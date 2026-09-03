@@ -78,7 +78,7 @@ const BlogArticle = () => {
                 "Ignorar la situación puede generar conflictos o demandas"
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="text-green-600 font-medium">✓</span>
+                  <span className="text-green-500 font-medium">✓</span>
                   <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
@@ -89,7 +89,7 @@ const BlogArticle = () => {
             Muchas personas siguen viviendo en una propiedad después de que el contrato de arriendo termina. Pagan el arriendo normalmente y todo parece seguir igual. ¿Sigo con contrato? ¿Me pueden echar? ¿Se renovó automáticamente? Aquí es donde aparece un concepto clave: la tácita reconducción.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base text-green-900">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>13 de Abril, 2026</span>

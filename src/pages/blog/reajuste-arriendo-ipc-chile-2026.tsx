@@ -106,7 +106,7 @@ const BlogArticle = () => {
                 "Calcular correctamente el reajuste evita cobros indebidos"
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="text-green-500 font-bold">✓</span>
+                  <span className="text-green-500 font-medium">✓</span>
                   <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
@@ -117,7 +117,7 @@ const BlogArticle = () => {
             Si buscas una calculadora de arriendo por IPC, aquí puedes calcular el reajuste y además entender cómo funciona legalmente el aumento del canon de arriendo. El reajuste del arriendo según IPC es una de las dudas más frecuentes tanto para arrendadores como arrendatarios en Chile. Muchas personas ven subir el precio mensual sin entender cómo se calcula realmente ni si el aumento es correcto.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base text-green-900">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>06 de Abril, 2026</span>

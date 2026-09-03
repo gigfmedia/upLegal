@@ -73,7 +73,7 @@ const BlogArticle = () => {
 
           <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">Resumen rápido</p>
-            <ul className="space-y-3">
+            <ul className="space-y-2 text-green-900">
               {[
                 "Tienes 60 días hábiles para demandar",
                 "Puedes exigir indemnización + recargos de hasta 80%",
@@ -82,7 +82,7 @@ const BlogArticle = () => {
                 "Un error puede hacerte perder millones",
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="text-green-600 font-medium">✓</span>
+                  <span className="text-green-500 font-medium">✓</span>
                   <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}

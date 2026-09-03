@@ -88,7 +88,7 @@ const BlogArticle = () => {
                 "Los conflictos suelen terminar resolviéndose en tribunales"
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="text-green-600 font-medium">✓</span>
+                  <span className="text-green-500 font-medium">✓</span>
                   <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
@@ -99,7 +99,7 @@ const BlogArticle = () => {
             Sí. Aunque no exista contrato escrito, sí pueden desalojarte mediante un procedimiento judicial dependiendo del caso. Arrendar sin contrato escrito es mucho más común de lo que parece en Chile. Muchas personas viven en una propiedad con acuerdos verbales, sin firmar ningún documento formal. Pero cuando surgen problemas, ¿qué pasa legalmente?
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base text-green-900">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>27 de Marzo, 2026</span>

@@ -89,7 +89,7 @@ const BlogArticle = () => {
                 "El proceso puede tomar entre 3 y 12 meses dependiendo del tribunal y si hay oposición",
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="text-green-600 font-medium">✓</span>
+                  <span className="text-green-500 font-medium">✓</span>
                   <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
@@ -100,7 +100,7 @@ const BlogArticle = () => {
             Si estás buscando cómo echar a un familiar de tu casa, sabes que no es una decisión fácil. Desalojar a un familiar es una de las situaciones legales más incómodas que existe. Ya sea que quieras saber cómo echar a una persona de tu propiedad o necesites entender el proceso legal para recuperar tu casa, esta guía te explica todo lo que necesitas saber.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base text-green-900">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>25 de Mayo, 2026</span>

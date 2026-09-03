@@ -74,7 +74,7 @@ const BlogArticle = () => {
                 "No responder la demanda es el error que más alarga el proceso"
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="text-green-600 font-medium">✓</span>
+                  <span className="text-green-500 font-medium">✓</span>
                   <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
@@ -85,16 +85,16 @@ const BlogArticle = () => {
             Si te despidieron y estás evaluando demandar, una de las primeras preguntas es cuánto tiempo va a tomar. La respuesta honesta es que depende — pero hay rangos reales y factores concretos que puedes evaluar desde hoy.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6 text-base">
-            <div className="flex items-center gap-2 text-gray-300">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900 text-base">
+            <div className="flex items-center gap-2 text-green-900">
               <Calendar className="h-4 w-4" />
               <span>6 de Mayo, 2026</span>
             </div>
-            <div className="flex items-center gap-2 text-gray-300">
+            <div className="flex items-center gap-2 text-green-900">
               <User className="h-4 w-4" />
               <span>Equipo LegalUp</span>
             </div>
-            <div className="flex items-center gap-2 text-gray-300">
+            <div className="flex items-center gap-2 text-green-900">
               <Clock className="h-4 w-4" />
               <ReadTime slug="cuanto-dura-juicio-laboral-despido-injustificado-chile-2026" />
             </div>

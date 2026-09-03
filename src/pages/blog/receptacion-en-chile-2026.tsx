@@ -90,7 +90,7 @@ const BlogArticle = () => {
                                 "Si eres investigado o fuiste víctima del delito precedente, contar con asesoría jurídica desde el inicio puede ser fundamental",
                             ].map((item, i) => (
                                 <li key={i} className="flex items-center gap-3">
-                                    <span className="text-green-500 font-bold">✓</span>
+                                    <span className="text-green-500 font-medium">✓</span>
                                     <span className="text-sm sm:text-base">{item}</span>
                                 </li>
                             ))}

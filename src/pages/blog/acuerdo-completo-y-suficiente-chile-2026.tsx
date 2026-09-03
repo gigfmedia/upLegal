@@ -117,7 +117,7 @@ const BlogArticle = () => {
                                 "Con asesoría adecuada se pueden evitar observaciones y retrasos",
                             ].map((item, i) => (
                                 <li key={i} className="flex items-center gap-3">
-                                    <span className="text-green-500 font-bold">✓</span>
+                                    <span className="text-green-500 font-medium">✓</span>
                                     <span className="text-sm sm:text-base">{item}</span>
                                 </li>
                             ))}

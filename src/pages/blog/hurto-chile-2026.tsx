@@ -93,7 +93,7 @@ const BlogArticle = () => {
                                 "Contar con asesoría de un abogado penalista desde el inicio puede influir significativamente en el resultado del proceso.",
                             ].map((item, i) => (
                                 <li key={i} className="flex items-center gap-3">
-                                    <span className="text-green-500 font-bold">✓</span>
+                                    <span className="text-green-500 font-medium">✓</span>
                                     <span className="text-sm sm:text-base">{item}</span>
                                 </li>
                             ))}

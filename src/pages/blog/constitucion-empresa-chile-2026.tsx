@@ -49,7 +49,7 @@ const BlogArticle = () => {
                                 "Empresa en un Día es gratis y válido; la vía notarial es la alternativa tradicional.",
                                 "Si proyectas crecer, traer socios o postular a fondos, la SpA es la opción.",
                             ].map((item, i) => (
-                                <li key={i} className="flex items-center gap-3"><span className="text-green-500 font-bold">✓</span><span className="text-sm sm:text-base">{item}</span></li>
+                                <li key={i} className="flex items-center gap-3"><span className="text-green-500 font-medium">✓</span><span className="text-sm sm:text-base">{item}</span></li>
                             ))}
                         </ul>
                     </div>

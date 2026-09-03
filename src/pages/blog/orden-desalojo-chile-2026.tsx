@@ -86,7 +86,7 @@ const BlogArticle = () => {
                 "Actuar rápido puede ayudarte a negociar o ganar tiempo"
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="text-green-600 font-medium">✓</span>
+                  <span className="text-green-500 font-medium">✓</span>
                   <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
@@ -96,7 +96,7 @@ const BlogArticle = () => {
             Cuando existe un conflicto de arriendo, muchas personas escuchan el término "orden de desalojo", pero no siempre tienen claro qué significa ni en qué momento ocurre.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base text-green-900">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>20 de Marzo, 2026</span>

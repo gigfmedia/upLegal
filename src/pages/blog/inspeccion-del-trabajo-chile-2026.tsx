@@ -90,7 +90,7 @@ const BlogArticle = () => {
                                 "En casos de despido, discriminación o tutela laboral, puede ser necesario acudir a un abogado y demandar judicialmente",
                             ].map((item, i) => (
                                 <li key={i} className="flex items-center gap-3">
-                                    <span className="text-green-500 font-bold">✓</span>
+                                    <span className="text-green-500 font-medium">✓</span>
                                     <span className="text-sm sm:text-base">{item}</span>
                                 </li>
                             ))}

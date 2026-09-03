@@ -82,7 +82,7 @@ const BlogArticle = () => {
                 "Ignorar la demanda puede acelerar el lanzamiento"
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="text-green-600 font-medium">✓</span>
+                  <span className="text-green-500 font-medium">✓</span>
                   <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
@@ -93,7 +93,7 @@ const BlogArticle = () => {
             Comprender cómo funciona realmente el proceso de desalojo es fundamental para proteger tus derechos como arrendatario y evitar abusos o situaciones ilegales.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base text-green-900">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>13 de Marzo, 2026</span>

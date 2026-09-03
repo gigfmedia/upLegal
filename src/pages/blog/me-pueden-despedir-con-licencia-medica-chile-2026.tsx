@@ -74,7 +74,7 @@ const BlogArticle = () => {
                 "Los plazos para actuar son cortos — 60 días hábiles desde el despido"
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="text-green-600 font-medium">✓</span>
+                  <span className="text-green-500 font-medium">✓</span>
                   <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
@@ -85,16 +85,16 @@ const BlogArticle = () => {
             Una de las dudas más frecuentes entre trabajadores chilenos es si el empleador puede despedirlos mientras están con licencia médica. La respuesta no es simple: depende de la causal y de las circunstancias.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6 text-base">
-            <div className="flex items-center gap-2 text-gray-300">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900 text-base">
+            <div className="flex items-center gap-2 text-green-900">
               <Calendar className="h-4 w-4" />
               <span>8 de Mayo, 2026</span>
             </div>
-            <div className="flex items-center gap-2 text-gray-300">
+            <div className="flex items-center gap-2 text-green-900">
               <User className="h-4 w-4" />
               <span>Equipo LegalUp</span>
             </div>
-            <div className="flex items-center gap-2 text-gray-300">
+            <div className="flex items-center gap-2 text-green-900">
               <Clock className="h-4 w-4" />
               <ReadTime slug="me-pueden-despedir-con-licencia-medica-chile-2026" />
             </div>

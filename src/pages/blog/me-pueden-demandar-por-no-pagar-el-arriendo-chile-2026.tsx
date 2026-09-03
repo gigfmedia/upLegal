@@ -91,7 +91,7 @@ const BlogArticle = () => {
                 "Puedes negociar o pagar y evitar el desalojo en muchos casos",
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <span className="text-green-600 font-medium">✓</span>
+                  <span className="text-green-500 font-medium">✓</span>
                   <span className="text-sm sm:text-base">{item}</span>
                 </div>
               ))}
@@ -102,7 +102,7 @@ const BlogArticle = () => {
             Si dejaste de pagar el arriendo o estás atrasado, es normal preguntarse qué puede pasar realmente.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base text-green-900">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>22 de Abril, 2026</span>
@@ -268,7 +268,7 @@ const BlogArticle = () => {
                   <CheckCircle className="h-5 w-5 text-green-500" />
                   Procedimiento Legal
                 </h4>
-                <ul className="space-y-3">
+                <ul className="space-y-2 text-green-900">
                   {[
                     "Requiere juicio civil completo",
                     "Requiere orden judicial expresa",

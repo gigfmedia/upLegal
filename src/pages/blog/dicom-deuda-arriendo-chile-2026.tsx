@@ -86,7 +86,7 @@ const BlogArticle = () => {
                 "Actuar temprano puede evitar problemas financieros mayores"
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="text-green-600 font-medium">✓</span>
+                  <span className="text-green-500 font-medium">✓</span>
                   <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
@@ -97,7 +97,7 @@ const BlogArticle = () => {
             Tener problemas con el pago del arriendo genera muchas dudas, pero hay una que aparece siempre: ¿Me pueden meter a DICOM por deuda de arriendo? Muchos arrendadores usan esta amenaza como presión, pero no siempre es legal ni posible.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base text-green-900">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>10 de Abril, 2026</span>

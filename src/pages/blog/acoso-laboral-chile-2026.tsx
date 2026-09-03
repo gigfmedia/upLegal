@@ -91,7 +91,7 @@ const BlogArticle = () => {
                                 <><span>En algunos casos puede dar lugar a tutela laboral, <Link to="/blog/como-calcular-tu-finiquito-chile-2026" className="text-green-700 underline hover:text-green-500">finiquito</Link> u otras acciones judiciales</span></>,
                             ].map((item, i) => (
                                 <li key={i} className="flex items-center gap-3">
-                                    <span className="text-green-500 font-bold">✓</span>
+                                    <span className="text-green-500 font-medium">✓</span>
                                     <span className="text-sm sm:text-base">{item}</span>
                                 </li>
                             ))}

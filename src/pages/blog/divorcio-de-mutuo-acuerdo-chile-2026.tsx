@@ -72,7 +72,7 @@ const BlogArticle = () => {
 
           <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">Resumen rápido</p>
-            <ul className="space-y-3">
+            <ul className="space-y-2 text-green-900">
               {[
                 "Ambos cónyuges deben estar de acuerdo y tener al menos 1 año de cese de convivencia",
                 "Es el proceso más rápido y económico — puede resolverse en 3 a 6 meses",
@@ -80,7 +80,7 @@ const BlogArticle = () => {
                 "Se puede hacer con un solo abogado que represente a ambas partes"
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="text-green-600 font-bold flex-shrink-0">✓</span>
+                  <span className="text-green-500 font-bold flex-shrink-0">✓</span>
                   <span className="sm:text-base">{item}</span>
                 </li>
               ))}

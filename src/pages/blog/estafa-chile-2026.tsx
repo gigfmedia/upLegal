@@ -107,7 +107,7 @@ const BlogArticle = () => {
                                 "Un abogado penalista puede ayudarte a evaluar acciones penales y civiles para perseguir responsabilidades y recuperar perjuicios.",
                             ].map((item, i) => (
                                 <li key={i} className="flex items-center gap-3">
-                                    <span className="text-green-500 font-bold">✓</span>
+                                    <span className="text-green-500 font-medium">✓</span>
                                     <span className="text-sm sm:text-base">{item}</span>
                                 </li>
                             ))}

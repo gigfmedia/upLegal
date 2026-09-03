@@ -86,7 +86,7 @@ const BlogArticle = () => {
                                 <><span>Dependiendo del caso, pueden existir acciones adicionales como tutela laboral, autodespido o <Link to='/blog/como-calcular-tu-finiquito-chile-2026' className='text-green-500 underline hover:text-green-400'>indemnizaciones</Link>.</span></>,
                             ].map((item, i) => (
                                 <li key={i} className="flex items-center gap-3">
-                                    <span className="text-green-500 font-bold">✓</span>
+                                    <span className="text-green-500 font-medium">✓</span>
                                     <span className="text-sm sm:text-base">{item}</span>
                                 </li>
                             ))}

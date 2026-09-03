@@ -50,7 +50,7 @@ const BlogArticle = () => {
                 "Evita el archivo silencioso: te notifican y puedes oponerte.",
                 "Permite acusar particular si la Fiscalía no persevera.",
               ].map((item, i) => (
-                <li key={i} className="flex items-center gap-3"><span className="text-green-500 font-bold">✓</span><span className="text-sm sm:text-base">{item}</span></li>
+                <li key={i} className="flex items-center gap-3"><span className="text-green-500 font-medium">✓</span><span className="text-sm sm:text-base">{item}</span></li>
               ))}
             </ul>
           </div>

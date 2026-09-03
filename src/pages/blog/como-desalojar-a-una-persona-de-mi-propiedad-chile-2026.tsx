@@ -77,7 +77,7 @@ const BlogArticle = () => {
 
           <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">Resumen rápido</p>
-            <ul className="space-y-3">
+            <ul className="space-y-2 text-green-900">
               {[
                 "El desalojo siempre requiere orden judicial — no puedes actuar por tu cuenta",
                 "El proceso varía según si hay contrato, contrato verbal u ocupación sin acuerdo",
@@ -85,7 +85,7 @@ const BlogArticle = () => {
                 "Un abogado puede hacer la diferencia entre un proceso de 3 meses y uno de 12",
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="text-green-600 font-medium">✓</span>
+                  <span className="text-green-500 font-medium">✓</span>
                   <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}

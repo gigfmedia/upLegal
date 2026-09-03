@@ -84,7 +84,7 @@ const BlogArticle = () => {
                 "Actuar rápido puede evitar que la deuda y el conflicto aumenten"
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="text-green-600 font-medium">✓</span>
+                  <span className="text-green-500 font-medium">✓</span>
                   <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
@@ -95,7 +95,7 @@ const BlogArticle = () => {
             La Ley &quot;Devuélveme Mi Casa&quot; (Ley 21.461) se ha convertido en una de las normas más relevantes en Chile para propietarios que enfrentan problemas con arrendatarios que no pagan o se niegan a abandonar una propiedad, quienes a menudo necesitan <Link to="/abogados-arriendo" className="text-green-600 underline hover:text-green-400">abogados de arriendo en Chile</Link> para recuperar su inmueble.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base text-green-900">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>25 de Marzo, 2026</span>

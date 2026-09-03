@@ -78,7 +78,7 @@ const BlogArticle = () => {
 
           <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">Resumen rápido</p>
-            <ul className="space-y-3">
+            <ul className="space-y-2 text-green-900">
               {[
                 "El contrato de arriendo regula derechos y obligaciones entre arrendador y arrendatario",
                 "El desalojo en Chile siempre requiere orden judicial",
@@ -88,7 +88,7 @@ const BlogArticle = () => {
                 "Los conflictos más comunes son deuda, garantía y término del contrato",
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="text-green-600 font-medium">✓</span>
+                  <span className="text-green-500 font-medium">✓</span>
                   <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
@@ -99,7 +99,7 @@ const BlogArticle = () => {
             ¿Te pueden desalojar? ¿Pueden subirte el arriendo? Conoce tus derechos, cómo funciona el contrato y qué hacer si tienes un problema de arriendo en Chile.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base text-green-900">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>15 de Abril, 2026</span>

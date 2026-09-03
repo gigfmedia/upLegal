@@ -76,7 +76,7 @@ const BlogArticle = () => {
                 "La carga de probar la causal del despido recae siempre sobre el empleador"
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="text-green-600 font-medium">✓</span>
+                  <span className="text-green-500 font-medium">✓</span>
                   <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
@@ -87,7 +87,7 @@ const BlogArticle = () => {
             Ser despedido del trabajo es una situación difícil. Pero cuando el despido ocurre sin una causa válida o sin respetar la ley, se trata de un despido injustificado, y tienes derecho a reclamar.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base text-green-900">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>1 de Abril, 2026</span>

@@ -89,19 +89,19 @@ const BlogArticle = () => {
             <p className="text-xs font-bold uppercase tracking-widest text-green-400 mb-4">Resumen rápido</p>
             <div className="grid sm:grid-cols-2 gap-4 text-white">
               <div className="flex items-center gap-3">
-                <span className="text-green-600 font-medium">✓</span>
+                <span className="text-green-500 font-medium">✓</span>
                 <span className="text-base">1 mes de deuda habilita demanda</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-green-600 font-medium">✓</span>
+                <span className="text-green-500 font-medium">✓</span>
                 <span className="text-base">No existe mínimo legal de meses</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-green-600 font-medium">✓</span>
+                <span className="text-green-500 font-medium">✓</span>
                 <span className="text-base">Desalojo SIEMPRE requiere juicio</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-green-600 font-medium">✓</span>
+                <span className="text-green-500 font-medium">✓</span>
                 <span className="text-base">Demora real: 3 a 12 meses</span>
               </div>
             </div>
@@ -111,7 +111,7 @@ const BlogArticle = () => {
             Hay un mito muy extendido: que necesitas 3 o 6 meses de deuda de arriendo para que te desalojen. La realidad es distinta y puede costarte cara si no la conoces. Con solo 1 mes de deuda el arrendador ya puede iniciar la demanda de desalojo. En esta guía te explicamos exactamente cuántos meses debes para que te desalojen, cómo funciona el juicio y qué puedes hacer para evitar llegar a ese punto.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base text-green-900">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>20 de Abril, 2026</span>
@@ -227,7 +227,7 @@ const BlogArticle = () => {
                 { title: "Lanzamiento", desc: "Ejecución forzada con auxilio de la fuerza pública si es necesario.", icon: <Shield className="h-5 w-5" /> },
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-4 p-6 bg-gray-50 rounded-2xl border border-gray-100 hover:bg-gray-100 transition-colors">
-                  <div className="bg-green-900 p-2 rounded-lg text-green-600 w-9 h-9 flex items-center justify-center flex-shrink-0">
+                  <div className="bg-green-900 p-2 rounded-lg text-green-500 w-9 h-9 flex items-center justify-center flex-shrink-0">
                     {item.icon}
                   </div>
 
@@ -347,7 +347,7 @@ const BlogArticle = () => {
                 { text: "Se puede solicitar la restitución del inmueble", icon: <FileText className="h-5 w-5" /> },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                  <div className="text-green-600 flex-shrink-0">{item.icon}</div>
+                  <div className="text-green-500 flex-shrink-0">{item.icon}</div>
                   <span className="text-gray-700 font-medium text-base">{item.text}</span>
                 </div>
               ))}
@@ -428,7 +428,7 @@ const BlogArticle = () => {
                 { text: "El tribunal tiene baja carga", icon: <AlertCircle className="h-5 w-5" /> },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                  <div className="text-green-600 flex-shrink-0">{item.icon}</div>
+                  <div className="text-green-500 flex-shrink-0">{item.icon}</div>
                   <span className="text-gray-700 font-medium text-base">{item.text}</span>
                 </div>
               ))}
@@ -585,7 +585,7 @@ const BlogArticle = () => {
                 { text: "Evitar el desalojo", icon: <Shield className="h-5 w-5" /> },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                  <div className="text-green-600 flex-shrink-0">{item.icon}</div>
+                  <div className="text-green-500 flex-shrink-0">{item.icon}</div>
                   <span className="text-gray-700 font-medium text-base">{item.text}</span>
                 </div>
               ))}
@@ -647,7 +647,7 @@ const BlogArticle = () => {
             <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
               {["Ya debes 2 meses o más de arriendo y el arrendador ha dejado de responder", "Recibiste una notificación judicial o citación por demanda de desalojo", "No estás seguro de si puedes negociar un acuerdo de pago o si es mejor defender tu caso en el juicio"].map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="text-green-600 flex-shrink-0">•</span>
+                  <span className="text-green-500 flex-shrink-0">•</span>
                   <span className="text-gray-700 font-bold">{item}</span>
                 </li>
               ))}

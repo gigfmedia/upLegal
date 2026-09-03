@@ -90,7 +90,7 @@ const BlogArticle = () => {
                                 "Si existe un perjuicio económico importante, un abogado puede evaluar cuál es la estrategia más conveniente.",
                             ].map((item, i) => (
                                 <li key={i} className="flex items-center gap-3">
-                                    <span className="text-green-500 font-bold">✓</span>
+                                    <span className="text-green-500 font-medium">✓</span>
                                     <span className="text-sm sm:text-base">{item}</span>
                                 </li>
                             ))}

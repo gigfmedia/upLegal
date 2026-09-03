@@ -80,7 +80,7 @@ const BlogArticle = () => {
                 "Tienes 60 días hábiles para demandar"
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="text-green-600 font-medium">✓</span>
+                  <span className="text-green-500 font-medium">✓</span>
                   <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
@@ -91,16 +91,16 @@ const BlogArticle = () => {
             Ser despedido genera muchas dudas, especialmente cuando no hay una explicación clara. Una de las preguntas más frecuentes es: ¿Me pueden despedir sin motivo en Chile?
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base text-green-900">
-            <div className="flex items-center gap-2 text-gray-300">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900 text-sm sm:text-base">
+            <div className="flex items-center gap-2 text-green-900">
               <Calendar className="h-4 w-4" />
               <span>4 de Mayo, 2026</span>
             </div>
-            <div className="flex items-center gap-2 text-gray-300">
+            <div className="flex items-center gap-2 text-green-900">
               <User className="h-4 w-4" />
               <span>Equipo LegalUp</span>
             </div>
-            <div className="flex items-center gap-2 text-gray-300">
+            <div className="flex items-center gap-2 text-green-900">
               <Clock className="h-4 w-4" />
               <ReadTime slug="me-pueden-despedir-sin-motivo-chile-2026" />
             </div>
