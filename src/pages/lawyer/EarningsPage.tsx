@@ -41,34 +41,8 @@ interface Transaction {
 
 type TimeRange = 'week' | 'month' | 'year' | 'all';
 
-const generateMockTransactions = (): Transaction[] => {
-  const services = ['Consulta Legal', 'Asesoría', 'Revisión de Contrato', 'Defensa Legal', 'Otros Servicios'];
-  const clients = ['Juan Pérez', 'María González', 'Carlos López', 'Ana Martínez', 'Pedro Rodríguez'];
-  const transactions: Transaction[] = [];
-  
-  // Generate transactions for the last 6 months
-  for (let i = 0; i < 30; i++) {
-    const daysAgo = Math.floor(Math.random() * 180);
-    const date = new Date();
-    date.setDate(date.getDate() - daysAgo);
-    
-    const amount = Math.floor(Math.random() * 1000) + 50; // $50 - $1050
-    const statuses: Array<Transaction['status']> = ['completed', 'pending', 'refunded', 'failed'];
-    const types: Array<Transaction['type']> = ['consultation', 'service', 'subscription', 'other'];
-    
-    transactions.push({
-      id: `tx_${i + 1000}`,
-      date,
-      clientName: clients[Math.floor(Math.random() * clients.length)],
-      service: services[Math.floor(Math.random() * services.length)],
-      amount,
-      status: statuses[Math.floor(Math.random() * statuses.length)],
-      type: types[Math.floor(Math.random() * types.length)]
-    });
-  }
-  
-  return transactions.sort((a, b) => b.date.getTime() - a.date.getTime());
-};
+// Mock transactions removed in Fase 1B.2 — revenue now uses real payments.lawyer_amount
+// Previously generateMockTransactions() generated fake data; now fetchTransactions uses only real Supabase data.
 
 export default function EarningsPage() {
   const [timeRange, setTimeRange] = useState<TimeRange>('month');
@@ -84,17 +58,20 @@ export default function EarningsPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      // Fetch payments from the database
+      // Fetch payments from the database — Fase 1B.2: use lawyer_amount (real revenue) and payout_status
       // 1. Fetch payments first
       const { data: payments, error: paymentsError } = await supabase
         .from('payments')
         .select(`
           id,
+          lawyer_amount,
           amount,
           status,
+          payout_status,
           created_at,
           appointment_id,
-          lawyer_id
+          lawyer_id,
+          service_description
         `)
         .eq('lawyer_id', session.user.id)
         .order('created_at', { ascending: false });
@@ -134,27 +111,27 @@ export default function EarningsPage() {
         }
       }
 
-      // 4. Merge data
+      // 4. Merge data — use lawyer_amount as real revenue
       const formattedTransactions: Transaction[] = (payments || [])
         .filter(payment => {
-          // Skip payments with 0 amount (no test payment check)
-          if (payment.amount === 0) {
-            return false;
-          }
+          const realAmount = payment.lawyer_amount ?? payment.amount ?? 0;
+          if (realAmount === 0) return false;
           return true;
         })
         .map((payment: any) => {
           const appointment = appointmentsMap.get(payment.appointment_id);
-          
+          const realAmount = payment.lawyer_amount ?? payment.amount ?? 0;
+          // payout_status is shown as badge detail, status maps to completed/pending
+          const displayStatus = payment.payout_status === 'paid' || payment.status === 'completed' || payment.status === 'approved' ? 'completed' : payment.status === 'pending' || payment.payout_status === 'pending' ? 'pending' : (payment.status as Transaction['status']);
           return {
             id: payment.id,
             date: new Date(payment.created_at),
             clientName: appointment?.client 
               ? `${appointment.client.first_name || ''} ${appointment.client.last_name || ''}`.trim() || 'Cliente'
-              : 'Cliente',
-            service: appointment?.service_type || 'Consulta',
-            amount: payment.amount,
-            status: payment.status as Transaction['status'],
+              : payment.service_description || 'Servicio',
+            service: appointment?.service_type || payment.service_description || 'Consulta',
+            amount: realAmount,
+            status: displayStatus,
             type: 'consultation'
           };
         });

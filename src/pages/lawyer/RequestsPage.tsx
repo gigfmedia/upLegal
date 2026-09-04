@@ -53,6 +53,10 @@ export default function RequestsPage() {
       // 2. link booking -> client_id if booking
       if (req.kind === 'booking') {
         await supabase.from('bookings').update({ client_id: client.id }).eq('id', req.rawId).eq('lawyer_id', user.id);
+        // mark pending as confirmed to indicate processed (safe, existing enum)
+        if (req.status === 'pending') {
+          await supabase.from('bookings').update({ status: 'confirmed' }).eq('id', req.rawId).eq('lawyer_id', user.id).eq('status', 'pending');
+        }
       }
 
       // 3. create case (or reuse if exists for same booking/quote)

@@ -7,10 +7,29 @@ import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Search, X, C
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AppointmentForm } from '@/components/appointments/AppointmentForm';
+import { useLawyerClients } from '@/hooks/useLawyerClients';
+import { normalizeEmail } from '@/lib/normalizeEmail';
+
+type Appointment = {
+  id: string;
+  clientName: string;
+  clientEmail: string;
+  clientPhone: string;
+  service: string;
+  date: Date;
+  duration: number;
+  status: string;
+  type: string;
+  notes: string;
+  bookingId: string;
+  clientId: string | null;
+  source: string;
+};
+
 export default function CitasPage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -20,56 +39,43 @@ export default function CitasPage() {
   const [appointmentToDelete, setAppointmentToDelete] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
+  const { findOrCreateClient } = useLawyerClients();
 
-  // Navegación de días
   const goToPreviousDay = () => setSelectedDate(prev => addDays(prev, -1));
   const goToNextDay = () => setSelectedDate(prev => addDays(prev, 1));
   const goToToday = () => setSelectedDate(new Date());
 
-  // Formatear fecha para mostrar
   const formatDateDisplay = (date: Date) => {
     if (isToday(date)) return 'Hoy';
     if (isTomorrow(date)) return 'Mañana';
     return format(date, 'EEEE d', { locale: es });
   };
 
-  // Manejar acciones de citas
-  const handleViewAppointment = (appointment: Appointment) => {
-    setViewingAppointment(appointment);
-  };
-
+  const handleViewAppointment = (appointment: Appointment) => setViewingAppointment(appointment);
   const handleEditAppointment = (appointment: Appointment) => {
     setEditingAppointment(appointment);
     setShowNewAppointmentForm(true);
   };
-
-  const handleDeleteAppointment = (appointmentId: string) => {
-    setAppointmentToDelete(appointmentId);
-  };
+  const handleDeleteAppointment = (appointmentId: string) => setAppointmentToDelete(appointmentId);
 
   const confirmDeleteAppointment = async () => {
     if (!appointmentToDelete) return;
-    
     try {
-      // Aquí iría la llamada a la API para eliminar la cita
-      setAppointments(appointments.filter(appt => appt.id !== appointmentToDelete));
-      toast({
-        title: 'Cita cancelada',
-        description: 'La cita ha sido cancelada correctamente.',
-      });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      // Cancel via bookings status (RLS: auth.uid()=lawyer_id)
+      const { error } = await supabase.from('bookings').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', appointmentToDelete).eq('lawyer_id', session.user.id);
+      if (error) throw error;
+      setAppointments(prev => prev.filter(appt => appt.id !== appointmentToDelete));
+      toast({ title: 'Cita cancelada', description: 'La cita ha sido cancelada correctamente.' });
     } catch (error) {
       console.error('Error al cancelar la cita:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo cancelar la cita. Inténtalo de nuevo.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'No se pudo cancelar la cita.', variant: 'destructive' });
     } finally {
       setAppointmentToDelete(null);
     }
   };
 
-  // Filtrar citas por fecha
   const getAppointmentsForDate = (date: Date) => {
     const targetDate = new Date(date);
     targetDate.setHours(0, 0, 0, 0);
@@ -81,146 +87,143 @@ export default function CitasPage() {
     });
   };
 
-  // Handle new appointment
   const handleNewAppointment = async (data: any) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      // First, find or create the client
-      let clientId: string;
-      
-      // Check if client exists by email
-      const { data: existingClient } = await supabase
-        .from('profiles')
-        .select('id, user_id')
-        .eq('email', data.clientEmail)
-        .single();
-
-      if (existingClient) {
-        clientId = (existingClient as any).user_id || existingClient.id;
-      } else {
-        // Create new client profile
-        const { data: newClient, error: clientError } = await supabase
-          .from('profiles')
-          .insert({
-            first_name: data.clientName.split(' ')[0],
-            last_name: data.clientName.split(' ').slice(1).join(' '),
-            email: data.clientEmail,
-            phone: data.clientPhone,
-            role: 'client'
-          })
-          .select('id, user_id')
-          .single();
-
-        if (clientError) throw clientError;
-        clientId = (newClient as any).user_id || newClient.id;
+      // Find or create lawyer_clients (replaces phantom profiles)
+      let clientId: string | null = null;
+      try {
+        const client = await findOrCreateClient({
+          name: data.clientName,
+          email: data.clientEmail || null,
+          phone: data.clientPhone || null,
+          source: 'LAWYER_DIRECT',
+        });
+        clientId = client.id;
+      } catch (e) {
+        console.error('Error creating client for appointment:', e);
+        // Continue without client_id if email invalid etc.
       }
 
-      // Create the appointment
-      const { error } = await supabase
-        .from('appointments')
+      const scheduledDate = data.date; // yyyy-MM-dd
+      const scheduledTime = data.time; // HH:mm
+      const duration = parseInt(data.duration, 10) || 30;
+
+      const { data: booking, error } = await supabase
+        .from('bookings')
         .insert({
-          user_id: clientId,
           lawyer_id: session.user.id,
-          appointment_date: data.date,
-          appointment_time: data.time,
-          duration: parseInt(data.duration, 10),
-          status: 'pending',
-          type: data.type,
-          consultation_type: data.service,
-          name: data.clientName,
-          email: data.clientEmail,
-          phone: data.clientPhone,
-          notes: data.notes
-        } as any);
+          user_id: null,
+          user_name: data.clientName,
+          user_email: data.clientEmail || `no-email-${Date.now()}@placeholder.invalid`,
+          user_phone: data.clientPhone || null,
+          scheduled_date: scheduledDate,
+          scheduled_time: scheduledTime,
+          duration,
+          price: 0,
+          status: 'confirmed',
+          booking_type: 'appointment',
+          service_title: data.service || 'Cita',
+          service_description: data.notes || null,
+          source: 'LAWYER_DIRECT',
+          client_id: clientId,
+          requires_meeting: data.type === 'video',
+        } as any)
+        .select('id')
+        .single();
 
       if (error) throw error;
-
-      // Refresh appointments
       await fetchAppointments();
-      
-      toast({
-        title: 'Cita creada',
-        description: 'La cita ha sido agendada correctamente.',
-      });
-      
+      toast({ title: 'Cita creada', description: 'La cita ha sido agendada correctamente.' });
       setShowNewAppointmentForm(false);
+      setEditingAppointment(null);
     } catch (error) {
       console.error('Error creating appointment:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo crear la cita. Por favor, inténtalo de nuevo.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'No se pudo crear la cita.', variant: 'destructive' });
     }
   };
 
-  // Fetch appointments from database
+  const handleUpdateAppointment = async (data: any) => {
+    if (!editingAppointment) return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const duration = parseInt(data.duration, 10) || 30;
+      const { error } = await supabase
+        .from('bookings')
+        .update({
+          user_name: data.clientName,
+          user_email: data.clientEmail || `no-email-${Date.now()}@placeholder.invalid`,
+          user_phone: data.clientPhone || null,
+          scheduled_date: data.date,
+          scheduled_time: data.time,
+          duration,
+          service_title: data.service || 'Cita',
+          service_description: data.notes || null,
+          updated_at: new Date().toISOString(),
+        } as any)
+        .eq('id', editingAppointment.bookingId)
+        .eq('lawyer_id', session.user.id);
+      if (error) throw error;
+      await fetchAppointments();
+      toast({ title: 'Cita actualizada' });
+      setShowNewAppointmentForm(false);
+      setEditingAppointment(null);
+    } catch (error) {
+      console.error('Error updating appointment:', error);
+      toast({ title: 'Error', description: 'No se pudo actualizar.', variant: 'destructive' });
+    }
+  };
+
   const fetchAppointments = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-
-      // Get lawyer's appointments
-      const { data: appointments, error } = await supabase
-        .from('appointments')
-        .select(`
-          id,
-          appointment_date,
-          appointment_time,
-          duration,
-          status,
-          type,
-          notes,
-          consultation_type,
-          name,
-          email,
-          phone
-        `)
+      // Canonical source: bookings where booking_type=appointment
+      const { data: bookings, error } = await supabase
+        .from('bookings')
+        .select('id, user_name, user_email, user_phone, service_title, scheduled_date, scheduled_time, duration, status, source, client_id, created_at')
         .eq('lawyer_id', session.user.id)
-        .order('appointment_date', { ascending: true });
-
+        .eq('booking_type', 'appointment')
+        .neq('status', 'cancelled')
+        .order('scheduled_date', { ascending: true })
+        .order('scheduled_time', { ascending: true });
       if (error) throw error;
 
-      // Transform data to match the expected format
-      const formattedAppointments = appointments.map((appt: any) => ({
-        id: appt.id,
-        clientName: appt.name || 'Cliente',
-        clientEmail: appt.email || '',
-        clientPhone: appt.phone || '',
-        service: appt.consultation_type || 'Consulta',
-        date: appt.appointment_date && appt.appointment_time
-          ? new Date(`${appt.appointment_date}T${appt.appointment_time}`)
-          : new Date(appt.appointment_date || Date.now()),
-        duration: appt.duration || 30, // Default to 30 minutes if not specified
-        status: appt.status || 'pending',
-        type: appt.type || 'video',
-        notes: appt.notes || ''
-      }));
-
-      setAppointments(formattedAppointments);
+      const formatted: Appointment[] = (bookings || []).map((b: any) => {
+        const dateStr = b.scheduled_date && b.scheduled_time ? `${b.scheduled_date}T${b.scheduled_time}` : b.created_at;
+        return {
+          id: b.id,
+          bookingId: b.id,
+          clientName: b.user_name || 'Cliente',
+          clientEmail: b.user_email || '',
+          clientPhone: b.user_phone || '',
+          service: b.service_title || 'Cita',
+          date: new Date(dateStr),
+          duration: b.duration || 30,
+          status: b.status || 'pending',
+          type: 'video',
+          notes: '',
+          clientId: b.client_id,
+          source: b.source || 'UNKNOWN',
+        };
+      });
+      setAppointments(formatted);
     } catch (error) {
       console.error('Error fetching appointments:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudieron cargar las citas. Por favor, inténtalo de nuevo.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'No se pudieron cargar las citas.', variant: 'destructive' });
     }
   };
 
-  // Fetch appointments on component mount
   useEffect(() => {
     fetchAppointments();
   }, []);
 
   const dailyAppointments = getAppointmentsForDate(selectedDate);
   const filteredAppointments = searchQuery
-    ? dailyAppointments.filter(appt =>
-        appt.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        appt.service.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+    ? dailyAppointments.filter(appt => appt.clientName.toLowerCase().includes(searchQuery.toLowerCase()) || appt.service.toLowerCase().includes(searchQuery.toLowerCase()))
     : dailyAppointments;
 
   return (
@@ -230,22 +233,18 @@ export default function CitasPage() {
           <h1 className="text-2xl font-bold tracking-tight">Citas</h1>
           <p className="text-muted-foreground">Gestiona tus citas programadas</p>
         </div>
-        <div className="w-full md:w-auto">
+        <div className="w-full md:w-auto flex gap-2">
+          <Button onClick={() => { setEditingAppointment(null); setShowNewAppointmentForm(true); }} className="bg-gray-900 hover:bg-green-900">
+            <Plus className="h-4 w-4 mr-1" /> Nueva cita
+          </Button>
           <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Buscar citas..."
-              className="w-full md:w-[300px] pl-8"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input type="search" placeholder="Buscar citas..." className="w-full md:w-[300px] pl-8" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           </div>
         </div>
       </div>
 
       <div className="flex flex-col md:flex-row gap-6">
-        {/* Calendario */}
         <div className="w-full md:w-1/3">
           <Card className="mb-6">
             <CardContent className="p-4">
@@ -260,43 +259,26 @@ export default function CitasPage() {
                   </Button>
                 </div>
               </div>
-              
               <div className="grid grid-cols-7 gap-1 text-center text-xs">
                 {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((day, i) => (
                   <div key={i} className="text-muted-foreground py-1">{day}</div>
                 ))}
-                
                 {[...Array(7)].map((_, i) => {
                   const day = addDays(startOfWeek(selectedDate, { locale: es }), i);
                   const isSelected = day.toDateString() === selectedDate.toDateString();
                   const isCurrentMonth = day.getMonth() === selectedDate.getMonth();
-                  
                   return (
-                    <button
-                      key={i}
-                      className={`py-1.5 rounded-md flex items-center justify-center ${
-                        isSelected 
-                          ? 'bg-primary text-white' 
-                          : isCurrentMonth 
-                            ? 'hover:bg-muted' 
-                            : 'text-muted-foreground/50 hover:bg-muted/50'
-                      }`}
-                      onClick={() => setSelectedDate(day)}
-                    >
+                    <button key={i} className={`py-1.5 rounded-md flex items-center justify-center ${isSelected ? 'bg-primary text-white' : isCurrentMonth ? 'hover:bg-muted' : 'text-muted-foreground/50 hover:bg-muted/50'}`} onClick={() => setSelectedDate(day)}>
                       {format(day, 'd')}
                     </button>
                   );
                 })}
               </div>
-              
-              <Button variant="outline" className="mt-4 w-full" size="sm" onClick={goToToday}>
-                Hoy
-              </Button>
+              <Button variant="outline" className="mt-4 w-full" size="sm" onClick={goToToday}>Hoy</Button>
             </CardContent>
           </Card>
         </div>
 
-        {/* Lista de citas del día */}
         <div className="w-full md:w-2/3">
           {filteredAppointments.length === 0 ? (
             <div className="text-center text-muted-foreground">No hay citas para este día.</div>
@@ -306,72 +288,35 @@ export default function CitasPage() {
                 <CardHeader className="flex flex-col">
                   <div className="flex items-center space-x-3 mb-2">
                     <Avatar>
-                      <AvatarFallback>
-                        {appointment.clientName
-                          .split(' ')
-                          .map(n => n[0])
-                          .join('')
-                          .toUpperCase()}
-                      </AvatarFallback>
+                      <AvatarFallback>{appointment.clientName.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div>
                       <div className="font-semibold">{appointment.clientName}</div>
                       <div className="text-sm text-muted-foreground">{appointment.service}</div>
                     </div>
                   </div>
-
                   <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                     <div className="flex items-center text-muted-foreground">
                       <Clock className="mr-2 h-4 w-4" />
                       {format(appointment.date, 'HH:mm')} - {format(new Date(appointment.date.getTime() + appointment.duration * 60000), 'HH:mm')}
                     </div>
                     <div className="flex items-center text-muted-foreground">
-                      {appointment.type === 'video' ? (
-                        <Video className="mr-2 h-4 w-4" />
-                      ) : appointment.type === 'phone' ? (
-                        <Phone className="mr-2 h-4 w-4" />
-                      ) : (
-                        <MapPin className="mr-2 h-4 w-4" />
-                      )}
-                      {appointment.type === 'video'
-                        ? 'Videollamada'
-                        : appointment.type === 'phone'
-                        ? 'Llamada telefónica'
-                        : 'Reunión presencial'}
+                      <Video className="mr-2 h-4 w-4" /> Videollamada
                     </div>
                     <div className="flex items-center text-muted-foreground">
                       <Clock className="mr-2 h-4 w-4" />
                       {appointment.duration} minutos
                     </div>
                   </CardContent>
-
                   <div className="flex justify-end space-x-2 mt-4">
-                    <Button 
-                      variant="outline" 
-                      size="default" 
-                      className="h-9 flex items-center gap-2 px-4"
-                      onClick={() => handleViewAppointment(appointment)}
-                    >
-                      <Eye className="h-4 w-4" />
-                      Ver
+                    <Button variant="outline" size="default" className="h-9 flex items-center gap-2 px-4" onClick={() => handleViewAppointment(appointment)}>
+                      <Eye className="h-4 w-4" /> Ver
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="default" 
-                      className="h-9 flex items-center gap-2 px-4"
-                      onClick={() => handleEditAppointment(appointment)}
-                    >
-                      <Edit className="h-4 w-4" />
-                      Editar
+                    <Button variant="outline" size="default" className="h-9 flex items-center gap-2 px-4" onClick={() => handleEditAppointment(appointment)}>
+                      <Edit className="h-4 w-4" /> Editar
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="default"
-                      className="h-9 flex items-center gap-2 px-4 text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700"
-                      onClick={() => handleDeleteAppointment(appointment.id)}
-                    >
-                      <X className="h-4 w-4" />
-                      Cancelar
+                    <Button variant="outline" size="default" className="h-9 flex items-center gap-2 px-4 text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700" onClick={() => handleDeleteAppointment(appointment.id)}>
+                      <X className="h-4 w-4" /> Cancelar
                     </Button>
                   </div>
                 </CardHeader>
@@ -381,159 +326,49 @@ export default function CitasPage() {
         </div>
       </div>
 
-      {/* View Appointment Dialog */}
       <Dialog open={!!viewingAppointment} onOpenChange={(open) => !open && setViewingAppointment(null)}>
-        <DialogContent 
-          className="sm:max-w-2xl fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-          onInteractOutside={(e) => e.preventDefault()}
-        >
+        <DialogContent className="sm:max-w-2xl fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" onInteractOutside={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">Detalles de la Cita</DialogTitle>
           </DialogHeader>
-          
           <div className="space-y-4 py-4">
-            <div>
-              <h4 className="font-medium">Cliente</h4>
-              <p className="text-muted-foreground">{viewingAppointment?.clientName}</p>
-            </div>
-            <div>
-              <h4 className="font-medium">Servicio</h4>
-              <p className="text-muted-foreground">{viewingAppointment?.service}</p>
-            </div>
-            <div>
-              <h4 className="font-medium">Fecha y Hora</h4>
-              <p className="text-muted-foreground">
-                {viewingAppointment && format(viewingAppointment.date, 'PPP', { locale: es })} a las{' '}
-                {viewingAppointment && format(viewingAppointment.date, 'p', { locale: es })}
-              </p>
-            </div>
-            <div>
-              <h4 className="font-medium">Duración</h4>
-              <p className="text-muted-foreground">{viewingAppointment?.duration} minutos</p>
-            </div>
-            <div>
-              <h4 className="font-medium">Tipo</h4>
-              <p className="text-muted-foreground capitalize">
-                {viewingAppointment?.type === 'video' 
-                  ? 'Videollamada' 
-                  : viewingAppointment?.type === 'phone' 
-                    ? 'Llamada telefónica' 
-                    : 'Reunión presencial'}
-              </p>
-            </div>
-            {viewingAppointment?.notes && (
-              <div>
-                <h4 className="font-medium">Notas</h4>
-                <p className="text-muted-foreground whitespace-pre-line">{viewingAppointment.notes}</p>
-              </div>
-            )}
+            <div><h4 className="font-medium">Cliente</h4><p className="text-muted-foreground">{viewingAppointment?.clientName}</p></div>
+            <div><h4 className="font-medium">Servicio</h4><p className="text-muted-foreground">{viewingAppointment?.service}</p></div>
+            <div><h4 className="font-medium">Fecha y Hora</h4><p className="text-muted-foreground">{viewingAppointment && format(viewingAppointment.date, 'PPP', { locale: es })} a las {viewingAppointment && format(viewingAppointment.date, 'p', { locale: es })}</p></div>
+            <div><h4 className="font-medium">Duración</h4><p className="text-muted-foreground">{viewingAppointment?.duration} minutos</p></div>
           </div>
-          
           <DialogFooter className="mt-4">
-            <Button 
-              variant="outline" 
-              className="mr-2"
-              onClick={() => {
-                if (viewingAppointment) {
-                  setViewingAppointment(null);
-                  handleEditAppointment(viewingAppointment);
-                }
-              }}
-            >
-              Editar
-            </Button>
+            <Button variant="outline" className="mr-2" onClick={() => { if (viewingAppointment) { setViewingAppointment(null); handleEditAppointment(viewingAppointment); } }}>Editar</Button>
             <Button onClick={() => setViewingAppointment(null)}>Cerrar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* New/Edit Appointment Dialog */}
       <Dialog open={showNewAppointmentForm} onOpenChange={(open) => !open && setShowNewAppointmentForm(false)}>
-        <DialogContent 
-          className="sm:max-w-2xl max-h-[90vh] overflow-y-auto fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" 
-          onInteractOutside={(e) => e.preventDefault()}
-        >
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" onInteractOutside={(e) => e.preventDefault()}>
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">
-              {editingAppointment ? 'Editar Cita' : 'Nueva Cita'}
-            </DialogTitle>
+            <DialogTitle className="text-xl font-semibold">{editingAppointment ? 'Editar Cita' : 'Nueva Cita'}</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-
             <AppointmentForm
-              initialData={editingAppointment ? {
-                ...editingAppointment,
-                  date: format(editingAppointment.date, 'yyyy-MM-dd'),
-                  time: format(editingAppointment.date, 'HH:mm'),
-                  duration: editingAppointment.duration.toString(),
-                } : {
-                  clientName: '',
-                  clientEmail: '',
-                  clientPhone: '',
-                  service: '',
-                  date: format(selectedDate, 'yyyy-MM-dd'),
-                  time: '10:00',
-                  duration: '30',
-                  type: 'video',
-                  notes: ''
-                }}
-                onSubmit={(data) => {
-                  if (editingAppointment) {
-                    // Actualizar cita existente
-                    setAppointments(appointments.map(appt => 
-                      appt.id === editingAppointment.id 
-                        ? { ...appt, ...data, date: new Date(`${data.date}T${data.time}`) }
-                        : appt
-                    ));
-                    setEditingAppointment(null);
-                  } else {
-                    // Crear nueva cita
-                    const newAppointment: Appointment = {
-                      id: Date.now().toString(),
-                      ...data,
-                      date: new Date(`${data.date}T${data.time}`),
-                      status: 'confirmed',
-                    };
-                    setAppointments(prev => [...prev, newAppointment]);
-                    setShowNewAppointmentForm(false);
-                  }
-                }}
-                onCancel={() => {
-                  setShowNewAppointmentForm(false);
-                  setEditingAppointment(null);
-                }}
-                isEditing={!!editingAppointment}
+              initialData={editingAppointment ? { ...editingAppointment, date: format(editingAppointment.date, 'yyyy-MM-dd'), time: format(editingAppointment.date, 'HH:mm'), duration: editingAppointment.duration.toString() } : { clientName: '', clientEmail: '', clientPhone: '', service: '', date: format(selectedDate, 'yyyy-MM-dd'), time: '10:00', duration: '30', type: 'video', notes: '' }}
+              onSubmit={(data) => { if (editingAppointment) handleUpdateAppointment(data); else handleNewAppointment(data); }}
+              onCancel={() => { setShowNewAppointmentForm(false); setEditingAppointment(null); }}
+              isEditing={!!editingAppointment}
             />
           </div>
         </DialogContent>
       </Dialog>
-      {/* Confirmation Dialog for Appointment Cancellation */}
+
       <Dialog open={!!appointmentToDelete} onOpenChange={(open) => !open && setAppointmentToDelete(null)}>
-        <DialogContent 
-          className="sm:max-w-[425px] fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" 
-          onInteractOutside={(e) => e.preventDefault()}
-        >
+        <DialogContent className="sm:max-w-[425px] fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" onInteractOutside={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">¿Cancelar cita?</DialogTitle>
-            <DialogDescription className="mt-2">
-              ¿Estás seguro de que deseas cancelar esta cita? Esta acción no se puede deshacer.
-            </DialogDescription>
+            <DialogDescription className="mt-2">¿Estás seguro de que deseas cancelar esta cita? Esta acción no se puede deshacer.</DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4">
-            <Button 
-              variant="outline" 
-              onClick={() => setAppointmentToDelete(null)}
-              className="mr-2"
-            >
-              Volver
-            </Button>
-            <Button 
-              variant="destructive"
-              onClick={confirmDeleteAppointment}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Sí, cancelar cita
-            </Button>
+            <Button variant="outline" onClick={() => setAppointmentToDelete(null)} className="mr-2">Volver</Button>
+            <Button variant="destructive" onClick={confirmDeleteAppointment} className="bg-red-600 hover:bg-red-700">Sí, cancelar cita</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

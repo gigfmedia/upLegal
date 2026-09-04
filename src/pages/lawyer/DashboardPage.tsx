@@ -5,7 +5,7 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useEffect, useState, useCallback } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { User, Calendar, Briefcase, MessageSquare, Clock, CheckCircle, AlertCircle, Sparkles, ArrowRight, Star } from 'lucide-react';
+import { User, Calendar, Briefcase, MessageSquare, Clock, CheckCircle, AlertCircle, Sparkles, ArrowRight, Star, Loader2 } from 'lucide-react';
 import { ProfileCompletion } from '@/components/dashboard/ProfileCompletion';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { useProfile } from '@/hooks/useProfile';
@@ -13,6 +13,90 @@ import { supabase } from '@/lib/supabaseClient';
 import { format, formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useAISubscription } from '@/hooks/useAISubscription';
+
+// --- HOY Section — Fase 1B.2 minimal ---
+function HoySection({ userId }: { userId?: string }) {
+  const [pendingRequests, setPendingRequests] = useState<number | null>(null);
+  const [todayBookings, setTodayBookings] = useState<any[]>([]);
+  const [revenueMonth, setRevenueMonth] = useState<number | null>(null);
+  const [loadingHoy, setLoadingHoy] = useState(true);
+
+  useEffect(() => {
+    if (!userId) return;
+    const fetchHoy = async () => {
+      try {
+        setLoadingHoy(true);
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        const [{ count: pendingCount }, { data: todayData }, { data: payments }] = await Promise.all([
+          supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('lawyer_id', userId).in('status', ['pending', 'pending_payment']),
+          supabase.from('bookings').select('id, user_name, service_title, scheduled_date, scheduled_time, status').eq('lawyer_id', userId).eq('booking_type', 'appointment').eq('scheduled_date', todayStr).neq('status', 'cancelled').order('scheduled_time', { ascending: true }).limit(5),
+          supabase.from('payments').select('lawyer_amount, created_at').eq('lawyer_id', userId).gte('created_at', startOfMonth.toISOString()),
+        ]);
+
+        setPendingRequests(pendingCount ?? 0);
+        setTodayBookings(todayData || []);
+        const total = (payments || []).reduce((sum: number, p: any) => sum + (p.lawyer_amount ?? 0), 0);
+        setRevenueMonth(total);
+      } catch (e) {
+        console.error('HoySection fetch error', e);
+      } finally {
+        setLoadingHoy(false);
+      }
+    };
+    fetchHoy();
+  }, [userId]);
+
+  const nextAppointment = todayBookings[0] || null;
+
+  return (
+    <div className="rounded-xl border bg-white p-5">
+      <h3 className="text-sm font-semibold tracking-widest text-gray-500 uppercase mb-3">Hoy</h3>
+      {loadingHoy ? (
+        <div className="flex items-center gap-2 text-sm text-gray-500"><Loader2 className="h-4 w-4 animate-spin" /> Cargando...</div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card className="border-0 shadow-none bg-gray-50">
+            <CardContent className="p-4">
+              <div className="text-xs text-gray-500">Solicitudes pendientes</div>
+              <div className="text-2xl font-bold">{pendingRequests ?? 0}</div>
+              <div className="text-xs text-gray-500">por procesar</div>
+            </CardContent>
+          </Card>
+          <Card className="border-0 shadow-none bg-gray-50">
+            <CardContent className="p-4">
+              <div className="text-xs text-gray-500">Próxima cita</div>
+              {nextAppointment ? (
+                <>
+                  <div className="text-lg font-bold">{nextAppointment.scheduled_time?.slice(0,5) || '--:--'}</div>
+                  <div className="text-sm truncate">{nextAppointment.user_name || 'Cliente'} · {nextAppointment.service_title || 'Cita'}</div>
+                  <div className="text-xs text-gray-500">{nextAppointment.status}</div>
+                </>
+              ) : (
+                <div className="text-sm text-gray-500 mt-1">Sin citas hoy</div>
+              )}
+            </CardContent>
+          </Card>
+          <Card className="border-0 shadow-none bg-gray-50">
+            <CardContent className="p-4">
+              <div className="text-xs text-gray-500">Ingresos mes</div>
+              <div className="text-2xl font-bold">{revenueMonth !== null ? `$${revenueMonth.toLocaleString('es-CL')}` : '--'}</div>
+              <div className="text-xs text-gray-500">lawyer_amount</div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+      {todayBookings.length > 1 && (
+        <div className="mt-3 text-xs text-gray-500">
+          +{todayBookings.length - 1} cita{todayBookings.length - 1 !== 1 ? 's' : ''} más hoy · <Link to="/lawyer/citas" className="text-green-600 hover:underline">Ver agenda</Link>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function LawyerDashboardPage() {
   const navigate = useNavigate();
@@ -393,6 +477,9 @@ export default function LawyerDashboardPage() {
           </p>
         </div>
       </div>
+
+      {/* HOY — Fase 1B.2: solicitudes pendientes, citas de hoy, ingresos */}
+      <HoySection userId={user?.id} />
 
       {/* LegalUp AI Badge */}
       <div 
