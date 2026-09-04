@@ -184,19 +184,17 @@ function DashboardLayout() {
 
       return [
         { href: '/lawyer/dashboard', icon: Activity, label: 'Inicio' },
-        { href: '/lawyer/ai', icon: Sparkles, label: 'LegalUp', highlightIcon: true, aiBadge: true },
         { href: '/lawyer/requests', icon: Inbox, label: 'Solicitudes' },
+        { href: '/lawyer/jobs', icon: Briefcase, label: 'Trabajos' },
         { href: '/lawyer/clients', icon: Users, label: 'Clientes' },
         { href: '/lawyer/cases', icon: Briefcase, label: 'Casos' },
+        { href: '/lawyer/citas', icon: Calendar, label: 'Citas' },
+        { href: '/lawyer/earnings', icon: TrendingUp, label: 'Ingresos' },
+        { href: '/lawyer/ai', icon: Sparkles, label: 'LegalUp', highlightIcon: true, aiBadge: true },
         { href: '/lawyer/profile', icon: User, label: 'Perfil' },
         { href: '/lawyer/services', icon: FileText, label: 'Servicios', badge: showServicesBadge },
-        // { href: '/lawyer/consultas', icon: MessageSquare, label: 'Consultas' },
-        { href: '/lawyer/citas', icon: Calendar, label: 'Citas' },
-        { href: '/lawyer/jobs', icon: Briefcase, label: 'Trabajos' },
-        // { href: '/lawyer/empresas', icon: Building2, label: 'Empresas' },
         { href: '/lawyer/favorites', icon: Heart, label: 'Favoritos' },
         { href: '/lawyer/notificaciones', icon: Bell, label: 'Notificaciones' },
-        { href: '/lawyer/earnings', icon: TrendingUp, label: 'Ingresos' },
         ...commonItems
       ];
     }
@@ -209,6 +207,35 @@ function DashboardLayout() {
 
   const currentPath = location.pathname;
   const navItems = getNavItems();
+
+  // Grouped navigation for lawyer (single flow, no Marketplace/SaaS split)
+  type NavSection = { title: string | null; items: NavItem[] };
+  const getLawyerSections = (): NavSection[] => {
+    const itemsByHref = new Map(navItems.map(i => [i.href, i]));
+    const get = (href: string) => itemsByHref.get(href);
+    const without = (hrefs: string[]) => navItems.filter(i => !hrefs.includes(i.href));
+    // Build sections in desired order
+    const inicio = get('/lawyer/dashboard') ? [get('/lawyer/dashboard')!] : [];
+    const captacion = ['/lawyer/requests', '/lawyer/jobs'].map(get).filter(Boolean) as NavItem[];
+    const gestion = ['/lawyer/clients', '/lawyer/cases', '/lawyer/citas', '/lawyer/earnings'].map(get).filter(Boolean) as NavItem[];
+    const herramientas = ['/lawyer/ai'].map(get).filter(Boolean) as NavItem[];
+    const perfil = ['/lawyer/profile', '/lawyer/services', '/lawyer/favorites', '/lawyer/notificaciones'].map(get).filter(Boolean) as NavItem[];
+    const cuenta = ['/dashboard/payment-settings'].map(get).filter(Boolean) as NavItem[];
+    // Any remaining items (should be none, but keep for safety)
+    const accounted = new Set([...inicio, ...captacion, ...gestion, ...herramientas, ...perfil, ...cuenta].map(i => i.href));
+    const remaining = navItems.filter(i => !accounted.has(i.href));
+    const sections: NavSection[] = [];
+    if (inicio.length) sections.push({ title: null, items: inicio });
+    if (captacion.length) sections.push({ title: 'CAPTACIÓN', items: captacion });
+    if (gestion.length) sections.push({ title: 'GESTIÓN', items: gestion });
+    if (herramientas.length) sections.push({ title: 'HERRAMIENTAS', items: herramientas });
+    if (perfil.length) sections.push({ title: 'PERFIL', items: perfil });
+    if (cuenta.length) sections.push({ title: 'CUENTA', items: cuenta });
+    if (remaining.length) sections.push({ title: null, items: remaining });
+    return sections;
+  };
+
+  const lawyerSections = userRole === 'lawyer' && !currentPath.startsWith('/admin') ? getLawyerSections() : null;
 
   // Check if a navigation item is active
   const isActive = (href: string, exact: boolean = false): boolean => {
@@ -274,43 +301,94 @@ function DashboardLayout() {
             <aside className="hidden lg:flex flex-col w-64 shrink-0 bg-white border-r border-gray-200">
               {/* Nav pinned at the top (never rises with the footer) */}
               <nav className="w-full sticky top-16 self-start py-4">
-                <ul className="space-y-1 px-3">
-                  {navItems.map(({ href, icon: Icon, label, exact, badge, highlightIcon, aiBadge }) => (
-                    <li key={href}>
-                      <Link
-                        to={href}
-                        className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                          isActive(href, exact)
-                            ? 'bg-green-50 text-green-900'
-                            : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                        onClick={() => setIsSidebarOpen(false)}
-                      >
-                        <Icon
-                          className={`mr-3 h-5 w-5 ${
-                            highlightIcon
-                              ? 'text-green-400'
-                              : isActive(href, exact)
-                                ? 'text-green-400'
-                                : 'text-gray-400 group-hover:text-gray-500'
-                          }`}
-                          aria-hidden="true"
-                        />
-                        <span className="flex flex-1 items-center gap-1.5">
-                          <span>{label}</span>
-                          {aiBadge && (
-                            <span className="inline-flex h-[18.4px] items-center rounded-[5px] border border-emerald-400/30 bg-emerald-400/10 px-1.5 py-px text-[0.6rem] font-semibold leading-none tracking-[0.14em] text-emerald-400 transition-colors group-hover:bg-emerald-400/20">
-                              AI
-                            </span>
-                          )}
-                        </span>
-                        {badge && (
-                          <span className="ml-auto flex-shrink-0 w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm" />
+                {lawyerSections ? (
+                  <div className="space-y-5 px-3">
+                    {lawyerSections.map((section) => (
+                      <div key={section.title || 'inicio'}>
+                        {section.title && (
+                          <div className="px-3 pb-1 text-[11px] font-semibold tracking-widest text-gray-400 uppercase">
+                            {section.title}
+                          </div>
                         )}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+                        <ul className="space-y-1">
+                          {section.items.map(({ href, icon: Icon, label, exact, badge, highlightIcon, aiBadge }) => (
+                            <li key={href}>
+                              <Link
+                                to={href}
+                                className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                                  isActive(href, exact)
+                                    ? 'bg-green-50 text-green-900'
+                                    : 'text-gray-700 hover:bg-gray-100'
+                                }`}
+                                onClick={() => setIsSidebarOpen(false)}
+                              >
+                                <Icon
+                                  className={`mr-3 h-5 w-5 ${
+                                    highlightIcon
+                                      ? 'text-green-400'
+                                      : isActive(href, exact)
+                                        ? 'text-green-400'
+                                        : 'text-gray-400 group-hover:text-gray-500'
+                                  }`}
+                                  aria-hidden="true"
+                                />
+                                <span className="flex flex-1 items-center gap-1.5">
+                                  <span>{label}</span>
+                                  {aiBadge && (
+                                    <span className="inline-flex h-[18.4px] items-center rounded-[5px] border border-emerald-400/30 bg-emerald-400/10 px-1.5 py-px text-[0.6rem] font-semibold leading-none tracking-[0.14em] text-emerald-400 transition-colors group-hover:bg-emerald-400/20">
+                                      AI
+                                    </span>
+                                  )}
+                                </span>
+                                {badge && (
+                                  <span className="ml-auto flex-shrink-0 w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm" />
+                                )}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <ul className="space-y-1 px-3">
+                    {navItems.map(({ href, icon: Icon, label, exact, badge, highlightIcon, aiBadge }) => (
+                      <li key={href}>
+                        <Link
+                          to={href}
+                          className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                            isActive(href, exact)
+                              ? 'bg-green-50 text-green-900'
+                              : 'text-gray-700 hover:bg-gray-100'
+                          }`}
+                          onClick={() => setIsSidebarOpen(false)}
+                        >
+                          <Icon
+                            className={`mr-3 h-5 w-5 ${
+                              highlightIcon
+                                ? 'text-green-400'
+                                : isActive(href, exact)
+                                  ? 'text-green-400'
+                                  : 'text-gray-400 group-hover:text-gray-500'
+                            }`}
+                            aria-hidden="true"
+                          />
+                          <span className="flex flex-1 items-center gap-1.5">
+                            <span>{label}</span>
+                            {aiBadge && (
+                              <span className="inline-flex h-[18.4px] items-center rounded-[5px] border border-emerald-400/30 bg-emerald-400/10 px-1.5 py-px text-[0.6rem] font-semibold leading-none tracking-[0.14em] text-emerald-400 transition-colors group-hover:bg-emerald-400/20">
+                                AI
+                              </span>
+                            )}
+                          </span>
+                          {badge && (
+                            <span className="ml-auto flex-shrink-0 w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm" />
+                          )}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </nav>
 
               <div className="flex-1" />
@@ -353,43 +431,94 @@ function DashboardLayout() {
             >
               <div className="flex-1 overflow-y-auto py-4">
                 <nav>
-                  <ul className="space-y-1 px-3">
-                    {navItems.map(({ href, icon: Icon, label, exact, badge, highlightIcon, aiBadge }) => (
-                      <li key={href}>
-                        <Link
-                          to={href}
-                          className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                            isActive(href, exact)
-                              ? 'bg-green-50 text-green-900'
-                              : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                          onClick={() => setIsSidebarOpen(false)}
-                        >
-                          <Icon
-                            className={`mr-3 h-5 w-5 ${
-                              highlightIcon
-                                ? 'text-green-400'
-                                : isActive(href, exact)
-                                  ? 'text-green-400'
-                                  : 'text-gray-400 group-hover:text-gray-500'
-                            }`}
-                            aria-hidden="true"
-                          />
-                          <span className="flex flex-1 items-center gap-1.5">
-                            <span>{label}</span>
-                            {aiBadge && (
-                              <span className="inline-flex h-[18.4px] items-center rounded-[5px] border border-emerald-400/30 bg-emerald-400/10 px-1.5 py-px text-[0.6rem] font-semibold leading-none tracking-[0.14em] text-emerald-400 transition-colors group-hover:bg-emerald-400/20">
-                                AI
-                              </span>
-                            )}
-                          </span>
-                          {badge && (
-                            <span className="ml-auto flex-shrink-0 w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm" />
+                  {lawyerSections ? (
+                    <div className="space-y-5 px-3">
+                      {lawyerSections.map((section) => (
+                        <div key={section.title || 'inicio-mobile'}>
+                          {section.title && (
+                            <div className="px-3 pb-1 text-[11px] font-semibold tracking-widest text-gray-400 uppercase">
+                              {section.title}
+                            </div>
                           )}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
+                          <ul className="space-y-1">
+                            {section.items.map(({ href, icon: Icon, label, exact, badge, highlightIcon, aiBadge }) => (
+                              <li key={href}>
+                                <Link
+                                  to={href}
+                                  className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                                    isActive(href, exact)
+                                      ? 'bg-green-50 text-green-900'
+                                      : 'text-gray-700 hover:bg-gray-100'
+                                  }`}
+                                  onClick={() => setIsSidebarOpen(false)}
+                                >
+                                  <Icon
+                                    className={`mr-3 h-5 w-5 ${
+                                      highlightIcon
+                                        ? 'text-green-400'
+                                        : isActive(href, exact)
+                                          ? 'text-green-400'
+                                          : 'text-gray-400 group-hover:text-gray-500'
+                                    }`}
+                                    aria-hidden="true"
+                                  />
+                                  <span className="flex flex-1 items-center gap-1.5">
+                                    <span>{label}</span>
+                                    {aiBadge && (
+                                      <span className="inline-flex h-[18.4px] items-center rounded-[5px] border border-emerald-400/30 bg-emerald-400/10 px-1.5 py-px text-[0.6rem] font-semibold leading-none tracking-[0.14em] text-emerald-400 transition-colors group-hover:bg-emerald-400/20">
+                                        AI
+                                      </span>
+                                    )}
+                                  </span>
+                                  {badge && (
+                                    <span className="ml-auto flex-shrink-0 w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm" />
+                                  )}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <ul className="space-y-1 px-3">
+                      {navItems.map(({ href, icon: Icon, label, exact, badge, highlightIcon, aiBadge }) => (
+                        <li key={href}>
+                          <Link
+                            to={href}
+                            className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                              isActive(href, exact)
+                                ? 'bg-green-50 text-green-900'
+                                : 'text-gray-700 hover:bg-gray-100'
+                            }`}
+                            onClick={() => setIsSidebarOpen(false)}
+                          >
+                            <Icon
+                              className={`mr-3 h-5 w-5 ${
+                                highlightIcon
+                                  ? 'text-green-400'
+                                  : isActive(href, exact)
+                                    ? 'text-green-400'
+                                    : 'text-gray-400 group-hover:text-gray-500'
+                              }`}
+                              aria-hidden="true"
+                            />
+                            <span className="flex flex-1 items-center gap-1.5">
+                              <span>{label}</span>
+                              {aiBadge && (
+                                <span className="inline-flex h-[18.4px] items-center rounded-[5px] border border-emerald-400/30 bg-emerald-400/10 px-1.5 py-px text-[0.6rem] font-semibold leading-none tracking-[0.14em] text-emerald-400 transition-colors group-hover:bg-emerald-400/20">
+                                  AI
+                                </span>
+                              )}
+                            </span>
+                            {badge && (
+                              <span className="ml-auto flex-shrink-0 w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm" />
+                            )}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </nav>
               </div>
               <div className="border-t border-gray-200 p-4">
