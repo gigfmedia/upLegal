@@ -193,7 +193,6 @@ function DashboardLayout() {
         { href: '/lawyer/ai', icon: Sparkles, label: 'LegalUp', highlightIcon: true, aiBadge: true },
         { href: '/lawyer/profile', icon: User, label: 'Perfil' },
         { href: '/lawyer/services', icon: FileText, label: 'Servicios', badge: showServicesBadge },
-        { href: '/lawyer/favorites', icon: Heart, label: 'Favoritos' },
         { href: '/lawyer/notificaciones', icon: Bell, label: 'Notificaciones' },
         ...commonItems
       ];
@@ -219,7 +218,7 @@ function DashboardLayout() {
     const captacion = ['/lawyer/requests', '/lawyer/jobs'].map(get).filter(Boolean) as NavItem[];
     const gestion = ['/lawyer/clients', '/lawyer/cases', '/lawyer/citas', '/lawyer/earnings'].map(get).filter(Boolean) as NavItem[];
     const herramientas = ['/lawyer/ai'].map(get).filter(Boolean) as NavItem[];
-    const perfil = ['/lawyer/profile', '/lawyer/services', '/lawyer/favorites', '/lawyer/notificaciones'].map(get).filter(Boolean) as NavItem[];
+    const perfil = ['/lawyer/profile', '/lawyer/services', '/lawyer/notificaciones'].map(get).filter(Boolean) as NavItem[];
     const cuenta = ['/dashboard/payment-settings'].map(get).filter(Boolean) as NavItem[];
     // Any remaining items (should be none, but keep for safety)
     const accounted = new Set([...inicio, ...captacion, ...gestion, ...herramientas, ...perfil, ...cuenta].map(i => i.href));
