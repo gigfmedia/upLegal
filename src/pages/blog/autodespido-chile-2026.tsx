@@ -302,18 +302,18 @@ const BlogArticle = () => {
 
             {/* Ejemplo Real Block */}
                 <div className="flex justify-between items-center border-b border-gray-700 pb-2">
-                  <span className="text-white">Mes de aviso previo</span>
-                  <span className="font-bold">$1.000.000</span>
+                  <span className="text-green-900">Mes de aviso previo</span>
+                  <span className="font-bold text-green-900">$1.000.000</span>
                 </div>
-                <div className="flex justify-between items-center border-b border-gray-700 pb-2 text-green-400">
+                <div className="flex justify-between items-center border-b border-gray-700 pb-2 text-green-900">
                   <span>Recargo legal (ej. 50%)</span>
                   <span className="font-bold">+$2.500.000</span>
                 </div>
-                <div className="flex justify-between items-center pt-2 text-xl text-white">
+                <div className="flex justify-between items-center pt-2 text-xl text-green-900">
                   <span className="font-bold">Total estimado</span>
-                  <span className="font-bold text-green-400">&gt; $8.500.000</span>
+                  <span className="font-bold">&gt; $8.500.000</span>
                 </div>
-              <p className="mt-4 text-white italic">Más vacaciones pendientes y otras remuneraciones adeudadas.</p>
+              <p className="mt-4 text-green-900 italic">Más vacaciones pendientes y otras remuneraciones adeudadas.</p>
           </div>
 
           {/* COMPLEJIDAD 2: CALCULO CORRECTO VS INCORRECTO */}
