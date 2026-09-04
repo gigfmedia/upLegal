@@ -101,8 +101,8 @@ export function GoogleCalendarConnect() {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="pt-6">
+      <Card className="h-full">
+        <CardContent className="pt-6 h-full flex items-center justify-center">
           <div className="flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
           </div>
@@ -112,7 +112,7 @@ export function GoogleCalendarConnect() {
   }
 
   return (
-    <Card>
+    <Card className="h-full flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Calendar className="h-5 w-5" />

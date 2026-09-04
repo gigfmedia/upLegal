@@ -228,20 +228,19 @@ export default function CitasPage() {
 
   return (
     <div className="space-y-6 px-4 sm:px-6 lg:px-8 py-6">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Citas</h1>
           <p className="text-muted-foreground">Gestiona tus citas programadas</p>
         </div>
-        <div className="w-full md:w-auto flex gap-2">
-          <Button onClick={() => { setEditingAppointment(null); setShowNewAppointmentForm(true); }} className="bg-gray-900 hover:bg-green-900">
-            <Plus className="h-4 w-4 mr-1" /> Nueva cita
-          </Button>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input type="search" placeholder="Buscar citas..." className="w-full md:w-[300px] pl-8" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-          </div>
-        </div>
+        <Button onClick={() => { setEditingAppointment(null); setShowNewAppointmentForm(true); }} className="bg-gray-900 hover:bg-green-900 shrink-0">
+          <Plus className="h-4 w-4 mr-1" /> Nueva cita
+        </Button>
+      </div>
+
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input type="search" placeholder="Buscar citas..." className="pl-8" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
       </div>
 
       <div className="flex flex-col md:flex-row gap-6">

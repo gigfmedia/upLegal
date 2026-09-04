@@ -85,8 +85,12 @@ export default function LawyerDashboardPage() {
     fetch();
   }, [user?.id]);
 
-  let aiBadgeText = 'Asistencia inteligente para tu práctica jurídica.';
-  let aiCtaText = 'Abrir LegalUpAI';
+  const handleLegalUpAIClick = () => {
+    navigate('/lawyer/ai');
+  };
+
+  let aiBadgeText = 'IA diseñada para abogados. Analiza documentos, resume causas y redacta más rápido.';
+  let aiCtaText = 'Conocer más';
   if (aiSub.status === 'none') {
     aiBadgeText = 'Prueba LegalUp AI gratis durante 5 días. Sin tarjeta.';
     aiCtaText = 'Empezar prueba gratis';
@@ -94,8 +98,11 @@ export default function LawyerDashboardPage() {
     aiBadgeText = `Tu prueba de LegalUp AI termina pronto. Suscríbete por $49.900/mes para no perder el acceso.`;
     aiCtaText = 'Suscribirme';
   } else if ((aiSub as any).isActive) {
-    aiBadgeText = 'Tu plan LegalUp AI está activo.';
+    aiBadgeText = 'Tu plan LegalUp AI está activo. Sigue trabajando tus casos con IA.';
     aiCtaText = 'Ir a LegalUp AI';
+  } else if (aiSub.status === 'expired' || (aiSub as any).status === 'past_due' || aiSub.status === 'cancelled') {
+    aiBadgeText = 'Reanuda tu acceso a LegalUp AI para seguir usando tus herramientas.';
+    aiCtaText = 'Reanudar suscripción';
   }
 
   return (
@@ -271,26 +278,43 @@ export default function LawyerDashboardPage() {
         </div>
       </div>
 
-      {/* LEGALUP AI — secundario */}
-      <Card className="border-emerald-100 bg-emerald-50/50">
-        <CardContent className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-white border flex items-center justify-center">
-              <Sparkles className="h-5 w-5 text-emerald-600" />
+      {/* LegalUp AI + Google Calendar — 2 col, misma altura */}
+      <div className="grid gap-6 md:grid-cols-2 items-stretch">
+        <div
+          onClick={handleLegalUpAIClick}
+          className="rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-white to-white p-6 cursor-pointer hover:shadow-lg hover:shadow-green-500/20 transition-all duration-300 group h-full flex flex-col justify-center"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Nuevo</span>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">
+                  <span className="inline-flex items-center gap-1.5">
+                    LegalUp
+                    <span className="inline-flex h-[18.4px] items-center rounded-[5px] border border-emerald-400/40 bg-emerald-50 px-1.5 py-px text-[0.6rem] font-semibold leading-none tracking-[0.14em] text-emerald-700 transition-colors group-hover:bg-emerald-100">
+                      AI
+                    </span>
+                  </span>
+                </h3>
+                <p className="text-gray-600 text-sm">{aiBadgeText}</p>
+              </div>
             </div>
-            <div>
-              <div className="font-medium text-sm">LegalUpAI</div>
-              <div className="text-xs text-gray-600 max-w-md">{aiSub.status === 'none' ? 'Prueba gratis 5 días. Sin tarjeta.' : aiBadgeText}</div>
+            <div className="flex items-center gap-2 bg-gray-900 rounded-lg px-4 py-2 text-white group-hover:bg-green-900 transition-colors">
+              <span className="text-white font-medium text-sm">{aiCtaText}</span>
+              <ArrowRight className="h-4 w-4 text-white group-hover:translate-x-1 transition-transform" />
             </div>
           </div>
-          <Button asChild variant="outline" size="sm" className="shrink-0">
-            <Link to="/lawyer/ai">{aiCtaText}</Link>
-          </Button>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Google Calendar — secundario, no prioritario */}
-      <GoogleCalendarConnect />
+        <div className="h-full">
+          <GoogleCalendarConnect />
+        </div>
+      </div>
     </div>
   );
 }
