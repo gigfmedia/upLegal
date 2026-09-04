@@ -90,6 +90,11 @@ const CitasPage = lazy(() => import('./pages/lawyer/CitasPage'));
 const EarningsPage = lazy(() => import('./pages/lawyer/EarningsPage'));
 const ProfilePage = lazy(() => import('./pages/lawyer/ProfilePage'));
 const JobsPage = lazy(() => import('./pages/lawyer/JobsPage'));
+const RequestsPage = lazy(() => import('./pages/lawyer/RequestsPage'));
+const ClientsPage = lazy(() => import('./pages/lawyer/ClientsPage'));
+const ClientDetailPage = lazy(() => import('./pages/lawyer/ClientDetailPage'));
+const CasesPage = lazy(() => import('./pages/lawyer/CasesPage'));
+const CaseDetailPage = lazy(() => import('./pages/lawyer/CaseDetailPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const HowItWorksPage = lazy(() => import('./pages/HowItWorksPage'));
 const PaymentSettings = lazy(() => import('./pages/PaymentSettings'));
@@ -575,6 +580,11 @@ const AppContent = () => {
                 <Route path="consultas" element={<ConsultasPage />} />
                 <Route path="citas" element={<CitasPage />} />
                 <Route path="jobs" element={<JobsPage />} />
+                <Route path="requests" element={<RequestsPage />} />
+                <Route path="clients" element={<ClientsPage />} />
+                <Route path="clients/:clientId" element={<ClientDetailPage />} />
+                <Route path="cases" element={<CasesPage />} />
+                <Route path="cases/:caseId" element={<CaseDetailPage />} />
                 <Route path="earnings" element={<EarningsPage />} />
                 <Route path="favorites" element={<DashboardFavorites />} />
                 <Route path="quotes/:quoteRequestId" element={<QuoteRequestsPage />} />

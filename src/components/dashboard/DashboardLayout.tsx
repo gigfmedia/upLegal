@@ -19,6 +19,8 @@ import {
   Sparkles,
   Bell,
   Loader2,
+  Inbox,
+  Users,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { supabase } from '@/lib/supabaseClient';
@@ -183,6 +185,9 @@ function DashboardLayout() {
       return [
         { href: '/lawyer/dashboard', icon: Activity, label: 'Inicio' },
         { href: '/lawyer/ai', icon: Sparkles, label: 'LegalUp', highlightIcon: true, aiBadge: true },
+        { href: '/lawyer/requests', icon: Inbox, label: 'Solicitudes' },
+        { href: '/lawyer/clients', icon: Users, label: 'Clientes' },
+        { href: '/lawyer/cases', icon: Briefcase, label: 'Casos' },
         { href: '/lawyer/profile', icon: User, label: 'Perfil' },
         { href: '/lawyer/services', icon: FileText, label: 'Servicios', badge: showServicesBadge },
         // { href: '/lawyer/consultas', icon: MessageSquare, label: 'Consultas' },
