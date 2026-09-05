@@ -120,6 +120,9 @@ export default function NotificationsPage() {
           <p className="text-sm text-muted-foreground">
             No pudimos cargar tus notificaciones. Intenta nuevamente en unos minutos.
           </p>
+          <Button variant="outline" size="sm" className="mt-4" onClick={() => queryClient.invalidateQueries({ queryKey: ['notifications'] })}>
+            Reintentar
+          </Button>
         </div>
       ) : rows.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-lg border bg-muted/30 p-12 text-center">

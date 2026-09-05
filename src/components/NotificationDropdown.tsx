@@ -106,8 +106,11 @@ export function NotificationDropdown() {
                 <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500" />
               </div>
             ) : isError ? (
-              <div className="py-6 text-center text-sm text-muted-foreground">
-                No pudimos cargar tus notificaciones.
+              <div className="py-6 text-center">
+                <p className="text-sm text-muted-foreground">No pudimos cargar tus notificaciones.</p>
+                <Button variant="ghost" size="sm" className="mt-2 h-7 text-xs" onClick={() => refetchNotifications()}>
+                  Reintentar
+                </Button>
               </div>
             ) : notifications.length === 0 ? (
               <div className="flex flex-col items-center gap-2 py-8 text-center">

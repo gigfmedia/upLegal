@@ -73,42 +73,78 @@ export async function fetchNotifications(
 ): Promise<NotificationListData> {
   const { limit = 50, offset = 0 } = opts;
   const doFetch = async (t: string) => fetch(`/api/notifications?limit=${limit}&offset=${offset}`, { headers: { Authorization: `Bearer ${t}` } });
-  let response = await doFetch(token);
-  // Retry once on 401 after refreshing session (Render cold start or expired JWT)
-  if (response.status === 401) {
-    try {
-      const { validateAndRefreshSession } = await import('@/lib/sessionUtils');
-      await validateAndRefreshSession();
-      const { supabase } = await import('@/lib/supabaseClient');
-      const { data } = await supabase.auth.getSession();
-      const newToken = data.session?.access_token;
-      if (newToken && newToken !== token) response = await doFetch(newToken);
-    } catch {}
+  let response: Response | null = null;
+  let lastError: string | null = null;
+  try {
+    response = await doFetch(token);
+    if (response.status === 401) {
+      try {
+        const { validateAndRefreshSession } = await import('@/lib/sessionUtils');
+        await validateAndRefreshSession();
+        const { data } = await supabase.auth.getSession();
+        const newToken = data.session?.access_token;
+        if (newToken && newToken !== token) response = await doFetch(newToken);
+      } catch {}
+    }
+    if (response.ok) {
+      const data = await response.json();
+      return {
+        rows: ((data.notifications || []) as NotificationRow[]).map((n) => mapNotification(n, role)),
+        total: data.total || 0,
+      };
+    }
+    try { lastError = `${response.status} ${await response.text()}`; } catch { lastError = `${response.status}`; }
+  } catch (e) {
+    lastError = e instanceof Error ? e.message : String(e);
   }
-  if (!response.ok) throw new Error('Error al cargar notificaciones');
-  const data = await response.json();
+  // Fallback: lectura directa vía Supabase RLS (bypass Render cold start / token expirado)
+  console.warn('[notifications] API falló, usando fallback Supabase:', lastError);
+  const { data: { user } } = await supabase.auth.getUser();
+  const uid = user?.id;
+  if (!uid) throw new Error(lastError || 'Error al cargar notificaciones');
+  const { data, error, count } = await supabase
+    .from('notifications')
+    .select('*', { count: 'exact' })
+    .eq('user_id', uid)
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+  if (error) throw new Error(error.message || lastError || 'Error al cargar notificaciones');
   return {
-    rows: ((data.notifications || []) as NotificationRow[]).map((n) => mapNotification(n, role)),
-    total: data.total || 0,
+    rows: ((data || []) as NotificationRow[]).map((n) => mapNotification(n, role)),
+    total: count || 0,
   };
 }
 
 export async function fetchUnreadCount(token: string): Promise<number> {
   const doFetch = async (t: string) => fetch('/api/notifications/unread-count', { headers: { Authorization: `Bearer ${t}` } });
-  let response = await doFetch(token);
-  if (response.status === 401) {
-    try {
-      const { validateAndRefreshSession } = await import('@/lib/sessionUtils');
-      await validateAndRefreshSession();
-      const { supabase } = await import('@/lib/supabaseClient');
-      const { data } = await supabase.auth.getSession();
-      const newToken = data.session?.access_token;
-      if (newToken && newToken !== token) response = await doFetch(newToken);
-    } catch {}
+  let response: Response | null = null;
+  let lastError: string | null = null;
+  try {
+    response = await doFetch(token);
+    if (response.status === 401) {
+      try {
+        const { validateAndRefreshSession } = await import('@/lib/sessionUtils');
+        await validateAndRefreshSession();
+        const { data } = await supabase.auth.getSession();
+        const newToken = data.session?.access_token;
+        if (newToken && newToken !== token) response = await doFetch(newToken);
+      } catch {}
+    }
+    if (response?.ok) {
+      const data = await response.json();
+      return data.count || 0;
+    }
+    try { lastError = `${response?.status} ${await response?.text()}`; } catch { lastError = `${response?.status}`; }
+  } catch (e) {
+    lastError = e instanceof Error ? e.message : String(e);
   }
-  if (!response.ok) throw new Error('Error al contar notificaciones');
-  const data = await response.json();
-  return data.count || 0;
+  console.warn('[notifications] unread-count API falló, fallback Supabase:', lastError);
+  const { data: { user } } = await supabase.auth.getUser();
+  const uid = user?.id;
+  if (!uid) throw new Error(lastError || 'Error al contar notificaciones');
+  const { count, error } = await supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', uid).eq('is_read', false);
+  if (error) throw new Error(error.message || lastError || 'Error al contar notificaciones');
+  return count || 0;
 }
 
 export async function markNotificationRead(token: string, id: string): Promise<void> {
