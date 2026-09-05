@@ -93,53 +93,69 @@ function DashboardLayout() {
     checkServices();
   }, [user?.id, location.pathname]);
 
-  // Check authentication and profile setup
+  // Check authentication + onboarding gate for lawyers (respeta >=70% como satisfecho)
   useEffect(() => {
     const checkAuthAndProfile = async () => {
       if (isLoading) return;
-      
-      // Redirect to home if not authenticated
+
       if (!user) {
         navigate('/');
         return;
       }
 
-      // Ensure we have a valid user ID before querying Supabase
       if (!user.id) {
         console.warn('DashboardLayout: user is present but lacks an id; skipping profile check.');
         return;
       }
-      
-      // Skip profile check for these routes
+
+      // No gatear onboarding ni dashboard/login routes
       const excludedRoutes = [
         '/dashboard/profile/setup',
         '/dashboard/profile',
-        '/dashboard/lawyer',
-        '/dashboard/lawyer/'
+        '/lawyer/onboarding',
       ];
-      
-      // Skip if on an excluded route
-      if (excludedRoutes.some(route => location.pathname.startsWith(route))) {
+      if (excludedRoutes.some((route) => location.pathname.startsWith(route))) {
         return;
       }
-      
+
+      // Solo gatear sección /lawyer (SaaS abogado)
+      if (!location.pathname.startsWith('/lawyer')) return;
+
       try {
-        const { data: profile, error } = await supabase
+        const { data: profile } = await supabase
           .from('profiles')
-          .select('first_name, profile_setup_completed, role')
+          .select('*')
           .eq('user_id', user.id)
-          .single();
-          
-        if (error) {
-          console.error('Error fetching profile:', error);
+          .maybeSingle();
+
+        const role = (profile as any)?.role || (user as any)?.user_metadata?.role;
+        if (role !== 'lawyer') return;
+
+        // Email must be verified — fuente de verdad: user.email_confirmed_at
+        if (!user.email_confirmed_at) {
+          // No verificado → enviar a onboarding (allí se muestra blocker "verifica tu correo")
+          if (location.pathname !== '/lawyer/onboarding') navigate('/lawyer/onboarding', { replace: true });
           return;
         }
-        // For lawyers, don't force redirection to setup
+
+        if ((profile as any)?.profile_setup_completed === true) return;
+
+        // Abogado existente con perfil suficientemente completo (>=70% real) → no forzar onboarding
+        // Reutiliza el mismo cálculo que useProfile/calculateProfileCompletion (no inventa otro)
+        const { calculateProfileCompletion } = await import('@/utils/profileCompletion');
+        const { count: servicesCount } = await supabase
+          .from('lawyer_services')
+          .select('id', { count: 'exact', head: true })
+          .eq('lawyer_user_id', user.id);
+        const completion = calculateProfileCompletion({ ...(profile as any), servicesCount: servicesCount ?? 0 });
+        if (completion >= 70) return;
+
+        if (location.pathname !== '/lawyer/onboarding') navigate('/lawyer/onboarding', { replace: true });
       } catch (error) {
         console.error('Error checking profile:', error);
       }
     };
-    
+
     checkAuthAndProfile();
   }, [user, isLoading, navigate, location.pathname]);
   

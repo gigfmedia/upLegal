@@ -230,44 +230,54 @@ export default function ProfessionalInfoStep({
         </div>
       </div>
 
-      {/* Bar & RUT */}
+      {/* Bar & RUT — si ya viene verificado desde el Register, solo informativo */}
       <div className="space-y-3">
         <Label className="text-base font-semibold">Credenciales</Label>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="rut">RUT (verificación PJUD)</Label>
-          <div className="flex gap-2">
-            <Input
-              id="rut"
-              value={formData.rut}
-              onChange={(e) =>
-                onFormDataChange({ rut: e.target.value, pjud_verified: false })
-              }
-              placeholder="12.345.678-9"
-              disabled={formData.pjud_verified}
-            />
-            <Button
-              type="button"
-              onClick={onVerifyRut}
-              disabled={!formData.rut || formData.pjud_verified || isVerifyingRut}
-              variant={formData.pjud_verified ? 'outline' : 'default'}
-              className="whitespace-nowrap"
-            >
-              {isVerifyingRut ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : formData.pjud_verified ? (
-                <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
-              ) : null}
-              {isVerifyingRut ? 'Verificando…' : formData.pjud_verified ? 'Verificado' : 'Verificar'}
-            </Button>
+        {formData.pjud_verified && formData.rut ? (
+          <div className="rounded-lg border bg-green-50 px-4 py-3 flex items-center gap-2">
+            <CheckCircle className="h-4 w-4 text-green-600 shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-green-900">RUT verificado: {formData.rut}</p>
+              <p className="text-xs text-green-700">Ya validado en el Poder Judicial durante el registro.</p>
+            </div>
           </div>
-          {rutError && <p className="text-sm text-red-500">{rutError}</p>}
-          {formData.pjud_verified && (
-            <p className="text-sm text-green-600 flex items-center gap-1">
-              <CheckCircle className="h-3.5 w-3.5" /> RUT verificado en el PJUD correctamente
-            </p>
-          )}
-        </div>
+        ) : (
+          <div className="space-y-1.5">
+            <Label htmlFor="rut">RUT (verificación PJUD)</Label>
+            <div className="flex gap-2">
+              <Input
+                id="rut"
+                value={formData.rut}
+                onChange={(e) =>
+                  onFormDataChange({ rut: e.target.value, pjud_verified: false })
+                }
+                placeholder="12.345.678-9"
+                disabled={formData.pjud_verified}
+              />
+              <Button
+                type="button"
+                onClick={onVerifyRut}
+                disabled={!formData.rut || formData.pjud_verified || isVerifyingRut}
+                variant={formData.pjud_verified ? 'outline' : 'default'}
+                className="whitespace-nowrap"
+              >
+                {isVerifyingRut ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : formData.pjud_verified ? (
+                  <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+                ) : null}
+                {isVerifyingRut ? 'Verificando…' : formData.pjud_verified ? 'Verificado' : 'Verificar'}
+              </Button>
+            </div>
+            {rutError && <p className="text-sm text-red-500">{rutError}</p>}
+            {formData.pjud_verified && (
+              <p className="text-sm text-green-600 flex items-center gap-1">
+                <CheckCircle className="h-3.5 w-3.5" /> RUT verificado en el PJUD correctamente
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

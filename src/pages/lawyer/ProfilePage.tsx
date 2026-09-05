@@ -47,7 +47,6 @@ export interface ProfileFormData {
   specialties: string[];
   experience_years: number;
   hourly_rate_clp: number;
-  contact_fee_clp: number;
   languages: string[];
   education: string;
   university: string;
@@ -74,7 +73,7 @@ export default function LawyerProfilePage() {
   const [verificationStatus, setVerificationStatus] = useState<'idle' | 'verifying' | 'success' | 'error'>('idle');
   
   // Use the useProfile hook to get services and profile data
-  const { profile: userProfile, services, loading: profileLoading } = useProfile(user?.id);
+  const { profile: userProfile, services, loading: profileLoading, refreshProfile } = useProfile(user?.id);
   
   // Handle number input changes specifically
   const handleNumberInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -427,7 +426,6 @@ export default function LawyerProfilePage() {
     specialties: [],
     experience_years: 0,
     hourly_rate_clp: 0,
-    contact_fee_clp: 0,
     languages: [],
     education: '',
     university: '',
@@ -437,7 +435,8 @@ export default function LawyerProfilePage() {
     bar_association_number: '',
     rut: '',
     pjud_verified: false,
-    avatar_url: ''
+    avatar_url: '',
+    meet_link: ''
   });
 
   const [selectedSpecializations, setSelectedSpecializations] = useState<string[]>([]);
@@ -467,7 +466,6 @@ export default function LawyerProfilePage() {
         specialties: userProfile.specialties || [],
         experience_years: userProfile.experience_years || 0,
         hourly_rate_clp: userProfile.hourly_rate_clp || 0,
-        contact_fee_clp: userProfile.contact_fee_clp || 0,
         languages: userProfile.languages || [],
         education: typeof userProfile.education === 'string' ? userProfile.education : '',
         university: typeof userProfile.university === 'string' ? userProfile.university : '',
@@ -477,7 +475,8 @@ export default function LawyerProfilePage() {
         bar_association_number: userProfile.bar_association_number || '',
         rut: userProfile.rut || '',
         pjud_verified: userProfile.pjud_verified || false,
-        avatar_url: userProfile.avatar_url || ''
+        avatar_url: userProfile.avatar_url || '',
+        meet_link: (userProfile as any).meet_link || (metadata as any).meet_link || ''
       });
       
       setSelectedSpecializations(userProfile.specialties || []);
@@ -502,7 +501,6 @@ export default function LawyerProfilePage() {
         specialties: initialData.specialties || [],
         experience_years: initialData.experience_years || 0,
         hourly_rate_clp: initialData.hourly_rate_clp || 0,
-        contact_fee_clp: initialData.contact_fee_clp || 0,
         languages: initialData.languages || [],
         education: typeof initialData.education === 'string' ? initialData.education : '',
         university: typeof initialData.university === 'string' ? initialData.university : '',
@@ -512,7 +510,8 @@ export default function LawyerProfilePage() {
         bar_association_number: initialData.bar_association_number || '',
         rut: initialData.rut || '',
         pjud_verified: initialData.pjud_verified || false,
-        avatar_url: initialData.avatar_url || ''
+        avatar_url: initialData.avatar_url || '',
+        meet_link: (initialData as any).meet_link || ''
       }));
       setSelectedSpecializations(initialData.specialties || []);
     }
@@ -550,7 +549,6 @@ export default function LawyerProfilePage() {
           specialties: userProfile.specialties || [],
           experience_years: userProfile.experience_years || 0,
           hourly_rate_clp: userProfile.hourly_rate_clp || 0,
-          contact_fee_clp: userProfile.contact_fee_clp || 0,
           languages: userProfile.languages || [],
           education: typeof userProfile.education === 'string' ? userProfile.education : '',
           university: typeof userProfile.university === 'string' ? userProfile.university : '',
@@ -560,7 +558,8 @@ export default function LawyerProfilePage() {
           bar_association_number: userProfile.bar_association_number || '',
           rut: userProfile.rut || '',
           pjud_verified: userProfile.pjud_verified || false,
-          avatar_url: userProfile.avatar_url || ''
+          avatar_url: userProfile.avatar_url || '',
+          meet_link: (userProfile as any).meet_link || prev.meet_link || ''
         }));
       }
     }
@@ -568,8 +567,12 @@ export default function LawyerProfilePage() {
   };
 
   // Handle availability changes from the ManageAvailability component
-  const handleAvailabilityChange = () => {
+  const handleAvailabilityChange = async () => {
     setHasChanges(true);
+    const refreshed = await refreshProfile();
+    if (refreshed && (refreshed as any).meet_link) {
+      setFormData(prev => ({ ...prev, meet_link: (refreshed as any).meet_link }));
+    }
   };
 
   // Handle save button click
@@ -604,7 +607,6 @@ export default function LawyerProfilePage() {
         specialties: selectedSpecializations,
         experience_years: formData.experience_years ? Number(formData.experience_years) : null,
         hourly_rate_clp: formData.hourly_rate_clp ? Number(formData.hourly_rate_clp) : null,
-        contact_fee_clp: formData.contact_fee_clp ? Number(formData.contact_fee_clp) : null,
         languages: formData.languages || [],
         education: safeTrim(formData.education) || null,
         university: safeTrim(formData.university) || null,
@@ -1139,7 +1141,7 @@ export default function LawyerProfilePage() {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="experience">Años de Experiencia</Label>
                 <Input
@@ -1167,23 +1169,6 @@ export default function LawyerProfilePage() {
                   placeholder="Ej: 50000"
                   className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="contact_fee_clp">Tarifa por Contactar (CLP)</Label>
-                <Input
-                  id="contact_fee_clp"
-                  name="contact_fee_clp"
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={formData.contact_fee_clp === 0 ? '' : (formData.contact_fee_clp || 0).toString()}
-                  onChange={handleNumberInput}
-                  disabled={!isEditing}
-                  placeholder="Ej: 10000"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Esta tarifa se cobrará a los clientes al realizar el segundo "Contactar" contigo.
-                </p>
               </div>
             </div>
             

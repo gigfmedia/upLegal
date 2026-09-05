@@ -44,13 +44,12 @@ export default function LawyerOnboardingWizard() {
     avatar_url: '',
   });
 
-  /** Step 2 data */
+  /** Step 2 data — solo complemento profesional, no repite Register */
   const [professionalData, setProfessionalData] = useState<ProfessionalInfoFormData>({
     bio: '',
     specialties: [],
     experience_years: '',
     hourly_rate_clp: '',
-    contact_fee_clp: '',
     languages: [],
     education: '',
     university: '',
@@ -60,7 +59,7 @@ export default function LawyerOnboardingWizard() {
     bar_association_number: '',
     rut: '',
     pjud_verified: false,
-  });
+  } as ProfessionalInfoFormData);
 
   useEffect(() => {
     sessionStorage.setItem('onboardingStep', String(currentStep));
@@ -106,7 +105,6 @@ export default function LawyerOnboardingWizard() {
             specialties: data.specialties || [],
             experience_years: data.experience_years?.toString() || '',
             hourly_rate_clp: data.hourly_rate_clp?.toString() || '',
-            contact_fee_clp: data.contact_fee_clp?.toString() || '',
             languages: data.languages || [],
             education: safeParseString(data.education),
             university: data.university || '',
@@ -134,11 +132,10 @@ export default function LawyerOnboardingWizard() {
   const saveStep1 = async () => {
     setIsSaving(true);
     try {
+      // No se re-envían first_name/last_name/email: ya capturados en Register
       const { error } = await supabase
         .from('profiles')
         .update({
-          first_name: personalData.first_name.trim() || null,
-          last_name: personalData.last_name.trim() || null,
           phone: personalData.phone.trim() || null,
           location: personalData.location.trim() || null,
           avatar_url: personalData.avatar_url || null,
@@ -148,14 +145,12 @@ export default function LawyerOnboardingWizard() {
 
       if (error) throw error;
 
-      // Also update auth metadata so name and avatar show everywhere
-      await supabase.auth.updateUser({
-        data: {
-          first_name: personalData.first_name.trim(),
-          last_name: personalData.last_name.trim(),
-          avatar_url: personalData.avatar_url || null,
-        },
-      });
+      // Solo avatar en metadata; nombre ya existe desde el registro
+      if (personalData.avatar_url) {
+        await supabase.auth.updateUser({
+          data: { avatar_url: personalData.avatar_url || null },
+        });
+      }
 
       toast({ title: '¡Guardado!', description: 'Información personal guardada correctamente.' });
       setCurrentStep(2);
@@ -170,33 +165,35 @@ export default function LawyerOnboardingWizard() {
   const saveStep2 = async () => {
     setIsSaving(true);
     try {
+      const payload: Record<string, unknown> = {
+        bio: professionalData.bio.trim() || null,
+        specialties: professionalData.specialties,
+        experience_years: professionalData.experience_years ? Number(professionalData.experience_years) : null,
+        hourly_rate_clp: professionalData.hourly_rate_clp ? Number(professionalData.hourly_rate_clp) : null,
+        languages: professionalData.languages,
+        education: professionalData.education.trim()
+          ? JSON.stringify(professionalData.education.trim())
+          : null,
+        university: professionalData.university.trim() || null,
+        study_start_year: professionalData.study_start_year ? Number(professionalData.study_start_year) : null,
+        study_end_year: professionalData.study_end_year ? Number(professionalData.study_end_year) : null,
+        certifications: typeof professionalData.certifications === 'string' && professionalData.certifications.trim()
+          ? JSON.stringify(professionalData.certifications.trim())
+          : null,
+        bar_association_number: typeof professionalData.bar_association_number === 'string'
+          ? professionalData.bar_association_number.trim() || null
+          : null,
+        updated_at: new Date().toISOString(),
+      };
+      // RUT solo si aún no está verificado; si ya viene verificado desde Register no se re-escribe
+      const isRutAlreadyVerified = !!professionalData.pjud_verified && !!professionalData.rut;
+      if (!isRutAlreadyVerified) {
+        (payload as any).rut = typeof professionalData.rut === 'string' ? professionalData.rut.trim() || null : null;
+        (payload as any).pjud_verified = professionalData.pjud_verified;
+      }
       const { error } = await supabase
         .from('profiles')
-        .update({
-          bio: professionalData.bio.trim() || null,
-          specialties: professionalData.specialties,
-          experience_years: professionalData.experience_years ? Number(professionalData.experience_years) : null,
-          hourly_rate_clp: professionalData.hourly_rate_clp ? Number(professionalData.hourly_rate_clp) : null,
-          contact_fee_clp: professionalData.contact_fee_clp ? Number(professionalData.contact_fee_clp) : null,
-          languages: professionalData.languages,
-          education: professionalData.education.trim() 
-            ? JSON.stringify(professionalData.education.trim()) 
-            : null,
-          university: professionalData.university.trim() || null,
-          study_start_year: professionalData.study_start_year ? Number(professionalData.study_start_year) : null,
-          study_end_year: professionalData.study_end_year ? Number(professionalData.study_end_year) : null,
-          certifications: typeof professionalData.certifications === 'string' && professionalData.certifications.trim()
-            ? JSON.stringify(professionalData.certifications.trim())
-            : null,
-          bar_association_number: typeof professionalData.bar_association_number === 'string' 
-            ? professionalData.bar_association_number.trim() || null 
-            : null,
-          rut: typeof professionalData.rut === 'string' 
-            ? professionalData.rut.trim() || null 
-            : null,
-          pjud_verified: professionalData.pjud_verified,
-          updated_at: new Date().toISOString(),
-        })
+        .update(payload)
         .eq('user_id', user!.id);
 
       if (error) throw error;
@@ -287,6 +284,10 @@ export default function LawyerOnboardingWizard() {
 
   return (
     <div className="w-full max-w-3xl mx-auto">
+      <div className="mb-6 rounded-lg border bg-white px-4 py-3 text-center">
+        <p className="text-sm font-semibold text-gray-900">Tu cuenta está lista. Ahora completa tu perfil profesional.</p>
+        <p className="text-xs text-gray-500">Perfil profesional · {currentStep} de {STEPS.length} · {step.name}</p>
+      </div>
       <div className="mb-8 pl-4 pr-4">
         <WizardStepIndicators currentStep={currentStep} steps={STEPS} />
       </div>
@@ -298,6 +299,7 @@ export default function LawyerOnboardingWizard() {
           <PersonalInfoStep
             formData={personalData}
             onFormDataChange={(updates) => setPersonalData((prev) => ({ ...prev, ...updates }))}
+            email={user?.email}
           />
         )}
 

@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
-import { Scale, Loader2, Eye, EyeOff, Key, Check, CheckCircle2, Info, XCircle } from "lucide-react";
+import { Scale, Loader2, Eye, EyeOff, Key, Check, CheckCircle2, Info, XCircle, MailCheck } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { verifyRutWithPJUD } from "@/services/pjudService";
@@ -73,6 +73,8 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
   const [forgotPassword, setForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  const [signupVerificationEmail, setSignupVerificationEmail] = useState<string | null>(null);
+  const [isCheckingVerification, setIsCheckingVerification] = useState(false);
   
   // Password requirements state
   const [passwordRequirements, setPasswordRequirements] = useState({
@@ -564,34 +566,72 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
     
     // Show appropriate success message based on email confirmation status
     if (signupResponse.requiresEmailConfirmation) {
+      const emailForVerification = formData.email.trim();
+      // Keep email to show verification state inside modal; don't close immediately
+      setSignupVerificationEmail(emailForVerification);
+      // Clear sensitive fields but keep email for the verification screen
+      setFormData({
+        email: '',
+        password: '',
+        confirmPassword: '',
+        firstName: '',
+        lastName: '',
+        rut: '',
+        role: 'client',
+      });
       toast({
         title: '¡Registro exitoso!',
-        description: 'Por favor revisa tu correo electrónico para confirmar tu cuenta.',
+        description: 'Revisa tu correo para verificar tu cuenta antes de continuar.',
         variant: 'default',
       });
-      onClose();
+      return;
     } else {
-      if (formData.role === 'lawyer' && aiLanding) {
+      // No email confirmation required (Supabase confirm disabled): go via onboarding gate
+      const isLawyerSignup = formData.role === 'lawyer';
+      // Reset form before navigation
+      setFormData({
+        email: '',
+        password: '',
+        confirmPassword: '',
+        firstName: '',
+        lastName: '',
+        rut: '',
+        role: 'client',
+      });
+      if (isLawyerSignup && aiLanding) {
         toast({
           title: '¡Bienvenido a LegalUp AI!',
           description: 'Tu cuenta de abogado está lista. Vamos a preparar tu prueba gratuita.',
           variant: 'default',
         });
-      } else if (formData.role === 'lawyer') {
-        // Redirect lawyer to profile setup
-        navigate('/dashboard/profile/setup');
-        toast({
-          title: '¡Bienvenido a LegalUp!',
-          description: 'Completa tu perfil para comenzar a recibir clientes.',
-          variant: 'default',
-        });
-      } else {
-        toast({
-          title: '¡Bienvenido a LegalUp!',
-          description: 'Tu cuenta ha sido creada y verificada correctamente.',
-          variant: 'default',
-        });
+        onClose();
+        // Let auth callback / login flow decide; if already verified go onboarding
+        navigate('/lawyer/onboarding?from=ai');
+        return;
       }
+      if (isLawyerSignup) {
+        // Verified already (no confirmation needed) → onboarding gate will handle
+        // Check session truth: if email_confirmed_at present, go onboarding else still show verification
+        const { data: { user: freshUser } } = await supabase.auth.getUser();
+        const verified = !!freshUser?.email_confirmed_at;
+        onClose();
+        if (verified) {
+          navigate('/lawyer/onboarding');
+        } else {
+          setSignupVerificationEmail(formData.email.trim() || freshUser?.email || null);
+        }
+        toast({
+          title: '¡Bienvenido a LegalUp!',
+          description: verified ? 'Tu cuenta está lista. Completa tu perfil profesional.' : 'Revisa tu correo para verificar tu cuenta.',
+          variant: 'default',
+        });
+        return;
+      }
+      toast({
+        title: '¡Bienvenido a LegalUp!',
+        description: 'Tu cuenta ha sido creada y verificada correctamente.',
+        variant: 'default',
+      });
       onClose();
     }
   };
@@ -680,6 +720,52 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
     }
   };
 
+  const handleCheckVerification = async () => {
+    setIsCheckingVerification(true);
+    try {
+      // Refresh session from server then inspect user.email_confirmed_at (fuente de verdad)
+      await supabase.auth.refreshSession().catch(() => {});
+      const { data: { user: freshUser } } = await supabase.auth.getUser();
+      if (freshUser?.email_confirmed_at) {
+        toast({ title: '¡Correo verificado!', description: 'Tu cuenta está lista. Completa tu perfil profesional.' });
+        // Fetch profile to decide destination
+        const metadataRole = (freshUser.user_metadata as any)?.role;
+        const isLawyer = metadataRole === 'lawyer';
+        if (isLawyer) {
+          // Check if onboarding already completed
+          const { data: profile } = await supabase.from('profiles').select('profile_setup_completed, role').eq('user_id', freshUser.id).maybeSingle();
+          const completed = (profile as any)?.profile_setup_completed === true;
+          onClose();
+          setSignupVerificationEmail(null);
+          if (completed) navigate('/lawyer/dashboard');
+          else navigate('/lawyer/onboarding');
+          return;
+        }
+        onClose();
+        setSignupVerificationEmail(null);
+        navigate('/dashboard');
+      } else {
+        toast({ title: 'Aún no verificado', description: 'Revisa tu bandeja de entrada y haz clic en el enlace de verificación.', variant: 'destructive' });
+      }
+    } finally {
+      setIsCheckingVerification(false);
+    }
+  };
+
+  const handleResendSignupVerification = async () => {
+    if (!signupVerificationEmail) return;
+    setIsResending(true);
+    try {
+      const { error } = await supabase.auth.resend({ type: 'signup', email: signupVerificationEmail });
+      if (error) throw error;
+      toast({ title: 'Correo reenviado', description: 'Revisa tu bandeja de entrada.' });
+    } catch {
+      toast({ title: 'Error', description: 'No se pudo reenviar el correo. Inténtalo más tarde.', variant: 'destructive' });
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setError('');
@@ -731,6 +817,40 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
       </div>
     </div>
   );
+
+  if (signupVerificationEmail) {
+    return (
+      <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { setSignupVerificationEmail(null); onClose(); } }}>
+        <DialogContent className={`sm:max-w-[425px] text-center ${L.content}`} style={aiLanding ? ({ "--surface": "oklch(0.14 0.012 264)" } as React.CSSProperties) : undefined}>
+          <DialogHeader className="text-center">
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <Scale className={`h-8 w-8 ${L.logo}`} />
+              <span className={`text-xl font-bold ${L.logoText}`}>LegalUp</span>
+            </div>
+            <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full ${L.successBox} mb-3`}>
+              <MailCheck className={`h-7 w-7 ${L.successIcon}`} />
+            </div>
+            <DialogTitle className={`text-2xl ${L.title}`}>Revisa tu correo</DialogTitle>
+            <DialogDescription className={`${L.text} text-sm mt-2`}>
+              Te enviamos un enlace de verificación a <span className={`font-semibold ${L.textStrong}`}>{signupVerificationEmail}</span>.
+              <br />Debes verificar tu email antes de continuar al onboarding.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 pt-2">
+            <Button onClick={handleCheckVerification} className={`w-full ${L.submit}`} disabled={isCheckingVerification}>
+              {isCheckingVerification ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Verificando…</> : 'Ya verifiqué mi correo'}
+            </Button>
+            <Button variant="outline" onClick={handleResendSignupVerification} disabled={isResending} className="w-full">
+              {isResending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Reenviando…</> : 'Reenviar correo'}
+            </Button>
+            <button type="button" onClick={() => { setSignupVerificationEmail(null); onClose(); }} className={`text-sm ${L.link} font-medium`}>
+              Cerrar
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   if (forgotPassword) {
     return (

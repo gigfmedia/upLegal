@@ -13,12 +13,23 @@ export interface PersonalInfoFormData {
 interface PersonalInfoStepProps {
   formData: PersonalInfoFormData;
   onFormDataChange: (updates: Partial<PersonalInfoFormData>) => void;
+  /** Email shown read-only; captured at Register and not editable here */
+  email?: string | null;
 }
 
-export default function PersonalInfoStep({ formData, onFormDataChange }: PersonalInfoStepProps) {
+export default function PersonalInfoStep({ formData, onFormDataChange, email }: PersonalInfoStepProps) {
+  const displayName = [formData.first_name, formData.last_name].filter(Boolean).join(' ') || '—';
 
   return (
     <div className="space-y-6">
+      {/* Identidad ya registrada — solo lectura */}
+      <div className="rounded-lg border bg-gray-50 px-4 py-3 space-y-1">
+        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Cuenta registrada</p>
+        <p className="text-sm font-semibold text-gray-900">{displayName}</p>
+        {email && <p className="text-sm text-gray-600">{email}</p>}
+        <p className="text-xs text-gray-500">Nombre y correo ya registrados — no es necesario ingresarlos nuevamente.</p>
+      </div>
+
       {/* Avatar */}
       <div className="flex flex-col items-center gap-3">
         <Label>Foto de perfil</Label>
@@ -29,27 +40,6 @@ export default function PersonalInfoStep({ formData, onFormDataChange }: Persona
         <p className="text-xs text-muted-foreground text-center">
           Sube una foto profesional (JPG, PNG, hasta 5 MB)
         </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="first_name">Nombres</Label>
-          <Input
-            id="first_name"
-            value={formData.first_name}
-            onChange={(e) => onFormDataChange({ first_name: e.target.value })}
-            placeholder="Tu nombre"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="last_name">Apellidos</Label>
-          <Input
-            id="last_name"
-            value={formData.last_name}
-            onChange={(e) => onFormDataChange({ last_name: e.target.value })}
-            placeholder="Tu apellido"
-          />
-        </div>
       </div>
 
       <div className="space-y-1.5">

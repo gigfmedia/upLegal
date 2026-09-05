@@ -403,7 +403,9 @@ const AppContent = () => {
           </Suspense>
           {!location.pathname.startsWith('/lawyer') &&
             !location.pathname.startsWith('/admin') &&
-            !location.pathname.startsWith('/empresa') && (
+            !location.pathname.startsWith('/empresa') &&
+            !location.pathname.startsWith('/dashboard/settings') &&
+            !location.pathname.startsWith('/dashboard/payment-settings') && (
             <Suspense fallback={null}>
               <DeferredMount>
                 <LegalUpAssistant />
