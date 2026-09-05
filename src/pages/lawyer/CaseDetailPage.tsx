@@ -28,6 +28,15 @@ const statusLabels: Record<CaseStatus, string> = {
   cancelled: 'Cancelado',
 };
 
+const bookingStatusLabels: Record<string, string> = {
+  pending: 'Pendiente',
+  pending_payment: 'Pendiente de pago',
+  confirmed: 'Confirmada',
+  cancelled: 'Cancelada',
+  completed: 'Completada',
+  paid: 'Pagado',
+};
+
 const sourceLabels: Record<string, string> = {
   LAWYER_DIRECT: 'Directo',
   LEGALUP_MARKETPLACE: 'Marketplace',
@@ -206,7 +215,7 @@ export default function CaseDetailPage() {
                   <div className="border rounded p-2">
                     <div className="font-medium">{caseData.booking.service_title || 'Reserva'}</div>
                     <div className="text-xs text-gray-500">
-                      {caseData.booking.status} · {caseData.booking.user_name}
+                      {bookingStatusLabels[caseData.booking.status] || statusLabels[caseData.booking.status as CaseStatus] || caseData.booking.status} · {caseData.booking.user_name}
                     </div>
                   </div>
                 ) : (
@@ -259,8 +268,10 @@ export default function CaseDetailPage() {
               {caseBookings.map((b: any) => (
                 <div key={b.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
                   <div>
-                    <div className="font-medium text-sm">{b.scheduled_date || format(new Date(b.created_at), 'dd MMM', { locale: es })} {b.scheduled_time?.slice(0,5) ? `· ${b.scheduled_time.slice(0,5)}` : ''} · {b.service_title || 'Cita'}</div>
-                    <div className="text-xs text-gray-500">{b.status} {b.price ? `· $${b.price.toLocaleString('es-CL')}` : ''}</div>
+                    <div className="font-medium text-sm">
+                      {b.scheduled_date ? format(new Date(b.scheduled_date), 'dd-MM-yyyy') : format(new Date(b.created_at), 'dd-MM-yyyy')} {b.scheduled_time?.slice(0,5) ? `· ${b.scheduled_time.slice(0,5)}` : ''} · {b.service_title || 'Cita agendada'}
+                    </div>
+                    <div className="text-xs text-gray-500">{bookingStatusLabels[b.status] || statusLabels[b.status as CaseStatus] || b.status} {b.price ? `· $${b.price.toLocaleString('es-CL')}` : ''}</div>
                   </div>
                   <Link to={`/lawyer/citas`} className="text-xs text-green-600 hover:underline">Ver agenda</Link>
                 </div>

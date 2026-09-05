@@ -13,6 +13,23 @@ import { ProfileCompletion } from '@/components/dashboard/ProfileCompletion';
 import { useAISubscription } from '@/hooks/useAISubscription';
 import { GoogleCalendarConnect } from '@/components/dashboard/GoogleCalendarConnect';
 
+const statusLabels: Record<string, string> = {
+  pending: 'Pendiente',
+  pending_payment: 'Pendiente de pago',
+  confirmed: 'Confirmada',
+  new: 'Nuevo',
+  quoted: 'Cotizado',
+  paid: 'Pagado',
+  in_progress: 'En progreso',
+  delivered: 'Entregado',
+  closed: 'Cerrado',
+  cancelled: 'Cancelada',
+};
+import { OnboardingCard } from '@/components/lawyer/OnboardingCard';
+import { GlobalSearch } from '@/components/lawyer/GlobalSearch';
+import { loadDemoData } from '@/lib/demoData';
+import { trackOnboardingViewed } from '@/lib/activationAnalytics';
+
 export default function LawyerDashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -33,6 +50,10 @@ export default function LawyerDashboardPage() {
       navigate('/lawyer/dashboard', { replace: true });
     }
   }, [searchParams, toast, navigate]);
+
+  useEffect(() => {
+    if (user?.id) trackOnboardingViewed(user.id);
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -112,6 +133,37 @@ export default function LawyerDashboardPage() {
         <h1 className="text-2xl font-bold tracking-tight">Inicio</h1>
         <p className="text-muted-foreground">Gestiona tus clientes, casos, citas y oportunidades desde un solo lugar.</p>
       </div>
+
+      <OnboardingCard />
+
+      <GlobalSearch />
+
+      {!loading && stats.clients === 0 && stats.cases === 0 && (
+        <Card className="border-dashed">
+          <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <div className="font-medium text-sm">¿Quieres ver cómo se ve con datos?</div>
+              <div className="text-xs text-gray-500">Carga datos de demostración (2 clientes, 2 casos, 4 citas) solo para este abogado.</div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                if (!user?.id) return;
+                try {
+                  const res = await loadDemoData(user.id);
+                  toast({ title: res.message });
+                  setTimeout(() => window.location.reload(), 500);
+                } catch (e) {
+                  toast({ title: 'Error', description: e instanceof Error ? e.message : 'No se pudo cargar demo', variant: 'destructive' });
+                }
+              }}
+            >
+              Cargar demo
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* HOY */}
       <div>
@@ -219,9 +271,9 @@ export default function LawyerDashboardPage() {
                   <div key={a.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
                     <div>
                       <div className="font-medium text-sm">{a.scheduled_time?.slice(0,5) || ''} · {a.user_name || 'Cliente'}</div>
-                      <div className="text-xs text-gray-500">{a.service_title || 'Cita'} · {a.status}</div>
+                      <div className="text-xs text-gray-500">{a.service_title || 'Cita'} · {statusLabels[a.status] || a.status}</div>
                     </div>
-                    <div className="text-xs text-gray-400">{a.scheduled_date}</div>
+                    <div className="text-xs text-gray-400">{a.scheduled_date ? format(new Date(a.scheduled_date), 'dd-MM-yyyy') : ''}</div>
                   </div>
                 ))}
               </div>

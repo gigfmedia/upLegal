@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AppointmentForm } from '@/components/appointments/AppointmentForm';
 import { useLawyerClients } from '@/hooks/useLawyerClients';
 import { normalizeEmail } from '@/lib/normalizeEmail';
+import { trackBookingCreated, trackRequestProcessed } from '@/lib/activationAnalytics';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSearchParams, Link } from 'react-router-dom';
 
@@ -152,10 +153,14 @@ export default function CitasPage() {
       } as any).select('id').single();
       if (error) throw error;
       await fetchAppointments();
+      // activation: first/second booking
+      try {
+        const hasCase = Boolean(caseId);
+        if (session?.user?.id) await trackBookingCreated(session.user.id, 'LAWYER_DIRECT', hasCase);
+      } catch {}
       toast({ title: 'Cita creada', description: 'La cita ha sido agendada correctamente.' });
       setShowNewAppointmentForm(false);
       setEditingAppointment(null);
-      setSelectedCaseId('none');
     } catch (error) {
       console.error('Error creating appointment:', error);
       toast({ title: 'Error', description: 'No se pudo crear la cita.', variant: 'destructive' });

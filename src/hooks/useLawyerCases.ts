@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
+import { trackFirstCaseIfNeeded } from '@/lib/activationAnalytics';
 
 export type CaseStatus = 'new' | 'quoted' | 'paid' | 'in_progress' | 'delivered' | 'closed' | 'cancelled';
 
@@ -86,6 +87,7 @@ export function useLawyerCases() {
       if (error) throw error;
       const created = data as unknown as LawyerCase;
       setCases((prev) => [created, ...prev]);
+      if (user?.id) trackFirstCaseIfNeeded(user.id, (payload.source as string) || 'unknown').catch(() => {});
       return created;
     },
     [user?.id]

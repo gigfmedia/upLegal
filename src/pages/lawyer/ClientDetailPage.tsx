@@ -11,6 +11,20 @@ import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowLeft, Save, Trash2 } from 'lucide-react';
 
+const statusLabels: Record<string, string> = {
+  new: 'Nuevo',
+  quoted: 'Cotizado',
+  paid: 'Pagado',
+  in_progress: 'En progreso',
+  delivered: 'Entregado',
+  closed: 'Cerrado',
+  cancelled: 'Cancelado',
+  pending: 'Pendiente',
+  pending_payment: 'Pendiente de pago',
+  confirmed: 'Confirmada',
+  completed: 'Completado',
+};
+
 export default function ClientDetailPage() {
   const { clientId } = useParams<{ clientId: string }>();
   const { client, loading, error } = useLawyerClient(clientId);
@@ -140,7 +154,7 @@ export default function ClientDetailPage() {
                 <Link key={c.id} to={`/lawyer/cases/${c.id}`} className="block border rounded-lg p-3 hover:bg-gray-50">
                   <div className="font-medium text-sm">{c.title}</div>
                   <div className="text-xs text-gray-500">
-                    {c.status} · {new Date(c.created_at).toLocaleDateString('es-CL')}
+                    {statusLabels[c.status] || c.status} · {new Date(c.created_at).toLocaleDateString('es-CL')}
                   </div>
                 </Link>
               ))
@@ -165,7 +179,7 @@ export default function ClientDetailPage() {
                 <div key={b.id} className="border rounded-lg p-3">
                   <div className="font-medium text-sm">{b.service_title || 'Reserva'}</div>
                   <div className="text-xs text-gray-500">
-                    {b.status} {b.price ? `· $${b.price.toLocaleString('es-CL')}` : ''} · {new Date(b.created_at).toLocaleDateString('es-CL')}
+                    {statusLabels[b.status] || b.status} {b.price ? `· $${b.price.toLocaleString('es-CL')}` : ''} · {new Date(b.created_at).toLocaleDateString('es-CL')}
                   </div>
                 </div>
               ))

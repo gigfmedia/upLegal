@@ -9,6 +9,7 @@ import { useLawyerClients } from '@/hooks/useLawyerClients';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { trackRequestProcessed } from '@/lib/activationAnalytics';
 import { Search, Loader2, User, Mail, Phone, Calendar, DollarSign, FileText, ArrowRight } from 'lucide-react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -20,6 +21,23 @@ function statusColor(status: string) {
   if (status === 'cancelled') return 'bg-red-100 text-red-800';
   return 'bg-gray-100 text-gray-800';
 }
+
+const statusLabels: Record<string, string> = {
+  pending: 'Pendiente',
+  quote_pending: 'Solicitud recibida',
+  pending_payment: 'Pendiente de pago',
+  quoted: 'Cotizado',
+  quote_sent: 'Presupuesto enviado',
+  paid: 'Pagado',
+  confirmed: 'Confirmada',
+  in_progress: 'En progreso',
+  completed: 'Completado',
+  cancelled: 'Cancelado',
+  expired: 'Expirado',
+  new: 'Nuevo',
+  delivered: 'Entregado',
+  closed: 'Cerrado',
+};
 
 export default function RequestsPage() {
   const navigate = useNavigate();
@@ -103,6 +121,7 @@ export default function RequestsPage() {
         }
       }
 
+      try { trackRequestProcessed(req.source || 'unknown'); } catch {}
       toast({ title: 'Solicitud procesada', description: `${client.name} → caso creado` });
       if (caseId) navigate(`/lawyer/cases/${caseId}`);
       else refetch();
@@ -163,7 +182,7 @@ export default function RequestsPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <h3 className="font-semibold truncate">{req.title}</h3>
-                            <Badge className={`${statusColor(req.status)} border-0 text-xs`}>{req.status}</Badge>
+                            <Badge className={`${statusColor(req.status)} border-0 text-xs`}>{statusLabels[req.status] || req.status}</Badge>
                             <Badge variant="outline" className="text-xs">{req.kind === 'booking' ? 'Reserva' : 'Presupuesto'}</Badge>
                             {req.source && <Badge variant="outline" className="text-xs">{req.source}</Badge>}
                           </div>
@@ -207,7 +226,7 @@ export default function RequestsPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <h3 className="font-semibold truncate">{req.title}</h3>
-                              <Badge className={`${statusColor(req.status)} border-0 text-xs`}>{req.status}</Badge>
+                              <Badge className={`${statusColor(req.status)} border-0 text-xs`}>{statusLabels[req.status] || req.status}</Badge>
                               <Badge variant="outline" className="text-xs">{req.kind === 'booking' ? 'Reserva' : 'Presupuesto'}</Badge>
                             </div>
                             <div className="mt-2 space-y-1 text-sm text-gray-600">

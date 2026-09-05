@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { normalizeEmail } from '@/lib/normalizeEmail';
+import { trackFirstClientIfNeeded } from '@/lib/activationAnalytics';
 
 export interface LawyerClient {
   id: string;
@@ -86,6 +87,8 @@ export function useLawyerClients() {
       }
       const created = data as LawyerClient;
       setClients((prev) => [created, ...prev]);
+      // activation analytics (first_client) — no PII, only source
+      if (user?.id) trackFirstClientIfNeeded(user.id, (payload.source as string) || 'unknown').catch(() => {});
       return created;
     },
     [user?.id, findByNormalizedEmail]
