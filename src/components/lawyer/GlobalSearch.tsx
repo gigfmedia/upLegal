@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
-import { Search, User, Briefcase, Calendar } from 'lucide-react';
+import { Search, User, Briefcase, Calendar, Loader2 } from 'lucide-react';
 
 type Result = { type: 'client' | 'case' | 'booking'; id: string; title: string; subtitle: string; href: string };
 
@@ -13,6 +13,8 @@ export function GlobalSearch() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Result[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!query.trim() || query.trim().length < 2) {
@@ -33,7 +35,6 @@ export function GlobalSearch() {
         (clientsRes.data || []).forEach((c: any) => res.push({ type: 'client', id: c.id, title: c.name, subtitle: c.email || '', href: `/lawyer/clients/${c.id}` }));
         (casesRes.data || []).forEach((c: any) => res.push({ type: 'case', id: c.id, title: c.title, subtitle: 'Caso', href: `/lawyer/cases/${c.id}` }));
         (bookingsRes.data || []).forEach((b: any) => res.push({ type: 'booking', id: b.id, title: b.user_name || 'Cita', subtitle: b.service_title || '', href: `/lawyer/citas` }));
-        // also search clients by email
         if (q.includes('@')) {
           const { data: emailClients } = await supabase.from('lawyer_clients').select('id, name, email').eq('lawyer_id', user.id).ilike('email', `%${q}%`).limit(3);
           (emailClients || []).forEach((c: any) => {
@@ -50,36 +51,77 @@ export function GlobalSearch() {
     return () => clearTimeout(timer);
   }, [query, user?.id]);
 
+  // Close on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setIsFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  if (!user?.id) return null;
+
+  const showResults = isFocused && query.length >= 2;
+
   return (
-    <div className="relative">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-        <Input placeholder="Buscar clientes, casos, citas..." className="pl-9" value={query} onChange={e => setQuery(e.target.value)} />
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center">
+      <div
+        ref={wrapperRef}
+        className={`relative transition-all duration-300 ease-out ${isFocused ? 'w-[380px] sm:w-[420px]' : 'w-[250px]'} max-w-[calc(100vw-32px)]`}
+      >
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+          <Input
+            placeholder="Buscar clientes, casos, citas…"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            onFocus={() => setIsFocused(true)}
+            className="h-[50px] w-full rounded-full border border-gray-200 bg-white pl-12 pr-12 text-sm shadow-lg shadow-black/5 placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-green-500/20 focus-visible:border-green-300 transition-all"
+          />
+          {loading && (
+            <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-gray-400" />
+          )}
+        </div>
+
+        {showResults && (
+          <Card className="absolute bottom-full mb-3 w-full rounded-2xl shadow-xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200 max-h-[320px] overflow-auto">
+            <CardContent className="p-2">
+              {loading ? (
+                <div className="p-4 text-sm text-gray-500 flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Buscando…
+                </div>
+              ) : results.length === 0 ? (
+                <div className="p-4 text-sm text-gray-500">Sin resultados para "{query}"</div>
+              ) : (
+                <div className="space-y-1">
+                  {results.map(r => (
+                    <Link
+                      key={`${r.type}-${r.id}`}
+                      to={r.href}
+                      onClick={() => { setQuery(''); setIsFocused(false); }}
+                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                        {r.type === 'client' ? <User className="h-4 w-4 text-gray-500" /> : r.type === 'case' ? <Briefcase className="h-4 w-4 text-gray-500" /> : <Calendar className="h-4 w-4 text-gray-500" />}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium truncate">{r.title}</div>
+                        <div className="text-xs text-gray-500 truncate">{r.subtitle}</div>
+                      </div>
+                      <span className="ml-auto text-[11px] font-medium tracking-wide text-gray-400 uppercase shrink-0">
+                        {r.type === 'client' ? 'Cliente' : r.type === 'case' ? 'Caso' : 'Cita'}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
-      {(query.length >= 2) && (
-        <Card className="absolute z-10 mt-2 w-full shadow-lg max-h-80 overflow-auto">
-          <CardContent className="p-2">
-            {loading ? (
-              <div className="p-3 text-sm text-gray-500">Buscando...</div>
-            ) : results.length === 0 ? (
-              <div className="p-3 text-sm text-gray-500">Sin resultados para "{query}"</div>
-            ) : (
-              <div className="space-y-1">
-                {results.map(r => (
-                  <Link key={`${r.type}-${r.id}`} to={r.href} onClick={() => setQuery('')} className="flex items-center gap-3 p-2 rounded hover:bg-gray-50">
-                    {r.type === 'client' ? <User className="h-4 w-4 text-gray-400" /> : r.type === 'case' ? <Briefcase className="h-4 w-4 text-gray-400" /> : <Calendar className="h-4 w-4 text-gray-400" />}
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium truncate">{r.title}</div>
-                      <div className="text-xs text-gray-500 truncate">{r.subtitle}</div>
-                    </div>
-                    <span className="ml-auto text-xs text-gray-400 capitalize">{r.type === 'client' ? 'Cliente' : r.type === 'case' ? 'Caso' : 'Cita'}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

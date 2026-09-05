@@ -26,7 +26,6 @@ const statusLabels: Record<string, string> = {
   cancelled: 'Cancelada',
 };
 import { OnboardingCard } from '@/components/lawyer/OnboardingCard';
-import { GlobalSearch } from '@/components/lawyer/GlobalSearch';
 import { loadDemoData } from '@/lib/demoData';
 import { trackOnboardingViewed } from '@/lib/activationAnalytics';
 
@@ -135,8 +134,6 @@ export default function LawyerDashboardPage() {
       </div>
 
       <OnboardingCard />
-
-      <GlobalSearch />
 
       {!loading && stats.clients === 0 && stats.cases === 0 && (
         <Card className="border-dashed">
