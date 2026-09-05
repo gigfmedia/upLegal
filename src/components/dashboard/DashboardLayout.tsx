@@ -296,10 +296,10 @@ function DashboardLayout() {
         <div className="bg-cream-900 mx-auto">
           <div className="flex">
             {/* Sidebar */}
-            {/* Desktop sidebar */}
-            <aside className="hidden lg:flex flex-col w-64 shrink-0 bg-white border-r border-gray-200">
-              {/* Nav pinned at the top (never rises with the footer) */}
-              <nav className="w-full sticky top-16 self-start py-4">
+            {/* Desktop sidebar — scroll auto */}
+            <aside className="hidden lg:flex flex-col w-64 shrink-0 bg-white border-r border-gray-200 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto sidebar-scroll">
+              {/* Nav */}
+              <nav className="w-full py-4">
                 {lawyerSections ? (
                   <div className="space-y-5 px-3">
                     {lawyerSections.map((section) => (
@@ -390,10 +390,10 @@ function DashboardLayout() {
                 )}
               </nav>
 
-              <div className="flex-1" />
+              <div className="flex-1 min-h-4" />
 
-              {/* Bottom actions pinned to the bottom; rise with the footer on page end */}
-              <div className="w-full sticky bottom-0 self-end border-t border-gray-200 p-4">
+              {/* Bottom actions pinned to bottom of sidebar; stays visible while scrolling */}
+              <div className="w-full sticky bottom-0 mt-auto border-t bg-white border-gray-200 p-4">
                 <ul className="space-y-1">
                   <li>
                     <Link

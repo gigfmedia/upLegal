@@ -176,3 +176,28 @@ All colors MUST be HSL.
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Sidebar auto scroll — hidden until hover/scroll */
+.sidebar-scroll {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  overscroll-behavior: contain;
+}
+.sidebar-scroll:hover {
+  scrollbar-color: #d1d5db transparent;
+}
+.sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 9999px;
+}
+.sidebar-scroll:hover::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+}
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
