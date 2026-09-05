@@ -17,13 +17,19 @@ export function GlobalSearch() {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!query.trim() || query.trim().length < 2) {
+    const trimmed = query.trim();
+    if (!trimmed || trimmed.length < 2) {
       setResults([]);
+      setLoading(false);
       return;
     }
-    if (!user?.id) return;
-    const q = query.trim().toLowerCase();
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+    const q = trimmed.toLowerCase();
     setLoading(true);
+    let cancelled = false;
     const timer = setTimeout(async () => {
       try {
         const [clientsRes, casesRes, bookingsRes] = await Promise.all([
@@ -31,24 +37,30 @@ export function GlobalSearch() {
           supabase.from('lawyer_cases').select('id, title').eq('lawyer_id', user.id).ilike('title', `%${q}%`).limit(5),
           supabase.from('bookings').select('id, user_name, service_title').eq('lawyer_id', user.id).ilike('user_name', `%${q}%`).limit(5),
         ]);
+        if (cancelled) return;
         const res: Result[] = [];
         (clientsRes.data || []).forEach((c: any) => res.push({ type: 'client', id: c.id, title: c.name, subtitle: c.email || '', href: `/lawyer/clients/${c.id}` }));
         (casesRes.data || []).forEach((c: any) => res.push({ type: 'case', id: c.id, title: c.title, subtitle: 'Caso', href: `/lawyer/cases/${c.id}` }));
         (bookingsRes.data || []).forEach((b: any) => res.push({ type: 'booking', id: b.id, title: b.user_name || 'Cita', subtitle: b.service_title || '', href: `/lawyer/citas` }));
         if (q.includes('@')) {
           const { data: emailClients } = await supabase.from('lawyer_clients').select('id, name, email').eq('lawyer_id', user.id).ilike('email', `%${q}%`).limit(3);
-          (emailClients || []).forEach((c: any) => {
-            if (!res.find(r => r.id === c.id)) res.push({ type: 'client', id: c.id, title: c.name, subtitle: c.email, href: `/lawyer/clients/${c.id}` });
-          });
+          if (!cancelled) {
+            (emailClients || []).forEach((c: any) => {
+              if (!res.find(r => r.id === c.id)) res.push({ type: 'client', id: c.id, title: c.name, subtitle: c.email, href: `/lawyer/clients/${c.id}` });
+            });
+          }
         }
-        setResults(res.slice(0, 8));
+        if (!cancelled) setResults(res.slice(0, 8));
       } catch (e) {
         console.error(e);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }, 300);
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [query, user?.id]);
 
   useEffect(() => {
@@ -67,10 +79,7 @@ export function GlobalSearch() {
 
   return (
     <div className="fixed top-[7px] left-1/2 -translate-x-1/2 z-[60] hidden md:flex flex-col items-center">
-      <div
-        ref={wrapperRef}
-        className={`relative transition-all duration-300 ease-out ${isFocused ? 'w-[420px]' : 'w-[300px]'} min-w-[300px]`}
-      >
+      <div ref={wrapperRef} className="relative w-[300px] min-w-[300px]">
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
           <Input
