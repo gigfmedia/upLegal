@@ -911,6 +911,7 @@ app.post('/create-payment', async (req, res) => {
       userId,
       lawyerId,
       appointmentId,
+      bookingId,
       successUrl,
       failureUrl,
       pendingUrl,
@@ -918,12 +919,12 @@ app.post('/create-payment', async (req, res) => {
       userName
     } = req.body;
 
-    // Validations
-    if ((!amount && !originalAmount) || !appointmentId) {
+    // Validations — 2B: allow bookingId as alternative to appointmentId for modern traceability
+    if ((!amount && !originalAmount) || (!appointmentId && !bookingId)) {
       return res.status(400).json({
         error: 'Missing required fields',
-        required: ['amount or originalAmount', 'appointmentId'],
-        received: { amount, originalAmount, appointmentId }
+        required: ['amount or originalAmount', 'appointmentId or bookingId'],
+        received: { amount, originalAmount, appointmentId, bookingId }
       });
     }
 
@@ -1078,6 +1079,23 @@ app.post('/create-payment', async (req, res) => {
     } catch (insertError) {
       console.error('❌ Exception during RPC INSERT:', insertError);
       throw insertError;
+    }
+
+    // 2B: Link payment to booking if bookingId provided and valid (FK SET NULL ensures safety)
+    if (bookingId) {
+      try {
+        // Verify booking exists and belongs to same lawyer (tenant isolation)
+        const { data: bookingRow } = await supabase.from('bookings').select('id, lawyer_id').eq('id', bookingId).maybeSingle();
+        if (bookingRow && bookingRow.lawyer_id === actualLawyerId) {
+          await supabase.from('payments').update({ booking_id: bookingId }).eq('id', paymentId);
+          // Also store booking_id in metadata for webhook traceability
+          await supabase.from('payments').update({ metadata: { ...paymentData.metadata, booking_id: bookingId } }).eq('id', paymentId).then(()=>{});
+        } else if (bookingRow) {
+          console.warn(`[2B] booking_id lawyer mismatch: payment ${paymentId} lawyer ${actualLawyerId} vs booking ${bookingRow.lawyer_id}`);
+        }
+      } catch (e) {
+        console.warn('[2B] failed to link booking_id', e.message);
+      }
     }
 
     // Create MercadoPago preference data

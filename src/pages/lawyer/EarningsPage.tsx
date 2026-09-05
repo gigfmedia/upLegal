@@ -70,6 +70,7 @@ export default function EarningsPage() {
           payout_status,
           created_at,
           appointment_id,
+          booking_id,
           lawyer_id,
           service_description
         `)
@@ -78,13 +79,17 @@ export default function EarningsPage() {
 
       if (paymentsError) throw paymentsError;
 
-      // 2. Get unique appointment IDs
+      // 2. Get unique appointment IDs and booking IDs for traceability (2B)
       const appointmentIds = [...new Set((payments || [])
-        .map(p => p.appointment_id)
+        .map((p: any) => p.appointment_id)
         .filter(id => id) // filter out nulls
       )];
+      const bookingIds = [...new Set((payments || [])
+        .map((p: any) => p.booking_id)
+        .filter(id => id)
+      )];
 
-      // 3. Fetch appointments with client details
+      // 3. Fetch appointments with client details (legacy)
       let appointmentsMap = new Map();
       
       if (appointmentIds.length > 0) {
@@ -111,6 +116,28 @@ export default function EarningsPage() {
         }
       }
 
+      // 3b. Fetch bookings traceability for payments with booking_id (2B)
+      let bookingsMap = new Map();
+      if (bookingIds.length > 0) {
+        const { data: bookings, error: bookingsError } = await supabase
+          .from('bookings')
+          .select(`
+            id,
+            user_name,
+            service_title,
+            client_id,
+            case_id,
+            case:lawyer_cases!bookings_case_id_fkey(id, title),
+            client:lawyer_clients!bookings_client_id_fkey(id, name)
+          `)
+          .in('id', bookingIds);
+        if (bookingsError) {
+          console.error('Error fetching bookings traceability:', bookingsError);
+        } else if (bookings) {
+          bookings.forEach((b: any) => bookingsMap.set(b.id, b));
+        }
+      }
+
       // 4. Merge data — use lawyer_amount as real revenue
       const formattedTransactions: Transaction[] = (payments || [])
         .filter(payment => {
@@ -120,16 +147,20 @@ export default function EarningsPage() {
         })
         .map((payment: any) => {
           const appointment = appointmentsMap.get(payment.appointment_id);
+          const booking = bookingsMap.get(payment.booking_id);
           const realAmount = payment.lawyer_amount ?? payment.amount ?? 0;
           // payout_status is shown as badge detail, status maps to completed/pending
           const displayStatus = payment.payout_status === 'paid' || payment.status === 'completed' || payment.status === 'approved' ? 'completed' : payment.status === 'pending' || payment.payout_status === 'pending' ? 'pending' : (payment.status as Transaction['status']);
+          // Prefer deterministic booking traceability (2B) over legacy appointment
+          const traceClientName = booking?.client?.name || booking?.user_name;
+          const traceService = booking?.service_title || booking?.case?.title;
           return {
             id: payment.id,
             date: new Date(payment.created_at),
-            clientName: appointment?.client 
-              ? `${appointment.client.first_name || ''} ${appointment.client.last_name || ''}`.trim() || 'Cliente'
-              : payment.service_description || 'Servicio',
-            service: appointment?.service_type || payment.service_description || 'Consulta',
+            clientName: traceClientName
+              || (appointment?.client ? `${appointment.client.first_name || ''} ${appointment.client.last_name || ''}`.trim() || 'Cliente' : null)
+              || payment.service_description || 'Servicio',
+            service: traceService || appointment?.service_type || payment.service_description || 'Consulta',
             amount: realAmount,
             status: displayStatus,
             type: 'consultation'
