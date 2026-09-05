@@ -51,7 +51,6 @@ export function GlobalSearch() {
     return () => clearTimeout(timer);
   }, [query, user?.id]);
 
-  // Close on click outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
@@ -67,10 +66,10 @@ export function GlobalSearch() {
   const showResults = isFocused && query.length >= 2;
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center">
+    <div className="fixed top-[7px] left-1/2 -translate-x-1/2 z-[60] hidden md:flex flex-col items-center">
       <div
         ref={wrapperRef}
-        className={`relative transition-all duration-300 ease-out ${isFocused ? 'w-[380px] sm:w-[420px]' : 'w-[250px]'} max-w-[calc(100vw-32px)]`}
+        className={`relative transition-all duration-300 ease-out ${isFocused ? 'w-[420px]' : 'w-[300px]'} min-w-[300px]`}
       >
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
@@ -79,7 +78,7 @@ export function GlobalSearch() {
             value={query}
             onChange={e => setQuery(e.target.value)}
             onFocus={() => setIsFocused(true)}
-            className="h-[50px] w-full rounded-full border border-gray-200 bg-white pl-12 pr-12 text-sm shadow-lg shadow-black/5 placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-green-500/20 focus-visible:border-green-300 transition-all"
+            className="h-[50px] w-full rounded-full border border-gray-200 bg-white pl-12 pr-12 text-sm shadow-sm placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-green-500/20 focus-visible:border-green-300 transition-all"
           />
           {loading && (
             <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-gray-400" />
@@ -87,7 +86,7 @@ export function GlobalSearch() {
         </div>
 
         {showResults && (
-          <Card className="absolute bottom-full mb-3 w-full rounded-2xl shadow-xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200 max-h-[320px] overflow-auto">
+          <Card className="absolute top-full mt-3 w-full rounded-2xl shadow-xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 max-h-[380px] overflow-auto">
             <CardContent className="p-2">
               {loading ? (
                 <div className="p-4 text-sm text-gray-500 flex items-center gap-2">

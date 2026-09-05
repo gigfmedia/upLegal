@@ -562,7 +562,7 @@ function DashboardLayout() {
 
             {/* Main content */}
             <main className="flex-1 min-w-0 w-full">
-              <div className="min-h-screen pb-20">
+              <div className="min-h-screen">
                 {/* Suspense interno: el layout (header/sidebar) queda montado
                     mientras carga el chunk lazy de la ruta hija. Así no se
                     "corta" la pantalla ni vuelve el spinner full-screen del
@@ -585,7 +585,7 @@ function DashboardLayout() {
         </div>
       </div>
 
-      {/* Búsqueda global — fixed bottom center en todas las secciones lawyer */}
+      {/* Búsqueda global — header centro en todas las secciones lawyer */}
       {userRole === 'lawyer' && !currentPath.startsWith('/admin') && <GlobalSearch />}
     </div>
   );
