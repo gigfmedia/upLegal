@@ -184,7 +184,7 @@ export default function RequestsPage() {
                             <h3 className="font-semibold truncate">{req.title}</h3>
                             <Badge className={`${statusColor(req.status)} border-0 text-xs`}>{statusLabels[req.status] || req.status}</Badge>
                             <Badge variant="outline" className="text-xs">{req.kind === 'booking' ? 'Reserva' : 'Presupuesto'}</Badge>
-                            {req.source && <Badge variant="outline" className="text-xs">{req.source}</Badge>}
+                            {req.source && req.source !== 'UNKNOWN' && <Badge variant="outline" className="text-xs">{sourceLabels[req.source] || req.source}</Badge>}
                           </div>
                           <div className="mt-2 space-y-1 text-sm text-gray-600">
                             <div className="flex items-center gap-2"><User className="h-4 w-4 text-gray-400" /><span>{req.clientName}</span>{req.clientEmail && <><Mail className="h-4 w-4 text-gray-400 ml-2" /><span className="truncate">{req.clientEmail}</span></>}</div>

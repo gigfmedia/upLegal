@@ -159,7 +159,9 @@ export default function CaseDetailPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             {caseData.title}
-            <Badge variant="outline">{sourceLabels[caseData.source] || caseData.source}</Badge>
+            {caseData.source && caseData.source !== 'UNKNOWN' && (
+              <Badge variant="outline">{sourceLabels[caseData.source] || caseData.source}</Badge>
+            )}
             <Badge>{statusLabels[caseData.status] || caseData.status}</Badge>
           </CardTitle>
           <p className="text-sm text-muted-foreground">

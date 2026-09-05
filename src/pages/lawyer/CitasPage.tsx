@@ -45,14 +45,25 @@ export default function CitasPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
   const { findOrCreateClient } = useLawyerClients();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const preselectedCaseId = searchParams.get('caseId');
   const [cases, setCases] = useState<any[]>([]);
   const [selectedCaseId, setSelectedCaseId] = useState<string>('none');
   const [clients, setClients] = useState<any[]>([]);
+  const [preselectedCaseClient, setPreselectedCaseClient] = useState<any>(null);
 
   useEffect(() => {
-    if (preselectedCaseId) setSelectedCaseId(preselectedCaseId);
+    if (preselectedCaseId) {
+      setSelectedCaseId(preselectedCaseId);
+      setEditingAppointment(null);
+      setShowNewAppointmentForm(true);
+      // Prefill client from case
+      supabase.from('lawyer_cases').select('client:lawyer_clients(name,email,phone)').eq('id', preselectedCaseId).single().then(({ data }) => {
+        if ((data as any)?.client) setPreselectedCaseClient((data as any).client);
+      });
+    } else {
+      setPreselectedCaseClient(null);
+    }
   }, [preselectedCaseId]);
 
   useEffect(() => {
@@ -384,7 +395,7 @@ export default function CitasPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showNewAppointmentForm} onOpenChange={(open) => !open && setShowNewAppointmentForm(false)}>
+      <Dialog open={showNewAppointmentForm} onOpenChange={(open) => { if (!open) { setShowNewAppointmentForm(false); setEditingAppointment(null); setSelectedCaseId('none'); setPreselectedCaseClient(null); if (preselectedCaseId) setSearchParams({}, { replace: true }); } }}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" onInteractOutside={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">{editingAppointment ? 'Editar Cita' : 'Nueva Cita'}</DialogTitle>
@@ -406,9 +417,9 @@ export default function CitasPage() {
               <p className="text-xs text-gray-500">Solo se muestran casos del cliente seleccionado.</p>
             </div>
             <AppointmentForm
-              initialData={editingAppointment ? { ...editingAppointment, date: format(editingAppointment.date, 'yyyy-MM-dd'), time: format(editingAppointment.date, 'HH:mm'), duration: editingAppointment.duration.toString() } : { clientName: '', clientEmail: '', clientPhone: '', service: '', date: format(selectedDate, 'yyyy-MM-dd'), time: '10:00', duration: '30', type: 'video', notes: '' }}
-              onSubmit={(data) => { if (editingAppointment) handleUpdateAppointment(data); else handleNewAppointment(data); }}
-              onCancel={() => { setShowNewAppointmentForm(false); setEditingAppointment(null); setSelectedCaseId('none'); }}
+              initialData={editingAppointment ? { ...editingAppointment, date: format(editingAppointment.date, 'yyyy-MM-dd'), time: format(editingAppointment.date, 'HH:mm'), duration: editingAppointment.duration.toString() } : { clientName: preselectedCaseClient?.name || '', clientEmail: preselectedCaseClient?.email || '', clientPhone: preselectedCaseClient?.phone || '', service: '', date: format(selectedDate, 'yyyy-MM-dd'), time: '10:00', duration: '30', type: 'video', notes: '' }}
+              onSubmit={(data) => { if (editingAppointment) handleUpdateAppointment(data); else handleNewAppointment(data); if (preselectedCaseId) setSearchParams({}, { replace: true }); }}
+              onCancel={() => { setShowNewAppointmentForm(false); setEditingAppointment(null); setSelectedCaseId('none'); setPreselectedCaseClient(null); if (preselectedCaseId) setSearchParams({}, { replace: true }); }}
               isEditing={!!editingAppointment}
             />
           </div>

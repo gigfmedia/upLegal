@@ -153,9 +153,11 @@ export default function CasesPage() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold truncate">{c.title}</h3>
                       <Badge className={`${statusColors[c.status] || 'bg-gray-100 text-gray-800'} border-0 text-xs`}>{statusLabels[c.status] || c.status}</Badge>
-                      <Badge variant="outline" className="text-xs">
-                        {sourceLabels[c.source] || c.source}
-                      </Badge>
+                      {c.source && c.source !== 'UNKNOWN' && (
+                        <Badge variant="outline" className="text-xs">
+                          {sourceLabels[c.source] || c.source}
+                        </Badge>
+                      )}
                     </div>
                     <div className="mt-2 text-sm text-gray-600">
                       {c.client ? (
@@ -165,7 +167,7 @@ export default function CasesPage() {
                       ) : (
                         <span className="text-gray-400">Sin cliente</span>
                       )}
-                      {c.booking && <span className="ml-2">· Reserva: {c.booking.service_title || c.booking.status}</span>}
+                      {c.booking && <span className="ml-2">· Reserva: {c.booking.service_title || statusLabels[c.booking.status] || c.booking.status}</span>}
                     </div>
                     {c.description && <p className="text-sm text-gray-500 bg-gray-50 p-2 rounded mt-2 line-clamp-2">{c.description}</p>}
                     <div className="text-xs text-gray-400 mt-2">{new Date(c.created_at).toLocaleDateString('es-CL')} · {c.currency} {c.price_clp ? `$${c.price_clp.toLocaleString('es-CL')}` : ''}</div>

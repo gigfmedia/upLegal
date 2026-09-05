@@ -114,7 +114,8 @@ export default function ClientsPage() {
                         </div>
                       )}
                       <div className="text-xs text-gray-500">
-                        Creado {formatDistanceToNow(parseISO(c.created_at), { addSuffix: true, locale: es })} · {c.source}
+                        Creado {formatDistanceToNow(parseISO(c.created_at), { addSuffix: true, locale: es })}
+                        {c.source && c.source !== 'UNKNOWN' && ` · ${c.source === 'LAWYER_DIRECT' ? 'Directo' : c.source === 'LEGALUP_MARKETPLACE' ? 'Marketplace' : c.source}`}
                       </div>
                     </div>
                   </div>

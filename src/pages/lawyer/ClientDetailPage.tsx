@@ -123,7 +123,7 @@ export default function ClientDetailPage() {
             </div>
             <div className="space-y-2">
               <Label>Fuente</Label>
-              <Input value={client.source} disabled />
+              <Input value={client.source === 'UNKNOWN' ? 'Desconocido' : client.source === 'LAWYER_DIRECT' ? 'Directo' : client.source === 'LEGALUP_MARKETPLACE' ? 'Marketplace' : client.source} disabled />
             </div>
           </div>
           <div className="space-y-2">
