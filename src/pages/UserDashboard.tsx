@@ -273,20 +273,43 @@ function ClientDashboardContent() {
         if (consultationsError) throw consultationsError;
         setConsultations(consultationsData || []);
 
-        // Fetch appointments (compat multi-esquema)
-        const { data: appointmentsData, error: appointmentsError } = await supabase
-          .from('appointments')
-          .select('*')
-          .eq('user_id', user.id);
+        // Fetch appointments (legacy) + bookings (primary) — 2C-2 dual-read, bookings → primary
+        const [appointmentsRes, bookingsRes] = await Promise.all([
+          supabase.from('appointments').select('*').eq('user_id', user.id),
+          supabase.from('bookings').select('id, lawyer_id, user_id, scheduled_date, scheduled_time, duration, status, service_title, meet_link, created_at').eq('user_id', user.id).eq('booking_type', 'appointment')
+        ]);
 
-        if (appointmentsError) throw appointmentsError;
+        if (appointmentsRes.error) throw appointmentsRes.error;
+        if (bookingsRes.error) throw bookingsRes.error;
+
         const nowIso = new Date().toISOString();
-        const normalizedUpcoming = (appointmentsData || [])
+        // Normalize bookings to appointment-like shape
+        const bookingsNormalized = (bookingsRes.data || []).map((b: any) => ({
+          id: b.id,
+          title: b.service_title || 'Cita',
+          service_type: b.service_title || 'Cita',
+          name: b.service_title || 'Cita',
+          appointment_date: b.scheduled_date,
+          appointment_time: b.scheduled_time ? `${b.scheduled_date}T${b.scheduled_time}` : null,
+          scheduled_time: b.scheduled_time ? `${b.scheduled_date}T${b.scheduled_time}` : null,
+          date: b.scheduled_date ? `${b.scheduled_date}T${b.scheduled_time || '00:00:00'}` : null,
+          status: b.status,
+          meet_link: b.meet_link,
+          lawyer_id: b.lawyer_id,
+          user_id: b.user_id,
+          created_at: b.created_at,
+          _source: 'bookings'
+        }));
+        const appointmentsNormalized = (appointmentsRes.data || [])
           .map((appointment: any) => ({
             ...appointment,
-            appointment_time: getAppointmentDateTime(appointment)
-          }))
-          .filter((appointment: any) => appointment.appointment_time && appointment.appointment_time >= nowIso)
+            appointment_time: getAppointmentDateTime(appointment),
+            _source: 'appointments'
+          }));
+
+        const combined = [...bookingsNormalized, ...appointmentsNormalized];
+        const normalizedUpcoming = combined
+          .filter((a: any) => a.appointment_time && a.appointment_time >= nowIso)
           .sort((a: any, b: any) => a.appointment_time.localeCompare(b.appointment_time));
 
         setAppointments(normalizedUpcoming);
@@ -378,15 +401,20 @@ function ClientDashboardContent() {
 
         const totalSpent = payments?.reduce((sum, payment) => sum + (parseFloat(payment.amount) || 0), 0) || 0;
 
-        // 4. Fetch next appointment (compat multi-esquema)
-        const { data: nextAppointmentsRaw } = await supabase
-          .from('appointments')
-          .select('*')
-          .eq('user_id', user?.id)
-          .limit(200);
-
+        // 4. Fetch next appointment — bookings primary + appointments legacy (2C-2)
+        const [nextApptsRaw, nextBookingsRaw] = await Promise.all([
+          supabase.from('appointments').select('*').eq('user_id', user?.id).limit(200),
+          supabase.from('bookings').select('id, scheduled_date, scheduled_time, status').eq('user_id', user?.id).eq('booking_type', 'appointment').limit(200)
+        ]);
+        const bookingsAsAppts = (nextBookingsRaw.data || []).map((b: any) => ({
+          appointment_date: b.scheduled_date,
+          appointment_time: b.scheduled_date && b.scheduled_time ? `${b.scheduled_date}T${b.scheduled_time}` : null,
+          scheduled_time: b.scheduled_date && b.scheduled_time ? `${b.scheduled_date}T${b.scheduled_time}` : null,
+          date: b.scheduled_date ? `${b.scheduled_date}T${b.scheduled_time || '00:00:00'}` : null,
+          _source: 'bookings'
+        }));
         const nowIso = new Date().toISOString();
-        const nextAppointment = (nextAppointmentsRaw || [])
+        const nextAppointment = [...(nextApptsRaw.data || []), ...bookingsAsAppts]
           .map((appointment: any) => getAppointmentDateTime(appointment))
           .filter((appointmentTime: string | null) => appointmentTime && appointmentTime >= nowIso)
           .sort((a: string, b: string) => a.localeCompare(b))[0];
