@@ -2932,10 +2932,18 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
             }
 
             console.log('[webhook] step=meet_generation status=updated appointment_id=' + appointmentId + ' meet_status=' + meetStatus + ' meet_provider=' + meetProvider + ' meet_link=' + fresh.meet_link);
+            // 2C: sync meet_link to bookings for future SaaS traceability (bookings.meet_link)
+            if (booking?.id && fresh.meet_link) {
+              await supabase.from('bookings').update({ meet_link: fresh.meet_link }).eq('id', booking.id);
+            }
           } catch (updateError) {
             console.error('[webhook] step=meet_generation status=update_failed', updateError);
             throw updateError;
           }
+        }
+        // 2C: for bookings without appointment mirror (service type), persist meet_link directly to bookings
+        if (!appointmentId && booking?.id && meetLink) {
+          await supabase.from('bookings').update({ meet_link: meetLink }).eq('id', booking.id);
         }
       }
 
