@@ -35,6 +35,12 @@ interface NotificationRow {
 export type NotificationListData = { rows: Notification[]; total: number };
 
 export async function getAuthToken(): Promise<string | null> {
+  // Ensure session is valid and refreshed if needed before returning token
+  // This prevents "Token inválido" 401 when the stored session is expired
+  try {
+    const { validateAndRefreshSession } = await import('@/lib/sessionUtils');
+    await validateAndRefreshSession();
+  } catch {}
   const { data } = await supabase.auth.getSession();
   return data.session?.access_token || null;
 }
@@ -66,9 +72,19 @@ export async function fetchNotifications(
   opts: { limit?: number; offset?: number } = {}
 ): Promise<NotificationListData> {
   const { limit = 50, offset = 0 } = opts;
-  const response = await fetch(`/api/notifications?limit=${limit}&offset=${offset}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const doFetch = async (t: string) => fetch(`/api/notifications?limit=${limit}&offset=${offset}`, { headers: { Authorization: `Bearer ${t}` } });
+  let response = await doFetch(token);
+  // Retry once on 401 after refreshing session (Render cold start or expired JWT)
+  if (response.status === 401) {
+    try {
+      const { validateAndRefreshSession } = await import('@/lib/sessionUtils');
+      await validateAndRefreshSession();
+      const { supabase } = await import('@/lib/supabaseClient');
+      const { data } = await supabase.auth.getSession();
+      const newToken = data.session?.access_token;
+      if (newToken && newToken !== token) response = await doFetch(newToken);
+    } catch {}
+  }
   if (!response.ok) throw new Error('Error al cargar notificaciones');
   const data = await response.json();
   return {
@@ -78,9 +94,18 @@ export async function fetchNotifications(
 }
 
 export async function fetchUnreadCount(token: string): Promise<number> {
-  const response = await fetch('/api/notifications/unread-count', {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const doFetch = async (t: string) => fetch('/api/notifications/unread-count', { headers: { Authorization: `Bearer ${t}` } });
+  let response = await doFetch(token);
+  if (response.status === 401) {
+    try {
+      const { validateAndRefreshSession } = await import('@/lib/sessionUtils');
+      await validateAndRefreshSession();
+      const { supabase } = await import('@/lib/supabaseClient');
+      const { data } = await supabase.auth.getSession();
+      const newToken = data.session?.access_token;
+      if (newToken && newToken !== token) response = await doFetch(newToken);
+    } catch {}
+  }
   if (!response.ok) throw new Error('Error al contar notificaciones');
   const data = await response.json();
   return data.count || 0;
