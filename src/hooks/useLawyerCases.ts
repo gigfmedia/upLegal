@@ -41,7 +41,7 @@ export function useLawyerCases() {
     try {
       const { data, error } = await supabase
         .from('lawyer_cases')
-        .select('*, client:lawyer_clients(id,name,email), booking:bookings(id,user_name,service_title,status)')
+        .select('*, client:lawyer_clients(id,name,email), booking:bookings!lawyer_cases_booking_id_fkey(id,user_name,service_title,status)')
         .eq('lawyer_id', user.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -82,7 +82,7 @@ export function useLawyerCases() {
         source: input.source || 'LAWYER_DIRECT',
         price_clp: input.price_clp ?? null,
       };
-      const { data, error } = await supabase.from('lawyer_cases').insert(payload).select('*, client:lawyer_clients(id,name,email), booking:bookings(id,user_name,service_title,status)').single();
+      const { data, error } = await supabase.from('lawyer_cases').insert(payload).select('*, client:lawyer_clients(id,name,email), booking:bookings!lawyer_cases_booking_id_fkey(id,user_name,service_title,status)').single();
       if (error) throw error;
       const created = data as unknown as LawyerCase;
       setCases((prev) => [created, ...prev]);
@@ -100,7 +100,7 @@ export function useLawyerCases() {
     if (patch.client_id !== undefined) payload.client_id = patch.client_id;
     if (patch.booking_id !== undefined) payload.booking_id = patch.booking_id;
     if (patch.price_clp !== undefined) payload.price_clp = patch.price_clp;
-    const { data, error } = await supabase.from('lawyer_cases').update(payload).eq('id', id).select('*, client:lawyer_clients(id,name,email), booking:bookings(id,user_name,service_title,status)').single();
+    const { data, error } = await supabase.from('lawyer_cases').update(payload).eq('id', id).select('*, client:lawyer_clients(id,name,email), booking:bookings!lawyer_cases_booking_id_fkey(id,user_name,service_title,status)').single();
     if (error) throw error;
     setCases((prev) => prev.map((c) => (c.id === id ? (data as unknown as LawyerCase) : c)));
     return data as unknown as LawyerCase;
@@ -128,7 +128,7 @@ export function useLawyerCase(caseId: string | undefined) {
     }
     supabase
       .from('lawyer_cases')
-      .select('*, client:lawyer_clients(id,name,email,phone), booking:bookings(id,user_name,user_email,service_title,price,status,scheduled_date,scheduled_time)')
+      .select('*, client:lawyer_clients(id,name,email,phone), booking:bookings!lawyer_cases_booking_id_fkey(id,user_name,user_email,service_title,price,status,scheduled_date,scheduled_time)')
       .eq('id', caseId)
       .eq('lawyer_id', user.id)
       .single()
