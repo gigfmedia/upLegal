@@ -221,7 +221,7 @@ export default function CitasPage() {
       if (!session) return;
       const { data: bookings, error } = await supabase
         .from('bookings')
-        .select('id, user_name, user_email, user_phone, service_title, scheduled_date, scheduled_time, duration, status, source, client_id, case_id, created_at, case:lawyer_cases(id,title)')
+        .select('id, user_name, user_email, user_phone, service_title, scheduled_date, scheduled_time, duration, status, source, client_id, case_id, created_at, case:lawyer_cases!bookings_case_id_fkey(id,title)')
         .eq('lawyer_id', session.user.id)
         .eq('booking_type', 'appointment')
         .neq('status', 'cancelled')
