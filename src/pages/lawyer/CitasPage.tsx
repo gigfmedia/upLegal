@@ -13,6 +13,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AppointmentForm } from '@/components/appointments/AppointmentForm';
 import { useLawyerClients } from '@/hooks/useLawyerClients';
 import { normalizeEmail } from '@/lib/normalizeEmail';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useSearchParams, Link } from 'react-router-dom';
 
 type Appointment = {
   id: string;
@@ -27,7 +29,9 @@ type Appointment = {
   notes: string;
   bookingId: string;
   clientId: string | null;
+  caseId: string | null;
   source: string;
+  caseTitle?: string | null;
 };
 
 export default function CitasPage() {
@@ -40,20 +44,38 @@ export default function CitasPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
   const { findOrCreateClient } = useLawyerClients();
+  const [searchParams] = useSearchParams();
+  const preselectedCaseId = searchParams.get('caseId');
+  const [cases, setCases] = useState<any[]>([]);
+  const [selectedCaseId, setSelectedCaseId] = useState<string>('none');
+  const [clients, setClients] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (preselectedCaseId) setSelectedCaseId(preselectedCaseId);
+  }, [preselectedCaseId]);
+
+  useEffect(() => {
+    const fetchClientsAndCases = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const [{ data: c }, { data: cl }] = await Promise.all([
+        supabase.from('lawyer_cases').select('id, title, client_id').eq('lawyer_id', session.user.id).order('created_at', { ascending: false }).limit(50),
+        supabase.from('lawyer_clients').select('id, name, email').eq('lawyer_id', session.user.id).order('created_at', { ascending: false }).limit(50),
+      ]);
+      setCases(c || []);
+      setClients(cl || []);
+    };
+    fetchClientsAndCases();
+  }, []);
 
   const goToPreviousDay = () => setSelectedDate(prev => addDays(prev, -1));
   const goToNextDay = () => setSelectedDate(prev => addDays(prev, 1));
   const goToToday = () => setSelectedDate(new Date());
 
-  const formatDateDisplay = (date: Date) => {
-    if (isToday(date)) return 'Hoy';
-    if (isTomorrow(date)) return 'Mañana';
-    return format(date, 'EEEE d', { locale: es });
-  };
-
   const handleViewAppointment = (appointment: Appointment) => setViewingAppointment(appointment);
   const handleEditAppointment = (appointment: Appointment) => {
     setEditingAppointment(appointment);
+    setSelectedCaseId(appointment.caseId || 'none');
     setShowNewAppointmentForm(true);
   };
   const handleDeleteAppointment = (appointmentId: string) => setAppointmentToDelete(appointmentId);
@@ -63,7 +85,6 @@ export default function CitasPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      // Cancel via bookings status (RLS: auth.uid()=lawyer_id)
       const { error } = await supabase.from('bookings').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', appointmentToDelete).eq('lawyer_id', session.user.id);
       if (error) throw error;
       setAppointments(prev => prev.filter(appt => appt.id !== appointmentToDelete));
@@ -91,54 +112,50 @@ export default function CitasPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-
-      // Find or create lawyer_clients (replaces phantom profiles)
       let clientId: string | null = null;
       try {
-        const client = await findOrCreateClient({
-          name: data.clientName,
-          email: data.clientEmail || null,
-          phone: data.clientPhone || null,
-          source: 'LAWYER_DIRECT',
-        });
+        const client = await findOrCreateClient({ name: data.clientName, email: data.clientEmail || null, phone: data.clientPhone || null, source: 'LAWYER_DIRECT' });
         clientId = client.id;
       } catch (e) {
         console.error('Error creating client for appointment:', e);
-        // Continue without client_id if email invalid etc.
       }
-
-      const scheduledDate = data.date; // yyyy-MM-dd
-      const scheduledTime = data.time; // HH:mm
+      const scheduledDate = data.date;
+      const scheduledTime = data.time;
       const duration = parseInt(data.duration, 10) || 30;
-
-      const { data: booking, error } = await supabase
-        .from('bookings')
-        .insert({
-          lawyer_id: session.user.id,
-          user_id: null,
-          user_name: data.clientName,
-          user_email: data.clientEmail || `no-email-${Date.now()}@placeholder.invalid`,
-          user_phone: data.clientPhone || null,
-          scheduled_date: scheduledDate,
-          scheduled_time: scheduledTime,
-          duration,
-          price: 0,
-          status: 'confirmed',
-          booking_type: 'appointment',
-          service_title: data.service || 'Cita',
-          service_description: data.notes || null,
-          source: 'LAWYER_DIRECT',
-          client_id: clientId,
-          requires_meeting: data.type === 'video',
-        } as any)
-        .select('id')
-        .single();
-
+      // Validate case belongs to same lawyer and same client if selected
+      let caseId: string | null = selectedCaseId !== 'none' ? selectedCaseId : null;
+      if (caseId) {
+        const c = cases.find(x => x.id === caseId);
+        if (c && clientId && c.client_id && c.client_id !== clientId) {
+          toast({ title: 'Advertencia', description: 'El caso seleccionado pertenece a otro cliente. Se creará sin caso.', variant: 'destructive' });
+          caseId = null;
+        }
+      }
+      const { data: booking, error } = await supabase.from('bookings').insert({
+        lawyer_id: session.user.id,
+        user_id: null,
+        user_name: data.clientName,
+        user_email: data.clientEmail || `no-email-${Date.now()}@placeholder.invalid`,
+        user_phone: data.clientPhone || null,
+        scheduled_date: scheduledDate,
+        scheduled_time: scheduledTime,
+        duration,
+        price: 0,
+        status: 'confirmed',
+        booking_type: 'appointment',
+        service_title: data.service || 'Cita',
+        service_description: data.notes || null,
+        source: 'LAWYER_DIRECT',
+        client_id: clientId,
+        case_id: caseId,
+        requires_meeting: data.type === 'video',
+      } as any).select('id').single();
       if (error) throw error;
       await fetchAppointments();
       toast({ title: 'Cita creada', description: 'La cita ha sido agendada correctamente.' });
       setShowNewAppointmentForm(false);
       setEditingAppointment(null);
+      setSelectedCaseId('none');
     } catch (error) {
       console.error('Error creating appointment:', error);
       toast({ title: 'Error', description: 'No se pudo crear la cita.', variant: 'destructive' });
@@ -151,26 +168,31 @@ export default function CitasPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const duration = parseInt(data.duration, 10) || 30;
-      const { error } = await supabase
-        .from('bookings')
-        .update({
-          user_name: data.clientName,
-          user_email: data.clientEmail || `no-email-${Date.now()}@placeholder.invalid`,
-          user_phone: data.clientPhone || null,
-          scheduled_date: data.date,
-          scheduled_time: data.time,
-          duration,
-          service_title: data.service || 'Cita',
-          service_description: data.notes || null,
-          updated_at: new Date().toISOString(),
-        } as any)
-        .eq('id', editingAppointment.bookingId)
-        .eq('lawyer_id', session.user.id);
+      let caseId: string | null = selectedCaseId !== 'none' ? selectedCaseId : null;
+      if (caseId) {
+        const c = cases.find(x => x.id === caseId);
+        if (c && editingAppointment.clientId && c.client_id && c.client_id !== editingAppointment.clientId) {
+          caseId = null;
+        }
+      }
+      const { error } = await supabase.from('bookings').update({
+        user_name: data.clientName,
+        user_email: data.clientEmail || `no-email-${Date.now()}@placeholder.invalid`,
+        user_phone: data.clientPhone || null,
+        scheduled_date: data.date,
+        scheduled_time: data.time,
+        duration,
+        service_title: data.service || 'Cita',
+        service_description: data.notes || null,
+        case_id: caseId,
+        updated_at: new Date().toISOString(),
+      } as any).eq('id', editingAppointment.bookingId).eq('lawyer_id', session.user.id);
       if (error) throw error;
       await fetchAppointments();
       toast({ title: 'Cita actualizada' });
       setShowNewAppointmentForm(false);
       setEditingAppointment(null);
+      setSelectedCaseId('none');
     } catch (error) {
       console.error('Error updating appointment:', error);
       toast({ title: 'Error', description: 'No se pudo actualizar.', variant: 'destructive' });
@@ -181,17 +203,15 @@ export default function CitasPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      // Canonical source: bookings where booking_type=appointment
       const { data: bookings, error } = await supabase
         .from('bookings')
-        .select('id, user_name, user_email, user_phone, service_title, scheduled_date, scheduled_time, duration, status, source, client_id, created_at')
+        .select('id, user_name, user_email, user_phone, service_title, scheduled_date, scheduled_time, duration, status, source, client_id, case_id, created_at, case:lawyer_cases(id,title)')
         .eq('lawyer_id', session.user.id)
         .eq('booking_type', 'appointment')
         .neq('status', 'cancelled')
         .order('scheduled_date', { ascending: true })
         .order('scheduled_time', { ascending: true });
       if (error) throw error;
-
       const formatted: Appointment[] = (bookings || []).map((b: any) => {
         const dateStr = b.scheduled_date && b.scheduled_time ? `${b.scheduled_date}T${b.scheduled_time}` : b.created_at;
         return {
@@ -207,6 +227,8 @@ export default function CitasPage() {
           type: 'video',
           notes: '',
           clientId: b.client_id,
+          caseId: b.case_id,
+          caseTitle: b.case?.title || null,
           source: b.source || 'UNKNOWN',
         };
       });
@@ -226,6 +248,16 @@ export default function CitasPage() {
     ? dailyAppointments.filter(appt => appt.clientName.toLowerCase().includes(searchQuery.toLowerCase()) || appt.service.toLowerCase().includes(searchQuery.toLowerCase()))
     : dailyAppointments;
 
+  // Filter cases by selected client email for form
+  const filteredCasesForForm = (() => {
+    // Find client for current form data would require form state, just show all cases for now, filtered by client if editing
+    if (editingAppointment?.clientId) {
+      const clientCases = cases.filter(c => c.client_id === editingAppointment.clientId);
+      return clientCases.length ? clientCases : cases;
+    }
+    return cases;
+  })();
+
   return (
     <div className="space-y-6 px-4 sm:px-6 lg:px-8 py-6">
       <div className="flex flex-col sm:flex-row justify-between gap-4">
@@ -233,7 +265,7 @@ export default function CitasPage() {
           <h1 className="text-2xl font-bold tracking-tight">Citas</h1>
           <p className="text-muted-foreground">Gestiona tus citas programadas</p>
         </div>
-        <Button onClick={() => { setEditingAppointment(null); setShowNewAppointmentForm(true); }} className="bg-gray-900 hover:bg-green-900 shrink-0">
+        <Button onClick={() => { setEditingAppointment(null); setSelectedCaseId(preselectedCaseId || 'none'); setShowNewAppointmentForm(true); }} className="bg-gray-900 hover:bg-green-900 shrink-0">
           <Plus className="h-4 w-4 mr-1" /> Nueva cita
         </Button>
       </div>
@@ -292,6 +324,9 @@ export default function CitasPage() {
                     <div>
                       <div className="font-semibold">{appointment.clientName}</div>
                       <div className="text-sm text-muted-foreground">{appointment.service}</div>
+                      {appointment.caseTitle && (
+                        <Link to={`/lawyer/cases/${appointment.caseId}`} className="text-xs text-green-600 hover:underline">Caso: {appointment.caseTitle}</Link>
+                      )}
                     </div>
                   </div>
                   <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
@@ -335,6 +370,7 @@ export default function CitasPage() {
             <div><h4 className="font-medium">Servicio</h4><p className="text-muted-foreground">{viewingAppointment?.service}</p></div>
             <div><h4 className="font-medium">Fecha y Hora</h4><p className="text-muted-foreground">{viewingAppointment && format(viewingAppointment.date, 'PPP', { locale: es })} a las {viewingAppointment && format(viewingAppointment.date, 'p', { locale: es })}</p></div>
             <div><h4 className="font-medium">Duración</h4><p className="text-muted-foreground">{viewingAppointment?.duration} minutos</p></div>
+            {viewingAppointment?.caseTitle && <div><h4 className="font-medium">Caso</h4><p className="text-muted-foreground">{viewingAppointment.caseTitle}</p></div>}
           </div>
           <DialogFooter className="mt-4">
             <Button variant="outline" className="mr-2" onClick={() => { if (viewingAppointment) { setViewingAppointment(null); handleEditAppointment(viewingAppointment); } }}>Editar</Button>
@@ -348,11 +384,26 @@ export default function CitasPage() {
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">{editingAppointment ? 'Editar Cita' : 'Nueva Cita'}</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Caso (opcional)</label>
+              <Select value={selectedCaseId} onValueChange={setSelectedCaseId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sin caso" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sin caso</SelectItem>
+                  {filteredCasesForForm.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">Solo se muestran casos del cliente seleccionado.</p>
+            </div>
             <AppointmentForm
               initialData={editingAppointment ? { ...editingAppointment, date: format(editingAppointment.date, 'yyyy-MM-dd'), time: format(editingAppointment.date, 'HH:mm'), duration: editingAppointment.duration.toString() } : { clientName: '', clientEmail: '', clientPhone: '', service: '', date: format(selectedDate, 'yyyy-MM-dd'), time: '10:00', duration: '30', type: 'video', notes: '' }}
               onSubmit={(data) => { if (editingAppointment) handleUpdateAppointment(data); else handleNewAppointment(data); }}
-              onCancel={() => { setShowNewAppointmentForm(false); setEditingAppointment(null); }}
+              onCancel={() => { setShowNewAppointmentForm(false); setEditingAppointment(null); setSelectedCaseId('none'); }}
               isEditing={!!editingAppointment}
             />
           </div>

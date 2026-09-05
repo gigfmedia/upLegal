@@ -37,6 +37,11 @@ export default function RequestsPage() {
       (r.clientEmail || '').toLowerCase().includes(search.toLowerCase())
   );
 
+  const isPending = (s: string) => ['pending', 'pending_payment', 'quote_pending'].includes(s);
+  const pendingRequests = filtered.filter((r) => isPending(r.status));
+  const processedRequests = filtered.filter((r) => !isPending(r.status));
+  const [showProcessed, setShowProcessed] = useState(false);
+
   const handleProcess = async (req: RequestItem) => {
     if (!user?.id) return;
     setProcessingId(req.id);
@@ -143,73 +148,85 @@ export default function RequestsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
-          {filtered.map((req) => (
-            <Card key={req.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold truncate">{req.title}</h3>
-                      <Badge className={`${statusColor(req.status)} border-0 text-xs`}>{req.status}</Badge>
-                      <Badge variant="outline" className="text-xs">
-                        {req.kind === 'booking' ? 'Reserva' : 'Presupuesto'}
-                      </Badge>
-                      {req.source && <Badge variant="outline" className="text-xs">{req.source}</Badge>}
-                    </div>
-                    <div className="mt-2 space-y-1 text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-gray-400" />
-                        <span>{req.clientName}</span>
-                        {req.clientEmail && (
-                          <>
-                            <Mail className="h-4 w-4 text-gray-400 ml-2" />
-                            <span className="truncate">{req.clientEmail}</span>
-                          </>
-                        )}
-                      </div>
-                      {req.clientPhone && (
-                        <div className="flex items-center gap-2">
-                          <Phone className="h-4 w-4 text-gray-400" />
-                          <span>{req.clientPhone}</span>
+        <>
+          {/* Pendientes */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-gray-700">Pendientes por procesar ({pendingRequests.length})</h3>
+            {pendingRequests.length === 0 ? (
+              <Card><CardContent className="p-4 text-sm text-gray-500 text-center">No hay solicitudes pendientes.</CardContent></Card>
+            ) : (
+              <div className="grid gap-4">
+                {pendingRequests.map((req) => (
+                  <Card key={req.id} className="hover:shadow-md transition-shadow border-l-4 border-l-yellow-400">
+                    <CardContent className="p-4">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-semibold truncate">{req.title}</h3>
+                            <Badge className={`${statusColor(req.status)} border-0 text-xs`}>{req.status}</Badge>
+                            <Badge variant="outline" className="text-xs">{req.kind === 'booking' ? 'Reserva' : 'Presupuesto'}</Badge>
+                            {req.source && <Badge variant="outline" className="text-xs">{req.source}</Badge>}
+                          </div>
+                          <div className="mt-2 space-y-1 text-sm text-gray-600">
+                            <div className="flex items-center gap-2"><User className="h-4 w-4 text-gray-400" /><span>{req.clientName}</span>{req.clientEmail && <><Mail className="h-4 w-4 text-gray-400 ml-2" /><span className="truncate">{req.clientEmail}</span></>}</div>
+                            {req.clientPhone && <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-gray-400" /><span>{req.clientPhone}</span></div>}
+                            <div className="flex items-center gap-4 text-xs text-gray-500">
+                              <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{formatDistanceToNow(parseISO(req.createdAt), { addSuffix: true, locale: es })}</span>
+                              {req.price && <span className="flex items-center gap-1"><DollarSign className="h-3 w-3" />${req.price.toLocaleString('es-CL')}</span>}
+                              {req.scheduledDate && <span>{req.scheduledDate} {req.scheduledTime}</span>}
+                            </div>
+                            {req.description && <p className="text-sm bg-gray-50 p-2 rounded mt-2 line-clamp-2">{req.description}</p>}
+                          </div>
                         </div>
-                      )}
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {formatDistanceToNow(parseISO(req.createdAt), { addSuffix: true, locale: es })}
-                        </span>
-                        {req.price && (
-                          <span className="flex items-center gap-1">
-                            <DollarSign className="h-3 w-3" />${req.price.toLocaleString('es-CL')}
-                          </span>
-                        )}
-                        {req.scheduledDate && <span>{req.scheduledDate} {req.scheduledTime}</span>}
+                        <div className="flex flex-col gap-2 shrink-0">
+                          <Button size="sm" onClick={() => handleProcess(req)} disabled={processingId === req.id} className="bg-gray-900 hover:bg-green-900">
+                            {processingId === req.id ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <ArrowRight className="h-4 w-4 mr-1" />} Procesar solicitud
+                          </Button>
+                          {req.kind === 'quote' && <Button variant="outline" size="sm" onClick={() => navigate(`/lawyer/quotes/${req.rawId}`)}>Ver presupuesto</Button>}
+                        </div>
                       </div>
-                      {req.description && <p className="text-sm bg-gray-50 p-2 rounded mt-2 line-clamp-2">{req.description}</p>}
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2 shrink-0">
-                    <Button
-                      size="sm"
-                      onClick={() => handleProcess(req)}
-                      disabled={processingId === req.id}
-                      className="bg-gray-900 hover:bg-green-900"
-                    >
-                      {processingId === req.id ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <ArrowRight className="h-4 w-4 mr-1" />}
-                      Procesar solicitud
-                    </Button>
-                    {req.kind === 'quote' && (
-                      <Button variant="outline" size="sm" onClick={() => navigate(`/lawyer/quotes/${req.rawId}`)}>
-                        Ver presupuesto
-                      </Button>
-                    )}
-                  </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Procesadas */}
+          {processedRequests.length > 0 && (
+            <div className="space-y-4">
+              <button onClick={() => setShowProcessed(!showProcessed)} className="text-sm font-medium text-gray-600 hover:text-gray-900">
+                {showProcessed ? 'Ocultar' : 'Ver'} procesadas ({processedRequests.length}) {showProcessed ? '▲' : '▼'}
+              </button>
+              {showProcessed && (
+                <div className="grid gap-4 opacity-75">
+                  {processedRequests.map((req) => (
+                    <Card key={req.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="font-semibold truncate">{req.title}</h3>
+                              <Badge className={`${statusColor(req.status)} border-0 text-xs`}>{req.status}</Badge>
+                              <Badge variant="outline" className="text-xs">{req.kind === 'booking' ? 'Reserva' : 'Presupuesto'}</Badge>
+                            </div>
+                            <div className="mt-2 space-y-1 text-sm text-gray-600">
+                              <div className="flex items-center gap-2"><User className="h-4 w-4 text-gray-400" /><span>{req.clientName}</span></div>
+                              <div className="flex items-center gap-4 text-xs text-gray-500">
+                                <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{formatDistanceToNow(parseISO(req.createdAt), { addSuffix: true, locale: es })}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <Badge variant="outline" className="text-xs">Procesada</Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
