@@ -129,7 +129,7 @@ export default function RequestsPage() {
       </div>
 
       <div className="relative max-w-md">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input placeholder="Buscar por cliente o servicio..." className="pl-8" value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
 
