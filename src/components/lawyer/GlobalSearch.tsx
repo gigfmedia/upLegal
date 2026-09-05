@@ -87,7 +87,7 @@ export function GlobalSearch() {
             value={query}
             onChange={e => setQuery(e.target.value)}
             onFocus={() => setIsFocused(true)}
-            className="h-[50px] w-full rounded-full border border-gray-200 bg-white pl-12 pr-12 text-sm shadow-sm placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-green-500/20 focus-visible:border-green-300 transition-all"
+            className="h-[50px] w-full rounded-full border border-gray-200 bg-white pl-12 pr-12 text-sm shadow-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-green-400 transition-colors"
           />
           {loading && (
             <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-gray-400" />
