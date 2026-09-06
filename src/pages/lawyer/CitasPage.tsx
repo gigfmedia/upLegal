@@ -133,7 +133,7 @@ export default function CitasPage() {
       }
       const scheduledDate = data.date;
       const scheduledTime = data.time;
-      const duration = parseInt(data.duration, 10) || 30;
+      const duration = parseInt(data.duration, 10) || 60;
       // Validate case belongs to same lawyer and same client if selected
       let caseId: string | null = selectedCaseId !== 'none' ? selectedCaseId : null;
       if (caseId) {
@@ -183,7 +183,7 @@ export default function CitasPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      const duration = parseInt(data.duration, 10) || 30;
+      const duration = parseInt(data.duration, 10) || 60;
       let caseId: string | null = selectedCaseId !== 'none' ? selectedCaseId : null;
       if (caseId) {
         const c = cases.find(x => x.id === caseId);
@@ -238,7 +238,7 @@ export default function CitasPage() {
           clientPhone: b.user_phone || '',
           service: b.service_title || 'Cita',
           date: new Date(dateStr),
-          duration: b.duration || 30,
+          duration: b.duration || 60,
           status: b.status || 'pending',
           type: 'video',
           notes: '',
@@ -417,7 +417,7 @@ export default function CitasPage() {
               <p className="text-xs text-gray-500">Solo se muestran casos del cliente seleccionado.</p>
             </div>
             <AppointmentForm
-              initialData={editingAppointment ? { ...editingAppointment, date: format(editingAppointment.date, 'yyyy-MM-dd'), time: format(editingAppointment.date, 'HH:mm'), duration: editingAppointment.duration.toString() } : { clientName: preselectedCaseClient?.name || '', clientEmail: preselectedCaseClient?.email || '', clientPhone: preselectedCaseClient?.phone || '', service: '', date: format(selectedDate, 'yyyy-MM-dd'), time: '10:00', duration: '30', type: 'video', notes: '' }}
+              initialData={editingAppointment ? { ...editingAppointment, date: format(editingAppointment.date, 'yyyy-MM-dd'), time: format(editingAppointment.date, 'HH:mm'), duration: editingAppointment.duration.toString() } : { clientName: preselectedCaseClient?.name || '', clientEmail: preselectedCaseClient?.email || '', clientPhone: preselectedCaseClient?.phone || '', service: '', date: format(selectedDate, 'yyyy-MM-dd'), time: '10:00', duration: '60', type: 'video', notes: '' }}
               onSubmit={(data) => { if (editingAppointment) handleUpdateAppointment(data); else handleNewAppointment(data); if (preselectedCaseId) setSearchParams({}, { replace: true }); }}
               onCancel={() => { setShowNewAppointmentForm(false); setEditingAppointment(null); setSelectedCaseId('none'); setPreselectedCaseClient(null); if (preselectedCaseId) setSearchParams({}, { replace: true }); }}
               isEditing={!!editingAppointment}

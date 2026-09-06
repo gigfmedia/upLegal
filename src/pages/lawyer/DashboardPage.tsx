@@ -27,7 +27,10 @@ const statusLabels: Record<string, string> = {
 };
 import { OnboardingCard } from '@/components/lawyer/OnboardingCard';
 import { loadDemoData } from '@/lib/demoData';
-import { trackOnboardingViewed } from '@/lib/activationAnalytics';
+import { trackOnboardingViewed, trackBookingCreated } from '@/lib/activationAnalytics';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AppointmentForm } from '@/components/appointments/AppointmentForm';
+import { useLawyerClients } from '@/hooks/useLawyerClients';
 
 export default function LawyerDashboardPage() {
   const navigate = useNavigate();
@@ -42,6 +45,8 @@ export default function LawyerDashboardPage() {
   const [nextAppointments, setNextAppointments] = useState<any[]>([]);
   const [attention, setAttention] = useState<{ title: string; desc: string; cta: string; href: string } | null>(null);
   const [stats, setStats] = useState({ clients: 0, cases: 0, services: 0 });
+  const [showNewAppointment, setShowNewAppointment] = useState(false);
+  const { findOrCreateClient } = useLawyerClients();
 
   useEffect(() => {
     if (searchParams.get('google_auth') === 'success') {
@@ -258,8 +263,8 @@ export default function LawyerDashboardPage() {
                 <Calendar className="mx-auto h-8 w-8 text-gray-300" />
                 <p className="text-sm font-medium mt-2">No tienes citas próximas.</p>
                 <p className="text-xs text-gray-500">Cuando agendes una cita aparecerá aquí.</p>
-                <Button asChild variant="outline" size="sm" className="mt-3">
-                  <Link to="/lawyer/citas">Crear una cita</Link>
+                <Button variant="outline" size="sm" className="mt-3" onClick={() => setShowNewAppointment(true)}>
+                  Crear una cita
                 </Button>
               </div>
             ) : (
@@ -364,6 +369,51 @@ export default function LawyerDashboardPage() {
           <GoogleCalendarConnect />
         </div>
       </div>
+
+      <Dialog open={showNewAppointment} onOpenChange={setShowNewAppointment}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Nueva Cita</DialogTitle>
+          </DialogHeader>
+          <AppointmentForm
+            initialData={{ date: format(new Date(), 'yyyy-MM-dd'), time: '10:00', duration: '60', type: 'video', service: '', clientName: '', clientEmail: '', clientPhone: '', notes: '' }}
+            onSubmit={async (data: any) => {
+              try {
+                let clientId: string | null = null;
+                try {
+                  const client = await findOrCreateClient({ name: data.clientName, email: data.clientEmail || null, phone: data.clientPhone || null, source: 'LAWYER_DIRECT' });
+                  clientId = client.id;
+                } catch {}
+                const { error } = await supabase.from('bookings').insert({
+                  lawyer_id: user!.id,
+                  user_name: data.clientName,
+                  user_email: data.clientEmail || `no-email-${Date.now()}@placeholder.invalid`,
+                  user_phone: data.clientPhone || null,
+                  scheduled_date: data.date,
+                  scheduled_time: data.time,
+                  duration: parseInt(data.duration, 10) || 60,
+                  price: 0,
+                  status: 'confirmed',
+                  booking_type: 'appointment',
+                  service_title: data.service || 'Cita',
+                  source: 'LAWYER_DIRECT',
+                  client_id: clientId,
+                  requires_meeting: data.type === 'video',
+                } as any);
+                if (error) throw error;
+                try { if (user?.id) await trackBookingCreated(user.id, 'LAWYER_DIRECT', false); } catch {}
+                toast({ title: 'Cita creada', description: 'La cita ha sido agendada correctamente.' });
+                setShowNewAppointment(false);
+                window.location.reload();
+              } catch (e) {
+                console.error(e);
+                toast({ title: 'Error', description: 'No se pudo crear la cita.', variant: 'destructive' });
+              }
+            }}
+            onCancel={() => setShowNewAppointment(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

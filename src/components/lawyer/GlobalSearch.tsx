@@ -15,6 +15,7 @@ export function GlobalSearch() {
   const [loading, setLoading] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -73,6 +74,22 @@ export function GlobalSearch() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        inputRef.current?.focus();
+        setIsFocused(true);
+      }
+      if (e.key === 'Escape' && isFocused) {
+        inputRef.current?.blur();
+        setIsFocused(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFocused]);
+
   if (!user?.id) return null;
 
   const showResults = isFocused && query.length >= 2;
@@ -83,20 +100,27 @@ export function GlobalSearch() {
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
           <Input
+            ref={inputRef}
             placeholder="Buscar clientes, casos, citas…"
             value={query}
             onChange={e => setQuery(e.target.value)}
             onFocus={() => setIsFocused(true)}
-            className="h-[50px] w-full rounded-full border border-gray-200 bg-white pl-12 pr-12 text-sm shadow-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-green-400 transition-colors"
+            className="h-[50px] w-full rounded-full border border-gray-200 bg-white pl-12 pr-24 text-sm shadow-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-green-400 transition-colors"
           />
-          {loading && (
-            <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-gray-400" />
-          )}
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+            {!loading && !isFocused && !query && (
+              <kbd className="hidden sm:inline-flex items-center gap-1 rounded-md font-medium text-gray-500">
+                <span className="bg-gray-100 px-1.5 py-1 text-xs text-[12px]">⌘</span>
+                <span className="bg-gray-100 px-1.5 py-1 text-xs">K</span>
+              </kbd>
+            )}
+            {loading && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
+          </div>
         </div>
 
         {showResults && (
-          <Card className="absolute top-full mt-3 w-full rounded-2xl shadow-xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 max-h-[380px] overflow-auto">
-            <CardContent className="p-2">
+          <Card className="absolute top-full mt-3 w-full rounded-2xl shadow-xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 max-h-[380px] overflow-auto bg-white">
+            <CardContent className="p-3">
               {loading ? (
                 <div className="p-4 text-sm text-gray-500 flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" /> Buscando…
@@ -104,22 +128,22 @@ export function GlobalSearch() {
               ) : results.length === 0 ? (
                 <div className="p-4 text-sm text-gray-500">Sin resultados para "{query}"</div>
               ) : (
-                <div className="space-y-1">
+                <div className="space-y-2">
                   {results.map(r => (
                     <Link
                       key={`${r.type}-${r.id}`}
                       to={r.href}
                       onClick={() => { setQuery(''); setIsFocused(false); }}
-                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors"
+                      className="flex items-center gap-3 p-3 rounded-xl bg-gray-100 hover:bg-gray-200 border border-gray-100 transition-colors"
                     >
-                      <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                        {r.type === 'client' ? <User className="h-4 w-4 text-gray-500" /> : r.type === 'case' ? <Briefcase className="h-4 w-4 text-gray-500" /> : <Calendar className="h-4 w-4 text-gray-500" />}
+                      <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center shrink-0 border border-gray-200">
+                        {r.type === 'client' ? <User className="h-4 w-4 text-gray-600" /> : r.type === 'case' ? <Briefcase className="h-4 w-4 text-gray-600" /> : <Calendar className="h-4 w-4 text-gray-600" />}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium truncate">{r.title}</div>
+                        <div className="text-sm font-medium truncate text-gray-900">{r.title}</div>
                         <div className="text-xs text-gray-500 truncate">{r.subtitle}</div>
                       </div>
-                      <span className="ml-auto text-[11px] font-medium tracking-wide text-gray-400 uppercase shrink-0">
+                      <span className="ml-auto text-[11px] font-medium tracking-wide text-gray-500 uppercase shrink-0">
                         {r.type === 'client' ? 'Cliente' : r.type === 'case' ? 'Caso' : 'Cita'}
                       </span>
                     </Link>
