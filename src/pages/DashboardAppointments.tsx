@@ -29,6 +29,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { appointmentsApi, type AppointmentData, type AppointmentStatus, type AppointmentType } from '@/lib/api';
+import { supabase } from '@/lib/supabaseClient';
 
 // Local UI type that extends the API type with display-specific fields
 interface Appointment extends Omit<AppointmentData, 'lawyer_id' | 'client_id' | 'created_at' | 'updated_at'> {
@@ -110,10 +111,42 @@ export default function DashboardAppointments() {
           status: statusFilter === 'all' ? undefined : statusFilter as AppointmentStatus
         });
 
+        // 2E: also fetch bookings as primary (client: user_id, lawyer: lawyer_id)
+        let bookingsAsAppointments: AppointmentData[] = [];
+        try {
+          const { data: bookingsData } = await supabase
+            .from('bookings')
+            .select('*')
+            .eq('booking_type', 'appointment')
+            .or(`user_id.eq.${user.id},lawyer_id.eq.${user.id}`)
+            .neq('status', 'cancelled');
+          if (bookingsData) {
+            bookingsAsAppointments = bookingsData.map((b: any) => ({
+              id: b.id,
+              title: b.service_title || 'Cita',
+              description: b.service_description || '',
+              status: (b.status === 'confirmed' ? 'confirmed' : b.status) as AppointmentStatus,
+              type: 'video' as AppointmentType,
+              lawyer_id: b.lawyer_id,
+              client_id: b.user_id,
+              date: b.scheduled_date || '',
+              time: b.scheduled_time || '',
+              duration: b.duration || 60,
+              price: b.price || 0,
+              notes: '',
+              meet_link: b.meet_link || null,
+              location: null,
+              created_at: b.created_at,
+              updated_at: b.updated_at,
+            })).filter((b: any) => statusFilter === 'all' || b.status === statusFilter);
+          }
+        } catch (e) { console.warn('bookings fetch failed', e); }
+
         if (!isMounted) return;
 
-        // Filter appointments based on user role
-        const filteredAppointments = response.filter(appt => {
+        // Filter appointments based on user role (legacy) and merge with bookings
+        const allAppointments = [...response, ...bookingsAsAppointments];
+        const filteredAppointments = allAppointments.filter(appt => {
           try {
             return userRole === 'lawyer'
               ? appt.lawyer_id === user.id

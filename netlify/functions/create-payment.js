@@ -55,6 +55,7 @@ exports.handler = async (event) => {
       userId, 
       lawyerId, 
       appointmentId,  // Puede ser de appointments o consultations
+      bookingId,  // 2E: booking-first Marketplace (bookings.id)
       successUrl, 
       failureUrl, 
       pendingUrl, 
@@ -118,15 +119,15 @@ exports.handler = async (event) => {
       };
     }
 
-    // Validations
-    if ((!amount && !originalAmount) || !userId || !lawyerId || !appointmentId) {
+    // Validations — 2E: allow bookingId as alternative to appointmentId
+    if ((!amount && !originalAmount) || !userId || !lawyerId || (!appointmentId && !bookingId)) {
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({ 
           error: 'Missing required fields',
-          required: ['amount or originalAmount', 'userId', 'lawyerId', 'appointmentId'],
-          received: { amount: !!amount, originalAmount: !!originalAmount, userId: !!userId, lawyerId: !!lawyerId, appointmentId: !!appointmentId }
+          required: ['amount or originalAmount', 'userId', 'lawyerId', 'appointmentId or bookingId'],
+          received: { amount: !!amount, originalAmount: !!originalAmount, userId: !!userId, lawyerId: !!lawyerId, appointmentId: !!appointmentId, bookingId: !!bookingId }
         })
       };
     }
@@ -207,34 +208,51 @@ exports.handler = async (event) => {
     const platformFee = Math.round(derivedOriginalAmount * platformFeePercent);
     const lawyerAmount = Math.max(derivedOriginalAmount - platformFee, 0);
 
-    // DETERMINAR SI ES APPOINTMENT O CONSULTATION
+    // DETERMINAR SI ES BOOKING (2E booking-first) O APPOINTMENT/CONSULTATION LEGACY
     let isConsultation = false;
     let isAppointment = false;
+    let isBooking = false;
 
-    // Primero verificar en consultations
-    const { data: consultationData, error: consultationError } = await supabase
-      .from('consultations')
-      .select('id')
-      .eq('id', appointmentId)
-      .single();
-
-    if (consultationData && !consultationError) {
-      isConsultation = true;
+    if (bookingId) {
+      const { data: bookingData, error: bookingError } = await supabase
+        .from('bookings')
+        .select('id, lawyer_id')
+        .eq('id', bookingId)
+        .single();
+      if (bookingData && !bookingError) {
+        if (bookingData.lawyer_id !== lawyerId) {
+          throw new Error('Booking lawyer mismatch');
+        }
+        isBooking = true;
+      } else {
+        throw new Error('No se encontró el booking');
+      }
     } else {
-      // Si no está en consultations, verificar en appointments
-      const { data: appointmentData, error: appointmentError } = await supabase
-        .from('appointments')
+      // Primero verificar en consultations
+      const { data: consultationData, error: consultationError } = await supabase
+        .from('consultations')
         .select('id')
         .eq('id', appointmentId)
         .single();
 
-      if (appointmentData && !appointmentError) {
-        isAppointment = true;
-      }
-    }
+      if (consultationData && !consultationError) {
+        isConsultation = true;
+      } else {
+        // Si no está en consultations, verificar en appointments
+        const { data: appointmentData, error: appointmentError } = await supabase
+          .from('appointments')
+          .select('id')
+          .eq('id', appointmentId)
+          .single();
 
-    if (!isConsultation && !isAppointment) {
-      throw new Error('No se encontró la referencia en appointments ni consultations');
+        if (appointmentData && !appointmentError) {
+          isAppointment = true;
+        }
+      }
+
+      if (!isConsultation && !isAppointment) {
+        throw new Error('No se encontró la referencia en appointments ni consultations');
+      }
     }
 
     // Crear datos de pago según el tipo
@@ -258,12 +276,18 @@ exports.handler = async (event) => {
     };
 
     // Agregar la referencia correcta
-    if (isConsultation) {
+    if (isBooking) {
+      paymentData.booking_id = bookingId;
+      paymentData.appointment_id = null;
+      paymentData.consultation_id = null;
+    } else if (isConsultation) {
       paymentData.consultation_id = appointmentId;
       paymentData.appointment_id = null;
+      paymentData.booking_id = null;
     } else if (isAppointment) {
       paymentData.appointment_id = appointmentId;
       paymentData.consultation_id = null;
+      paymentData.booking_id = null;
     }
 
     // Insert payment into database
@@ -310,7 +334,7 @@ exports.handler = async (event) => {
       },
       auto_return: 'approved',
       binary_mode: true,
-      external_reference: paymentId,
+      external_reference: isBooking ? bookingId : paymentId,
       statement_descriptor: 'UPLEGAL'
     };
 
