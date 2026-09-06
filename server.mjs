@@ -1120,7 +1120,7 @@ app.post('/create-payment', async (req, res) => {
       },
       ...(isLocal ? {} : { auto_return: 'approved' }),
       binary_mode: true,
-      external_reference: paymentId,
+      external_reference: bookingId || paymentId,
       statement_descriptor: 'LEGALUP',
       ...(webhookUrl ? { notification_url: webhookUrl } : {})
     };

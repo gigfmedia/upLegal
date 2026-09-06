@@ -3,11 +3,13 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
 describe('FASE 2D — ScheduleModal audit', () => {
-  it('ScheduleModal still uses appointments (Marketplace legacy, not migrated in 2D)', () => {
+  it('ScheduleModal now booking-first (Marketplace migrated in 2D-2)', () => {
     const content = readFileSync(resolve('src/components/ScheduleModal.tsx'), 'utf-8');
-    expect(content).toContain('appointments');
-    expect(content).toContain('appointmentId');
-    expect(content).toContain('insert');
+    expect(content).toContain('api/bookings/create');
+    expect(content).toContain('bookingId');
+    expect(content).toContain('bookings');
+    // New flow should not create appointments directly
+    expect(content).not.toContain("from('appointments').insert");
   });
   it('CitasPage uses bookings LAWYER_DIRECT (SaaS)', () => {
     const content = readFileSync(resolve('src/pages/lawyer/CitasPage.tsx'), 'utf-8');

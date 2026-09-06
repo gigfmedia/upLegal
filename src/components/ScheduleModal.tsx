@@ -862,40 +862,62 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         throw new Error('No se ha seleccionado un abogado');
       }
 
-      // Create appointment data
-      const appointmentData = {
-        name: formData.name || 'Cliente',
-        email: formData.email || '',
-        phone: formData.phone || '',
-        user_id: user?.id || '',
+      // Create booking via booking-first flow (2D-2) — Marketplace now uses bookings, not appointments
+      const bookingPayload = {
         lawyer_id: finalLawyerId,
-        status: 'pending_payment',
-        appointment_date: formData.date,
-        appointment_time: formData.time,
+        user_id: user?.id || null,
+        user_email: formData.email || user?.email || '',
+        user_name: formData.name || user?.user_metadata?.full_name || 'Cliente',
+        user_phone: formData.phone || null,
+        scheduled_date: formData.date,
+        scheduled_time: formData.time,
         duration: parseInt(formData.duration) || 60,
-        consultation_type: formData.consultationType || 'consultation',
-        contact_method: formData.contactMethod,
         price: clientAmount,
-        notes: formData.description || '',
-        amount: clientAmount,
-        currency: 'CLP',
-        meet_link: null,
-        address: formData.contactMethod === 'presencial' ? formData.address : null
+        booking_type: 'appointment',
+        service_title: 'Consulta Legal',
+        service_description: formData.description || null,
+        requires_meeting: formData.contactMethod !== 'presencial',
       };
-
-      // Insert the appointment into the database
-      const { data: appointment, error: appointmentError } = await supabase
-        .from('appointments')
-        .insert(appointmentData)
-        .select()
-        .single();
-
-      if (appointmentError) {
-        console.error('Database error:', appointmentError);
-        throw new Error(`Error al crear la cita: ${appointmentError.message}`);
+      const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+      const bookingRes = await fetch(`${apiBase}/api/bookings/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bookingPayload),
+      });
+      if (!bookingRes.ok) {
+        const errText = await bookingRes.text();
+        throw new Error(`Error al crear la reserva: ${errText}`);
       }
+      const bookingResult = await bookingRes.json();
+      const bookingId = bookingResult.booking_id || bookingResult.booking?.id || bookingResult.id;
+      const paymentLink = bookingResult.payment_link;
+      if (!bookingId || !paymentLink) {
+        throw new Error('No se pudo obtener el enlace de pago');
+      }
+      // Store for success page (booking_id)
+      const pendingBookingData = {
+        bookingId,
+        clientEmail: formData.email,
+        clientName: formData.name,
+        lawyerName: selectedLawyerData?.name || lawyerName,
+        lawyerId: finalLawyerId,
+        appointmentDate: formData.date,
+        appointmentTime: formData.time,
+        serviceType: formData.consultationType,
+        duration: formData.duration,
+        description: formData.description,
+        contactMethod: formData.contactMethod
+      };
+      localStorage.setItem('pendingBooking', JSON.stringify(pendingBookingData));
+      localStorage.setItem('pending_lead_id', bookingResult.lead_id || '');
+      setIsRedirecting(true);
+      setTimeout(() => {
+        window.location.href = paymentLink;
+      }, 300);
+      return;
 
-      // Create payment with MercadoPago
+      // Legacy appointment flow removed — bookings is now source of truth for Marketplace
+      // Create payment with MercadoPago (legacy)
       try {
 
         const paymentParams = {
