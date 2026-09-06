@@ -1369,7 +1369,6 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="30">30 minutos</SelectItem>
                       <SelectItem value="60">1 hora</SelectItem>
                       <SelectItem value="90">1.5 horas</SelectItem>
                       <SelectItem value="120">2 horas</SelectItem>

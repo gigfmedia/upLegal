@@ -1342,6 +1342,55 @@ app.post('/api/bookings/create', async (req, res) => {
       return res.status(404).json({ error: 'Lawyer not found' });
     }
 
+    // 2E.3 P0: server-side price protection — calculate official price
+    let computedPrice = price;
+    let priceSource = 'client';
+    let serverPrice = price;
+    try {
+      const { data: platformSettings } = await supabase
+        .from('platform_settings')
+        .select('client_surcharge_percent')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const surcharge = Number(platformSettings?.client_surcharge_percent ?? 0.1);
+      if (isServiceBooking && service_id) {
+        const { data: service } = await supabase
+          .from('lawyer_services')
+          .select('price_clp')
+          .eq('id', service_id)
+          .eq('lawyer_user_id', lawyer_id)
+          .maybeSingle();
+        if (service && service.price_clp != null) {
+          const original = Number(service.price_clp);
+          serverPrice = Math.round(original * (1 + surcharge));
+          priceSource = 'service';
+        }
+      } else {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('hourly_rate_clp')
+          .eq('user_id', lawyer_id)
+          .maybeSingle();
+        const hourlyRate = Number(profile?.hourly_rate_clp || 0);
+        if (hourlyRate > 0 && resolvedDuration) {
+          const original = Math.round(hourlyRate * resolvedDuration / 60);
+          serverPrice = Math.round(original * (1 + surcharge));
+          priceSource = 'hourly';
+        }
+      }
+      // Validate: if server could determine price, enforce it
+      if (priceSource !== 'client' && serverPrice !== price) {
+        console.warn(`[2E.3] price manipulation blocked: client ${price} vs server ${serverPrice} (${priceSource}) lawyer ${lawyer_id}`);
+      }
+      // Use server price when determinable
+      if (priceSource !== 'client' && serverPrice > 0) {
+        computedPrice = serverPrice;
+      }
+    } catch (e) {
+      console.warn('[2E.3] price calc failed, using client price', e.message);
+    }
+
     const inferRequiresMeeting = () => {
       if (typeof requires_meeting === 'boolean') return requires_meeting;
       if (!service_title) return true;
@@ -1361,7 +1410,7 @@ app.post('/api/bookings/create', async (req, res) => {
       scheduled_date: isServiceBooking ? null : scheduled_date,
       scheduled_time: isServiceBooking ? null : scheduled_time,
       duration: isServiceBooking ? null : resolvedDuration,
-      price,
+      price: computedPrice,
       status: 'pending',
       booking_type: isServiceBooking ? 'service' : 'appointment',
       service_id: isServiceBooking ? service_id : null,
@@ -1497,7 +1546,7 @@ app.post('/api/bookings/create', async (req, res) => {
         description: mpItemDescription,
         category_id: 'services',
         quantity: 1,
-        unit_price: price,
+        unit_price: computedPrice,
       }],
       payer: {
         name: user_name,
@@ -1586,6 +1635,7 @@ app.post('/api/bookings/create', async (req, res) => {
       booking_id: booking.id,
       lead_id: leadId,
       payment_link: paymentLink,
+      price: computedPrice,
       message: isServiceBooking ? 'Service booking created successfully' : 'Booking created successfully',
     });
   } catch (error) {
@@ -2837,7 +2887,13 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
       let meetStatus = 'fallback';
       let meetProvider = 'jitsi';
 
-      if (shouldCreateAppointment) {
+      // 2E.3: idempotent reuse of existing booking meet_link
+      if (booking.meet_link) {
+        meetLink = booking.meet_link;
+        meetStatus = 'success';
+        meetProvider = 'existing';
+        console.log('[webhook] step=meet_generation status=reused_existing booking_id=' + bookingId + ' meet_link=' + meetLink);
+      } else if (shouldCreateAppointment) {
         // PRIORITY 1: Use lawyer's fixed meet_link if configured
         if (lawyerProfile?.meet_link) {
           meetLink = lawyerProfile.meet_link;
