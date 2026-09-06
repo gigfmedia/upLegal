@@ -2917,7 +2917,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
             });
 
             const { data: meetData, error: meetError } = await supabase.functions.invoke('create-google-meeting', {
-              body: { appointmentId }
+              body: { appointmentId, bookingId: booking.id }
             });
 
             console.log('[webhook] create-google-meeting result', {
