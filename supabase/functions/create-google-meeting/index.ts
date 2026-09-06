@@ -14,16 +14,47 @@ serve(async (req) => {
 
   try {
 
-    const { appointmentId } = await req.json();
+    const { appointmentId, bookingId } = await req.json();
 
-    if (!appointmentId) throw new Error('Missing appointmentId');
+    if (!appointmentId && !bookingId) throw new Error('Missing appointmentId or bookingId');
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // 1. Appointment
+    // 2F: bookingId primary (bookings.meet_link), appointmentId legacy fallback
+    if (bookingId) {
+      const { data: booking, error: bookingError } = await supabaseClient
+        .from('bookings')
+        .select('*')
+        .eq('id', bookingId)
+        .maybeSingle();
+      if (bookingError || !booking) {
+        console.error('❌ Booking error:', bookingError);
+        throw new Error('Booking not found');
+      }
+      if (booking.meet_link) {
+        return new Response(
+          JSON.stringify({ success: true, meetLink: booking.meet_link, source: (booking as any).meet_provider || 'existing', existing: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      // PRIORITY 1: lawyer fixed
+      const { data: lawyerProfile } = await supabaseClient.from('profiles').select('user_id, meet_link').eq('user_id', booking.lawyer_id).maybeSingle();
+      if (lawyerProfile?.meet_link) {
+        const fixed = lawyerProfile.meet_link;
+        const provider = fixed.includes('meet.google.com') ? 'google' : fixed.includes('jitsi') ? 'jitsi' : 'custom';
+        await supabaseClient.from('bookings').update({ meet_link: fixed, updated_at: new Date().toISOString() }).eq('id', bookingId);
+        return new Response(JSON.stringify({ success: true, meetLink: fixed, source: provider, existing: false }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      // Fallback Jitsi for bookings
+      const meetLink = `https://meet.jit.si/legalup-${bookingId}`;
+      await supabaseClient.from('bookings').update({ meet_link: meetLink, updated_at: new Date().toISOString() }).eq('id', bookingId);
+      return new Response(JSON.stringify({ success: true, meetLink, source: 'jitsi' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // 1. Appointment (legacy)
     const { data: appointment, error: appError } = await supabaseClient
       .from('appointments')
       .select('*')

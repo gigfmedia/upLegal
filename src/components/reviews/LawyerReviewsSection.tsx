@@ -122,9 +122,18 @@ export function LawyerReviewsSection({ lawyerId, lawyerName }: LawyerReviewsSect
         .eq('status', 'completed')
         .limit(1);
 
+      const { data: bookings } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('lawyer_id', lawyerId)
+        .in('status', ['confirmed', 'completed'])
+        .limit(1);
+
       setCanWriteReview(
         (consultations && consultations.length > 0) || 
-        (appointments && appointments.length > 0)
+        (appointments && appointments.length > 0) ||
+        (bookings && bookings.length > 0)
       );
     } catch (error) {
       console.error('Error checking review eligibility:', error);
