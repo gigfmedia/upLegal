@@ -86,7 +86,7 @@ const BlogArticle = () => {
           </h1>
 
           <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
-            <p className="text-xs font-bold uppercase tracking-widest text-green-400 mb-4">Resumen rápido</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">Resumen rápido</p>
             <div className="grid sm:grid-cols-2 gap-4 text-white">
               <div className="flex items-center gap-3">
                 <span className="text-green-500 font-medium">✓</span>
