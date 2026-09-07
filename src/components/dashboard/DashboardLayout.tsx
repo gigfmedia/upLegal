@@ -46,6 +46,7 @@ function DashboardLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>('client');
   const [showServicesBadge, setShowServicesBadge] = useState(false);
+  const [navCounts, setNavCounts] = useState<Record<string, number>>({});
   
   // Get user role safely
   const getUserRole = (): UserRole => {
@@ -91,6 +92,44 @@ function DashboardLayout() {
       }
     };
     checkServices();
+  }, [user?.id, location.pathname]);
+
+  // Sidebar counts for lawyer (tenue gray-100 like command k)
+  useEffect(() => {
+    const fetchCounts = async () => {
+      if (!user?.id || !location.pathname.startsWith('/lawyer')) return;
+      try {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const [
+          clientsRes,
+          casesRes,
+          citasRes,
+          requestsBookingsRes,
+          requestsQuotesRes,
+          jobsRes,
+          servicesRes,
+        ] = await Promise.all([
+          supabase.from('lawyer_clients').select('id', { count: 'exact', head: true }).eq('lawyer_id', user.id),
+          supabase.from('lawyer_cases').select('id', { count: 'exact', head: true }).eq('lawyer_id', user.id),
+          supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('lawyer_id', user.id).eq('booking_type', 'appointment').neq('status', 'cancelled').gte('scheduled_date', todayStr),
+          supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('lawyer_id', user.id).in('status', ['pending', 'pending_payment']),
+          supabase.from('service_quote_requests').select('id', { count: 'exact', head: true }).eq('lawyer_id', user.id).eq('status', 'pending'),
+          supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('lawyer_id', user.id).eq('booking_type', 'service'),
+          supabase.from('lawyer_services').select('id', { count: 'exact', head: true }).eq('lawyer_user_id', user.id),
+        ]);
+        setNavCounts({
+          '/lawyer/clients': clientsRes.count ?? 0,
+          '/lawyer/cases': casesRes.count ?? 0,
+          '/lawyer/citas': citasRes.count ?? 0,
+          '/lawyer/requests': (requestsBookingsRes.count ?? 0) + (requestsQuotesRes.count ?? 0),
+          '/lawyer/jobs': jobsRes.count ?? 0,
+          '/lawyer/services': servicesRes.count ?? 0,
+        });
+      } catch {
+        // ignore
+      }
+    };
+    fetchCounts();
   }, [user?.id, location.pathname]);
 
   // Check authentication + onboarding gate for lawyers (respeta >=70% como satisfecho)
@@ -356,7 +395,12 @@ function DashboardLayout() {
                                     </span>
                                   )}
                                 </span>
-                                {badge && (
+                                {navCounts[href] !== undefined && (
+                                  <span className="ml-auto bg-gray-100 text-gray-600 text-xs font-medium px-2 py-0.5 rounded-full">
+                                    {navCounts[href]}
+                                  </span>
+                                )}
+                                {badge && navCounts[href] === undefined && (
                                   <span className="ml-auto flex-shrink-0 w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm" />
                                 )}
                               </Link>
@@ -397,7 +441,12 @@ function DashboardLayout() {
                               </span>
                             )}
                           </span>
-                          {badge && (
+                          {navCounts[href] !== undefined && (
+                            <span className="ml-auto bg-gray-100 text-gray-600 text-xs font-medium px-2 py-0.5 rounded-full">
+                              {navCounts[href]}
+                            </span>
+                          )}
+                          {badge && navCounts[href] === undefined && (
                             <span className="ml-auto flex-shrink-0 w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm" />
                           )}
                         </Link>
@@ -486,7 +535,12 @@ function DashboardLayout() {
                                       </span>
                                     )}
                                   </span>
-                                  {badge && (
+                                  {navCounts[href] !== undefined && (
+                                    <span className="ml-auto bg-gray-100 text-gray-600 text-xs font-medium px-2 py-0.5 rounded-full">
+                                      {navCounts[href]}
+                                    </span>
+                                  )}
+                                  {badge && navCounts[href] === undefined && (
                                     <span className="ml-auto flex-shrink-0 w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm" />
                                   )}
                                 </Link>
@@ -527,7 +581,12 @@ function DashboardLayout() {
                                 </span>
                               )}
                             </span>
-                            {badge && (
+                            {navCounts[href] !== undefined && (
+                              <span className="ml-auto bg-gray-100 text-gray-600 text-xs font-medium px-2 py-0.5 rounded-full">
+                                {navCounts[href]}
+                              </span>
+                            )}
+                            {badge && navCounts[href] === undefined && (
                               <span className="ml-auto flex-shrink-0 w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm" />
                             )}
                           </Link>
