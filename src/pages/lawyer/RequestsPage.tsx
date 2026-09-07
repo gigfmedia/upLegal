@@ -13,6 +13,9 @@ import { trackRequestProcessed } from '@/lib/activationAnalytics';
 import { Search, Loader2, User, Mail, Phone, Calendar, DollarSign, FileText, ArrowRight } from 'lucide-react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useProSubscription } from '@/hooks/useProSubscription';
+import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
+import posthog from 'posthog-js';
 
 function statusColor(status: string) {
   if (['pending', 'quote_pending'].includes(status)) return 'bg-yellow-100 text-yellow-800';
@@ -39,6 +42,12 @@ const statusLabels: Record<string, string> = {
   closed: 'Cerrado',
 };
 
+const sourceLabels: Record<string, string> = {
+  LAWYER_DIRECT: 'Directo',
+  LEGALUP_MARKETPLACE: 'Marketplace',
+  UNKNOWN: 'Desconocido',
+};
+
 export default function RequestsPage() {
   const navigate = useNavigate();
   const { requests, loading, error, refetch } = useRequests();
@@ -47,6 +56,8 @@ export default function RequestsPage() {
   const { toast } = useToast();
   const [search, setSearch] = useState('');
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const { hasProAccess } = useProSubscription();
+  const [proPaywallOpen, setProPaywallOpen] = useState(false);
 
   const filtered = requests.filter(
     (r) =>
@@ -61,6 +72,11 @@ export default function RequestsPage() {
   const [showProcessed, setShowProcessed] = useState(false);
 
   const handleProcess = async (req: RequestItem) => {
+    if (!hasProAccess) {
+      posthog.capture('pro_paywall_opened', { action: 'process_request' });
+      setProPaywallOpen(true);
+      return;
+    }
     if (!user?.id) return;
     setProcessingId(req.id);
     try {
@@ -247,6 +263,7 @@ export default function RequestsPage() {
           )}
         </>
       )}
+      <ProPricingModal open={proPaywallOpen} onOpenChange={setProPaywallOpen} triggerAction="process_request" />
     </div>
   );
 }

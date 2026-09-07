@@ -10,6 +10,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Search, Loader2, User, Mail, Phone, Plus, Eye } from 'lucide-react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useProSubscription } from '@/hooks/useProSubscription';
+import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
+import posthog from 'posthog-js';
 
 export default function ClientsPage() {
   const { clients, loading, error, createClient } = useLawyerClients();
@@ -20,6 +23,8 @@ export default function ClientsPage() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [saving, setSaving] = useState(false);
+  const { hasProAccess } = useProSubscription();
+  const [proPaywallOpen, setProPaywallOpen] = useState(false);
 
   const filtered = useMemo(
     () =>
@@ -34,6 +39,12 @@ export default function ClientsPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!hasProAccess) {
+      posthog.capture('pro_paywall_opened', { action: 'create_client' });
+      setProPaywallOpen(true);
+      return;
+    }
+    posthog.capture('pro_paywall_action', { action: 'create_client' });
     if (!name.trim()) {
       toast({ title: 'Nombre requerido', variant: 'destructive' });
       return;
@@ -68,7 +79,14 @@ export default function ClientsPage() {
           <h1 className="text-2xl font-bold tracking-tight">Clientes</h1>
           <p className="text-muted-foreground">Clientes del estudio — aislados por abogado</p>
         </div>
-        <Button onClick={() => setOpen(true)} className="bg-gray-900 hover:bg-green-900">
+        <Button onClick={() => {
+          if (!hasProAccess) {
+            posthog.capture('pro_paywall_opened', { action: 'create_client' });
+            setProPaywallOpen(true);
+            return;
+          }
+          setOpen(true);
+        }} className="bg-gray-900 hover:bg-green-900">
           <Plus className="h-4 w-4 mr-1" /> Nuevo cliente
         </Button>
       </div>
@@ -161,6 +179,7 @@ export default function ClientsPage() {
           </form>
         </DialogContent>
       </Dialog>
+      <ProPricingModal open={proPaywallOpen} onOpenChange={setProPaywallOpen} triggerAction="create_client" />
     </div>
   );
 }

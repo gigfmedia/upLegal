@@ -16,6 +16,9 @@ import { normalizeEmail } from '@/lib/normalizeEmail';
 import { trackBookingCreated, trackRequestProcessed } from '@/lib/activationAnalytics';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSearchParams, Link } from 'react-router-dom';
+import { useProSubscription } from '@/hooks/useProSubscription';
+import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
+import posthog from 'posthog-js';
 
 type Appointment = {
   id: string;
@@ -51,6 +54,8 @@ export default function CitasPage() {
   const [selectedCaseId, setSelectedCaseId] = useState<string>('none');
   const [clients, setClients] = useState<any[]>([]);
   const [preselectedCaseClient, setPreselectedCaseClient] = useState<any>(null);
+  const { hasProAccess } = useProSubscription();
+  const [proPaywallOpen, setProPaywallOpen] = useState(false);
 
   useEffect(() => {
     if (preselectedCaseId) {
@@ -121,6 +126,11 @@ export default function CitasPage() {
   };
 
   const handleNewAppointment = async (data: any) => {
+    if (!hasProAccess) {
+      posthog.capture('pro_paywall_opened', { action: 'create_appointment' });
+      setProPaywallOpen(true);
+      return;
+    }
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
@@ -281,7 +291,14 @@ export default function CitasPage() {
           <h1 className="text-2xl font-bold tracking-tight">Citas</h1>
           <p className="text-muted-foreground">Gestiona tus citas programadas</p>
         </div>
-        <Button onClick={() => { setEditingAppointment(null); setSelectedCaseId(preselectedCaseId || 'none'); setShowNewAppointmentForm(true); }} className="bg-gray-900 hover:bg-green-900 shrink-0">
+        <Button onClick={() => {
+          if (!hasProAccess) {
+            posthog.capture('pro_paywall_opened', { action: 'create_appointment' });
+            setProPaywallOpen(true);
+            return;
+          }
+          setEditingAppointment(null); setSelectedCaseId(preselectedCaseId || 'none'); setShowNewAppointmentForm(true);
+        }} className="bg-gray-900 hover:bg-green-900 shrink-0">
           <Plus className="h-4 w-4 mr-1" /> Nueva cita
         </Button>
       </div>
@@ -438,6 +455,7 @@ export default function CitasPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ProPricingModal open={proPaywallOpen} onOpenChange={setProPaywallOpen} triggerAction="create_appointment" />
     </div>
   );
 }

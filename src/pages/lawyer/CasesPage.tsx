@@ -12,6 +12,9 @@ import { useLawyerClients } from '@/hooks/useLawyerClients';
 import { useToast } from '@/hooks/use-toast';
 import { Search, Loader2, Plus, Eye, FileText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useProSubscription } from '@/hooks/useProSubscription';
+import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
+import posthog from 'posthog-js';
 
 const statusColors: Record<string, string> = {
   new: 'bg-yellow-100 text-yellow-800',
@@ -50,6 +53,8 @@ export default function CasesPage() {
   const [description, setDescription] = useState('');
   const [clientId, setClientId] = useState<string>('none');
   const [saving, setSaving] = useState(false);
+  const { hasProAccess } = useProSubscription();
+  const [proPaywallOpen, setProPaywallOpen] = useState(false);
 
   const filtered = useMemo(
     () =>
@@ -63,6 +68,12 @@ export default function CasesPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!hasProAccess) {
+      posthog.capture('pro_paywall_opened', { action: 'create_case' });
+      setProPaywallOpen(true);
+      return;
+    }
+    posthog.capture('pro_paywall_action', { action: 'create_case' });
     if (!title.trim()) {
       toast({ title: 'Título requerido', variant: 'destructive' });
       return;
@@ -102,7 +113,14 @@ export default function CasesPage() {
           <h1 className="text-2xl font-bold tracking-tight">Casos</h1>
           <p className="text-muted-foreground">Expedientes del estudio — vinculados a cliente y reserva</p>
         </div>
-        <Button onClick={() => setOpen(true)} className="bg-gray-900 hover:bg-green-900">
+        <Button onClick={() => {
+          if (!hasProAccess) {
+            posthog.capture('pro_paywall_opened', { action: 'create_case' });
+            setProPaywallOpen(true);
+            return;
+          }
+          setOpen(true);
+        }} className="bg-gray-900 hover:bg-green-900">
           <Plus className="h-4 w-4 mr-1" /> Nuevo caso
         </Button>
       </div>
@@ -225,6 +243,7 @@ export default function CasesPage() {
           </form>
         </DialogContent>
       </Dialog>
+      <ProPricingModal open={proPaywallOpen} onOpenChange={setProPaywallOpen} triggerAction="create_case" />
     </div>
   );
 }
