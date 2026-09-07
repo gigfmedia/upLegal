@@ -21,7 +21,7 @@ const PERKS = [
   'Solicitudes y agenda',
   'Citas y pagos',
   'Gestión de tu operación',
-  'LegalUp AI integrado',
+  'LegalUp AI limitado (1 caso, 3 documentos)',
 ];
 
 function formatDate(value: string | null): string {
@@ -89,6 +89,7 @@ export function ProPricingModal({ open, onOpenChange, triggerAction }: ProPricin
                 </li>
               ))}
             </ul>
+            <p className="mt-3 text-xs text-gray-500">AI Full con jurisprudencia y acceso completo: $49.900/mes</p>
           </div>
 
           {isActive && (

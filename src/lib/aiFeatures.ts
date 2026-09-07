@@ -39,10 +39,16 @@ export const AI_LIMITS = {
   maxDocumentSizeBytes: 20 * 1024 * 1024, // 20 MB
 };
 
+export const AI_PRO_LIMITS = {
+  maxCases: 1,
+  maxDocuments: 3,
+};
+
 /** Features disponibles según el plan de la suscripción AI. */
 const PLAN_FEATURES: Record<string, AIFeatureKey[]> = {
   free: [],
   essential: AI_FEATURES.map(f => f.key),
+  pro_limited: ['document_analysis', 'case_chat'],
 };
 
 /**

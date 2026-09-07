@@ -7561,6 +7561,26 @@ const getAILawyerAccess = async (userId) => {
     }
   }
 
+  // Pro Limited precedence: if no AI access, check Pro (no new ai_subscriptions row needed)
+  if (!hasAccess) {
+    const proAccess = await getProLawyerAccess(userId);
+    if (proAccess.hasAccess) {
+      return {
+        subscription: proAccess.subscription,
+        hasAccess: true,
+        status: 'pro_limited',
+        plan: 'pro_limited',
+        isTrialing: false,
+        isActive: false,
+        isProLimited: true,
+        trialDaysRemaining: 0,
+        trialEndsAt: null,
+        currentPeriodEnd: proAccess.currentPeriodEnd,
+        cancelAtPeriodEnd: false,
+      };
+    }
+  }
+
   return {
     subscription,
     hasAccess,
@@ -7568,6 +7588,7 @@ const getAILawyerAccess = async (userId) => {
     plan: subscription?.plan ?? null,
     isTrialing: status === 'trialing',
     isActive: status === 'active',
+    isProLimited: false,
     trialEndsAt: subscription?.trial_ends_at ?? null,
     trialDaysRemaining,
     currentPeriodEnd: subscription?.current_period_end ?? null,
@@ -7719,9 +7740,14 @@ const checkAIProtectionLimits = async (userId) => {
 // abogado en trial superó sus límites, o null si puede continuar.
 // El plan Essential activo no tiene límite de casos/documentos.
 const checkAILimits = async (userId, access) => {
-  if (!access?.isTrialing) return null;
+  const isProLimited = access?.isProLimited || access?.plan === 'pro_limited';
+  const isTrialing = access?.isTrialing;
+  if (!isProLimited && !isTrialing) return null;
   // Cuentas de prueba marcadas como ilimitadas no tienen límites de uso.
-  if (access.subscription?.unlimited_trial) return null;
+  if (isTrialing && access.subscription?.unlimited_trial) return null;
+
+  const maxCases = isProLimited ? 1 : 3;
+  const maxDocs = isProLimited ? 3 : 10;
 
   const [{ count: caseCount, error: casesError }, { count: docCount, error: docsError }] =
     await Promise.all([
@@ -7734,11 +7760,15 @@ const checkAILimits = async (userId, access) => {
     return null; // No bloquear si falla el conteo.
   }
 
-  if (docCount >= AI_TRIAL_MAX_DOCUMENTS) {
-    return `Alcanzaste el límite de ${AI_TRIAL_MAX_DOCUMENTS} documentos de la prueba gratuita. Suscríbete a Pro para subir más.`;
+  if (docCount >= maxDocs) {
+    return isProLimited
+      ? `Alcanzaste el límite de ${maxDocs} documentos de tu plan Pro. Actualiza a AI Full para más.`
+      : `Alcanzaste el límite de ${AI_TRIAL_MAX_DOCUMENTS} documentos de la prueba gratuita. Suscríbete a Pro para subir más.`;
   }
-  if (caseCount >= AI_TRIAL_MAX_CASES) {
-    return `Alcanzaste el límite de ${AI_TRIAL_MAX_CASES} casos de la prueba gratuita. Suscríbete a Pro para crear más.`;
+  if (caseCount >= maxCases) {
+    return isProLimited
+      ? `Alcanzaste el límite de ${maxCases} caso de tu plan Pro. Actualiza a AI Full para más.`
+      : `Alcanzaste el límite de ${AI_TRIAL_MAX_CASES} casos de la prueba gratuita. Suscríbete a Pro para crear más.`;
   }
   return null;
 };
