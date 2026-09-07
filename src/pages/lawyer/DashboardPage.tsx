@@ -11,6 +11,7 @@ import { es } from 'date-fns/locale';
 import { User, Calendar, Briefcase, FileText, Clock, Sparkles, ArrowRight, Loader2, Inbox, DollarSign, Users } from 'lucide-react';
 import { ProfileCompletion } from '@/components/dashboard/ProfileCompletion';
 import { useAISubscription } from '@/hooks/useAISubscription';
+import { useProSubscription } from '@/hooks/useProSubscription';
 import { GoogleCalendarConnect } from '@/components/dashboard/GoogleCalendarConnect';
 
 const statusLabels: Record<string, string> = {
@@ -54,6 +55,20 @@ export default function LawyerDashboardPage() {
       navigate('/lawyer/dashboard', { replace: true });
     }
   }, [searchParams, toast, navigate]);
+
+  const { hasProAccess: hasProAccessCheck } = useProSubscription();
+  useEffect(() => {
+    if (searchParams.get('pro_subscription_success') === 'true') {
+      if (hasProAccessCheck) {
+        toast({ title: '¡Pro activado!', description: 'Tu suscripción Pro está activa.' });
+      } else {
+        toast({ title: 'Verificando pago', description: 'Estamos verificando tu pago. Te avisaremos cuando esté activo.' });
+      }
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('pro_subscription_success');
+      navigate(`/lawyer/dashboard${newParams.toString() ? `?${newParams.toString()}` : ''}`, { replace: true });
+    }
+  }, [searchParams, hasProAccessCheck, toast, navigate]);
 
   useEffect(() => {
     if (user?.id) trackOnboardingViewed(user.id);

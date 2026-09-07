@@ -446,6 +446,13 @@ const AI_SUBSCRIPTION_TRIAL_MS = AI_SUBSCRIPTION_TRIAL_DAYS * 24 * 60 * 60 * 100
 const AI_EXTERNAL_REF_PREFIX = 'AI_';
 const AI_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 
+// ---- LegalUp Pro — Fase 3B-1: Founder 15 $19.990 ----
+const PRO_SUBSCRIPTION_PLAN = 'saas_essential';
+const PRO_SUBSCRIPTION_PRICE_CLP = 19990;
+const PRO_EXTERNAL_REF_PREFIX = 'PRO_';
+const PRO_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
+const PRO_FOUNDER_LIMIT = 15;
+
 // Límites de uso (Bloque 22). Solo aplican durante el trial; el plan Essential activo no limita.
 // Coinciden con la política del trigger en la BD (3 casos / 10 documentos).
 const AI_MAX_DOCUMENT_SIZE_MB = 20;
@@ -5095,6 +5102,46 @@ const handleAIAuthorizedPayment = async (payment, subscription) => {
   }
 };
 
+const handleProPreapprovalWebhook = async (preapproval) => {
+  const mpStatus = preapproval.status;
+  const preapprovalId = preapproval.id;
+  const externalRef = preapproval.external_reference || '';
+  const lawyerId = String(externalRef).replace(PRO_EXTERNAL_REF_PREFIX, '');
+  if (!lawyerId) return;
+  const { data: subscription } = await supabase.from('lawyer_subscriptions').select('*').eq('lawyer_id', lawyerId).maybeSingle();
+  if (!subscription) return;
+  const now = new Date();
+  if (mpStatus === 'authorized' || mpStatus === 'active') {
+    const periodEnd = new Date(now.getTime() + PRO_MONTH_MS);
+    await supabase.from('lawyer_subscriptions').update({ status: 'active', current_period_start: now.toISOString(), current_period_end: periodEnd.toISOString(), cancel_at_period_end: false, cancelled_at: null, updated_at: now.toISOString() }).eq('id', subscription.id);
+    await capturePostHog('pro_subscription_activated', lawyerId, { price_clp: PRO_SUBSCRIPTION_PRICE_CLP });
+    const userData = await getProLawyerEmail(lawyerId);
+    if (userData?.email) {
+      try { await sendAIEmail(userData.email, '¡Bienvenido a LegalUp Pro!', '<p>Tu suscripción Pro está activa.</p>'); } catch {}
+    }
+  } else if (mpStatus === 'cancelled') {
+    await supabase.from('lawyer_subscriptions').update({ status: 'cancelled', cancelled_at: now.toISOString(), cancel_at_period_end: true, updated_at: now.toISOString() }).eq('id', subscription.id);
+  } else if (mpStatus === 'paused') {
+    await supabase.from('lawyer_subscriptions').update({ status: 'past_due', updated_at: now.toISOString() }).eq('id', subscription.id);
+  }
+};
+
+const handleProAuthorizedPayment = async (payment) => {
+  const preapprovalId = payment.preapproval_id;
+  if (!preapprovalId) return;
+  const { data: subscription } = await supabase.from('lawyer_subscriptions').select('*').eq('provider_subscription_id', String(preapprovalId)).maybeSingle();
+  if (!subscription) return;
+  if (payment.status === 'approved') {
+    const now = new Date();
+    const periodEnd = new Date(now.getTime() + PRO_MONTH_MS);
+    await supabase.from('lawyer_subscriptions').update({ status: 'active', current_period_start: now.toISOString(), current_period_end: periodEnd.toISOString(), cancel_at_period_end: false, cancelled_at: null, updated_at: now.toISOString() }).eq('id', subscription.id);
+    await capturePostHog('pro_subscription_activated', subscription.lawyer_id, { price_clp: PRO_SUBSCRIPTION_PRICE_CLP });
+  } else if (payment.status === 'rejected' || payment.status === 'refused') {
+    await supabase.from('lawyer_subscriptions').update({ status: 'past_due', updated_at: new Date().toISOString() }).eq('id', subscription.id);
+    await capturePostHog('pro_subscription_payment_failed', subscription.lawyer_id, { payment_id: String(payment.id) });
+  }
+};
+
 const handlePreapprovalWebhook = async (preapprovalId) => {
   console.log('[Empresas] Handling preapproval event:', preapprovalId);
 
@@ -5121,6 +5168,12 @@ const handlePreapprovalWebhook = async (preapprovalId) => {
   // LegalUp AI: las suscripciones AI usan external_reference `AI_<lawyerId>`.
   if (externalRef && String(externalRef).startsWith(AI_EXTERNAL_REF_PREFIX)) {
     await handleAIPreapprovalWebhook(preapproval);
+    return;
+  }
+
+  // LegalUp Pro: Founder 15
+  if (externalRef && String(externalRef).startsWith(PRO_EXTERNAL_REF_PREFIX)) {
+    await handleProPreapprovalWebhook(preapproval);
     return;
   }
 
@@ -5299,6 +5352,17 @@ const handleAuthorizedPayment = async (paymentId) => {
     .maybeSingle();
   if (aiSubscription) {
     await handleAIAuthorizedPayment(payment, aiSubscription);
+    return;
+  }
+
+  // LegalUp Pro
+  const { data: proSubscription } = await supabase
+    .from('lawyer_subscriptions')
+    .select('*')
+    .eq('provider_subscription_id', String(preapprovalId))
+    .maybeSingle();
+  if (proSubscription) {
+    await handleProAuthorizedPayment(payment);
     return;
   }
 
@@ -7679,6 +7743,71 @@ const checkAILimits = async (userId, access) => {
   return null;
 };
 
+// ---- LegalUp Pro — entitlement (Fase 3B-1, sin trial) ----
+const getProLawyerSubscription = async (userId) => {
+  const { data, error } = await supabase
+    .from('lawyer_subscriptions')
+    .select('*')
+    .eq('lawyer_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) {
+    console.error('[LegalUpPro] subscription query error:', error);
+    return null;
+  }
+  return data ?? null;
+};
+
+const getProLawyerAccess = async (userId) => {
+  const subscription = await getProLawyerSubscription(userId);
+  const now = Date.now();
+  let hasAccess = false;
+  let status = subscription?.status ?? null;
+  if (subscription) {
+    const periodEndMs = subscription.current_period_end ? Date.parse(subscription.current_period_end) : 0;
+    if (subscription.status === 'active') {
+      hasAccess = periodEndMs > now;
+      if (!hasAccess) status = 'expired';
+    } else if (subscription.status === 'cancelled') {
+      hasAccess = periodEndMs > now;
+    } else if (subscription.status === 'past_due') {
+      hasAccess = false;
+    } else if (subscription.status === 'pending') {
+      hasAccess = false;
+    }
+  }
+  return {
+    subscription,
+    hasAccess,
+    status,
+    plan: subscription?.plan ?? null,
+    isActive: status === 'active' && hasAccess,
+    isCancelled: status === 'cancelled',
+    isPastDue: status === 'past_due',
+    isExpired: status === 'expired',
+    currentPeriodEnd: subscription?.current_period_end ?? null,
+  };
+};
+
+const requireProAccess = async (userId) => {
+  const access = await getProLawyerAccess(userId);
+  return access.hasAccess ? access : null;
+};
+
+const requireProEntitlement = async (req, res, userId) => {
+  const access = await requireProAccess(userId);
+  if (!access) {
+    return {
+      res: res.status(402).json({
+        error: 'Necesitas LegalUp Pro activo para usar esta función.',
+        code: 'PRO_PLAN_REQUIRED',
+      }),
+    };
+  }
+  return { res: null };
+};
+
 // POST /api/ai/trial/start — inicia la prueba gratuita (idempotente).
 // Autoridad de identidad: backend + BD. NO confía en el frontend.
 //   - Exige email confirmado (403 EMAIL_NOT_CONFIRMED).
@@ -7952,6 +8081,151 @@ app.post('/api/ai/subscription/cancel', async (req, res) => {
     res.status(500).json({ error: 'No se pudo cancelar la suscripción.' });
   }
 });
+
+// ---- LegalUp Pro — endpoints (Fase 3B-1, Founder 15) ----
+app.get('/api/pro/subscription', async (req, res) => {
+  try {
+    const userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    const access = await getProLawyerAccess(userId);
+    res.json({ hasProAccess: access.hasAccess, status: access.status, subscription: access.subscription });
+  } catch (e) {
+    console.error('[LegalUpPro] get subscription error:', e);
+    res.status(500).json({ error: 'No se pudo obtener la suscripción Pro.' });
+  }
+});
+
+app.post('/api/pro/subscribe', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+
+    // Founder 15 check — server-side, counts active/pending founder slots
+    const { count: founderCount } = await supabase
+      .from('lawyer_subscriptions')
+      .select('id', { count: 'exact', head: true })
+      .eq('is_founder', true)
+      .in('status', ['pending', 'active']);
+
+    const isFounderSlot = (founderCount ?? 0) < PRO_FOUNDER_LIMIT;
+
+    let subscription = await getProLawyerSubscription(userId);
+    if (subscription && ['active', 'pending'].includes(subscription.status) && subscription.provider_subscription_id) {
+      return res.status(409).json({ error: 'Ya tienes una suscripción Pro activa.', code: 'ALREADY_SUBSCRIBED' });
+    }
+
+    const appUrl = process.env.APP_URL || process.env.FRONTEND_URL || 'https://legalup.cl';
+
+    if (!subscription) {
+      const { data, error } = await supabase
+        .from('lawyer_subscriptions')
+        .insert({
+          lawyer_id: userId,
+          plan: PRO_SUBSCRIPTION_PLAN,
+          status: 'pending',
+          provider: 'mercadopago',
+          amount_clp: PRO_SUBSCRIPTION_PRICE_CLP,
+          is_founder: isFounderSlot,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      subscription = data;
+    } else {
+      // Reactivar pending/cancelled/expired
+      const { data, error } = await supabase
+        .from('lawyer_subscriptions')
+        .update({ status: 'pending', is_founder: isFounderSlot, updated_at: new Date().toISOString() })
+        .eq('id', subscription.id)
+        .select()
+        .single();
+      if (error) throw error;
+      subscription = data;
+    }
+
+    const userData = await getAILawyerEmail(userId);
+    const preapprovalData = {
+      reason: 'LegalUp Pro - Suscripción mensual',
+      external_reference: `${PRO_EXTERNAL_REF_PREFIX}${userId}`,
+      payer_email: userData?.email || '',
+      auto_recurring: {
+        frequency: 1,
+        frequency_type: 'months',
+        transaction_amount: PRO_SUBSCRIPTION_PRICE_CLP,
+        currency_id: 'CLP',
+        start_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      },
+      back_url: (() => {
+        const base = appUrl || 'https://legalup.cl';
+        if (base.includes('localhost')) return 'https://legalup.cl';
+        return `${base}/lawyer/dashboard?pro_subscription_success=true`;
+      })(),
+      status: 'pending',
+    };
+    const webhookUrl = resolveWebhookUrl(req);
+    if (webhookUrl) preapprovalData.notification_url = webhookUrl;
+
+    const mpResponse = await fetch('https://api.mercadopago.com/preapproval', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${mercadopagoAccessToken}` },
+      body: JSON.stringify(preapprovalData),
+    });
+    const mpResult = await mpResponse.json();
+    if (!mpResponse.ok) {
+      console.error('[LegalUpPro] MP preapproval error:', mpResult);
+      return res.status(500).json({ error: 'No se pudo iniciar el cobro en Mercado Pago.', details: mpResult });
+    }
+
+    await supabase.from('lawyer_subscriptions').update({ provider_subscription_id: String(mpResult.id), updated_at: new Date().toISOString() }).eq('id', subscription.id);
+
+    await capturePostHog('pro_subscription_checkout_started', userId, { price_clp: PRO_SUBSCRIPTION_PRICE_CLP, preapproval_id: String(mpResult.id), is_founder: isFounderSlot });
+
+    res.json({ success: true, subscription_id: subscription.id, preapproval_id: String(mpResult.id), initPoint: mpResult.init_point || mpResult.sandbox_init_point, is_founder: isFounderSlot });
+  } catch (error) {
+    console.error('[LegalUpPro] subscribe error:', error);
+    res.status(500).json({ error: 'No se pudo procesar la suscripción Pro.' });
+  }
+});
+
+app.post('/api/pro/subscription/cancel', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    const subscription = await getProLawyerSubscription(userId);
+    if (!subscription || subscription.status !== 'active') {
+      return res.status(409).json({ error: 'No tienes una suscripción Pro activa.', code: 'NOT_ACTIVE' });
+    }
+    if (subscription.provider_subscription_id) {
+      const mpResponse = await fetch(`https://api.mercadopago.com/preapproval/${subscription.provider_subscription_id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${mercadopagoAccessToken}` },
+        body: JSON.stringify({ status: 'cancelled' }),
+      });
+      if (!mpResponse.ok) {
+        const mpResult = await mpResponse.json().catch(() => ({}));
+        console.error('[LegalUpPro] MP cancel error:', mpResult);
+      }
+    }
+    const now = new Date();
+    await supabase.from('lawyer_subscriptions').update({ status: 'cancelled', cancelled_at: now.toISOString(), cancel_at_period_end: true, updated_at: now.toISOString() }).eq('id', subscription.id);
+    await capturePostHog('pro_subscription_cancelled', userId, { price_clp: PRO_SUBSCRIPTION_PRICE_CLP });
+    const userData = await getProLawyerEmail(userId);
+    // Reuse AI email template for Pro cancelled
+    if (userData?.email) {
+      try {
+        await sendAIEmail(userData.email, 'Tu suscripción de LegalUp Pro fue cancelada', `<p>Tu suscripción Pro se cancelará al final del período.</p>`);
+      } catch {}
+    }
+    res.json({ success: true, cancel_at_period_end: true });
+  } catch (error) {
+    console.error('[LegalUpPro] cancel error:', error);
+    res.status(500).json({ error: 'No se pudo cancelar la suscripción Pro.' });
+  }
+});
+
+const getProLawyerEmail = getAILawyerEmail;
 
 const extractTextFromStoredPdf = async (doc) => {
   const { data: file, error: downloadError } = await supabase.storage
