@@ -2891,7 +2891,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
       console.log('[webhook] step=booking_normalization status=ok user_id=' + (userId || 'null'));
 
       // FASE 3B/4B-3 C12: Payment accounting — usa snapshot, no settings actuales
-      const expectedClientTotal = Number(booking.price);
+      const ledgerExpectedTotal = Number(booking.price);
       try {
         const { data: existingPayment } = await supabase.from('payments').select('id').eq('booking_id', bookingId).maybeSingle();
         if (!existingPayment) {
@@ -2914,8 +2914,8 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                 platformFeePercent = Number(ps.platform_fee_percent ?? platformFeePercent);
               }
             } catch {}
-            derivedOriginal = Math.round(expectedClientTotal / (1 + clientSurchargePercent));
-            clientSurcharge = Math.max(expectedClientTotal - derivedOriginal, 0);
+            derivedOriginal = Math.round(ledgerExpectedTotal / (1 + clientSurchargePercent));
+            clientSurcharge = Math.max(ledgerExpectedTotal - derivedOriginal, 0);
             platformFee = Math.round(derivedOriginal * platformFeePercent);
             lawyerAmount = Math.max(derivedOriginal - platformFee, 0);
           }
@@ -2939,7 +2939,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
             lawyer_amount: lawyerAmount,
             currency: 'CLP',
             status: 'succeeded',
-            metadata: { provider: 'mercadopago', provider_payment_id: paymentId, booking_id: bookingId, client_total: expectedClientTotal },
+            metadata: { provider: 'mercadopago', provider_payment_id: paymentId, booking_id: bookingId, client_total: ledgerExpectedTotal },
           });
           if (payInsertError) {
             if (payInsertError.code === '23505') {
