@@ -1369,6 +1369,28 @@ app.post('/api/bookings/create', async (req, res) => {
       return false;
     };
 
+    // Snapshot checkout economics for idempotent webhook (C12)
+    let pricingSnapshot = null;
+    try {
+      const { data: snapSettings } = await supabase.from('platform_settings').select('client_surcharge_percent, platform_fee_percent').order('updated_at', { ascending: false }).limit(1).maybeSingle();
+      const snapSurchargePercent = Number(snapSettings?.client_surcharge_percent ?? 0.10);
+      const snapPlatformPercent = Number(snapSettings?.platform_fee_percent ?? 0.20);
+      const snapBase = Math.round(computedPrice / (1 + snapSurchargePercent));
+      const snapSurcharge = Math.max(computedPrice - snapBase, 0);
+      const snapPlatform = Math.round(snapBase * snapPlatformPercent);
+      const snapLawyer = Math.max(snapBase - snapPlatform, 0);
+      pricingSnapshot = {
+        base_amount: snapBase,
+        client_total: computedPrice,
+        client_surcharge: snapSurcharge,
+        client_surcharge_percent: snapSurchargePercent,
+        platform_fee: snapPlatform,
+        platform_fee_percent: snapPlatformPercent,
+        lawyer_amount: snapLawyer,
+        currency: 'CLP',
+      };
+    } catch {}
+
     const bookingInsert = {
       lawyer_id,
       user_id: user_id || null,
@@ -1388,6 +1410,7 @@ app.post('/api/bookings/create', async (req, res) => {
       requires_meeting: isServiceBooking ? inferRequiresMeeting() : true,
       experiment_variant: experiment_variant || null,
       posthog_distinct_id: posthog_distinct_id || null,
+      pricing_snapshot: pricingSnapshot,
       metadata: {
         article_slug: article_slug ? String(article_slug).trim() || null : null,
       },
@@ -2867,24 +2890,35 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
 
       console.log('[webhook] step=booking_normalization status=ok user_id=' + (userId || 'null'));
 
-      // FASE 3B: Payment accounting — crear/reconciliar payments row para bookings modernos (idempotente)
+      // FASE 3B/4B-3 C12: Payment accounting — usa snapshot, no settings actuales
       const expectedClientTotal = Number(booking.price);
       try {
         const { data: existingPayment } = await supabase.from('payments').select('id').eq('booking_id', bookingId).maybeSingle();
         if (!existingPayment) {
-          let clientSurchargePercent = 0.1;
-          let platformFeePercent = 0.20;
-          try {
-            const { data: ps } = await supabase.from('platform_settings').select('client_surcharge_percent, platform_fee_percent').order('updated_at', { ascending: false }).limit(1).maybeSingle();
-            if (ps) {
-              clientSurchargePercent = Number(ps.client_surcharge_percent ?? clientSurchargePercent);
-              platformFeePercent = Number(ps.platform_fee_percent ?? platformFeePercent);
-            }
-          } catch {}
-          const derivedOriginal = Math.round(expectedClientTotal / (1 + clientSurchargePercent));
-          const clientSurcharge = Math.max(expectedClientTotal - derivedOriginal, 0);
-          const platformFee = Math.round(derivedOriginal * platformFeePercent);
-          const lawyerAmount = Math.max(derivedOriginal - platformFee, 0);
+          let snap = booking.pricing_snapshot;
+          let clientSurchargePercent, platformFeePercent, derivedOriginal, clientSurcharge, platformFee, lawyerAmount;
+          if (snap && typeof snap.base_amount === 'number' && typeof snap.lawyer_amount === 'number') {
+            derivedOriginal = Number(snap.base_amount);
+            clientSurcharge = Number(snap.client_surcharge);
+            platformFee = Number(snap.platform_fee);
+            lawyerAmount = Number(snap.lawyer_amount);
+            clientSurchargePercent = Number(snap.client_surcharge_percent ?? 0.10);
+            platformFeePercent = Number(snap.platform_fee_percent ?? 0.20);
+          } else {
+            clientSurchargePercent = 0.1;
+            platformFeePercent = 0.20;
+            try {
+              const { data: ps } = await supabase.from('platform_settings').select('client_surcharge_percent, platform_fee_percent').order('updated_at', { ascending: false }).limit(1).maybeSingle();
+              if (ps) {
+                clientSurchargePercent = Number(ps.client_surcharge_percent ?? clientSurchargePercent);
+                platformFeePercent = Number(ps.platform_fee_percent ?? platformFeePercent);
+              }
+            } catch {}
+            derivedOriginal = Math.round(expectedClientTotal / (1 + clientSurchargePercent));
+            clientSurcharge = Math.max(expectedClientTotal - derivedOriginal, 0);
+            platformFee = Math.round(derivedOriginal * platformFeePercent);
+            lawyerAmount = Math.max(derivedOriginal - platformFee, 0);
+          }
           // Verificar ecuación DB: amount = platform_fee + lawyer_amount
           if (derivedOriginal !== platformFee + lawyerAmount) {
             console.warn(`[webhook] step=payment_accounting warning equation mismatch derived=${derivedOriginal} platform=${platformFee} lawyer=${lawyerAmount}`);

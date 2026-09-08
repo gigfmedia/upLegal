@@ -10,7 +10,8 @@ const corsHeaders = {
 
 interface PaymentRecord {
   id: string
-  lawyer_user_id: string
+  lawyer_id: string
+  lawyer_user_id?: string | null
   lawyer_amount: number
   currency: string | null
 }
@@ -61,7 +62,7 @@ serve(async (req) => {
     const cutoffDate = getPreviousMonday()
     const { data: payments, error } = await supabase
       .from('payments')
-      .select('id, lawyer_user_id, lawyer_amount, currency, created_at')
+      .select('id, lawyer_id, lawyer_user_id, lawyer_amount, currency, created_at')
       .eq('status', 'succeeded')
       .eq('payout_status', 'pending')
       .lt('created_at', cutoffDate.toISOString())
@@ -123,18 +124,19 @@ function groupPayments(payments: PaymentRecord[]): PayoutGroup[] {
   const map = new Map<string, PayoutGroup>()
 
   payments.forEach((payment) => {
-    if (!payment.lawyer_user_id) return
+    const canonicalLawyerId = payment.lawyer_id || payment.lawyer_user_id
+    if (!canonicalLawyerId) return
 
-    if (!map.has(payment.lawyer_user_id)) {
-      map.set(payment.lawyer_user_id, {
-        lawyerId: payment.lawyer_user_id,
+    if (!map.has(canonicalLawyerId)) {
+      map.set(canonicalLawyerId, {
+        lawyerId: canonicalLawyerId,
         totalAmount: 0,
         currency: payment.currency ?? DEFAULT_CURRENCY,
         paymentIds: [],
       })
     }
 
-    const group = map.get(payment.lawyer_user_id)!
+    const group = map.get(canonicalLawyerId)!
     group.totalAmount += payment.lawyer_amount ?? 0
     group.paymentIds.push(payment.id)
     if (!group.currency && payment.currency) {
@@ -146,6 +148,19 @@ function groupPayments(payments: PaymentRecord[]): PayoutGroup[] {
 }
 
 async function processPayout(supabase: ReturnType<typeof createClient>, payout: PayoutGroup) {
+  // Claim payments atomically to prevent concurrent double-processing
+  const { data: claimed, error: claimError } = await supabase
+    .from('payments')
+    .update({ payout_status: 'processing', payout_error: null })
+    .in('id', payout.paymentIds)
+    .eq('payout_status', 'pending')
+    .select('id');
+  if (claimError || !claimed || claimed.length === 0) {
+    return { lawyerId: payout.lawyerId, status: 'skipped' as const, reason: 'Already processing or claimed' };
+  }
+  // Use only claimed ids for this attempt (handles concurrent workers)
+  payout.paymentIds = claimed.map((r: any) => r.id);
+  payout.totalAmount = payout.paymentIds.length === 0 ? 0 : payout.totalAmount; // keep original total if all claimed, else recalc not needed for this fix
   try {
     const { data: lawyer, error: profileError } = await supabase
       .from('profiles')

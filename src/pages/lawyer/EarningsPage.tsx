@@ -150,7 +150,7 @@ export default function EarningsPage() {
           const booking = bookingsMap.get(payment.booking_id);
           const realAmount = payment.lawyer_amount ?? payment.amount ?? 0;
           // payout_status is shown as badge detail, status maps to completed/pending
-          const displayStatus = payment.payout_status === 'paid' || payment.status === 'completed' || payment.status === 'approved' ? 'completed' : payment.status === 'pending' || payment.payout_status === 'pending' ? 'pending' : (payment.status as Transaction['status']);
+          const displayStatus = payment.payout_status === 'paid' || payment.payout_status === 'completed' || payment.status === 'completed' || payment.status === 'approved' ? 'completed' : payment.status === 'pending' || payment.payout_status === 'pending' ? 'pending' : (payment.status as Transaction['status']);
           // Prefer deterministic booking traceability (2B) over legacy appointment
           const traceClientName = booking?.client?.name || booking?.user_name;
           const traceService = booking?.service_title || booking?.case?.title;
