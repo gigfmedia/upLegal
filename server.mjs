@@ -2507,8 +2507,75 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
 
       console.log('[webhook] step=payment_ingestion payment_id=' + paymentId + ' booking_id=' + bookingId);
 
-      // Idempotencia: si este payment_id ya fue procesado (evento success persistido),
-      // evitamos re-correr appointment, notificaciones, emails, GA4 y duplicar payment_events.
+      // STEP 1: Payment ingestion — claim recuperable
+      // Caso 1: payment_id IS NULL → claim P1
+      // Caso 2: payment_id = P1 → retry del mismo pago → continuar
+      // Caso 3: payment_id = P999 ≠ P1 → conflicto → no sobrescribir
+      const { data: existingBooking, error: existingBookingError } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('id', bookingId)
+        .maybeSingle();
+
+      if (existingBookingError || !existingBooking) {
+        console.error('[webhook] step=payment_ingestion status=failed error=' + (existingBookingError?.message || 'booking not found'));
+        return;
+      }
+
+      if (existingBooking.payment_id && existingBooking.payment_id !== paymentId) {
+        console.error('[webhook] step=payment_ingestion status=conflict booking_id=' + bookingId + ' existing_payment_id=' + existingBooking.payment_id + ' incoming_payment_id=' + paymentId);
+        await supabase.from('bookings').update({ needs_manual_review: true, updated_at: new Date().toISOString() }).eq('id', bookingId);
+        return;
+      }
+
+      let booking = existingBooking;
+      let isRecovery = false;
+      if (!existingBooking.payment_id) {
+        const { data: claimed, error: claimError } = await supabase
+          .from('bookings')
+          .update({
+            status: 'confirmed',
+            payment_status: 'approved',
+            payment_id: paymentId,
+            updated_at: new Date().toISOString()
+          })
+          .is('payment_id', null)
+          .eq('id', bookingId)
+          .select('*')
+          .maybeSingle();
+        if (claimError) {
+          console.error('[webhook] step=payment_ingestion status=failed error=' + claimError.message);
+          return;
+        }
+        if (claimed) {
+          booking = claimed;
+          console.log('[webhook] step=payment_ingestion status=ok booking_id=' + bookingId + ' mode=new');
+        } else {
+          const { data: raced } = await supabase.from('bookings').select('*').eq('id', bookingId).maybeSingle();
+          if (raced?.payment_id === paymentId) {
+            booking = raced;
+            isRecovery = true;
+            console.log('[webhook] step=payment_ingestion status=recovery booking_id=' + bookingId + ' payment_id=' + paymentId);
+          } else if (raced?.payment_id) {
+            console.error('[webhook] step=payment_ingestion status=conflict_race booking_id=' + bookingId + ' payment_id=' + raced.payment_id);
+            return;
+          } else {
+            console.error('[webhook] step=payment_ingestion status=failed race_no_claim booking_id=' + bookingId);
+            return;
+          }
+        }
+      } else {
+        isRecovery = true;
+        console.log('[webhook] step=payment_ingestion status=recovery booking_id=' + bookingId + ' payment_id=' + paymentId + ' existing_status=' + existingBooking.status);
+        // Asegurar status confirmed si quedó pending por fallo previo
+        if (existingBooking.status !== 'confirmed' || existingBooking.payment_status !== 'approved') {
+          const { data: fixed } = await supabase.from('bookings').update({ status: 'confirmed', payment_status: 'approved', updated_at: new Date().toISOString() }).eq('id', bookingId).select('*').maybeSingle();
+          if (fixed) booking = fixed;
+        }
+      }
+
+      // Idempotencia de éxito completo: si ya existe payment_events success + booking confirmed y meet ya persistido, skip duplicado
+      let alreadyComplete = false;
       try {
         const { data: existingSuccess } = await supabase
           .from('payment_events')
@@ -2516,75 +2583,52 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           .eq('event_type', 'success')
           .filter('metadata->>payment_id', 'eq', paymentId)
           .maybeSingle();
-
-        if (existingSuccess) {
-          console.log('[webhook] step=idempotency status=skipped payment_id=' + paymentId + ' existing_event=' + existingSuccess.id + ' created_at=' + existingSuccess.created_at);
-          return;
+        if (existingSuccess && booking.status === 'confirmed' && booking.payment_id === paymentId) {
+          // Verificar si etapas principales ya completadas (appointment + meet)
+          // Si booking ya tiene meet_link o appointments ya tiene meet_link, es completo
+          alreadyComplete = true;
+          // No return aún: dejar que etapas con check propio decidan skip individual
+          console.log('[webhook] step=idempotency status=maybe_already_complete payment_id=' + paymentId + ' existing_event=' + existingSuccess.id);
         }
       } catch (idempotencyError) {
         console.error('[webhook] step=idempotency status=check_failed payment_id=' + paymentId, idempotencyError);
       }
 
-      // STEP 1: Payment ingestion - Get booking
-      // Claim atómico: solo actualizamos la booking si aún no tiene payment_id
-      // (guard de idempotencia por row-lock). Si otra entrega concurrente ya
-      // la confirmó, esta actualización afecta 0 filas y se trata como duplicada.
-      const { data: booking, error: bookingError } = await supabase
-        .from('bookings')
-        .update({
-          status: 'confirmed',
-          payment_status: 'approved',
-          payment_id: paymentId,
-          updated_at: new Date().toISOString()
-        })
-        .is('payment_id', null)
-        .eq('id', bookingId)
-        .select('*')
-        .maybeSingle();
-
-      if (bookingError) {
-        console.error('[webhook] step=payment_ingestion status=failed error=' + (bookingError?.message || 'booking not found'));
-        return;
-      }
-
-      if (!booking) {
-        console.log('[webhook] step=idempotency status=skipped booking_already_claimed payment_id=' + paymentId + ' booking_id=' + bookingId);
-        return;
-      }
-
-      console.log('[webhook] step=payment_ingestion status=ok booking_id=' + bookingId);
-
-      // Send PostHog booking_paid event
-      try {
-        const posthogKey = process.env.POSTHOG_PROJECT_API_KEY || process.env.VITE_POSTHOG_KEY;
-        if (posthogKey) {
-          await fetch('https://us.i.posthog.com/capture/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+      // Send PostHog booking_paid event — idempotente: si ya existe payment_events success, skip
+      if (!alreadyComplete) {
+        try {
+          const posthogKey = process.env.POSTHOG_PROJECT_API_KEY || process.env.VITE_POSTHOG_KEY;
+          if (posthogKey) {
+            await fetch('https://us.i.posthog.com/capture/', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-              api_key: posthogKey,
-              event: 'booking_paid',
-              distinct_id: booking.posthog_distinct_id || booking.user_id || booking.user_email,
-              properties: {
-                booking_id: bookingId,
-                payment_id: paymentId,
-                lawyer_id: booking.lawyer_id,
-                amount: payment.transaction_amount,
-                variant: booking.experiment_variant,
-                is_owner: OWNER_EMAILS.has((booking.user_email || '').trim().toLowerCase()),
-                article_slug: booking.metadata?.article_slug || null,
-              },
-            }),
-          });
+                api_key: posthogKey,
+                event: 'booking_paid',
+                distinct_id: booking.posthog_distinct_id || booking.user_id || booking.user_email,
+                properties: {
+                  booking_id: bookingId,
+                  payment_id: paymentId,
+                  lawyer_id: booking.lawyer_id,
+                  amount: payment.transaction_amount,
+                  variant: booking.experiment_variant,
+                  is_owner: OWNER_EMAILS.has((booking.user_email || '').trim().toLowerCase()),
+                  article_slug: booking.metadata?.article_slug || null,
+                },
+              }),
+            });
+          }
+        } catch (e) {
+          console.error('[webhook] step=posthog_capture failed', e);
         }
-      } catch (e) {
-        console.error('[webhook] step=posthog_capture failed', e);
+      } else {
+        console.log('[webhook] step=posthog_capture status=skipped_already_complete payment_id=' + paymentId);
       }
 
-      // Notificaciones in-app de pago aprobado (in-app únicamente; los emails
-      // de confirmación ya se envían más abajo en este mismo webhook).
+      // Notificaciones in-app de pago aprobado — eventId dedup evita duplicado en retry
       try {
-        await notificationsService.notifyUsers([
+        if (!alreadyComplete) {
+          await notificationsService.notifyUsers([
           ...(booking.user_id
             ? [{
                 userId: booking.user_id,
@@ -2608,6 +2652,9 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
             eventId: `payment_approved:${paymentId}`,
           },
         ]);
+        } else {
+          console.log('[webhook] step=notifications status=skipped_already_complete payment_id=' + paymentId);
+        }
       } catch (notifyError) {
         console.error('[webhook] notifications failed:', notifyError);
       }
