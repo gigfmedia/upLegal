@@ -70,6 +70,36 @@ import {
 } from './server/ai/assistant.mjs';
 import { createNotificationService } from './server/notifications/service.mjs';
 import { createAuthorization, isPlatformAdmin } from './server/auth/authorization.mjs';
+
+async function sendEmailIdempotent({ supabase, businessEventId, type, recipient, sendFn }) {
+  const normalizedRecipient = String(recipient || '').trim().toLowerCase();
+  if (!normalizedRecipient) return { skipped: true, reason: 'no_recipient' };
+  try {
+    const { error: insertError } = await supabase.from('notification_deliveries').insert({
+      business_event_id: businessEventId,
+      notification_type: type,
+      recipient: normalizedRecipient,
+      status: 'pending',
+    });
+    if (insertError && insertError.code !== '23505') throw insertError;
+    if (insertError && insertError.code === '23505') {
+      const { data: existing } = await supabase.from('notification_deliveries').select('status').eq('business_event_id', businessEventId).eq('notification_type', type).eq('recipient', normalizedRecipient).maybeSingle();
+      if (existing?.status === 'sent') return { skipped: true, reason: 'already_sent' };
+      await supabase.from('notification_deliveries').update({ status: 'pending', updated_at: new Date().toISOString() }).eq('business_event_id', businessEventId).eq('notification_type', type).eq('recipient', normalizedRecipient);
+    }
+  } catch (e) {
+    // If claim fails for unexpected reason, proceed to send but log
+    console.warn('[email_idempotency] claim failed', businessEventId, type, e?.message);
+  }
+  try {
+    const result = await sendFn();
+    await supabase.from('notification_deliveries').update({ status: 'sent', sent_at: new Date().toISOString(), provider_message_id: result?.id || null, updated_at: new Date().toISOString() }).eq('business_event_id', businessEventId).eq('notification_type', type).eq('recipient', normalizedRecipient);
+    return { sent: true, id: result?.id || null };
+  } catch (e) {
+    await supabase.from('notification_deliveries').update({ status: 'failed', error: String(e?.message || e).slice(0, 1000), updated_at: new Date().toISOString() }).eq('business_event_id', businessEventId).eq('notification_type', type).eq('recipient', normalizedRecipient);
+    throw e;
+  }
+}
 import { createCompanyAuthorization } from './server/auth/companyAuthorization.mjs';
 import { sendMetaPurchaseEvent } from './server/metaCapi.mjs';
 import { deriveCaseActions, CASE_ACTION_TYPES } from './server/ai/caseActionLayer.mjs';
@@ -3212,7 +3242,12 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         const serviceDescription = booking.service_description || '';
 
         try {
-          await resend.emails.send({
+          await sendEmailIdempotent({
+            supabase,
+            businessEventId: `booking:${bookingId}:payment:${paymentId}`,
+            type: 'service_client',
+            recipient: userEmail,
+            sendFn: async () => resend.emails.send({
             from: 'LegalUp <hola@mg.legalup.cl>',
             to: userEmail,
             subject: 'Tu solicitud de servicio ha sido confirmada',
@@ -3242,6 +3277,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                   </div>
                 </body>
               `,
+          }),
           });
           console.log('[webhook] step=email_dispatch status=sent type=service_client');
         } catch (emailError) {
@@ -3250,7 +3286,12 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
 
         if (lawyerEmail) {
           try {
-            await resend.emails.send({
+            await sendEmailIdempotent({
+              supabase,
+              businessEventId: `booking:${bookingId}:payment:${paymentId}`,
+              type: 'service_lawyer',
+              recipient: lawyerEmail,
+              sendFn: async () => resend.emails.send({
               from: 'LegalUp <hola@mg.legalup.cl>',
               to: lawyerEmail,
               subject: 'Nueva solicitud de servicio pagada',
@@ -3282,6 +3323,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                     </div>
                   </body>
                 `,
+              }),
             });
             console.log('[webhook] step=email_dispatch status=sent type=service_lawyer');
           } catch (emailError) {
@@ -3331,9 +3373,14 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           }
         }
 
-        // Send client email
+        // Send client email — idempotent per booking:payment
         try {
-          await resend.emails.send({
+          await sendEmailIdempotent({
+            supabase,
+            businessEventId: `booking:${bookingId}:payment:${paymentId}`,
+            type: 'booking_client',
+            recipient: userEmail,
+            sendFn: async () => resend.emails.send({
             from: 'LegalUp <hola@mg.legalup.cl>',
             to: userEmail,
             subject: 'Tu cita ha sido confirmada',
@@ -3373,6 +3420,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                     </div>
                 </body>
               `
+            }),
           });
           console.log('[webhook] step=email_dispatch status=sent type=client');
         } catch (emailError) {
@@ -3382,7 +3430,12 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         // Send lawyer email
         if (lawyerEmail) {
           try {
-            await resend.emails.send({
+            await sendEmailIdempotent({
+              supabase,
+              businessEventId: `booking:${bookingId}:payment:${paymentId}`,
+              type: 'booking_lawyer',
+              recipient: lawyerEmail,
+              sendFn: async () => resend.emails.send({
               from: 'LegalUp <hola@mg.legalup.cl>',
               to: lawyerEmail,
               subject: 'Tienes una nueva cita agendada',
@@ -3427,6 +3480,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                     </div>
                   </body>
                 `
+              }),
             });
             console.log('[webhook] step=email_dispatch status=sent type=lawyer');
           } catch (emailError) {
@@ -3445,7 +3499,12 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         const legalUpCommission = Math.round(totalAmount * 0.30);
         const lawyerAmount = Math.round(totalAmount * 0.70);
 
-        await resend.emails.send({
+        await sendEmailIdempotent({
+          supabase,
+          businessEventId: `booking:${bookingId}:payment:${paymentId}`,
+          type: 'booking_admin',
+          recipient: 'gigfmedia@icloud.com',
+          sendFn: async () => resend.emails.send({
           from: 'LegalUp <hola@mg.legalup.cl>',
           to: 'gigfmedia@icloud.com',
           subject: 'Nuevo pago recibido en LegalUp',
@@ -3486,6 +3545,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                 </div>
               </body>
             `
+          }),
         });
         console.log('[webhook] step=admin_notification status=sent booking_id=' + bookingId);
       } catch (adminEmailError) {
