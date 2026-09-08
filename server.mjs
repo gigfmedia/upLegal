@@ -68,6 +68,8 @@ import {
   ASSISTANT_LIMITS,
 } from './server/ai/assistant.mjs';
 import { createNotificationService } from './server/notifications/service.mjs';
+import { createAuthorization } from './server/auth/authorization.mjs';
+import { createCompanyAuthorization } from './server/auth/companyAuthorization.mjs';
 import { sendMetaPurchaseEvent } from './server/metaCapi.mjs';
 import { deriveCaseActions, CASE_ACTION_TYPES } from './server/ai/caseActionLayer.mjs';
 import {
@@ -356,63 +358,9 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
-// Middleware: Verifies the user is authenticated and has admin role before proceeding
-const requireAdmin = async (req, res, next) => {
-  try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'No autorizado', details: 'Token de acceso requerido' });
-    }
-
-    const token = authHeader.split(' ')[1];
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-
-    if (userError || !user) {
-      console.error('[requireAdmin] getUser failed:', userError?.message);
-      return res.status(401).json({ error: 'No autorizado', details: 'Token inválido o expirado' });
-    }
-
-    // Try id first, then user_id as fallback (profiles has both columns)
-    let profile = null;
-    const { data: profileById } = await supabase
-      .from('profiles')
-      .select('role, email')
-      .eq('id', user.id)
-      .maybeSingle();
-    profile = profileById;
-
-    if (!profile) {
-      const { data: profileByUserId } = await supabase
-        .from('profiles')
-        .select('role, email')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      profile = profileByUserId;
-    }
-
-    if (!profile) {
-      return res.status(403).json({ error: 'Perfil no encontrado', details: 'No se encontró el perfil del usuario' });
-    }
-
-    const isAdmin = profile.role === 'admin' ||
-                    profile.role === 'superadmin' ||
-                    user.email?.toLowerCase() === 'gigfmedia@icloud.com' ||
-                    user.user_metadata?.is_admin === true ||
-                    user.user_metadata?.role === 'admin';
-
-    if (!isAdmin) {
-      console.error('[requireAdmin] Access denied for user', user.id, 'email:', user.email, 'profile.role:', profile.role);
-      return res.status(403).json({ error: 'Se requieren permisos de administrador' });
-    }
-
-    req.adminUser = user;
-    req.adminProfile = profile;
-    next();
-  } catch (error) {
-    console.error('[requireAdmin] Error:', error);
-    return res.status(500).json({ error: 'Error de autenticación' });
-  }
-};
+// Authorization uses Auth server-managed claims, never editable profile/user metadata.
+const { authenticate, requireAdmin, requireAuthentication } = createAuthorization({ supabase });
+const companyAuthorization = createCompanyAuthorization({ supabase, authenticate });
 
 // Health check para mantener Render despierto
 app.get('/health', (req, res) => {
@@ -4734,9 +4682,10 @@ app.post('/api/empresas/subscription/:subscriptionId/cancel', async (req, res) =
 });
 
 // ---- CREATE COMPANY REQUEST ----
-app.post('/api/empresas/requests', async (req, res) => {
+app.post('/api/empresas/requests', companyAuthorization.forRoute('POST /api/empresas/requests'), async (req, res) => {
   try {
-    const { companyId, userId, title, description, category } = req.body;
+    const { title, description, category } = req.body;
+    const { companyId, userId } = req.companyAuthorization;
 
     if (!companyId || !userId || !description || !category) {
       return res.status(400).json({ error: 'Faltan campos obligatorios' });
@@ -4886,10 +4835,11 @@ app.post('/api/empresas/requests', async (req, res) => {
 });
 
 // ---- UPLOAD REQUEST DOCUMENT ----
-app.post('/api/empresas/requests/:requestId/documents', async (req, res) => {
+app.post('/api/empresas/requests/:requestId/documents', companyAuthorization.forRoute('POST /api/empresas/requests/:requestId/documents'), async (req, res) => {
   try {
     const { requestId } = req.params;
-    const { companyId, fileName, fileUrl, fileType, fileSize, uploadedBy } = req.body;
+    const { fileName, fileUrl, fileType, fileSize } = req.body;
+    const { companyId, userId: uploadedBy } = req.companyAuthorization;
 
     if (!requestId || !companyId || !fileName || !fileUrl || !uploadedBy) {
       return res.status(400).json({ error: 'Faltan campos obligatorios' });
@@ -5691,9 +5641,9 @@ app.put('/api/admin/empresas/requests/:id/status', requireAdmin, async (req, res
 });
 
 // ---- LAWYER: GET ASSIGNED COMPANY REQUESTS ----
-app.get('/api/lawyer/empresas/requests', async (req, res) => {
+app.get('/api/lawyer/empresas/requests', requireAuthentication, async (req, res) => {
   try {
-    const { userId } = req.query;
+    const userId = req.authUser.id;
 
     if (!userId) return res.status(400).json({ error: 'userId is required' });
 
@@ -5827,7 +5777,7 @@ app.post('/api/notifications/read-all', async (req, res) => {
 });
 
 // ---- SLA METRICS ----
-app.get('/api/empresas/sla-metrics', async (req, res) => {
+app.get('/api/empresas/sla-metrics', companyAuthorization.forRoute('GET /api/empresas/sla-metrics'), async (req, res) => {
   try {
     const { companyId } = req.query;
 
@@ -5885,7 +5835,7 @@ app.get('/api/empresas/sla-metrics', async (req, res) => {
 });
 
 // ---- BREACHED SLA CHECK ----
-app.post('/api/empresas/sla/check-breached', async (req, res) => {
+app.post('/api/empresas/sla/check-breached', requireAdmin, async (req, res) => {
   try {
     const now = new Date().toISOString();
 
@@ -5933,7 +5883,7 @@ app.post('/api/empresas/sla/check-breached', async (req, res) => {
 });
 
 // ---- UPDATE FIRST RESPONSE ----
-app.post('/api/empresas/requests/:id/first-response', async (req, res) => {
+app.post('/api/empresas/requests/:id/first-response', companyAuthorization.forRoute('POST /api/empresas/requests/:id/first-response'), async (req, res) => {
   try {
     const { id } = req.params;
     const now = new Date().toISOString();
@@ -6002,7 +5952,7 @@ app.post('/api/empresas/requests/:id/first-response', async (req, res) => {
 });
 
 // ---- TIMELINE ----
-app.get('/api/empresas/requests/:id/timeline', async (req, res) => {
+app.get('/api/empresas/requests/:id/timeline', companyAuthorization.forRoute('GET /api/empresas/requests/:id/timeline'), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -6053,7 +6003,7 @@ app.get('/api/empresas/requests/:id/timeline', async (req, res) => {
 });
 
 // ---- REQUEST CONVERSATION ----
-app.get('/api/empresas/requests/:id/conversation', async (req, res) => {
+app.get('/api/empresas/requests/:id/conversation', companyAuthorization.forRoute('GET /api/empresas/requests/:id/conversation'), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -6146,12 +6096,9 @@ app.get('/api/empresas/requests/:id/conversation', async (req, res) => {
   }
 });
 
-app.post('/api/empresas/requests/:id/messages', async (req, res) => {
+app.post('/api/empresas/requests/:id/messages', companyAuthorization.forRoute('POST /api/empresas/requests/:id/messages'), async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'No autorizado' });
-    const userId = await getUserIdFromToken(authHeader.replace('Bearer ', ''));
-    if (!userId) return res.status(401).json({ error: 'Token inválido' });
+    const userId = req.authUser.id;
 
     const { id } = req.params;
     const { content, fileUrl, fileName } = req.body;
@@ -6265,7 +6212,7 @@ app.get('/api/empresas/service-categories', async (req, res) => {
   }
 });
 
-app.get('/api/empresas/budgets', async (req, res) => {
+app.get('/api/empresas/budgets', companyAuthorization.forRoute('GET /api/empresas/budgets'), async (req, res) => {
   try {
     const { companyId, requestId } = req.query;
     if (!companyId) return res.status(400).json({ error: 'companyId requerido' });
@@ -6286,9 +6233,10 @@ app.get('/api/empresas/budgets', async (req, res) => {
   }
 });
 
-app.post('/api/empresas/budgets/auto-generate', async (req, res) => {
+app.post('/api/empresas/budgets/auto-generate', companyAuthorization.forRoute('POST /api/empresas/budgets/auto-generate'), async (req, res) => {
   try {
-    const { requestId, companyId } = req.body;
+    const { requestId } = req.body;
+    const { companyId } = req.companyAuthorization;
     if (!requestId || !companyId) return res.status(400).json({ error: 'requestId y companyId requeridos' });
 
     const { data: request } = await supabase
@@ -6356,9 +6304,11 @@ app.post('/api/empresas/budgets/auto-generate', async (req, res) => {
   }
 });
 
-app.post('/api/empresas/budgets/manual', async (req, res) => {
+app.post('/api/empresas/budgets/manual', companyAuthorization.forRoute('POST /api/empresas/budgets/manual'), async (req, res) => {
   try {
-    const { companyId, requestId, lawyerId, title, description, items, discount_clp, tax_clp } = req.body;
+    const { requestId, title, description, items, discount_clp, tax_clp } = req.body;
+    const { companyId, resource } = req.companyAuthorization;
+    const lawyerId = resource.lawyer_id || null;
     if (!companyId || !requestId || !items || items.length === 0) {
       return res.status(400).json({ error: 'Faltan campos obligatorios' });
     }
@@ -6409,7 +6359,7 @@ app.post('/api/empresas/budgets/manual', async (req, res) => {
   }
 });
 
-app.post('/api/empresas/budgets/:id/approve', async (req, res) => {
+app.post('/api/empresas/budgets/:id/approve', companyAuthorization.forRoute('POST /api/empresas/budgets/:id/approve'), async (req, res) => {
   try {
     const { id } = req.params;
     const { data, error } = await supabase
@@ -6427,7 +6377,7 @@ app.post('/api/empresas/budgets/:id/approve', async (req, res) => {
   }
 });
 
-app.post('/api/empresas/budgets/:id/reject', async (req, res) => {
+app.post('/api/empresas/budgets/:id/reject', companyAuthorization.forRoute('POST /api/empresas/budgets/:id/reject'), async (req, res) => {
   try {
     const { id } = req.params;
     const { reason } = req.body;
@@ -6447,7 +6397,7 @@ app.post('/api/empresas/budgets/:id/reject', async (req, res) => {
 });
 
 // ---- ACTIVITY LOG ----
-app.get('/api/empresas/activity-log', async (req, res) => {
+app.get('/api/empresas/activity-log', companyAuthorization.forRoute('GET /api/empresas/activity-log'), async (req, res) => {
   try {
     const { companyId, limit, offset, action } = req.query;
     if (!companyId) return res.status(400).json({ error: 'companyId requerido' });
@@ -6543,13 +6493,9 @@ app.get('/api/empresas/activity-log', async (req, res) => {
 });
 
 // ---- RATINGS ----
-app.post('/api/empresas/ratings', async (req, res) => {
+app.post('/api/empresas/ratings', requireAuthentication, async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'No autorizado' });
-
-    const userId = await getUserIdFromToken(authHeader.replace('Bearer ', ''));
-    if (!userId) return res.status(401).json({ error: 'Token inválido' });
+    const userId = req.authUser.id;
 
     const { requestId, lawyerId, rating, comment } = req.body;
     if (!requestId || !lawyerId || !rating || rating < 1 || rating > 5) {
@@ -6620,7 +6566,7 @@ app.post('/api/empresas/ratings', async (req, res) => {
   }
 });
 
-app.get('/api/empresas/ratings', async (req, res) => {
+app.get('/api/empresas/ratings', companyAuthorization.forRoute('GET /api/empresas/ratings'), async (req, res) => {
   try {
     const { requestId } = req.query;
     if (!requestId) return res.status(400).json({ error: 'requestId requerido' });
@@ -6826,12 +6772,9 @@ async function autoAssignLawyer(supabase, { companyId, userId, category, priorit
 // ---- CENTRO LEGAL ----
 
 // Seed default folders for a company
-app.post('/api/empresas/legal-center/seed', async (req, res) => {
+app.post('/api/empresas/legal-center/seed', companyAuthorization.forRoute('POST /api/empresas/legal-center/seed'), async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'No autorizado' });
-    const userId = await getUserIdFromToken(authHeader.replace('Bearer ', ''));
-    if (!userId) return res.status(401).json({ error: 'Token inválido' });
+    const userId = req.authUser.id;
 
     const { companyId } = req.body;
     if (!companyId) return res.status(400).json({ error: 'companyId requerido' });
@@ -6852,12 +6795,9 @@ app.post('/api/empresas/legal-center/seed', async (req, res) => {
 
 // ---- FOLDERS ----
 
-app.get('/api/empresas/legal-folders', async (req, res) => {
+app.get('/api/empresas/legal-folders', companyAuthorization.forRoute('GET /api/empresas/legal-folders'), async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'No autorizado' });
-    const userId = await getUserIdFromToken(authHeader.replace('Bearer ', ''));
-    if (!userId) return res.status(401).json({ error: 'Token inválido' });
+    const userId = req.authUser.id;
 
     const { companyId } = req.query;
     if (!companyId) return res.status(400).json({ error: 'companyId requerido' });
@@ -6875,12 +6815,9 @@ app.get('/api/empresas/legal-folders', async (req, res) => {
   }
 });
 
-app.post('/api/empresas/legal-folders', async (req, res) => {
+app.post('/api/empresas/legal-folders', companyAuthorization.forRoute('POST /api/empresas/legal-folders'), async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'No autorizado' });
-    const userId = await getUserIdFromToken(authHeader.replace('Bearer ', ''));
-    if (!userId) return res.status(401).json({ error: 'Token inválido' });
+    const userId = req.authUser.id;
 
     const { companyId, parentId, name, icon } = req.body;
     if (!companyId || !name) return res.status(400).json({ error: 'companyId y name requeridos' });
@@ -6899,12 +6836,9 @@ app.post('/api/empresas/legal-folders', async (req, res) => {
   }
 });
 
-app.put('/api/empresas/legal-folders/:id', async (req, res) => {
+app.put('/api/empresas/legal-folders/:id', companyAuthorization.forRoute('PUT /api/empresas/legal-folders/:id'), async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'No autorizado' });
-    const userId = await getUserIdFromToken(authHeader.replace('Bearer ', ''));
-    if (!userId) return res.status(401).json({ error: 'Token inválido' });
+    const userId = req.authUser.id;
 
     const { name, icon, parent_id, sort_order } = req.body;
     const { data, error } = await supabase
@@ -6922,12 +6856,9 @@ app.put('/api/empresas/legal-folders/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/empresas/legal-folders/:id', async (req, res) => {
+app.delete('/api/empresas/legal-folders/:id', companyAuthorization.forRoute('DELETE /api/empresas/legal-folders/:id'), async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'No autorizado' });
-    const userId = await getUserIdFromToken(authHeader.replace('Bearer ', ''));
-    if (!userId) return res.status(401).json({ error: 'Token inválido' });
+    const userId = req.authUser.id;
 
     const { error } = await supabase
       .from('legal_folders')
@@ -6944,12 +6875,9 @@ app.delete('/api/empresas/legal-folders/:id', async (req, res) => {
 
 // ---- DOCUMENTS ----
 
-app.get('/api/empresas/legal-documents', async (req, res) => {
+app.get('/api/empresas/legal-documents', companyAuthorization.forRoute('GET /api/empresas/legal-documents'), async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'No autorizado' });
-    const userId = await getUserIdFromToken(authHeader.replace('Bearer ', ''));
-    if (!userId) return res.status(401).json({ error: 'Token inválido' });
+    const userId = req.authUser.id;
 
     const { companyId, folderId } = req.query;
     if (!companyId) return res.status(400).json({ error: 'companyId requerido' });
@@ -6974,12 +6902,9 @@ app.get('/api/empresas/legal-documents', async (req, res) => {
   }
 });
 
-app.get('/api/empresas/legal-documents/:id', async (req, res) => {
+app.get('/api/empresas/legal-documents/:id', companyAuthorization.forRoute('GET /api/empresas/legal-documents/:id'), async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'No autorizado' });
-    const userId = await getUserIdFromToken(authHeader.replace('Bearer ', ''));
-    if (!userId) return res.status(401).json({ error: 'Token inválido' });
+    const userId = req.authUser.id;
 
     const { data } = await supabase
       .from('legal_documents')
@@ -6994,12 +6919,9 @@ app.get('/api/empresas/legal-documents/:id', async (req, res) => {
   }
 });
 
-app.post('/api/empresas/legal-documents', async (req, res) => {
+app.post('/api/empresas/legal-documents', companyAuthorization.forRoute('POST /api/empresas/legal-documents'), async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'No autorizado' });
-    const userId = await getUserIdFromToken(authHeader.replace('Bearer ', ''));
-    if (!userId) return res.status(401).json({ error: 'Token inválido' });
+    const userId = req.authUser.id;
 
     const { companyId, folderId, name, description, fileUrl, fileName, fileType, fileSize } = req.body;
     if (!companyId || !name || !fileUrl || !fileName) {
@@ -7052,12 +6974,9 @@ app.post('/api/empresas/legal-documents', async (req, res) => {
   }
 });
 
-app.post('/api/empresas/legal-documents/:id/versions', async (req, res) => {
+app.post('/api/empresas/legal-documents/:id/versions', companyAuthorization.forRoute('POST /api/empresas/legal-documents/:id/versions'), async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'No autorizado' });
-    const userId = await getUserIdFromToken(authHeader.replace('Bearer ', ''));
-    if (!userId) return res.status(401).json({ error: 'Token inválido' });
+    const userId = req.authUser.id;
 
     const { fileUrl, fileName, fileType, fileSize, notes } = req.body;
     if (!fileUrl || !fileName) {
@@ -7104,12 +7023,9 @@ app.post('/api/empresas/legal-documents/:id/versions', async (req, res) => {
   }
 });
 
-app.get('/api/empresas/legal-documents/:id/versions', async (req, res) => {
+app.get('/api/empresas/legal-documents/:id/versions', companyAuthorization.forRoute('GET /api/empresas/legal-documents/:id/versions'), async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'No autorizado' });
-    const userId = await getUserIdFromToken(authHeader.replace('Bearer ', ''));
-    if (!userId) return res.status(401).json({ error: 'Token inválido' });
+    const userId = req.authUser.id;
 
     const { data } = await supabase
       .from('legal_document_versions')
@@ -7124,12 +7040,9 @@ app.get('/api/empresas/legal-documents/:id/versions', async (req, res) => {
   }
 });
 
-app.delete('/api/empresas/legal-documents/:id', async (req, res) => {
+app.delete('/api/empresas/legal-documents/:id', companyAuthorization.forRoute('DELETE /api/empresas/legal-documents/:id'), async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'No autorizado' });
-    const userId = await getUserIdFromToken(authHeader.replace('Bearer ', ''));
-    if (!userId) return res.status(401).json({ error: 'Token inválido' });
+    const userId = req.authUser.id;
 
     const { error } = await supabase
       .from('legal_documents')
@@ -7146,12 +7059,9 @@ app.delete('/api/empresas/legal-documents/:id', async (req, res) => {
 
 // ---- DOCUMENT-REQUEST LINKS ----
 
-app.post('/api/empresas/legal-documents/:id/link-request', async (req, res) => {
+app.post('/api/empresas/legal-documents/:id/link-request', companyAuthorization.forRoute('POST /api/empresas/legal-documents/:id/link-request'), async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'No autorizado' });
-    const userId = await getUserIdFromToken(authHeader.replace('Bearer ', ''));
-    if (!userId) return res.status(401).json({ error: 'Token inválido' });
+    const userId = req.authUser.id;
 
     const { requestId } = req.body;
     if (!requestId) return res.status(400).json({ error: 'requestId requerido' });
@@ -7167,12 +7077,9 @@ app.post('/api/empresas/legal-documents/:id/link-request', async (req, res) => {
   }
 });
 
-app.delete('/api/empresas/legal-documents/:id/link-request/:requestId', async (req, res) => {
+app.delete('/api/empresas/legal-documents/:id/link-request/:requestId', companyAuthorization.forRoute('DELETE /api/empresas/legal-documents/:id/link-request/:requestId'), async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'No autorizado' });
-    const userId = await getUserIdFromToken(authHeader.replace('Bearer ', ''));
-    if (!userId) return res.status(401).json({ error: 'Token inválido' });
+    const userId = req.authUser.id;
 
     await supabase
       .from('legal_document_requests')
@@ -7187,12 +7094,9 @@ app.delete('/api/empresas/legal-documents/:id/link-request/:requestId', async (r
   }
 });
 
-app.get('/api/empresas/legal-documents/:id/requests', async (req, res) => {
+app.get('/api/empresas/legal-documents/:id/requests', companyAuthorization.forRoute('GET /api/empresas/legal-documents/:id/requests'), async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'No autorizado' });
-    const userId = await getUserIdFromToken(authHeader.replace('Bearer ', ''));
-    if (!userId) return res.status(401).json({ error: 'Token inválido' });
+    const userId = req.authUser.id;
 
     const { data } = await supabase
       .from('legal_document_requests')
@@ -7208,12 +7112,9 @@ app.get('/api/empresas/legal-documents/:id/requests', async (req, res) => {
 
 
 // ---- COMPANY LAWYERS ----
-app.get('/api/empresas/lawyers', async (req, res) => {
+app.get('/api/empresas/lawyers', requireAuthentication, async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'No autorizado' });
-    const userId = await getUserIdFromToken(authHeader.replace('Bearer ', ''));
-    if (!userId) return res.status(401).json({ error: 'Token inválido' });
+    const userId = req.authUser.id;
 
     // Get user's company
     const { data: company } = await supabase

@@ -1,7 +1,8 @@
+import { companyApiFetch } from '@/lib/companyApi';
 import type { CompanyRating, CreateCompanyRatingInput, LawyerRatingStats } from '@/types/empresas'
 
 export async function getRequestRating(requestId: string): Promise<CompanyRating | null> {
-  const res = await fetch(`/api/empresas/ratings?requestId=${requestId}`)
+  const res = await companyApiFetch(`/api/empresas/ratings?requestId=${requestId}`)
   if (!res.ok) return null
   const data = await res.json()
   return data.rating || null

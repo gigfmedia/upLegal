@@ -1,3 +1,4 @@
+import { companyApiFetch } from '@/lib/companyApi';
 import { useState } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
@@ -71,7 +72,7 @@ export default function NewRequest() {
         .getPublicUrl(filePath)
 
       if (urlData) {
-        const res = await fetch(`/api/empresas/requests/${requestId}/documents`, {
+        const res = await companyApiFetch(`/api/empresas/requests/${requestId}/documents`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -97,7 +98,7 @@ export default function NewRequest() {
 
     setIsSubmitting(true)
     try {
-      const res = await fetch('/api/empresas/requests', {
+      const res = await companyApiFetch('/api/empresas/requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

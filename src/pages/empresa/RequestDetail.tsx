@@ -1,3 +1,4 @@
+import { companyApiFetch } from '@/lib/companyApi';
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
@@ -66,7 +67,7 @@ export default function RequestDetail() {
         setRequest(data)
         setCompanyRating(rating)
         if (data) {
-          const res = await fetch(`/api/empresas/budgets?companyId=${data.company_id}&requestId=${id}`)
+          const res = await companyApiFetch(`/api/empresas/budgets?companyId=${data.company_id}&requestId=${id}`)
           const bData = await res.json()
           setBudgets(bData.budgets || [])
         }
@@ -273,7 +274,7 @@ export default function RequestDetail() {
                       onClick={async () => {
                         await approveBudget(budget.id)
                         toast.success('Presupuesto aprobado')
-                        const res = await fetch(`/api/empresas/budgets?companyId=${request.company_id}&requestId=${request.id}`)
+                        const res = await companyApiFetch(`/api/empresas/budgets?companyId=${request.company_id}&requestId=${request.id}`)
                         const bData = await res.json()
                         setBudgets(bData.budgets || [])
                       }}>
@@ -283,7 +284,7 @@ export default function RequestDetail() {
                       onClick={async () => {
                         await rejectBudget(budget.id)
                         toast.success('Presupuesto rechazado')
-                        const res = await fetch(`/api/empresas/budgets?companyId=${request.company_id}&requestId=${request.id}`)
+                        const res = await companyApiFetch(`/api/empresas/budgets?companyId=${request.company_id}&requestId=${request.id}`)
                         const bData = await res.json()
                         setBudgets(bData.budgets || [])
                       }}>
@@ -315,7 +316,7 @@ function Timeline({ requestId }: { requestId: string }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch(`/api/empresas/requests/${requestId}/timeline`)
+    companyApiFetch(`/api/empresas/requests/${requestId}/timeline`)
       .then((r) => r.json())
       .then((data) => setTimeline(data.timeline || []))
       .catch(() => {})

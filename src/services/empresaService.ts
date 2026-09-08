@@ -1,3 +1,4 @@
+import { companyApiFetch } from '@/lib/companyApi';
 import { supabase } from '@/lib/supabaseClient'
 import type {
   Company,
@@ -577,7 +578,7 @@ export async function logActivity(entry: {
 // ---- BUDGETS ----
 
 export async function getCompanyBudgets(companyId: string): Promise<any[]> {
-  const res = await fetch(`/api/empresas/budgets?companyId=${companyId}`)
+  const res = await companyApiFetch(`/api/empresas/budgets?companyId=${companyId}`)
   const data = await res.json()
   return data.budgets || []
 }
@@ -596,11 +597,11 @@ export async function getServiceCategories(): Promise<any[]> {
 }
 
 export async function approveBudget(id: string): Promise<void> {
-  await fetch(`/api/empresas/budgets/${id}/approve`, { method: 'POST' })
+  await companyApiFetch(`/api/empresas/budgets/${id}/approve`, { method: 'POST' })
 }
 
 export async function rejectBudget(id: string, reason?: string): Promise<void> {
-  await fetch(`/api/empresas/budgets/${id}/reject`, {
+  await companyApiFetch(`/api/empresas/budgets/${id}/reject`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ reason }),

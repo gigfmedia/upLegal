@@ -1,3 +1,4 @@
+import { companyApiFetch } from '@/lib/companyApi';
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
@@ -30,7 +31,7 @@ export default function EmpresasRequestsPage() {
     const load = async () => {
       if (!user) return
       try {
-        const res = await fetch(`/api/lawyer/empresas/requests?userId=${user.id}`)
+        const res = await companyApiFetch(`/api/lawyer/empresas/requests?userId=${user.id}`)
         const data = await res.json()
         setRequests(data.requests || [])
       } catch (error) {

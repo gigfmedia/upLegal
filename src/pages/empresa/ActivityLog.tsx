@@ -1,3 +1,4 @@
+import { companyApiFetch } from '@/lib/companyApi';
 import { useState, useEffect } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { Card } from '@/components/ui/card'
@@ -45,7 +46,7 @@ export default function ActivityLog() {
     const load = async () => {
       try {
         const url = `/api/empresas/activity-log?companyId=${company.id}${filter ? `&action=${filter}` : ''}`
-        const res = await fetch(url)
+        const res = await companyApiFetch(url)
         const data = await res.json()
         setEntries(data.entries || [])
       } catch (error) {

@@ -1,3 +1,4 @@
+import { companyApiFetch } from '@/lib/companyApi';
 import { useState, useEffect } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
@@ -273,7 +274,7 @@ function SlaMetrics({ companyId }: { companyId: string }) {
   const [metrics, setMetrics] = useState<{ cumplimientoPct: number; tiempoPromedioRespuesta: string } | null>(null)
 
   useEffect(() => {
-    fetch(`/api/empresas/sla-metrics?companyId=${companyId}`)
+    companyApiFetch(`/api/empresas/sla-metrics?companyId=${companyId}`)
       .then((r) => r.json())
       .then(setMetrics)
       .catch(() => {})
