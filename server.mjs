@@ -1532,22 +1532,39 @@ app.post('/api/bookings/create', async (req, res) => {
       ...(webhookUrl ? { notification_url: webhookUrl } : {}),
     };
 
-    const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${mercadopagoAccessToken}`,
-      },
-      body: JSON.stringify(preferenceData),
-    });
+    let mpData;
+    try {
+      const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${mercadopagoAccessToken}`,
+        },
+        body: JSON.stringify(preferenceData),
+      });
 
-    if (!mpResponse.ok) {
-      const errorData = await mpResponse.json();
-      console.error('MercadoPago API error:', errorData);
-      throw new Error('Failed to create MercadoPago preference');
+      if (!mpResponse.ok) {
+        const errorData = await mpResponse.json().catch(() => ({}));
+        console.error('MercadoPago API error:', errorData, { booking_id: booking.id, status: mpResponse.status });
+        await supabase.from('bookings').update({ status: 'failed', updated_at: new Date().toISOString() }).eq('id', booking.id);
+        console.log(`[booking] step=checkout_creation_failed booking_id=${booking.id} status=failed reason=mp_${mpResponse.status}`);
+        throw new Error('Failed to create MercadoPago preference');
+      }
+
+      mpData = await mpResponse.json();
+    } catch (mpError) {
+      // Network/timeout o throw anterior: si booking sigue pending sin preference, liberarlo
+      if (!mpData) {
+        try {
+          const { data: check } = await supabase.from('bookings').select('status, mercadopago_preference_id').eq('id', booking.id).maybeSingle();
+          if (check && check.status === 'pending' && !check.mercadopago_preference_id) {
+            await supabase.from('bookings').update({ status: 'failed', updated_at: new Date().toISOString() }).eq('id', booking.id);
+            console.log(`[booking] step=checkout_creation_failed booking_id=${booking.id} status=failed reason=network`);
+          }
+        } catch {}
+      }
+      throw mpError;
     }
-
-    const mpData = await mpResponse.json();
 
     await supabase
       .from('bookings')
