@@ -1,3 +1,4 @@
+import { isPlatformAdmin } from '@/lib/adminAuthority';
 import { useState, useEffect, ReactNode, lazy, Suspense } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -238,7 +239,7 @@ export default function Header({
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onSelect={() => handleNavigation(userRole === 'lawyer' ? '/lawyer-dashboard' : '/dashboard')}><User className="mr-2 h-4 w-4" /><span>Ir al Panel</span></DropdownMenuItem>
-                    {(userRole === 'admin' || user?.user_metadata?.is_admin || user?.email?.toLowerCase() === 'gigfmedia@icloud.com') && (
+                    {isPlatformAdmin(user) && (
                       <DropdownMenuItem onSelect={() => handleNavigation('/admin/reviews')}><Eye className="mr-2 h-4 w-4" /><span>Admin Reviews</span></DropdownMenuItem>
                     )}
                     <DropdownMenuItem className="text-red-600 focus:text-red-700 focus:bg-red-50" onClick={async () => { await logout(); navigate('/'); }}><LogOut className="mr-2 h-4 w-4" /><span>Cerrar Sesión</span></DropdownMenuItem>

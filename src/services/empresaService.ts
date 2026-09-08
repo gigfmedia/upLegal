@@ -153,16 +153,13 @@ export async function getSubscriptionPlan(id: string): Promise<SubscriptionPlan 
 // ---- COMPANY SUBSCRIPTIONS ----
 
 export async function getCompanySubscription(companyId: string): Promise<CompanySubscription | null> {
-  const { data } = await supabase
-    .from('company_subscriptions')
-    .select('*, plan:plan_id(*)')
-    .eq('company_id', companyId)
-    .maybeSingle()
-  return data
+  const response = await companyApiFetch(`/api/empresas/subscription/${companyId}`)
+  const { subscription } = await response.json()
+  return subscription
 }
 
 export async function createSubscriptionPreference(companyId: string, planId: string): Promise<{ preferenceId: string; initPoint: string }> {
-  const response = await fetch('/api/empresas/subscription/create', {
+  const response = await companyApiFetch('/api/empresas/subscription/create', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ companyId, planId }),
@@ -177,7 +174,7 @@ export async function createSubscriptionPreference(companyId: string, planId: st
 }
 
 export async function cancelSubscription(subscriptionId: string): Promise<void> {
-  const response = await fetch(`/api/empresas/subscription/${subscriptionId}/cancel`, {
+  const response = await companyApiFetch(`/api/empresas/subscription/${subscriptionId}/cancel`, {
     method: 'POST',
   })
 

@@ -1,3 +1,4 @@
+import { confirmCompanyCancellation } from './server/subscriptions/companyCancellation.mjs';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -68,7 +69,7 @@ import {
   ASSISTANT_LIMITS,
 } from './server/ai/assistant.mjs';
 import { createNotificationService } from './server/notifications/service.mjs';
-import { createAuthorization } from './server/auth/authorization.mjs';
+import { createAuthorization, isPlatformAdmin } from './server/auth/authorization.mjs';
 import { createCompanyAuthorization } from './server/auth/companyAuthorization.mjs';
 import { sendMetaPurchaseEvent } from './server/metaCapi.mjs';
 import { deriveCaseActions, CASE_ACTION_TYPES } from './server/ai/caseActionLayer.mjs';
@@ -453,7 +454,7 @@ const AIDocumentAnalysisSchema = z.object({
 }));
 
 // Profile management endpoint used during signup to ensure profiles are created
-app.post('/api/profiles', async (req, res) => {
+app.post('/api/profiles', requireAuthentication, async (req, res) => {
   try {
     const {
       userId,
@@ -470,6 +471,13 @@ app.post('/api/profiles', async (req, res) => {
       return res.status(400).json({
         error: 'Missing required fields: userId, email and role.'
       });
+    }
+
+    if (userId !== req.authUser.id) {
+      return res.status(403).json({ error: 'No puedes modificar el perfil de otro usuario.' });
+    }
+    if (['admin', 'superadmin'].includes(String(role).trim().toLowerCase()) && !isPlatformAdmin(req.authUser)) {
+      return res.status(403).json({ error: 'El rol administrativo solo se administra desde Auth.' });
     }
 
     const normalizedEmail = email.toLowerCase().trim();
@@ -3633,7 +3641,7 @@ app.post('/api/mercadopago/reconcile/:paymentId', async (req, res) => {
 
 // GET /api/admin/booking-leads-count
 // Returns booking_leads count + daily timestamps using service role key (bypasses RLS)
-app.get('/api/admin/booking-leads-count', async (req, res) => {
+app.get('/api/admin/booking-leads-count', requireAdmin, async (req, res) => {
   try {
     const { start, end } = req.query;
 
@@ -3849,7 +3857,7 @@ app.get('/api/admin/documents-revenue', requireAdmin, async (req, res) => {
 });
 
 // Endpoint para notificar abogados
-app.post('/api/admin/notify-lawyers', async (req, res) => {
+app.post('/api/admin/notify-lawyers', requireAdmin, async (req, res) => {
   try {
     const { testMode = false, testEmail } = req.body;
 
@@ -4630,9 +4638,10 @@ function buildLegalUpAIInviteEmail({ lawyerName, ctaUrl }) {
 }
 
 // ---- CREATE SUBSCRIPTION (Mercado Pago Preapproval) ----
-app.post('/api/empresas/subscription/create', async (req, res) => {
+app.post('/api/empresas/subscription/create', companyAuthorization.forRoute('POST /api/empresas/subscription/create'), async (req, res) => {
   try {
-    const { companyId, planId } = req.body;
+    const { planId } = req.body;
+    const { companyId } = req.companyAuthorization;
 
     if (!companyId || !planId) {
       return res.status(400).json({ error: 'companyId and planId are required' });
@@ -4772,55 +4781,59 @@ app.post('/api/empresas/subscription/create', async (req, res) => {
 });
 
 // ---- CANCEL SUBSCRIPTION ----
-app.post('/api/empresas/subscription/:subscriptionId/cancel', async (req, res) => {
+app.post('/api/empresas/subscription/:subscriptionId/cancel', companyAuthorization.forRoute('POST /api/empresas/subscription/:subscriptionId/cancel'), async (req, res) => {
   try {
-    const { subscriptionId } = req.params;
+    const subscriptionId = req.companyAuthorization.resource.id;
+    const { companyId } = req.companyAuthorization;
 
-    const { data: subscription } = await supabase
+    const { data: subscription, error: subscriptionError } = await supabase
       .from('company_subscriptions')
       .select('*, company:company_id(*), plan:plan_id(*)')
       .eq('id', subscriptionId)
       .maybeSingle();
 
+    if (subscriptionError) return res.status(503).json({ error: 'No se pudo leer la suscripción.' });
     if (!subscription) {
       return res.status(404).json({ error: 'Suscripción no encontrada' });
     }
 
-    // Cancel in MercadoPago (set status to cancelled)
-    if (subscription.mercadopago_preapproval_id) {
-      const mpResponse = await fetch(
-        `https://api.mercadopago.com/preapproval/${subscription.mercadopago_preapproval_id}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${mercadopagoAccessToken}`,
-          },
-          body: JSON.stringify({ status: 'cancelled' }),
-        }
-      );
-
-      if (!mpResponse.ok) {
-        const errorData = await mpResponse.json();
-        console.error('[Empresas] MP cancel error:', errorData);
-      }
+    if (subscription.status === 'cancelled') {
+      return res.json({ success: true, already_cancelled: true });
+    }
+    if (!subscription.mercadopago_preapproval_id) {
+      return res.status(409).json({ error: 'Falta la referencia del proveedor; se requiere conciliación.', code: 'RECONCILIATION_REQUIRED' });
     }
 
-    // Update subscription in DB
-    await supabase
-      .from('company_subscriptions')
-      .update({
-        cancel_at_period_end: true,
-        status: 'cancelled',
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', subscriptionId);
+    const cancellation = await confirmCompanyCancellation({
+      preapprovalId: subscription.mercadopago_preapproval_id,
+      accessToken: mercadopagoAccessToken,
+      fetchImpl: fetch,
+    });
+    if (!cancellation.confirmed) {
+      return res.status(502).json({
+        error: 'No se pudo confirmar la cancelación con el proveedor. Intenta nuevamente.',
+        code: cancellation.networkError ? 'PROVIDER_UNREACHABLE' : 'PROVIDER_ERROR',
+      });
+    }
 
-    // Update company status
-    await supabase
-      .from('companies')
-      .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-      .eq('id', subscription.company_id);
+    // Both local records commit together, or neither changes. RPC is service-role only.
+    let persistenceError;
+    try {
+      ({ error: persistenceError } = await supabase.rpc('cancel_company_subscription_confirmed', {
+        p_subscription_id: subscriptionId,
+        p_company_id: companyId,
+        p_preapproval_id: String(subscription.mercadopago_preapproval_id),
+      }));
+    } catch (error) {
+      persistenceError = error;
+    }
+    if (persistenceError) {
+      console.error('[Empresas] Provider cancelled; local reconciliation required:', persistenceError);
+      return res.status(503).json({
+        error: 'El proveedor confirmó la baja, pero no se pudo guardar localmente. Reintenta para conciliar.',
+        code: 'RECONCILIATION_REQUIRED', provider_cancelled: true,
+      });
+    }
 
     // Send cancellation email
     const periodEnd = subscription.current_period_end
@@ -5039,11 +5052,11 @@ app.post('/api/empresas/requests/:requestId/documents', companyAuthorization.for
 });
 
 // ---- GET SUBSCRIPTION STATUS ----
-app.get('/api/empresas/subscription/:companyId', async (req, res) => {
+app.get('/api/empresas/subscription/:companyId', companyAuthorization.forRoute('GET /api/empresas/subscription/:companyId'), async (req, res) => {
   try {
-    const { companyId } = req.params;
+    const { companyId } = req.companyAuthorization;
 
-    const { data: subscription } = await supabase
+    const { data: subscription, error } = await supabase
       .from('company_subscriptions')
       .select('*, plan:plan_id(*)')
       .eq('company_id', companyId)
@@ -5051,6 +5064,7 @@ app.get('/api/empresas/subscription/:companyId', async (req, res) => {
       .limit(1)
       .maybeSingle();
 
+    if (error) return res.status(503).json({ error: 'No se pudo leer la suscripción.' });
     res.json({ subscription });
   } catch (error) {
     console.error('[Empresas] Error fetching subscription:', error);

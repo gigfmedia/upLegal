@@ -1,3 +1,4 @@
+import { isPlatformAdmin } from '../_shared/adminAuthority.mjs';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
@@ -71,7 +72,7 @@ serve(async (req: Request) => {
     }
 
     // Extract token
-    const token = authHeader.replace('Bearer ', '').trim();
+    const token = /^Bearer ([^\s]+)$/i.exec(authHeader)?.[1];
     if (!token) {
       console.error('No token provided');
       return errorResponse(401, 'Not authenticated', 'No token provided', origin);
@@ -113,25 +114,14 @@ serve(async (req: Request) => {
     });
 
     // Get the current user
-    const { data: { user }, error: userError } = await userClient.auth.getUser();
+    const { data: { user }, error: userError } = await userClient.auth.getUser(token);
     
     if (userError || !user) {
       console.error('Error getting user:', userError);
       return errorResponse(401, 'Not authenticated', userError, origin);
     }
 
-    // Check if user is an admin (has 'lawyer' role in profiles)
-    const { data: profile, error: profileError } = await adminClient
-      .from('profiles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single();
-
-    if (profileError || !profile || profile.role !== 'lawyer') {
-      console.error('User is not authorized to delete users:', { 
-        userId: user.id, 
-        role: profile?.role 
-      });
+    if (!isPlatformAdmin(user)) {
       return errorResponse(403, 'Forbidden', 'Insufficient permissions', origin);
     }
 

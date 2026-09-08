@@ -23,6 +23,7 @@ function fixture(user = { id: USER_A, app_metadata: {}, user_metadata: {} }) {
     legal_documents: [{ id: DOC_A, company_id: A }, { id: DOC_B, company_id: B }],
     legal_folders: [{ id: FOLDER_A, company_id: A }, { id: FOLDER_B, company_id: B }],
     company_request_documents: [],
+    company_subscriptions: [{ id: id(51), company_id: A }, { id: id(52), company_id: B }],
   };
   const writes = [], reads = [];
   const supabase = {
@@ -223,7 +224,7 @@ describe('Every company policy is wired into the real route', () => {
     });
     it(`${route}: user A / resource B → 403`, async () => {
       const s = setup();
-      const ids = { companies: B, company_requests: REQUEST_B, company_budgets: BUDGET_B, legal_documents: DOC_B, legal_folders: FOLDER_B };
+      const ids = { companies: B, company_subscriptions: id(52), company_requests: REQUEST_B, company_budgets: BUDGET_B, legal_documents: DOC_B, legal_folders: FOLDER_B };
       const r = req(); r[policy.resource.location][policy.resource.key] = ids[policy.resource.table];
       const res = await s.execute(route, r);
       expect(res.code).toBe(403);
@@ -231,7 +232,7 @@ describe('Every company policy is wired into the real route', () => {
     });
     if (policy.action !== 'read') it(`${route}: viewer cannot mutate`, async () => {
       const s = setup({ id: VIEWER });
-      const ids = { companies: A, company_requests: REQUEST_A, company_budgets: BUDGET_A, legal_documents: DOC_A, legal_folders: FOLDER_A };
+      const ids = { companies: A, company_subscriptions: id(51), company_requests: REQUEST_A, company_budgets: BUDGET_A, legal_documents: DOC_A, legal_folders: FOLDER_A };
       const r = req(); r[policy.resource.location][policy.resource.key] = ids[policy.resource.table];
       const res = await s.execute(route, r);
       expect(res.code).toBe(403);

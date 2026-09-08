@@ -507,7 +507,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
       }
     }
     
-    // Ensure profile record exists even if email confirmation is pending
+    // Authenticated profile repair; pending email confirmation relies on the Auth signup trigger.
     const payload = {
       userId: signupResponse.user?.id,
       email: formData.email,
@@ -520,13 +520,15 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
     };
 
     try {
-      if (payload.userId) {
+      const { data: { session: profileSession } } = await supabase.auth.getSession();
+      if (payload.userId && profileSession?.access_token) {
         const apiBaseUrl = resolveApiBaseUrl();
         const profileEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/profiles` : '/api/profiles';
         const response = await fetch(profileEndpoint, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${profileSession.access_token}`
           },
           body: JSON.stringify(payload)
         });

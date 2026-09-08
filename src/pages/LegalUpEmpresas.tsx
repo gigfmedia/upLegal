@@ -1,3 +1,4 @@
+import { companyApiFetch } from '@/lib/companyApi';
 import { useState, Suspense, lazy, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
@@ -229,7 +230,7 @@ export default function LegalUpEmpresas() {
       if (company) {
         if (planId) {
           try {
-            const res = await fetch('/api/empresas/subscription/create', {
+            const res = await companyApiFetch('/api/empresas/subscription/create', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ companyId: company.id, planId }),
@@ -273,7 +274,7 @@ export default function LegalUpEmpresas() {
     if (company) {
       if (selectedPlan) {
         try {
-          const res = await fetch('/api/empresas/subscription/create', {
+          const res = await companyApiFetch('/api/empresas/subscription/create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ companyId: company.id, planId: selectedPlan }),

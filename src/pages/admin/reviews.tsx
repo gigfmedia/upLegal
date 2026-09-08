@@ -1,3 +1,4 @@
+import { isPlatformAdmin } from '@/lib/adminAuthority';
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { getSupabaseAdminClient } from '@/lib/supabaseClient';
@@ -62,10 +63,7 @@ export default function AdminReviewsPage() {
       return;
     }
 
-    const isAdmin = user.is_admin === true ||
-      user.user_metadata?.is_admin === true ||
-      user.email?.toLowerCase() === 'gigfmedia@icloud.com' ||
-      user.role === 'admin';
+    const isAdmin = isPlatformAdmin(user);
 
     if (!isAdmin) {
       toast({

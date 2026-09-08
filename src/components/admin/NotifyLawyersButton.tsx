@@ -1,3 +1,4 @@
+import { supabase } from '@/lib/supabaseClient';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -43,11 +44,14 @@ export function NotifyLawyersButton() {
       // Use the full URL to your Render backend
       const apiUrl = 'https://uplegal-service.onrender.com/api/admin/notify-lawyers';
       
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Debes iniciar sesión');
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({ 
           testMode, 

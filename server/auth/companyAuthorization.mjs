@@ -7,6 +7,11 @@ const folder = () => reference('legal_folders', 'params', 'id');
 
 // Explicit route allowlist: no wildcard interception, including subscription/payment routes.
 export const COMPANY_ROUTE_POLICIES = {
+  'POST /api/empresas/subscription/create': { resource: company('body'), action: 'manage' },
+  'GET /api/empresas/subscription/:companyId': { resource: company('params'), action: 'manage' },
+  'POST /api/empresas/subscription/:subscriptionId/cancel': {
+    resource: reference('company_subscriptions', 'params', 'subscriptionId'), action: 'manage',
+  },
   'POST /api/empresas/requests': { resource: company('body'), action: 'write' },
   'POST /api/empresas/requests/:requestId/documents': { resource: request('params', 'requestId'), action: 'write' },
   'POST /api/empresas/requests/:id/first-response': { resource: request(), action: 'respond' },

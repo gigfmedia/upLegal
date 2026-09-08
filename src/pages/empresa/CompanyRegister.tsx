@@ -1,3 +1,4 @@
+import { companyApiFetch } from '@/lib/companyApi';
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
@@ -141,7 +142,7 @@ export default function CompanyRegister() {
       // If a plan was selected, create subscription
       if (selectedPlan) {
         try {
-          const res = await fetch('/api/empresas/subscription/create', {
+          const res = await companyApiFetch('/api/empresas/subscription/create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ companyId: company.id, planId: selectedPlan }),

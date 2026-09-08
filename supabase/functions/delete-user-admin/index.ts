@@ -1,3 +1,4 @@
+import { verifyPlatformAdmin } from '../_shared/adminAuthority.mjs';
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -14,42 +15,15 @@ serve(async (req) => {
 
   try {
     
-    // Get the authorization header
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      console.error('No authorization header')
-      throw new Error('No authorization header')
-    }
-
-    // Create a Supabase client with the Auth context of the logged in user
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
-      }
-    )
-
-    // Get the current user to verify they're admin
-    const {
-      data: { user },
-    } = await supabaseClient.auth.getUser()
-
-    if (!user) {
-      console.error('Not authenticated')
-      throw new Error('Not authenticated')
-    }
-
-    // Check if user is admin
-    const isAdmin = user.email === 'gigfmedia@icloud.com' || 
-                    user.email === 'admin@example.com' ||
-                    user.user_metadata?.role === 'admin'
-
-    if (!isAdmin) {
-      console.error('Not authorized - admin access required')
-      throw new Error('Not authorized - admin access required')
+    );
+    const authorization = await verifyPlatformAdmin(supabaseClient, req.headers.get('Authorization'));
+    if (!authorization.user) {
+      return new Response(JSON.stringify({ error: authorization.status === 401 ? 'Unauthorized' : 'Forbidden' }), {
+        status: authorization.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Get the userId from the request body

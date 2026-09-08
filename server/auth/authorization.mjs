@@ -1,8 +1,7 @@
 // Only Auth server-managed app_metadata is a privileged role authority.
 // profiles.role, user_metadata, request bodies and email allowlists are not.
-export function isPlatformAdmin(user) {
-  return ['admin', 'superadmin'].includes(user?.app_metadata?.role);
-}
+import { isPlatformAdmin } from '../../supabase/functions/_shared/adminAuthority.mjs';
+export { isPlatformAdmin };
 
 export function createAuthorization({ supabase }) {
   async function authenticate(req, res) {

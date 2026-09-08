@@ -1,3 +1,4 @@
+import { isPlatformAdmin } from '@/lib/adminAuthority';
 import { ReactNode, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,19 +8,7 @@ import { Loader2 } from 'lucide-react';
 export default function RequireAdmin({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();
 
-  const checkAdminStatus = () => {
-    if (!user) return false;
-
-    // Check for admin status in different possible locations
-    return (
-      user.is_admin === true ||
-      user.user_metadata?.is_admin === true ||
-      user.email?.toLowerCase() === 'gigfmedia@icloud.com' ||
-      user.role === 'admin'
-    );
-  };
-
-  const isAdmin = checkAdminStatus();
+  const isAdmin = isPlatformAdmin(user);
 
   useEffect(() => {
     if (!isLoading) {

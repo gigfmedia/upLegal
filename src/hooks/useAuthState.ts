@@ -1,3 +1,4 @@
+import { isPlatformAdmin } from '@/lib/adminAuthority';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { getSupabaseClient } from '@/lib/supabaseClient';
@@ -84,19 +85,7 @@ export const useAuthState = (): AuthState => {
         // Attach profile to user object
         currentSession.user.profile = profileData || {};
 
-        // 2. Admin Logic
-        const isAdmin = currentSession.user.email?.toLowerCase() === 'gigfmedia@icloud.com' || 
-                       currentSession.user.user_metadata?.is_admin === true ||
-                       profileData?.role === 'admin';
-        
-        currentSession.user.is_admin = isAdmin;
-        
-        // Ensure user_metadata exists
-        if (!currentSession.user.user_metadata) {
-            currentSession.user.user_metadata = { is_admin: isAdmin };
-        } else {
-            currentSession.user.user_metadata.is_admin = isAdmin;
-        }
+        currentSession.user.is_admin = isPlatformAdmin(currentSession.user);
 
         // =========================================================================
         // CLIENT-SIDE PROFILE REPAIR (Backup for Trigger Failures)

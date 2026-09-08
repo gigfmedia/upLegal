@@ -119,8 +119,11 @@ export default function FunnelDashboard() {
 
       // Fetch booking leads via server endpoint (service role key bypasses RLS on auth.users FK)
       const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Debes iniciar sesión');
       const leadsRes = await fetch(
-        `${apiBase}/api/admin/booking-leads-count?start=${start.toISOString()}&end=${end.toISOString()}`
+        `${apiBase}/api/admin/booking-leads-count?start=${start.toISOString()}&end=${end.toISOString()}`,
+        { headers: { Authorization: `Bearer ${session.access_token}` } }
       );
       const leadsJson = leadsRes.ok ? await leadsRes.json() : { count: 0, daily: [] };
       const leadsCount = leadsJson.count ?? 0;
