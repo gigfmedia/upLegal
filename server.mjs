@@ -3585,19 +3585,30 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
     if ((topic === 'payment' || topic === 'payment.created') && paymentId) {
       console.log('About to fetch payment from MercadoPago', paymentId);
 
-      const response = await fetch(
-        `https://api.mercadopago.com/v1/payments/${paymentId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${mercadopagoAccessToken}`
+      let payment = null;
+      for (const token of [mercadopagoAccessToken, process.env.VITE_MERCADOPAGO_ACCESS_TOKEN].filter(Boolean)) {
+        try {
+          const response = await fetch(
+            `https://api.mercadopago.com/v1/payments/${paymentId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            }
+          );
+          if (response.ok) {
+            payment = await response.json();
+            console.log('MP payment status:', payment.status, 'via token', token.slice(0, 10));
+            break;
           }
-        }
-      );
+        } catch {}
+      }
+      if (!payment) {
+        const fallback = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, { headers: { Authorization: `Bearer ${mercadopagoAccessToken}` } });
+        payment = await fallback.json().catch(() => ({}));
+      }
 
-      const payment = await response.json();
-      console.log('MP payment status:', payment.status);
-
-      if (payment.status === 'approved') {
+      if (payment?.status === 'approved') {
         await handleApprovedPayment(payment);
       }
     }
