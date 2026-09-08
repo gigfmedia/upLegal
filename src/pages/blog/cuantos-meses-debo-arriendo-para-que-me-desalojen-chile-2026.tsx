@@ -152,6 +152,16 @@ const BlogArticle = () => {
                 Esto ocurre porque el no pago es el incumplimiento principal del contrato, como explicamos en 👉 <Link to="/blog/me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026" className="text-blue-600 font-bold hover:underline">qué pasa si no pagas el arriendo en Chile</Link>
               </p>
             </div>
+
+            <InArticleCTA
+              category="Derecho Civil"
+              targetUrl="/abogado-arriendo"
+              title="¿Ya tienes meses de arriendo impagos?"
+              message="Si necesitas saber qué puede pasar en tu caso o revisar tus opciones frente a un posible desalojo, puedes consultar con un abogado de arriendos."
+              buttonText="Ver abogados de arriendos disponibles"
+              priceNote="Consultas desde $35.000 — 60 minutos"
+            />
+
             <p className="text-lg text-gray-600 leading-relaxed mt-6">
               Pero la realidad es más compleja. El desalojo no es inmediato y no depende solo de cuántos meses debes: depende del contrato, del tribunal y de si el arrendador decide demandar.
             </p>
