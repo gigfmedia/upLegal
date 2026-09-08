@@ -1446,6 +1446,10 @@ app.post('/api/bookings/create', async (req, res) => {
       pricing_snapshot: pricingSnapshot,
       metadata: {
         article_slug: article_slug ? String(article_slug).trim() || null : null,
+        utm_source: (req.body as any).utm_source ? String((req.body as any).utm_source).trim() || null : null,
+        utm_medium: (req.body as any).utm_medium ? String((req.body as any).utm_medium).trim() || null : null,
+        utm_campaign: (req.body as any).utm_campaign ? String((req.body as any).utm_campaign).trim() || null : null,
+        is_test: String(user_email || '').includes('@test.invalid') || String(article_slug || '').includes('test') ? true : undefined,
       },
     };
 
@@ -2718,10 +2722,17 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                   booking_id: bookingId,
                   payment_id: paymentId,
                   lawyer_id: booking.lawyer_id,
+                  service_id: booking.service_id || null,
                   amount: payment.transaction_amount,
+                  currency: 'CLP',
                   variant: booking.experiment_variant,
                   is_owner: OWNER_EMAILS.has((booking.user_email || '').trim().toLowerCase()),
                   article_slug: booking.metadata?.article_slug || null,
+                  source: booking.metadata?.source || null,
+                  cta_location: booking.metadata?.cta_location || null,
+                  utm_source: booking.metadata?.utm_source || null,
+                  utm_campaign: booking.metadata?.utm_campaign || null,
+                  is_test: booking.metadata?.is_test || String(booking.user_email || '').includes('@test.invalid') || false,
                 },
               }),
             });
@@ -3102,9 +3113,14 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           currency: 'CLP',
           booking_id: bookingId,
           lawyer_id: booking.lawyer_id,
+          service_id: booking.service_id || null,
           appointment_id: appointmentId,
           is_owner: isOwnerEmail(booking.user_email),
           article_slug: articleSlug,
+          source: booking.metadata?.source || null,
+          utm_source: booking.metadata?.utm_source || null,
+          utm_campaign: booking.metadata?.utm_campaign || null,
+          is_test: booking.metadata?.is_test || String(booking.user_email || '').includes('@test.invalid') || false,
         });
       } catch (ga4Error) {
         console.error('[webhook] step=ga4_event status=failed', ga4Error);

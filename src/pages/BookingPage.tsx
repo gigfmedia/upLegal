@@ -285,26 +285,18 @@ export default function BookingPage() {
     }
   }, [searchParams]);
 
-  // F4 booking_page_viewed — canonical
+  // F4 booking_page_viewed — canonical (helper only, no duplicate)
   useEffect(() => {
     if (lawyer?.user_id && !bookingPageTracked.current) {
       bookingPageTracked.current = true;
-      // canonical F4 via helper (both providers)
       import('@/lib/bookingFunnel').then(({ trackBookingPageViewed }) => {
-        trackBookingPageViewed({ lawyer_id: lawyer.user_id, source: 'booking_page', article_slug: (lawyer as any).article_slug || null });
-      });
-      // legacy direct (kept for backward compat, will be removed)
-      window.gtag?.('event', 'booking_page_viewed', {
-        lawyer_id: lawyer.user_id,
-        lawyer_name: `${lawyer.first_name} ${lawyer.last_name}`
-      });
-      posthog.capture('booking_page_viewed', {
-        variant,
-        lawyer_id: lawyer.user_id,
-        lawyer_name: `${lawyer.first_name} ${lawyer.last_name}`,
+        const params = new URLSearchParams(window.location.search);
+        const articleSlug = params.get('article_slug') || sessionStorage.getItem('legalup_article_slug') || (lawyer as any).article_slug || null;
+        const utmCampaign = params.get('utm_campaign') || sessionStorage.getItem('utm_campaign') || null;
+        trackBookingPageViewed({ lawyer_id: lawyer.user_id, source: 'booking_page', article_slug: articleSlug, cta_location: utmCampaign ? `utm:${utmCampaign}` : undefined });
       });
     }
-  }, [lawyer, variant]);
+  }, [lawyer]);
 
   // Apply deep link prefill once lawyer is loaded and slots are ready
   useEffect(() => {
@@ -583,6 +575,8 @@ export default function BookingPage() {
     setIsProcessingPayment(true);
 
     try {
+      const articleSlugForBooking = searchParams.get('article_slug') || (() => { try { return sessionStorage.getItem('legalup_article_slug') || null; } catch { return null; } })();
+      const utmParams = (() => { try { const p = new URLSearchParams(window.location.search); return { utm_source: p.get('utm_source') || sessionStorage.getItem('utm_source'), utm_medium: p.get('utm_medium') || sessionStorage.getItem('utm_medium'), utm_campaign: p.get('utm_campaign') || sessionStorage.getItem('utm_campaign') }; } catch { return {}; } })() as any;
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/bookings/create`, {
         method: 'POST',
         headers: {
@@ -590,7 +584,7 @@ export default function BookingPage() {
         },
         body: JSON.stringify({
           lawyer_id: lawyer.user_id,
-          user_id: user?.id || undefined,  // link authenticated user to booking
+          user_id: user?.id || undefined,
           user_email: userEmail,
           user_name: userName,
           scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
@@ -599,6 +593,10 @@ export default function BookingPage() {
           price: totalPrice,
           experiment_variant: variant || null,
           posthog_distinct_id: posthog.get_distinct_id() || null,
+          article_slug: articleSlugForBooking,
+          utm_source: utmParams.utm_source || null,
+          utm_medium: utmParams.utm_medium || null,
+          utm_campaign: utmParams.utm_campaign || null,
         })
       });
 

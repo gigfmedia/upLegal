@@ -101,6 +101,13 @@ export const RelatedLawyers = ({ category, title = "¿Necesitas resolver este pr
           price: baseProps.price,
           availability: baseProps.availability,
         });
+        // canonical F3 for PostHog
+        import('@/lib/bookingFunnel').then(({ trackBookingPageViewed }) => {
+          // use helper to emit lawyer_profile_viewed to both (via direct posthog for F3)
+          import('@/lib/posthogLoader').then(({ posthog }) => {
+            try { posthog.capture('lawyer_profile_viewed', { lawyer_id: lawyerId, article_slug: articleSlug, source: 'blog', cta_location: 'related_lawyers' }); } catch {}
+          });
+        });
       }
     }
   };

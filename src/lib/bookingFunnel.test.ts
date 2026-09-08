@@ -9,6 +9,8 @@ describe('bookingFunnel canonical', () => {
   beforeEach(() => {
     resetBookingStartedForTests();
     gtagMock.mockClear();
+    Object.defineProperty(window, 'location', { value: { hostname: 'legalup.cl', search: '', pathname: '/' }, writable: true });
+    try { sessionStorage.clear(); } catch {}
   });
 
   it('booking_started fires once per interaction', async () => {
