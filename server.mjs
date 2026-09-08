@@ -8001,26 +8001,32 @@ app.post('/api/ai/subscription/cancel', async (req, res) => {
     if (!userId) return;
 
     const subscription = await getAILawyerSubscription(userId);
-    if (!subscription || subscription.status !== 'active') {
+    if (!subscription) {
+      return res.status(409).json({ error: 'No tienes una suscripción activa.', code: 'NOT_ACTIVE' });
+    }
+    if (subscription.status === 'cancelled') {
+      return res.json({ success: true, cancel_at_period_end: true, already_cancelled: true });
+    }
+    if (subscription.status !== 'active') {
       return res.status(409).json({ error: 'No tienes una suscripción activa.', code: 'NOT_ACTIVE' });
     }
 
     if (subscription.provider_subscription_id) {
-      const mpResponse = await fetch(
-        `https://api.mercadopago.com/preapproval/${subscription.provider_subscription_id}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${mercadopagoAccessToken}`,
-          },
-          body: JSON.stringify({ status: 'cancelled' }),
+      const { cancelMpPreapproval, reconcileMpPreapprovalStatus } = await import('./server/subscriptions/cancelSubscription.mjs');
+      const mpResult = await cancelMpPreapproval({ preapprovalId: subscription.provider_subscription_id, accessToken: mercadopagoAccessToken });
+      if (!mpResult.ok) {
+        if (mpResult.alreadyCancelledHint) {
+          const recon = await reconcileMpPreapprovalStatus({ preapprovalId: subscription.provider_subscription_id, accessToken: mercadopagoAccessToken });
+          if (!recon.cancelled) {
+            console.error('[LegalUpAI] MP cancel error (provider not cancelled):', { providerId: subscription.provider_subscription_id, status: mpResult.status, body: mpResult.body });
+            return res.status(502).json({ error: 'No se pudo cancelar en el proveedor, intenta nuevamente.', code: 'PROVIDER_ERROR', provider_status: mpResult.status });
+          }
+          console.log('[LegalUpAI] MP already cancelled, reconciling local to cancelled', { providerId: subscription.provider_subscription_id });
+        } else {
+          const isNetwork = mpResult.networkError;
+          console.error('[LegalUpAI] MP cancel error:', { flow: 'AI', providerId: subscription.provider_subscription_id, status: mpResult.status, networkError: !!isNetwork, body: mpResult.body ? JSON.stringify(mpResult.body).slice(0, 500) : null });
+          return res.status(502).json({ error: isNetwork ? 'No se pudo contactar al proveedor, intenta nuevamente.' : 'No se pudo cancelar en el proveedor, intenta nuevamente.', code: isNetwork ? 'PROVIDER_UNREACHABLE' : 'PROVIDER_ERROR', provider_status: mpResult.status || undefined });
         }
-      );
-      if (!mpResponse.ok) {
-        const mpResult = await mpResponse.json().catch(() => ({}));
-        console.error('[LegalUpAI] MP cancel error:', mpResult);
-        // No fallar: se marca igual en BD y el webhook confirmará la baja.
       }
     }
 
@@ -8171,18 +8177,31 @@ app.post('/api/pro/subscription/cancel', async (req, res) => {
     userId = await requireAILawyer(req, res);
     if (!userId) return;
     const subscription = await getProLawyerSubscription(userId);
-    if (!subscription || subscription.status !== 'active') {
+    if (!subscription) {
+      return res.status(409).json({ error: 'No tienes una suscripción Pro activa.', code: 'NOT_ACTIVE' });
+    }
+    if (subscription.status === 'cancelled') {
+      return res.json({ success: true, cancel_at_period_end: true, already_cancelled: true });
+    }
+    if (subscription.status !== 'active') {
       return res.status(409).json({ error: 'No tienes una suscripción Pro activa.', code: 'NOT_ACTIVE' });
     }
     if (subscription.provider_subscription_id) {
-      const mpResponse = await fetch(`https://api.mercadopago.com/preapproval/${subscription.provider_subscription_id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${mercadopagoAccessToken}` },
-        body: JSON.stringify({ status: 'cancelled' }),
-      });
-      if (!mpResponse.ok) {
-        const mpResult = await mpResponse.json().catch(() => ({}));
-        console.error('[LegalUpPro] MP cancel error:', mpResult);
+      const { cancelMpPreapproval, reconcileMpPreapprovalStatus } = await import('./server/subscriptions/cancelSubscription.mjs');
+      const mpResult = await cancelMpPreapproval({ preapprovalId: subscription.provider_subscription_id, accessToken: mercadopagoAccessToken });
+      if (!mpResult.ok) {
+        if (mpResult.alreadyCancelledHint) {
+          const recon = await reconcileMpPreapprovalStatus({ preapprovalId: subscription.provider_subscription_id, accessToken: mercadopagoAccessToken });
+          if (!recon.cancelled) {
+            console.error('[LegalUpPro] MP cancel error (provider not cancelled):', { providerId: subscription.provider_subscription_id, status: mpResult.status, body: mpResult.body });
+            return res.status(502).json({ error: 'No se pudo cancelar en el proveedor, intenta nuevamente.', code: 'PROVIDER_ERROR', provider_status: mpResult.status });
+          }
+          console.log('[LegalUpPro] MP already cancelled, reconciling local to cancelled', { providerId: subscription.provider_subscription_id });
+        } else {
+          const isNetwork = mpResult.networkError;
+          console.error('[LegalUpPro] MP cancel error:', { flow: 'Pro', providerId: subscription.provider_subscription_id, status: mpResult.status, networkError: !!isNetwork, body: mpResult.body ? JSON.stringify(mpResult.body).slice(0, 500) : null });
+          return res.status(502).json({ error: isNetwork ? 'No se pudo contactar al proveedor, intenta nuevamente.' : 'No se pudo cancelar en el proveedor, intenta nuevamente.', code: isNetwork ? 'PROVIDER_UNREACHABLE' : 'PROVIDER_ERROR', provider_status: mpResult.status || undefined });
+        }
       }
     }
     const now = new Date();
