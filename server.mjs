@@ -2059,14 +2059,34 @@ app.post('/api/documents/create', async (req, res) => {
   try {
     const { type, user_email, user_name, payload, total_paid, amount, template_version } = req.body;
 
-    if (!type || !user_email || !payload || !total_paid) {
+    if (!type || !user_email || !payload) {
       return res.status(400).json({
         error: 'Faltan campos obligatorios',
-        required: ['type', 'user_email', 'payload', 'total_paid'],
+        required: ['type', 'user_email', 'payload'],
       });
     }
 
-    // Insert document as pending_payment
+    const { getDocumentProduct } = await import('./server/documents/catalog.mjs');
+    const product = getDocumentProduct(type);
+    if (!product) {
+      return res.status(400).json({ error: 'Tipo de documento no válido', code: 'INVALID_PRODUCT' });
+    }
+    const officialPrice = product.amount;
+    const officialCurrency = product.currency;
+
+    if (total_paid !== undefined && total_paid !== null && String(total_paid).trim() !== '') {
+      const clientPrice = Number(total_paid);
+      if (!Number.isFinite(clientPrice) || clientPrice !== officialPrice) {
+        return res.status(400).json({
+          error: 'Precio no coincide con el valor oficial',
+          code: 'PRICE_MISMATCH',
+          expected_amount: officialPrice,
+          expected_currency: officialCurrency,
+        });
+      }
+    }
+
+    // Insert document as pending_payment — siempre con precio oficial server-side
     const { data: doc, error: docError } = await supabase
       .from('generated_documents')
       .insert({
@@ -2075,7 +2095,7 @@ app.post('/api/documents/create', async (req, res) => {
         user_email,
         user_name: user_name || null,
         payload,
-        total_paid,
+        total_paid: officialPrice,
         amount: amount || null,
         template_version: template_version || 1,
       })
@@ -2087,18 +2107,18 @@ app.post('/api/documents/create', async (req, res) => {
       return res.status(500).json({ error: 'Error al crear el documento' });
     }
 
-    // Create MercadoPago preference
+    // Create MercadoPago preference — precio siempre desde catálogo server-side
     const webhookUrl = resolveWebhookUrl(req);
     const externalReference = `DOCUMENT_${doc.id}`;
 
     const preferenceData = {
       items: [{
         id: doc.id,
-        title: `Mandato Pagaré — LegalUp`,
-        description: 'Generación de documento legal',
+        title: product.title,
+        description: product.description,
         quantity: 1,
-        currency_id: 'CLP',
-        unit_price: total_paid,
+        currency_id: officialCurrency,
+        unit_price: officialPrice,
       }],
       payer: {
         email: user_email,
@@ -2425,6 +2445,17 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         const documentId = externalRef.replace('DOCREVIEW_', '');
         console.log('[webhook] step=review_payment document_id=' + documentId + ' payment_id=' + paymentId);
 
+        const { getDocumentProduct } = await import('./server/documents/catalog.mjs');
+        const reviewProduct = getDocumentProduct('pagare_review');
+        const paidAmount = Number(payment.transaction_amount);
+        const paidCurrency = payment.currency_id || null;
+        if (reviewProduct) {
+          if (!Number.isFinite(paidAmount) || paidAmount !== reviewProduct.amount || (paidCurrency && paidCurrency !== reviewProduct.currency)) {
+            console.error(`[webhook] step=review_payment status=price_mismatch document_id=${documentId} payment_id=${paymentId} expected=${reviewProduct.amount} ${reviewProduct.currency} got=${paidAmount} ${paidCurrency}`);
+            return;
+          }
+        }
+
         await supabase
           .from('generated_documents')
           .update({
@@ -2442,6 +2473,21 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
       if (externalRef.startsWith('DOCUMENT_')) {
         const documentId = externalRef.replace('DOCUMENT_', '');
         console.log('[webhook] step=document_payment document_id=' + documentId + ' payment_id=' + paymentId);
+
+        // Validación server-side del monto/currency aprobado por MP vs catálogo
+        const { data: pendingDoc } = await supabase.from('generated_documents').select('id,type,total_paid,status').eq('id', documentId).maybeSingle();
+        if (pendingDoc) {
+          const { getDocumentProduct } = await import('./server/documents/catalog.mjs');
+          const docProduct = getDocumentProduct(pendingDoc.type);
+          if (docProduct) {
+            const paidAmount = Number(payment.transaction_amount);
+            const paidCurrency = payment.currency_id || null;
+            if (!Number.isFinite(paidAmount) || paidAmount !== docProduct.amount || (paidCurrency && paidCurrency !== docProduct.currency)) {
+              console.error(`[webhook] step=document_payment status=price_mismatch document_id=${documentId} payment_id=${paymentId} expected=${docProduct.amount} ${docProduct.currency} got=${paidAmount} ${paidCurrency}`);
+              return;
+            }
+          }
+        }
 
         const { handleDocumentPayment } = await import('./server/documents.mjs');
         await handleDocumentPayment({
