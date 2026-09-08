@@ -5155,31 +5155,76 @@ const handleAIPreapprovalWebhook = async (preapproval) => {
   }
 
   const mpStatus = preapproval.status;
+  const providerEventAt = preapproval.last_modified || preapproval.date_created || new Date().toISOString();
+  const providerEventId = `${preapprovalId}:${mpStatus}:${providerEventAt}`;
+  const { tryInsertSubscriptionEvent, derivePeriodFromProvider, shouldApplyEvent, markSubscriptionEventProcessed, markSubscriptionEventFailed } = await import('./server/subscriptions/subscriptionEvents.mjs');
+  const eventRes = await tryInsertSubscriptionEvent(supabase, {
+    productType: 'ai',
+    subscriptionId: subscription.id,
+    providerEventId,
+    providerEventAt,
+    eventType: `preapproval_${mpStatus}`,
+    providerStatus: mpStatus,
+  });
+  if (!eventRes.inserted && eventRes.status === 'processed') {
+    console.log('[LegalUpAI] duplicate event skipped', providerEventId);
+    return;
+  }
+  if (!eventRes.inserted && !eventRes.retryable) {
+    console.log('[LegalUpAI] duplicate non-retryable event skipped', providerEventId);
+    return;
+  }
+  if (!(await shouldApplyEvent(supabase, { productType: 'ai', subscriptionId: subscription.id, providerEventAt }))) {
+    console.log('[LegalUpAI] out-of-order event ignored', providerEventId);
+    await markSubscriptionEventProcessed(supabase, { productType: 'ai', providerEventId });
+    return;
+  }
+  // Cancellation dominates: if subscription already cancelled with newer cancelled_at, don't reactivate
+  if (subscription.status === 'cancelled' && subscription.cancelled_at) {
+    const cancelledAt = new Date(subscription.cancelled_at).getTime();
+    const eventAt = new Date(providerEventAt).getTime();
+    if (!isNaN(cancelledAt) && !isNaN(eventAt) && eventAt <= cancelledAt) {
+      console.log('[LegalUpAI] old authorized event after cancellation ignored', providerEventId);
+      return;
+    }
+  }
   const now = new Date();
 
   switch (mpStatus) {
     case 'authorized':
     case 'active': {
-      const periodEnd = new Date(Date.now() + AI_MONTH_MS);
+      const derived = derivePeriodFromProvider(preapproval);
+      if (!derived) {
+        console.error('[LegalUpAI] cannot derive period, no entitlement', providerEventId);
+        return;
+      }
+      const periodEnd = derived.end;
       // Primera activación: el abogado venía de trial/pending y aún no había
       // sido activado (sin current_period_start). Solo ahí se reporta "started".
       const wasTrialing =
         (subscription.status === 'trialing' || subscription.status === 'pending') &&
         !subscription.current_period_start;
 
-      await supabase
-        .from('ai_subscriptions')
-        .update({
-          status: 'active',
-          provider: 'mercadopago',
-          provider_subscription_id: preapprovalId,
-          current_period_start: now.toISOString(),
-          current_period_end: periodEnd.toISOString(),
-          cancel_at_period_end: false,
-          cancelled_at: null,
-          updated_at: now.toISOString(),
-        })
-        .eq('id', subscription.id);
+      try {
+        const { error: updateError } = await supabase
+          .from('ai_subscriptions')
+          .update({
+            status: 'active',
+            provider: 'mercadopago',
+            provider_subscription_id: preapprovalId,
+            current_period_start: derived.start.toISOString(),
+            current_period_end: derived.end.toISOString(),
+            cancel_at_period_end: false,
+            cancelled_at: null,
+            updated_at: now.toISOString(),
+          })
+          .eq('id', subscription.id);
+        if (updateError) throw updateError;
+        await markSubscriptionEventProcessed(supabase, { productType: 'ai', providerEventId });
+      } catch (e) {
+        await markSubscriptionEventFailed(supabase, { productType: 'ai', providerEventId });
+        throw e;
+      }
 
       await capturePostHog(wasTrialing ? 'ai_subscription_started' : 'ai_subscription_renewed', lawyerId, {
         price_clp: AI_SUBSCRIPTION_PRICE_CLP,
@@ -5228,10 +5273,23 @@ const handleAIPreapprovalWebhook = async (preapproval) => {
 
 // LegalUp AI: procesa cobros autorizados (primera activación / renovaciones / pagos fallidos).
 const handleAIAuthorizedPayment = async (payment, subscription) => {
+  const providerEventId = String(payment.id);
+  const providerEventAt = payment.date_created || payment.date_approved || new Date().toISOString();
+  const { tryInsertSubscriptionEvent, shouldApplyEvent } = await import('./server/subscriptions/subscriptionEvents.mjs');
+  const ev = await tryInsertSubscriptionEvent(supabase, { productType: 'ai', subscriptionId: subscription.id, providerEventId, providerEventAt, eventType: 'payment_approved', providerStatus: payment.status });
+  if (!ev.inserted) return;
+  if (!(await shouldApplyEvent(supabase, { productType: 'ai', subscriptionId: subscription.id, providerEventAt }))) return;
+  if (subscription.status === 'cancelled' && subscription.cancelled_at) {
+    const cancelledAt = new Date(subscription.cancelled_at).getTime();
+    const eventAt = new Date(providerEventAt).getTime();
+    if (!isNaN(cancelledAt) && !isNaN(eventAt) && eventAt <= cancelledAt) return;
+  }
   const now = new Date();
+  const paymentDate = new Date(providerEventAt);
+  const periodStart = !isNaN(paymentDate.getTime()) ? paymentDate : now;
 
   if (payment.status === 'approved') {
-    const periodEnd = new Date(Date.now() + AI_MONTH_MS);
+    const periodEnd = new Date(periodStart.getTime() + AI_MONTH_MS);
 
     // La primera activación ocurre cuando el abogado pasaba por trial/pending
     // y aún no había sido activado (sin current_period_start). Solo entonces
@@ -5244,7 +5302,7 @@ const handleAIAuthorizedPayment = async (payment, subscription) => {
       .from('ai_subscriptions')
       .update({
         status: 'active',
-        current_period_start: now.toISOString(),
+        current_period_start: periodStart.toISOString(),
         current_period_end: periodEnd.toISOString(),
         cancel_at_period_end: false,
         cancelled_at: null,
@@ -5308,10 +5366,23 @@ const handleProPreapprovalWebhook = async (preapproval) => {
   if (!lawyerId) return;
   const { data: subscription } = await supabase.from('lawyer_subscriptions').select('*').eq('lawyer_id', lawyerId).maybeSingle();
   if (!subscription) return;
+  const providerEventAt = preapproval.last_modified || preapproval.date_created || new Date().toISOString();
+  const providerEventId = `${preapprovalId}:${mpStatus}:${providerEventAt}`;
+  const { tryInsertSubscriptionEvent, derivePeriodFromProvider, shouldApplyEvent } = await import('./server/subscriptions/subscriptionEvents.mjs');
+  const ev = await tryInsertSubscriptionEvent(supabase, { productType: 'pro', subscriptionId: subscription.id, providerEventId, providerEventAt, eventType: `preapproval_${mpStatus}`, providerStatus: mpStatus });
+  if (!ev.inserted) return;
+  if (!(await shouldApplyEvent(supabase, { productType: 'pro', subscriptionId: subscription.id, providerEventAt }))) return;
+  if (subscription.status === 'cancelled' && subscription.cancelled_at) {
+    const cancelledAt = new Date(subscription.cancelled_at).getTime();
+    const eventAt = new Date(providerEventAt).getTime();
+    if (!isNaN(cancelledAt) && !isNaN(eventAt) && eventAt <= cancelledAt) return;
+  }
   const now = new Date();
   if (mpStatus === 'authorized' || mpStatus === 'active') {
-    const periodEnd = new Date(now.getTime() + PRO_MONTH_MS);
-    await supabase.from('lawyer_subscriptions').update({ status: 'active', current_period_start: now.toISOString(), current_period_end: periodEnd.toISOString(), cancel_at_period_end: false, cancelled_at: null, updated_at: now.toISOString() }).eq('id', subscription.id);
+    const derived = derivePeriodFromProvider(preapproval);
+    if (!derived) return;
+    const periodEnd = derived.end;
+    await supabase.from('lawyer_subscriptions').update({ status: 'active', current_period_start: derived.start.toISOString(), current_period_end: periodEnd.toISOString(), cancel_at_period_end: false, cancelled_at: null, updated_at: now.toISOString() }).eq('id', subscription.id);
     await capturePostHog('pro_subscription_activated', lawyerId, { price_clp: PRO_SUBSCRIPTION_PRICE_CLP });
     const userData = await getProLawyerEmail(lawyerId);
     if (userData?.email) {
@@ -5329,10 +5400,23 @@ const handleProAuthorizedPayment = async (payment) => {
   if (!preapprovalId) return;
   const { data: subscription } = await supabase.from('lawyer_subscriptions').select('*').eq('provider_subscription_id', String(preapprovalId)).maybeSingle();
   if (!subscription) return;
+  const providerEventId = String(payment.id);
+  const providerEventAt = payment.date_created || payment.date_approved || new Date().toISOString();
+  const { tryInsertSubscriptionEvent, shouldApplyEvent } = await import('./server/subscriptions/subscriptionEvents.mjs');
+  const ev = await tryInsertSubscriptionEvent(supabase, { productType: 'pro', subscriptionId: subscription.id, providerEventId, providerEventAt, eventType: 'payment_approved', providerStatus: payment.status });
+  if (!ev.inserted) return;
+  if (!(await shouldApplyEvent(supabase, { productType: 'pro', subscriptionId: subscription.id, providerEventAt }))) return;
+  if (subscription.status === 'cancelled' && subscription.cancelled_at) {
+    const cancelledAt = new Date(subscription.cancelled_at).getTime();
+    const eventAt = new Date(providerEventAt).getTime();
+    if (!isNaN(cancelledAt) && !isNaN(eventAt) && eventAt <= cancelledAt) return;
+  }
   if (payment.status === 'approved') {
     const now = new Date();
-    const periodEnd = new Date(now.getTime() + PRO_MONTH_MS);
-    await supabase.from('lawyer_subscriptions').update({ status: 'active', current_period_start: now.toISOString(), current_period_end: periodEnd.toISOString(), cancel_at_period_end: false, cancelled_at: null, updated_at: now.toISOString() }).eq('id', subscription.id);
+    const paymentDate = new Date(providerEventAt);
+    const periodStart = !isNaN(paymentDate.getTime()) ? paymentDate : now;
+    const periodEnd = new Date(periodStart.getTime() + PRO_MONTH_MS);
+    await supabase.from('lawyer_subscriptions').update({ status: 'active', current_period_start: periodStart.toISOString(), current_period_end: periodEnd.toISOString(), cancel_at_period_end: false, cancelled_at: null, updated_at: now.toISOString() }).eq('id', subscription.id);
     await capturePostHog('pro_subscription_activated', subscription.lawyer_id, { price_clp: PRO_SUBSCRIPTION_PRICE_CLP });
   } else if (payment.status === 'rejected' || payment.status === 'refused') {
     await supabase.from('lawyer_subscriptions').update({ status: 'past_due', updated_at: new Date().toISOString() }).eq('id', subscription.id);
@@ -8309,7 +8393,12 @@ app.post('/api/pro/subscribe', async (req, res) => {
         if (mpCheck.ok) {
           const mpStatus = (mpData.status || '').toLowerCase();
           if (['authorized', 'active'].includes(mpStatus)) {
-            await supabase.from('lawyer_subscriptions').update({ status: 'active', updated_at: new Date().toISOString() }).eq('id', subscription.id);
+            const { derivePeriodFromProvider } = await import('./server/subscriptions/subscriptionEvents.mjs');
+            const derived = derivePeriodFromProvider(mpData);
+            if (!derived) {
+              return res.status(409).json({ error: 'Suscripción autorizada pero sin periodo válido, contacta soporte.', code: 'RECONCILIATION_PENDING' });
+            }
+            await supabase.from('lawyer_subscriptions').update({ status: 'active', current_period_start: derived.start.toISOString(), current_period_end: derived.end.toISOString(), updated_at: new Date().toISOString() }).eq('id', subscription.id);
             return res.json({ success: true, already_active: true, status: 'active', provider_status: mpStatus });
           }
           if (mpStatus === 'pending' && (mpData.init_point || mpData.sandbox_init_point)) {
@@ -8321,8 +8410,13 @@ app.post('/api/pro/subscribe', async (req, res) => {
           } else if (mpStatus === 'pending') {
             // pending sin init_point → continuar a crear nuevo
           }
+        } else {
+          // MP respondió con error no terminal (4xx/5xx sin status claro) → no crear duplicado
+          return res.status(502).json({ error: 'No se pudo verificar el estado con Mercado Pago, intenta nuevamente.', code: 'PROVIDER_ERROR', provider_status: mpCheck.status });
         }
-      } catch {}
+      } catch {
+        return res.status(503).json({ error: 'No se pudo contactar a Mercado Pago, intenta nuevamente.', code: 'PROVIDER_UNREACHABLE' });
+      }
       // si MP unreachable, mantener pending y no otorgar acceso, permitir retry si quiere pero no bloquear
     }
 
