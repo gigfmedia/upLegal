@@ -285,19 +285,19 @@ export default function BookingPage() {
     }
   }, [searchParams]);
 
-  // booking_page_viewed: Se dispara una sola vez cuando la página de booking carga correctamente
-  // (el abogado fue encontrado y los datos están disponibles).
-  // Usamos useRef para evitar disparos duplicados por re-renders o cambios de estado.
+  // F4 booking_page_viewed — canonical
   useEffect(() => {
     if (lawyer?.user_id && !bookingPageTracked.current) {
       bookingPageTracked.current = true;
+      // canonical F4 via helper (both providers)
+      import('@/lib/bookingFunnel').then(({ trackBookingPageViewed }) => {
+        trackBookingPageViewed({ lawyer_id: lawyer.user_id, source: 'booking_page', article_slug: (lawyer as any).article_slug || null });
+      });
+      // legacy direct (kept for backward compat, will be removed)
       window.gtag?.('event', 'booking_page_viewed', {
         lawyer_id: lawyer.user_id,
         lawyer_name: `${lawyer.first_name} ${lawyer.last_name}`
       });
-      // Evento de PostHog con variante del experimento: es la entrada del funnel
-      // exposure → booking_continue_clicked → booking_paid. La exposición real del
-      // flag ($feature_flag_called) ya la emite useFeatureFlagVariantKey al montar.
       posthog.capture('booking_page_viewed', {
         variant,
         lawyer_id: lawyer.user_id,
@@ -631,8 +631,17 @@ export default function BookingPage() {
           }
         });
 
-        // begin_checkout: Se dispara SOLO cuando existe un payment_link válido,
-        // justo antes de redirigir al usuario a Mercado Pago. Nunca antes.
+        // F6 begin_checkout — canonical, solo con preference válida
+        const { trackBeginCheckout } = await import('@/lib/bookingFunnel');
+        trackBeginCheckout({
+          booking_id: data.booking_id,
+          lawyer_id: lawyer.user_id,
+          value: totalPrice,
+          currency: 'CLP',
+          source: 'booking_page',
+          article_slug: (lawyer as any).article_slug || null,
+        });
+        // legacy direct (kept for backward compat)
         window.gtag?.('event', 'begin_checkout', {
           booking_id: data.booking_id,
           value: totalPrice,
@@ -728,6 +737,7 @@ export default function BookingPage() {
   }, [availableDates, selectedDate]);
 
   const handleDateSelect = (date: Date) => {
+    import('@/lib/bookingFunnel').then(({ trackBookingStarted }) => trackBookingStarted({ lawyer_id: lawyer?.user_id, source: 'booking_page', article_slug: (lawyer as any)?.article_slug || null }));
     setSelectedDate(date);
     setSelectedTime(null); // Reset time when date changes
 
@@ -747,6 +757,7 @@ export default function BookingPage() {
   };
 
   const handleTimeSelect = (time: string) => {
+    import('@/lib/bookingFunnel').then(({ trackBookingStarted }) => trackBookingStarted({ lawyer_id: lawyer?.user_id, source: 'booking_page', article_slug: (lawyer as any)?.article_slug || null }));
     setSelectedTime(time);
 
     // Scroll to summary section after state updates and renders

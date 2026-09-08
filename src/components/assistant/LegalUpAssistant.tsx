@@ -247,6 +247,8 @@ export default function LegalUpAssistant({ source = 'widget' }: LegalUpAssistant
   };
 
   const handleBook = (lawyer: AssistantLawyer, service: AssistantLawyerService) => {
+    import('@/lib/bookingFunnel').then(({ trackBookingStarted }) => trackBookingStarted({ lawyer_id: lawyer.id, service_id: service.id, source: 'assistant', article_slug: null }));
+    // legacy direct
     posthog.capture('booking_started', {
       source,
       lawyer_id: lawyer.id,
