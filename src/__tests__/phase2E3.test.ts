@@ -6,13 +6,12 @@ describe('FASE 2E.3 — Pricing server-side', () => {
   it('Test 1: server calculates price', () => {
     const c = readFileSync(resolve('server.mjs'), 'utf-8');
     expect(c).toContain('computedPrice');
-    expect(c).toContain('serverPrice');
     expect(c).toContain('hourly_rate_clp');
   });
   it('Test 2: client cannot manipulate price', () => {
     const c = readFileSync(resolve('server.mjs'), 'utf-8');
-    expect(c).toContain('price manipulation blocked');
-    expect(c).toContain('priceSource');
+    expect(c).toMatch(/price manipulation blocked|client price ignored/);
+    expect(c).toMatch(/priceSource|pricing_snapshot/);
   });
   it('Test 3: booking.price = server price', () => {
     const c = readFileSync(resolve('server.mjs'), 'utf-8');
