@@ -3,6 +3,10 @@
 
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS expires_at timestamptz;
 
+-- Fix status check to allow terminal statuses used by FASE 4B-5 (failed/expired/declined)
+ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_status_check;
+ALTER TABLE bookings ADD CONSTRAINT bookings_status_check CHECK (status = ANY (ARRAY['pending'::text, 'confirmed'::text, 'cancelled'::text, 'completed'::text, 'failed'::text, 'expired'::text, 'declined'::text]));
+
 -- Backfill expires_at for existing pending rows (15m TTL)
 UPDATE bookings SET expires_at = created_at + interval '15 minutes' WHERE status = 'pending' AND expires_at IS NULL;
 
