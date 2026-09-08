@@ -1305,10 +1305,9 @@ app.post('/api/bookings/create', async (req, res) => {
       return res.status(404).json({ error: 'Lawyer not found' });
     }
 
-    // 2E.3 P0: server-side price protection — calculate official price
-    let computedPrice = price;
-    let priceSource = 'client';
-    let serverPrice = price;
+    // FASE 4B-2 C3: server-side price — NEVER fallback to client
+    let computedPrice;
+    let priceSource;
     try {
       const { data: platformSettings } = await supabase
         .from('platform_settings')
@@ -1317,18 +1316,27 @@ app.post('/api/bookings/create', async (req, res) => {
         .limit(1)
         .maybeSingle();
       const surcharge = Number(platformSettings?.client_surcharge_percent ?? 0.1);
-      if (isServiceBooking && service_id) {
+      if (isServiceBooking) {
+        if (!service_id) {
+          return res.status(400).json({ error: 'service_id requerido para booking de servicio', code: 'INVALID_SERVICE' });
+        }
         const { data: service } = await supabase
           .from('lawyer_services')
-          .select('price_clp')
+          .select('price_clp, lawyer_user_id')
           .eq('id', service_id)
-          .eq('lawyer_user_id', lawyer_id)
           .maybeSingle();
-        if (service && service.price_clp != null) {
-          const original = Number(service.price_clp);
-          serverPrice = Math.round(original * (1 + surcharge));
-          priceSource = 'service';
+        if (!service) {
+          return res.status(400).json({ error: 'Servicio no válido', code: 'INVALID_SERVICE' });
         }
+        if (String(service.lawyer_user_id) !== String(lawyer_id)) {
+          return res.status(403).json({ error: 'Servicio no pertenece al abogado seleccionado', code: 'SERVICE_NOT_OWNED' });
+        }
+        if (service.price_clp == null || !Number.isFinite(Number(service.price_clp)) || Number(service.price_clp) <= 0) {
+          return res.status(422).json({ error: 'Precio de servicio no configurado', code: 'NO_VALID_PRICE' });
+        }
+        const original = Number(service.price_clp);
+        computedPrice = Math.round(original * (1 + surcharge));
+        priceSource = 'service';
       } else {
         const { data: profile } = await supabase
           .from('profiles')
@@ -1336,22 +1344,19 @@ app.post('/api/bookings/create', async (req, res) => {
           .eq('user_id', lawyer_id)
           .maybeSingle();
         const hourlyRate = Number(profile?.hourly_rate_clp || 0);
-        if (hourlyRate > 0 && resolvedDuration) {
-          const original = Math.round(hourlyRate * resolvedDuration / 60);
-          serverPrice = Math.round(original * (1 + surcharge));
-          priceSource = 'hourly';
+        if (!Number.isFinite(hourlyRate) || hourlyRate <= 0 || !resolvedDuration) {
+          return res.status(422).json({ error: 'Tarifa del abogado no configurada', code: 'NO_VALID_PRICE' });
         }
+        const original = Math.round(hourlyRate * resolvedDuration / 60);
+        computedPrice = Math.round(original * (1 + surcharge));
+        priceSource = 'hourly';
       }
-      // Validate: if server could determine price, enforce it
-      if (priceSource !== 'client' && serverPrice !== price) {
-        console.warn(`[2E.3] price manipulation blocked: client ${price} vs server ${serverPrice} (${priceSource}) lawyer ${lawyer_id}`);
-      }
-      // Use server price when determinable
-      if (priceSource !== 'client' && serverPrice > 0) {
-        computedPrice = serverPrice;
+      if (computedPrice !== price) {
+        console.warn(`[4B-2] client price ignored: client ${price} vs server ${computedPrice} (${priceSource}) lawyer ${lawyer_id}`);
       }
     } catch (e) {
-      console.warn('[2E.3] price calc failed, using client price', e.message);
+      console.error('[4B-2] price calc failed', e);
+      return res.status(500).json({ error: 'No se pudo validar el precio', code: 'PRICE_VALIDATION_FAILED' });
     }
 
     const inferRequiresMeeting = () => {
@@ -2473,9 +2478,9 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         const { getDocumentProduct } = await import('./server/documents/catalog.mjs');
         const reviewProduct = getDocumentProduct('pagare_review');
         const paidAmount = Number(payment.transaction_amount);
-        const paidCurrency = payment.currency_id || null;
+        const paidCurrency = payment.currency_id || payment.currency || null;
         if (reviewProduct) {
-          if (!Number.isFinite(paidAmount) || paidAmount !== reviewProduct.amount || (paidCurrency && paidCurrency !== reviewProduct.currency)) {
+          if (!Number.isFinite(paidAmount) || paidAmount !== reviewProduct.amount || paidCurrency !== reviewProduct.currency) {
             console.error(`[webhook] step=review_payment status=price_mismatch document_id=${documentId} payment_id=${paymentId} expected=${reviewProduct.amount} ${reviewProduct.currency} got=${paidAmount} ${paidCurrency}`);
             return;
           }
@@ -2499,18 +2504,24 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         const documentId = externalRef.replace('DOCUMENT_', '');
         console.log('[webhook] step=document_payment document_id=' + documentId + ' payment_id=' + paymentId);
 
-        // Validación server-side del monto/currency aprobado por MP vs catálogo
+        // Validación server-side del monto/currency — FAIL CLOSED si catálogo no disponible
         const { data: pendingDoc } = await supabase.from('generated_documents').select('id,type,total_paid,status').eq('id', documentId).maybeSingle();
-        if (pendingDoc) {
-          const { getDocumentProduct } = await import('./server/documents/catalog.mjs');
-          const docProduct = getDocumentProduct(pendingDoc.type);
-          if (docProduct) {
-            const paidAmount = Number(payment.transaction_amount);
-            const paidCurrency = payment.currency_id || null;
-            if (!Number.isFinite(paidAmount) || paidAmount !== docProduct.amount || (paidCurrency && paidCurrency !== docProduct.currency)) {
-              console.error(`[webhook] step=document_payment status=price_mismatch document_id=${documentId} payment_id=${paymentId} expected=${docProduct.amount} ${docProduct.currency} got=${paidAmount} ${paidCurrency}`);
-              return;
-            }
+        if (!pendingDoc) {
+          console.error(`[webhook] step=document_payment status=catalog_lookup_failed document_id=${documentId} payment_id=${paymentId} reason=document_not_found`);
+          throw new Error('Document catalog lookup failed');
+        }
+        const { getDocumentProduct: getDocProduct2 } = await import('./server/documents/catalog.mjs');
+        const docProduct = getDocProduct2(pendingDoc.type);
+        if (!docProduct) {
+          console.error(`[webhook] step=document_payment status=catalog_lookup_failed document_id=${documentId} payment_id=${paymentId} reason=unknown_product type=${pendingDoc.type}`);
+          throw new Error('Document catalog lookup failed');
+        }
+        {
+          const paidAmount = Number(payment.transaction_amount);
+          const paidCurrency = payment.currency_id || payment.currency || null;
+          if (!Number.isFinite(paidAmount) || paidAmount !== docProduct.amount || paidCurrency !== docProduct.currency) {
+            console.error(`[webhook] step=document_payment status=price_mismatch document_id=${documentId} payment_id=${paymentId} expected=${docProduct.amount} ${docProduct.currency} got=${paidAmount} ${paidCurrency}`);
+            return;
           }
         }
 
@@ -2547,6 +2558,28 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         return;
       }
 
+      // Terminal state protection: cancelled/expired should not be resurrected
+      const terminalStatuses = ['cancelled', 'expired', 'completed', 'declined'];
+      if (terminalStatuses.includes(existingBooking.status)) {
+        if (existingBooking.payment_id === paymentId) {
+          console.log('[webhook] step=payment_ingestion status=terminal_idempotent booking_id=' + bookingId + ' status=' + existingBooking.status + ' payment_id=' + paymentId);
+          return;
+        }
+        console.error('[webhook] step=payment_ingestion status=terminal_blocked booking_id=' + bookingId + ' status=' + existingBooking.status + ' incoming_payment_id=' + paymentId);
+        await supabase.from('bookings').update({ needs_manual_review: true, updated_at: new Date().toISOString() }).eq('id', bookingId);
+        return;
+      }
+
+      // Payment amount/currency validation BEFORE confirming (C4)
+      const expectedClientTotal = Number(existingBooking.price);
+      const paidAmount = Number(payment.transaction_amount);
+      const paidCurrency = payment.currency_id || payment.currency || 'CLP';
+      if (!Number.isFinite(expectedClientTotal) || !Number.isFinite(paidAmount) || paidAmount !== expectedClientTotal || paidCurrency !== 'CLP') {
+        console.error(`[webhook] step=amount_validation status=mismatch booking_id=${bookingId} payment_id=${paymentId} expected=${expectedClientTotal} CLP got=${paidAmount} ${paidCurrency}`);
+        await supabase.from('bookings').update({ needs_manual_review: true, updated_at: new Date().toISOString() }).eq('id', bookingId);
+        return;
+      }
+
       if (existingBooking.payment_id && existingBooking.payment_id !== paymentId) {
         console.error('[webhook] step=payment_ingestion status=conflict booking_id=' + bookingId + ' existing_payment_id=' + existingBooking.payment_id + ' incoming_payment_id=' + paymentId);
         await supabase.from('bookings').update({ needs_manual_review: true, updated_at: new Date().toISOString() }).eq('id', bookingId);
@@ -2559,7 +2592,6 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         const { data: claimed, error: claimError } = await supabase
           .from('bookings')
           .update({
-            status: 'confirmed',
             payment_status: 'approved',
             payment_id: paymentId,
             updated_at: new Date().toISOString()
@@ -2592,11 +2624,6 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
       } else {
         isRecovery = true;
         console.log('[webhook] step=payment_ingestion status=recovery booking_id=' + bookingId + ' payment_id=' + paymentId + ' existing_status=' + existingBooking.status);
-        // Asegurar status confirmed si quedó pending por fallo previo
-        if (existingBooking.status !== 'confirmed' || existingBooking.payment_status !== 'approved') {
-          const { data: fixed } = await supabase.from('bookings').update({ status: 'confirmed', payment_status: 'approved', updated_at: new Date().toISOString() }).eq('id', bookingId).select('*').maybeSingle();
-          if (fixed) booking = fixed;
-        }
       }
 
       // Idempotencia de éxito completo: si ya existe payment_events success + booking confirmed y meet ya persistido, skip duplicado
@@ -2840,17 +2867,8 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
 
       console.log('[webhook] step=booking_normalization status=ok user_id=' + (userId || 'null'));
 
-      // FASE 3B: Webhook amount validation — MP total debe coincidir con booking.price server-side
-      const expectedClientTotal = Number(booking.price);
-      const paidAmount = Number(payment.transaction_amount);
-      const paidCurrency = payment.currency_id || payment.currency || 'CLP';
-      if (!Number.isFinite(expectedClientTotal) || !Number.isFinite(paidAmount) || paidAmount !== expectedClientTotal || paidCurrency !== 'CLP') {
-        console.error(`[webhook] step=amount_validation status=mismatch booking_id=${bookingId} payment_id=${paymentId} expected=${expectedClientTotal} CLP got=${paidAmount} ${paidCurrency}`);
-        await supabase.from('bookings').update({ needs_manual_review: true, updated_at: new Date().toISOString() }).eq('id', bookingId);
-        return;
-      }
-
       // FASE 3B: Payment accounting — crear/reconciliar payments row para bookings modernos (idempotente)
+      const expectedClientTotal = Number(booking.price);
       try {
         const { data: existingPayment } = await supabase.from('payments').select('id').eq('booking_id', bookingId).maybeSingle();
         if (!existingPayment) {
@@ -2889,16 +2907,27 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
             status: 'succeeded',
             metadata: { provider: 'mercadopago', provider_payment_id: paymentId, booking_id: bookingId, client_total: expectedClientTotal },
           });
-          if (payInsertError && payInsertError.code !== '23505') {
-            console.error('[webhook] step=payment_accounting status=failed', payInsertError);
+          if (payInsertError) {
+            if (payInsertError.code === '23505') {
+              console.log('[webhook] step=payment_accounting status=already_exists booking_id=' + bookingId);
+            } else {
+              console.error('[webhook] step=payment_accounting status=failed', payInsertError);
+              throw payInsertError;
+            }
           } else {
             console.log('[webhook] step=payment_accounting status=ok booking_id=' + bookingId + ' payment_id=' + paymentId);
           }
         } else {
           console.log('[webhook] step=payment_accounting status=already_exists booking_id=' + bookingId);
         }
+        // Solo después de ledger exitoso, confirmar booking
+        if (booking.status !== 'confirmed' || booking.payment_status !== 'approved') {
+          const { data: confirmed } = await supabase.from('bookings').update({ status: 'confirmed', payment_status: 'approved', updated_at: new Date().toISOString() }).eq('id', bookingId).select('*').maybeSingle();
+          if (confirmed) booking = confirmed;
+        }
       } catch (payAccError) {
         console.error('[webhook] step=payment_accounting error', payAccError);
+        throw payAccError;
       }
 
       const shouldCreateAppointment = booking.requires_meeting !== false;
