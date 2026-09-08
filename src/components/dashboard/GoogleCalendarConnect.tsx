@@ -114,7 +114,7 @@ export function GoogleCalendarConnect() {
   return (
     <Card className="h-full flex flex-col">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-xl">
           <Calendar className="h-5 w-5" />
           Google Calendar
         </CardTitle>
