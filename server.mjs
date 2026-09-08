@@ -1249,8 +1249,11 @@ app.post('/api/bookings/create', async (req, res) => {
       return res.status(400).json({ error: 'Invalid email format' });
     }
 
-    // Prevent double-booking for scheduled appointments only
+    // Prevent double-booking for scheduled appointments only — expire stale pending first (durable)
     if (!isServiceBooking) {
+      try {
+        await supabase.rpc('expire_stale_pending_bookings');
+      } catch {}
       try {
         const { data: existingBookings, error: existingError } = await supabase
           .from('bookings')
