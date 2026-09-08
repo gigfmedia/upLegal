@@ -126,22 +126,49 @@ export function DocumentUpload({
   });
 
   const removeDocument = async () => {
-    if (currentDocumentUrl) {
-      try {
-        const oldFileName = currentDocumentUrl.split('/').pop();
-        if (oldFileName) {
-          await supabase.storage
-            .from(bucket)
-            .remove([`${userId}/${folder}/${oldFileName}`]);
+    if (!currentDocumentUrl) {
+      setPreviewUrl(null);
+      onUpload('', '');
+      toast({
+        title: "Documento eliminado",
+        description: `El ${label.toLowerCase()} se ha eliminado correctamente`,
+      });
+      return;
+    }
+    try {
+      const oldFileName = currentDocumentUrl.split('/').pop();
+      if (oldFileName) {
+        const { error: removeError } = await supabase.storage
+          .from(bucket)
+          .remove([`${userId}/${folder}/${oldFileName}`]);
+        if (removeError) {
+          const msg = String(removeError.message || '').toLowerCase();
+          const isNotFound = msg.includes('not found') || msg.includes('does not exist') || msg.includes('no such');
+          if (!isNotFound) throw removeError;
         }
-      } catch (error) {
-        console.error('Error al eliminar el documento:', error);
       }
+    } catch (error: any) {
+      console.error('Error al eliminar el documento:', error);
+      toast({
+        title: "Error",
+        description: error?.message || `No se pudo eliminar el ${label.toLowerCase()}`,
+        variant: "destructive",
+      });
+      return;
     }
     
     setPreviewUrl(null);
-    setFileName('');
-    onUpload('', '');
+    try {
+      await onUpload('', '');
+    } catch (e: any) {
+      console.error('Error limpiando referencia DB:', e);
+      toast({
+        title: "Error",
+        description: e?.message || "Se eliminó el archivo pero no se pudo actualizar el perfil. Intenta nuevamente.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     toast({
       title: "Documento eliminado",
