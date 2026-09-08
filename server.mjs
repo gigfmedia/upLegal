@@ -8219,8 +8219,34 @@ app.post('/api/pro/subscribe', async (req, res) => {
     const isFounderSlot = (founderCount ?? 0) < PRO_FOUNDER_LIMIT;
 
     let subscription = await getProLawyerSubscription(userId);
-    if (subscription && ['active', 'pending'].includes(subscription.status) && subscription.provider_subscription_id) {
+    if (subscription && subscription.status === 'active' && subscription.provider_subscription_id) {
       return res.status(409).json({ error: 'Ya tienes una suscripción Pro activa.', code: 'ALREADY_SUBSCRIBED' });
+    }
+    // Pending with provider id: intentar reconciliar o reutilizar checkout
+    if (subscription && subscription.status === 'pending' && subscription.provider_subscription_id) {
+      try {
+        const mpCheck = await fetch(`https://api.mercadopago.com/preapproval/${subscription.provider_subscription_id}`, {
+          headers: { Authorization: `Bearer ${mercadopagoAccessToken}` },
+        });
+        const mpData = await mpCheck.json().catch(() => ({}));
+        if (mpCheck.ok) {
+          const mpStatus = (mpData.status || '').toLowerCase();
+          if (['authorized', 'active'].includes(mpStatus)) {
+            await supabase.from('lawyer_subscriptions').update({ status: 'active', updated_at: new Date().toISOString() }).eq('id', subscription.id);
+            return res.json({ success: true, already_active: true, status: 'active', provider_status: mpStatus });
+          }
+          if (mpStatus === 'pending' && (mpData.init_point || mpData.sandbox_init_point)) {
+            return res.json({ success: true, pending_checkout: true, initPoint: mpData.init_point || mpData.sandbox_init_point, preapproval_id: subscription.provider_subscription_id, provider_status: mpStatus });
+          }
+          // cancelled/rejected/expired → permitir nuevo intento (continuar flujo)
+          if (['cancelled', 'rejected', 'expired'].includes(mpStatus)) {
+            // continuar a crear nuevo preapproval
+          } else if (mpStatus === 'pending') {
+            // pending sin init_point → continuar a crear nuevo
+          }
+        }
+      } catch {}
+      // si MP unreachable, mantener pending y no otorgar acceso, permitir retry si quiere pero no bloquear
     }
 
     const appUrl = process.env.APP_URL || process.env.FRONTEND_URL || 'https://legalup.cl';
