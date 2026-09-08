@@ -5604,6 +5604,40 @@ app.get('/api/admin/empresas', requireAdmin, async (req, res) => {
   }
 });
 
+// ---- ADMIN: GET COMPANY METRICS ----
+app.get('/api/admin/empresas/metrics', requireAdmin, async (req, res) => {
+  try {
+    const { data: metrics } = await supabase.rpc('get_company_metrics');
+
+    res.json({ metrics });
+  } catch (error) {
+    console.error('[Admin] Error fetching metrics:', error);
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
+
+// ---- ADMIN: GET ALL REQUESTS (for assignment dashboard) ----
+app.get('/api/admin/empresas/requests', requireAdmin, async (req, res) => {
+  try {
+    const { status } = req.query;
+
+    let query = supabase
+      .from('company_requests')
+      .select('*, company:company_id(id, name, rut, contact_name)')
+      .order('created_at', { ascending: false });
+
+    if (status) query = query.eq('status', status);
+    else query = query.not('status', 'in', '("finalizada","cancelada")');
+
+    const { data: requests } = await query;
+
+    res.json({ requests: requests || [] });
+  } catch (error) {
+    console.error('[Admin] Error fetching requests:', error);
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
+
 // ---- ADMIN: GET COMPANY DETAILS ----
 app.get('/api/admin/empresas/:id', requireAdmin, async (req, res) => {
   try {
@@ -5707,40 +5741,6 @@ app.post('/api/admin/empresas/:id/notes', requireAdmin, async (req, res) => {
     res.json({ note: data });
   } catch (error) {
     console.error('[Admin] Error adding note:', error);
-    res.status(500).json({ error: 'Error interno' });
-  }
-});
-
-// ---- ADMIN: GET COMPANY METRICS ----
-app.get('/api/admin/empresas/metrics', requireAdmin, async (req, res) => {
-  try {
-    const { data: metrics } = await supabase.rpc('get_company_metrics');
-
-    res.json({ metrics });
-  } catch (error) {
-    console.error('[Admin] Error fetching metrics:', error);
-    res.status(500).json({ error: 'Error interno' });
-  }
-});
-
-// ---- ADMIN: GET ALL REQUESTS (for assignment dashboard) ----
-app.get('/api/admin/empresas/requests', requireAdmin, async (req, res) => {
-  try {
-    const { status } = req.query;
-
-    let query = supabase
-      .from('company_requests')
-      .select('*, company:company_id(id, name, rut, contact_name)')
-      .order('created_at', { ascending: false });
-
-    if (status) query = query.eq('status', status);
-    else query = query.not('status', 'in', '("finalizada","cancelada")');
-
-    const { data: requests } = await query;
-
-    res.json({ requests: requests || [] });
-  } catch (error) {
-    console.error('[Admin] Error fetching requests:', error);
     res.status(500).json({ error: 'Error interno' });
   }
 });
