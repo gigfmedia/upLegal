@@ -2815,6 +2815,67 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
 
       console.log('[webhook] step=booking_normalization status=ok user_id=' + (userId || 'null'));
 
+      // FASE 3B: Webhook amount validation — MP total debe coincidir con booking.price server-side
+      const expectedClientTotal = Number(booking.price);
+      const paidAmount = Number(payment.transaction_amount);
+      const paidCurrency = payment.currency_id || payment.currency || 'CLP';
+      if (!Number.isFinite(expectedClientTotal) || !Number.isFinite(paidAmount) || paidAmount !== expectedClientTotal || paidCurrency !== 'CLP') {
+        console.error(`[webhook] step=amount_validation status=mismatch booking_id=${bookingId} payment_id=${paymentId} expected=${expectedClientTotal} CLP got=${paidAmount} ${paidCurrency}`);
+        await supabase.from('bookings').update({ needs_manual_review: true, updated_at: new Date().toISOString() }).eq('id', bookingId);
+        return;
+      }
+
+      // FASE 3B: Payment accounting — crear/reconciliar payments row para bookings modernos (idempotente)
+      try {
+        const { data: existingPayment } = await supabase.from('payments').select('id').eq('booking_id', bookingId).maybeSingle();
+        if (!existingPayment) {
+          let clientSurchargePercent = 0.1;
+          let platformFeePercent = 0.20;
+          try {
+            const { data: ps } = await supabase.from('platform_settings').select('client_surcharge_percent, platform_fee_percent').order('updated_at', { ascending: false }).limit(1).maybeSingle();
+            if (ps) {
+              clientSurchargePercent = Number(ps.client_surcharge_percent ?? clientSurchargePercent);
+              platformFeePercent = Number(ps.platform_fee_percent ?? platformFeePercent);
+            }
+          } catch {}
+          const derivedOriginal = Math.round(expectedClientTotal / (1 + clientSurchargePercent));
+          const clientSurcharge = Math.max(expectedClientTotal - derivedOriginal, 0);
+          const platformFee = Math.round(derivedOriginal * platformFeePercent);
+          const lawyerAmount = Math.max(derivedOriginal - platformFee, 0);
+          // Verificar ecuación DB: amount = platform_fee + lawyer_amount
+          if (derivedOriginal !== platformFee + lawyerAmount) {
+            console.warn(`[webhook] step=payment_accounting warning equation mismatch derived=${derivedOriginal} platform=${platformFee} lawyer=${lawyerAmount}`);
+          }
+          const paymentIdForTable = paymentId.length === 36 ? paymentId : null; // MP id no es UUID, usar random UUID y guardar provider id en metadata
+          const insertId = paymentIdForTable || crypto.randomUUID();
+          const { error: payInsertError } = await supabase.from('payments').insert({
+            id: insertId,
+            user_id: userId || booking.user_id,
+            lawyer_id: booking.lawyer_id,
+            booking_id: bookingId,
+            amount: derivedOriginal,
+            original_amount: derivedOriginal,
+            client_surcharge: clientSurcharge,
+            client_surcharge_percent: clientSurchargePercent,
+            platform_fee_percent: platformFeePercent,
+            platform_fee: platformFee,
+            lawyer_amount: lawyerAmount,
+            currency: 'CLP',
+            status: 'succeeded',
+            metadata: { provider: 'mercadopago', provider_payment_id: paymentId, booking_id: bookingId, client_total: expectedClientTotal },
+          });
+          if (payInsertError && payInsertError.code !== '23505') {
+            console.error('[webhook] step=payment_accounting status=failed', payInsertError);
+          } else {
+            console.log('[webhook] step=payment_accounting status=ok booking_id=' + bookingId + ' payment_id=' + paymentId);
+          }
+        } else {
+          console.log('[webhook] step=payment_accounting status=already_exists booking_id=' + bookingId);
+        }
+      } catch (payAccError) {
+        console.error('[webhook] step=payment_accounting error', payAccError);
+      }
+
       const shouldCreateAppointment = booking.requires_meeting !== false;
 
       // Track payment event.
