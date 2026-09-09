@@ -204,7 +204,7 @@ if (!ga4MeasurementId || !ga4ApiSecret) {
 
 // Send GA4 Purchase Event using Measurement Protocol
 const sendGA4PurchaseEvent = async (params) => {
-  const { transaction_id, value, currency, booking_id, lawyer_id, appointment_id, is_owner, article_slug } = params;
+  const { transaction_id, value, currency, booking_id, lawyer_id, appointment_id, is_owner, article_slug, ga_client_id, ga_session_id } = params;
 
   if (!ga4MeasurementId || !ga4ApiSecret) {
     console.warn('[GA4] Skipping purchase event - GA4 credentials not configured');
@@ -216,8 +216,13 @@ const sendGA4PurchaseEvent = async (params) => {
 
     const url = `https://www.google-analytics.com/mp/collect?measurement_id=${ga4MeasurementId}&api_secret=${ga4ApiSecret}`;
 
-    const payload = {
-      client_id: transaction_id, // Use transaction_id as client_id for server-side events
+    const effectiveClientId = ga_client_id || transaction_id;
+    if (!effectiveClientId) {
+      console.warn('[GA4] Skipping purchase — no ga_client_id and no transaction_id');
+      return;
+    }
+    const payload: any = {
+      client_id: effectiveClientId,
       events: [
         {
           name: 'purchase',
@@ -225,15 +230,12 @@ const sendGA4PurchaseEvent = async (params) => {
             transaction_id,
             value,
             currency,
-            // GA4 Measurement Protocol lee los parámetros custom como claves
-            // planas de `params`, no anidadas. Se envían así para que el flag
-            // is_owner / transport_is_owner pueda registrarse como dimensión
-            // custom en GA4 y filtrarse en los dashboards.
             ...(booking_id && { booking_id }),
             ...(lawyer_id && { lawyer_id }),
             ...(appointment_id && { appointment_id }),
             ...(is_owner !== undefined && { transport_is_owner: is_owner }),
             ...(params.article_slug && { article_slug: params.article_slug }),
+            ...(ga_session_id && { session_id: ga_session_id }),
             items: [
               {
                 item_id: booking_id,
@@ -1231,6 +1233,8 @@ app.post('/api/bookings/create', async (req, res) => {
       requires_meeting,
       experiment_variant,
       posthog_distinct_id,
+      ga_client_id,
+      ga_session_id,
       article_slug,
     } = req.body;
 
@@ -1450,6 +1454,8 @@ app.post('/api/bookings/create', async (req, res) => {
         utm_medium: (req.body as any).utm_medium ? String((req.body as any).utm_medium).trim() || null : null,
         utm_campaign: (req.body as any).utm_campaign ? String((req.body as any).utm_campaign).trim() || null : null,
         is_test: String(user_email || '').includes('@test.invalid') || String(article_slug || '').includes('test') ? true : undefined,
+        ga_client_id: (ga_client_id as any) ? String(ga_client_id).trim() || null : null,
+        ga_session_id: (ga_session_id as any) ? String(ga_session_id).trim() || null : null,
       },
     };
 
@@ -3121,6 +3127,8 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           utm_source: booking.metadata?.utm_source || null,
           utm_campaign: booking.metadata?.utm_campaign || null,
           is_test: booking.metadata?.is_test || String(booking.user_email || '').includes('@test.invalid') || false,
+          ga_client_id: (booking.metadata as any)?.ga_client_id || null,
+          ga_session_id: (booking.metadata as any)?.ga_session_id || null,
         });
       } catch (ga4Error) {
         console.error('[webhook] step=ga4_event status=failed', ga4Error);
