@@ -5381,14 +5381,23 @@ const handleAIPreapprovalWebhook = async (preapproval) => {
 const handleAIAuthorizedPayment = async (payment, subscription) => {
   const providerEventId = String(payment.id);
   const providerEventAt = payment.date_created || payment.date_approved || new Date().toISOString();
-  const { tryInsertSubscriptionEvent, shouldApplyEvent } = await import('./server/subscriptions/subscriptionEvents.mjs');
+  const { tryInsertSubscriptionEvent, shouldApplyEvent, markSubscriptionEventProcessed, markSubscriptionEventFailed } = await import('./server/subscriptions/subscriptionEvents.mjs');
   const ev = await tryInsertSubscriptionEvent(supabase, { productType: 'ai', subscriptionId: subscription.id, providerEventId, providerEventAt, eventType: 'payment_approved', providerStatus: payment.status });
-  if (!ev.inserted) return;
-  if (!(await shouldApplyEvent(supabase, { productType: 'ai', subscriptionId: subscription.id, providerEventAt }))) return;
+  if (!ev.inserted) {
+    if (ev.status === 'processed') return;
+    if (!ev.retryable) return;
+  }
+  if (!(await shouldApplyEvent(supabase, { productType: 'ai', subscriptionId: subscription.id, providerEventAt }))) {
+    await markSubscriptionEventProcessed(supabase, { productType: 'ai', providerEventId });
+    return;
+  }
   if (subscription.status === 'cancelled' && subscription.cancelled_at) {
     const cancelledAt = new Date(subscription.cancelled_at).getTime();
     const eventAt = new Date(providerEventAt).getTime();
-    if (!isNaN(cancelledAt) && !isNaN(eventAt) && eventAt <= cancelledAt) return;
+    if (!isNaN(cancelledAt) && !isNaN(eventAt) && eventAt <= cancelledAt) {
+      await markSubscriptionEventProcessed(supabase, { productType: 'ai', providerEventId });
+      return;
+    }
   }
   const now = new Date();
   const paymentDate = new Date(providerEventAt);
@@ -5397,24 +5406,28 @@ const handleAIAuthorizedPayment = async (payment, subscription) => {
   if (payment.status === 'approved') {
     const periodEnd = new Date(periodStart.getTime() + AI_MONTH_MS);
 
-    // La primera activación ocurre cuando el abogado pasaba por trial/pending
-    // y aún no había sido activado (sin current_period_start). Solo entonces
-    // se reporta 'ai_subscription_started'; de lo contrario es una renovación.
     const isFirstActivation =
       (subscription.status === 'trialing' || subscription.status === 'pending') &&
       !subscription.current_period_start;
 
-    await supabase
-      .from('ai_subscriptions')
-      .update({
-        status: 'active',
-        current_period_start: periodStart.toISOString(),
-        current_period_end: periodEnd.toISOString(),
-        cancel_at_period_end: false,
-        cancelled_at: null,
-        updated_at: now.toISOString(),
-      })
-      .eq('id', subscription.id);
+    try {
+      const { error: updateError } = await supabase
+        .from('ai_subscriptions')
+        .update({
+          status: 'active',
+          current_period_start: periodStart.toISOString(),
+          current_period_end: periodEnd.toISOString(),
+          cancel_at_period_end: false,
+          cancelled_at: null,
+          updated_at: now.toISOString(),
+        })
+        .eq('id', subscription.id);
+      if (updateError) throw updateError;
+      await markSubscriptionEventProcessed(supabase, { productType: 'ai', providerEventId });
+    } catch (e) {
+      await markSubscriptionEventFailed(supabase, { productType: 'ai', providerEventId });
+      throw e;
+    }
 
     await capturePostHog(
       isFirstActivation ? 'ai_subscription_started' : 'ai_subscription_renewed',
@@ -5425,7 +5438,6 @@ const handleAIAuthorizedPayment = async (payment, subscription) => {
       }
     );
 
-    // Ingreso confirmado: se reporta en cada cobro aprobado (primera y renovaciones).
     await capturePostHog('ai_subscription_paid', subscription.lawyer_id, {
       price_clp: payment.transaction_amount || AI_SUBSCRIPTION_PRICE_CLP,
       currency: 'CLP',
@@ -5508,21 +5520,37 @@ const handleProAuthorizedPayment = async (payment) => {
   if (!subscription) return;
   const providerEventId = String(payment.id);
   const providerEventAt = payment.date_created || payment.date_approved || new Date().toISOString();
-  const { tryInsertSubscriptionEvent, shouldApplyEvent } = await import('./server/subscriptions/subscriptionEvents.mjs');
+  const { tryInsertSubscriptionEvent, shouldApplyEvent, markSubscriptionEventProcessed, markSubscriptionEventFailed } = await import('./server/subscriptions/subscriptionEvents.mjs');
   const ev = await tryInsertSubscriptionEvent(supabase, { productType: 'pro', subscriptionId: subscription.id, providerEventId, providerEventAt, eventType: 'payment_approved', providerStatus: payment.status });
-  if (!ev.inserted) return;
-  if (!(await shouldApplyEvent(supabase, { productType: 'pro', subscriptionId: subscription.id, providerEventAt }))) return;
+  if (!ev.inserted) {
+    if (ev.status === 'processed') return;
+    if (!ev.retryable) return;
+  }
+  if (!(await shouldApplyEvent(supabase, { productType: 'pro', subscriptionId: subscription.id, providerEventAt }))) {
+    await markSubscriptionEventProcessed(supabase, { productType: 'pro', providerEventId });
+    return;
+  }
   if (subscription.status === 'cancelled' && subscription.cancelled_at) {
     const cancelledAt = new Date(subscription.cancelled_at).getTime();
     const eventAt = new Date(providerEventAt).getTime();
-    if (!isNaN(cancelledAt) && !isNaN(eventAt) && eventAt <= cancelledAt) return;
+    if (!isNaN(cancelledAt) && !isNaN(eventAt) && eventAt <= cancelledAt) {
+      await markSubscriptionEventProcessed(supabase, { productType: 'pro', providerEventId });
+      return;
+    }
   }
   if (payment.status === 'approved') {
     const now = new Date();
     const paymentDate = new Date(providerEventAt);
     const periodStart = !isNaN(paymentDate.getTime()) ? paymentDate : now;
     const periodEnd = new Date(periodStart.getTime() + PRO_MONTH_MS);
-    await supabase.from('lawyer_subscriptions').update({ status: 'active', current_period_start: periodStart.toISOString(), current_period_end: periodEnd.toISOString(), cancel_at_period_end: false, cancelled_at: null, updated_at: now.toISOString() }).eq('id', subscription.id);
+    try {
+      const { error: updateError } = await supabase.from('lawyer_subscriptions').update({ status: 'active', current_period_start: periodStart.toISOString(), current_period_end: periodEnd.toISOString(), cancel_at_period_end: false, cancelled_at: null, updated_at: now.toISOString() }).eq('id', subscription.id);
+      if (updateError) throw updateError;
+      await markSubscriptionEventProcessed(supabase, { productType: 'pro', providerEventId });
+    } catch (e) {
+      await markSubscriptionEventFailed(supabase, { productType: 'pro', providerEventId });
+      throw e;
+    }
     await capturePostHog('pro_subscription_activated', subscription.lawyer_id, { price_clp: PRO_SUBSCRIPTION_PRICE_CLP });
   } else if (payment.status === 'rejected' || payment.status === 'refused') {
     await supabase.from('lawyer_subscriptions').update({ status: 'past_due', updated_at: new Date().toISOString() }).eq('id', subscription.id);
