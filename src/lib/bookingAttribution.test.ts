@@ -3,7 +3,7 @@ import { getBookingAttribution } from './bookingAttribution';
 
 describe('bookingAttribution', () => {
   beforeEach(() => {
-    Object.defineProperty(window, 'location', { value: { search: '?utm_source=qa&utm_medium=e2e&utm_campaign=test&article_slug=test-article', hostname: 'legalup.cl' }, writable: true });
+    Object.defineProperty(window, 'location', { value: { search: '?utm_source=qa&utm_medium=e2e&utm_campaign=test&article_slug=test-article', hostname: 'legalup.cl', pathname: '/' }, writable: true });
     sessionStorage.clear();
   });
 
@@ -11,6 +11,34 @@ describe('bookingAttribution', () => {
     const attr = await getBookingAttribution();
     expect(attr.utm_source).toBe('qa');
     expect(attr.article_slug).toBe('test-article');
+  });
+
+  it('landing UTM survives navigation without UTMs', async () => {
+    // Simulate landing with UTMs
+    Object.defineProperty(window, 'location', { value: { search: '?utm_source=qa&utm_medium=e2e&utm_campaign=final_marketplace_e2e', hostname: 'legalup.cl', pathname: '/' }, writable: true });
+    const { persistUTMsFromURL } = await import('./bookingAttribution');
+    persistUTMsFromURL();
+    // Simulate navigation to booking page without UTMs
+    Object.defineProperty(window, 'location', { value: { search: '', hostname: 'legalup.cl', pathname: '/booking/123' }, writable: true });
+    const attr = await getBookingAttribution();
+    expect(attr.utm_source).toBe('qa');
+    expect(attr.utm_medium).toBe('e2e');
+    expect(attr.utm_campaign).toBe('final_marketplace_e2e');
+  });
+
+  it('no UTM returns null', async () => {
+    Object.defineProperty(window, 'location', { value: { search: '', hostname: 'legalup.cl', pathname: '/' }, writable: true });
+    sessionStorage.clear();
+    const attr = await getBookingAttribution();
+    expect(attr.utm_source).toBeNull();
+  });
+
+  it('new explicit UTM overwrites stored', async () => {
+    sessionStorage.setItem('utm_campaign', 'old_campaign');
+    Object.defineProperty(window, 'location', { value: { search: '?utm_campaign=new_campaign', hostname: 'legalup.cl', pathname: '/' }, writable: true });
+    const attr = await getBookingAttribution();
+    expect(attr.utm_campaign).toBe('new_campaign');
+    expect(sessionStorage.getItem('utm_campaign')).toBe('new_campaign');
   });
 
   it('captures ga_client_id when gtag available', async () => {

@@ -13,7 +13,29 @@ export type BookingAttribution = {
   cta_location?: string | null;
 };
 
+export function persistUTMsFromURL() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'] as const;
+    for (const key of utmKeys) {
+      const val = params.get(key);
+      if (val) {
+        try { sessionStorage.setItem(key, val); } catch {}
+      }
+    }
+    const article = params.get('article_slug');
+    if (article) try { sessionStorage.setItem('legalup_article_slug', article); } catch {}
+    // Also capture from current URL on every call for SPA navigation
+    if (params.get('utm_source') || params.get('utm_medium') || params.get('utm_campaign')) {
+      // already handled above
+    }
+  } catch {}
+}
+
 export async function getBookingAttribution(): Promise<BookingAttribution> {
+  // Ensure UTMs from current URL are persisted before reading
+  persistUTMsFromURL();
+
   let ga = { ga_client_id: null as string | null, ga_session_id: null as string | null };
   try {
     ga = await Promise.race([
@@ -33,17 +55,32 @@ export async function getBookingAttribution(): Promise<BookingAttribution> {
   let utm_campaign: string | null = null;
   try {
     const params = new URLSearchParams(window.location.search);
+    // Precedence: current URL UTM if present, else session-persisted UTM
+    const currentUtmSource = params.get('utm_source');
+    const currentUtmMedium = params.get('utm_medium');
+    const currentUtmCampaign = params.get('utm_campaign');
+    if (currentUtmSource) {
+      utm_source = currentUtmSource;
+      try { sessionStorage.setItem('utm_source', currentUtmSource); } catch {}
+    } else {
+      try { utm_source = sessionStorage.getItem('utm_source'); } catch {}
+    }
+    if (currentUtmMedium) {
+      utm_medium = currentUtmMedium;
+      try { sessionStorage.setItem('utm_medium', currentUtmMedium); } catch {}
+    } else {
+      try { utm_medium = sessionStorage.getItem('utm_medium'); } catch {}
+    }
+    if (currentUtmCampaign) {
+      utm_campaign = currentUtmCampaign;
+      try { sessionStorage.setItem('utm_campaign', currentUtmCampaign); } catch {}
+    } else {
+      try { utm_campaign = sessionStorage.getItem('utm_campaign'); } catch {}
+    }
     article_slug = params.get('article_slug') || (() => { try { return sessionStorage.getItem('legalup_article_slug'); } catch { return null; } })();
-    utm_source = params.get('utm_source') || (() => { try { return sessionStorage.getItem('utm_source'); } catch { return null; } })();
-    utm_medium = params.get('utm_medium') || (() => { try { return sessionStorage.getItem('utm_medium'); } catch { return null; } })();
-    utm_campaign = params.get('utm_campaign') || (() => { try { return sessionStorage.getItem('utm_campaign'); } catch { return null; } })();
-    // persist for refresh
-    try {
-      if (params.get('utm_source')) sessionStorage.setItem('utm_source', params.get('utm_source')!);
-      if (params.get('utm_medium')) sessionStorage.setItem('utm_medium', params.get('utm_medium')!);
-      if (params.get('utm_campaign')) sessionStorage.setItem('utm_campaign', params.get('utm_campaign')!);
-      if (params.get('article_slug')) sessionStorage.setItem('legalup_article_slug', params.get('article_slug')!);
-    } catch {}
+    if (params.get('article_slug')) {
+      try { sessionStorage.setItem('legalup_article_slug', params.get('article_slug')!); } catch {}
+    }
   } catch {}
 
   return {

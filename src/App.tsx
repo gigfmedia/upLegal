@@ -18,6 +18,7 @@ import { DeferredMount } from '@/components/DeferredMount';
 import { AuthProvider } from '@/contexts/AuthContext/clean/AuthContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePageTracking } from '@/hooks/usePageTracking';
+import { persistUTMsFromURL } from '@/lib/bookingAttribution';
 import { supabase } from '@/lib/supabaseClient';
 import { StickyBottomBarProvider } from '@/contexts/StickyBottomBarContext';
 
@@ -320,6 +321,11 @@ const AppContent = () => {
 
   // Track page views
   usePageTracking();
+
+  // Persist UTMs for attribution across SPA navigation
+  useEffect(() => {
+    persistUTMsFromURL();
+  }, [location.search]);
 
   const hashHandledRef = useRef(false);
 
