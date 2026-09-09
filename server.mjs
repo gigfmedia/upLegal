@@ -220,7 +220,7 @@ const sendGA4PurchaseEvent = async (params) => {
       console.warn('[GA4] Skipping purchase — no ga_client_id, not fabricating from transaction_id');
       return;
     }
-    const payload: any = {
+    const payload = {
       client_id: ga_client_id,
       events: [
         {
@@ -1449,12 +1449,12 @@ app.post('/api/bookings/create', async (req, res) => {
       pricing_snapshot: pricingSnapshot,
       metadata: {
         article_slug: article_slug ? String(article_slug).trim() || null : null,
-        utm_source: (req.body as any).utm_source ? String((req.body as any).utm_source).trim() || null : null,
-        utm_medium: (req.body as any).utm_medium ? String((req.body as any).utm_medium).trim() || null : null,
-        utm_campaign: (req.body as any).utm_campaign ? String((req.body as any).utm_campaign).trim() || null : null,
+        utm_source: req.body.utm_source ? String(req.body.utm_source).trim() || null : null,
+        utm_medium: req.body.utm_medium ? String(req.body.utm_medium).trim() || null : null,
+        utm_campaign: req.body.utm_campaign ? String(req.body.utm_campaign).trim() || null : null,
         is_test: String(user_email || '').includes('@test.invalid') || String(article_slug || '').includes('test') ? true : undefined,
-        ga_client_id: (ga_client_id as any) ? String(ga_client_id).trim() || null : null,
-        ga_session_id: (ga_session_id as any) ? String(ga_session_id).trim() || null : null,
+        ga_client_id: ga_client_id ? String(ga_client_id).trim() || null : null,
+        ga_session_id: ga_session_id ? String(ga_session_id).trim() || null : null,
       },
     };
 
@@ -3126,8 +3126,8 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           utm_source: booking.metadata?.utm_source || null,
           utm_campaign: booking.metadata?.utm_campaign || null,
           is_test: booking.metadata?.is_test || String(booking.user_email || '').includes('@test.invalid') || false,
-          ga_client_id: (booking.metadata as any)?.ga_client_id || null,
-          ga_session_id: (booking.metadata as any)?.ga_session_id || null,
+          ga_client_id: booking.metadata?.ga_client_id || null,
+          ga_session_id: booking.metadata?.ga_session_id || null,
         });
       } catch (ga4Error) {
         console.error('[webhook] step=ga4_event status=failed', ga4Error);
