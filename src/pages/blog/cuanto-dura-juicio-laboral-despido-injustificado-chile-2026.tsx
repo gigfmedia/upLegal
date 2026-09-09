@@ -191,7 +191,7 @@ const BlogArticle = () => {
 
 
           </div>
-<InArticleCTA category="Derecho Laboral" title="¿Estás evaluando demandar por despido injustificado?" message="Un abogado laboral puede estimar los plazos reales de tu juicio y definir la estrategia más conveniente para tu caso." />
+<InArticleCTA category="Derecho Laboral" targetUrl="/abogado-laboral" title="¿Estás evaluando iniciar un juicio laboral?" message="Si tienes un conflicto con tu empleador y necesitas saber qué opciones tienes, puedes revisar tu situación con un abogado laboral." buttonText="Ver abogados laborales disponibles" />
 
 
           <div className="mb-12">

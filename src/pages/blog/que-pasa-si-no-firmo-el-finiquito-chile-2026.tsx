@@ -233,7 +233,7 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
-<InArticleCTA category="Derecho Laboral" title="¿No firmaste el finiquito y el empleador te presiona?" message="Un abogado laboral puede revisar el documento, explicar tus opciones y ayudarte a firmar con reserva si corresponde." />
+<InArticleCTA category="Derecho Laboral" targetUrl="/abogado-laboral" title="¿Tienes dudas antes de firmar tu finiquito?" message="Si no estás de acuerdo con los montos, causal o condiciones de tu finiquito, puedes revisar tus antecedentes con un abogado laboral antes de decidir qué hacer." buttonText="Ver abogados laborales disponibles" />
 
 
           <div className="mb-12">
