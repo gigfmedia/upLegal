@@ -73,7 +73,7 @@ const BlogArticle = () => {
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-900">
-            ¿Cómo echar a un familiar de mi casa o desalojarlo legalmente en Chile 2026? Guía paso a paso
+            Echar de la casa a un familiar en Chile 2026: cómo desalojarlo legalmente
           </h1>
 
           {/* Quick Summary Card */}

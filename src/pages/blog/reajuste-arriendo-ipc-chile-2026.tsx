@@ -67,8 +67,8 @@ const BlogArticle = () => {
   return (
     <div className="min-h-screen bg-white">
       <BlogGrowthHacks
-        title="Calculadora IPC Chile 2026: calcula el reajuste de tu arriendo al instante | LegalUp"
-        description="¿Cuánto sube tu arriendo según el IPC? Usa nuestra calculadora IPC Chile 2026 e ingresa tu renta para obtener el reajuste exacto en segundos. Incluye guía legal completa."
+        title="Calculadora IPC Arriendo Chile 2026 — Calcula tu reajuste y qué puedes hacer"
+        description="Calcula el reajuste de tu arriendo según el IPC oficial del INE. Ingresa el valor de tu arriendo y obtén el nuevo monto. Guía completa: cuándo aplica, qué hacer si el aumento es abusivo y cuándo conviene consultar a un abogado."
         image="/assets/reajuste-arriendo-ipc-2026.png"
         url="https://legalup.cl/blog/reajuste-arriendo-ipc-chile-2026"
         datePublished="2026-04-06"
@@ -89,7 +89,7 @@ const BlogArticle = () => {
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-900">
-            Calculadora IPC Arriendo Chile 2026: Calcula tu Reajuste al Instante
+            Calculadora IPC Arriendo Chile 2026: calcula tu reajuste y qué puedes hacer si el aumento no corresponde
           </h1>
 
           <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
@@ -152,6 +152,10 @@ const BlogArticle = () => {
               Esta guía te explica cómo funciona el mecanismo, cómo calcularlo paso a paso, y qué hacer si el reajuste no corresponde.
             </p>
           </div>
+
+          <p className="text-base text-gray-600 leading-relaxed mb-8 -mt-4">
+            El INE publica el IPC de agosto en septiembre de 2026. Si tu contrato de arriendo tiene cláusula de reajuste, tu arrendador puede aplicarlo a partir de ese dato. Antes de aceptar el nuevo valor, verifica que el cálculo sea correcto.
+          </p>
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué es el reajuste de arriendo según IPC?</h2>

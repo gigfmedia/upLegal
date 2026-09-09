@@ -44,7 +44,7 @@ const BlogArticle = () => {
   return (
     <div className="min-h-screen bg-white">
       <BlogGrowthHacks
-        title="¿Me pueden despedir sin motivo en Chile? Qué dice realmente la ley (2026)"
+        title="¿Te pueden despedir sin motivo en Chile 2026? Lo que dice la ley"
         description="¿Te preguntas si te pueden despedir sin motivo en Chile? La respuesta es sí, pero con indemnización. Descubre cuánto te corresponde según tus años de servicio y qué hacer si el despido fue injustificado."
         image="/assets/despido-sin-motivo-chile-2026.png"
         url="https://legalup.cl/blog/me-pueden-despedir-sin-motivo-chile-2026"
