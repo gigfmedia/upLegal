@@ -1980,10 +1980,13 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
 });
 
 // Save MercadoPago account - called by frontend after OAuth callback
-app.post('/api/mercadopago/save-account', async (req, res) => {
+app.post('/api/mercadopago/save-account', requireAuthentication, async (req, res) => {
   try {
+    const userId = req.authUser.id;
+    if (req.body.userId !== undefined && req.body.userId !== userId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
     const {
-      userId,
       mercadopagoUserId,
       accessToken,
       refreshToken,
@@ -1995,7 +1998,7 @@ app.post('/api/mercadopago/save-account', async (req, res) => {
       expiresAt
     } = req.body;
 
-    if (!userId || !mercadopagoUserId || !accessToken) {
+    if (!mercadopagoUserId || !accessToken) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -2022,7 +2025,7 @@ app.post('/api/mercadopago/save-account', async (req, res) => {
       .single();
 
     if (error) {
-      console.error('Error upserting mercadopago_accounts:', error);
+      console.error('Error upserting mercadopago_accounts:');
       return res.status(500).json({ error: 'Failed to save account' });
     }
 
@@ -2039,22 +2042,25 @@ app.post('/api/mercadopago/save-account', async (req, res) => {
       .eq('id', userId);
 
     if (profileError) {
-      console.warn('Warning: Failed to sync MercadoPago status to profiles table:', profileError);
+      console.warn('Warning: Failed to sync MercadoPago status to profiles table:');
       // We don't fail the request here because the main account table was updated, but it's worth logging
     }
 
     res.json({ success: true, account: data });
 
   } catch (error) {
-    console.error('Save account error:', error);
+    console.error('Save account error:');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // Get MercadoPago account for a user
-app.get('/api/mercadopago/account/:userId', async (req, res) => {
+app.get('/api/mercadopago/account/:userId', requireAuthentication, async (req, res) => {
   try {
-    const { userId } = req.params;
+    const userId = req.authUser.id;
+    if (req.params.userId !== userId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
 
     const { data, error } = await supabase
       .from('mercadopago_accounts')
@@ -2101,15 +2107,18 @@ app.get('/api/mercadopago/account/:userId', async (req, res) => {
     return res.json({ connected: true, account: accountFromProfile });
 
   } catch (error) {
-    console.error('Get account error:', error);
+    console.error('Get account error:');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // Disconnect MercadoPago account
-app.delete('/api/mercadopago/disconnect/:userId', async (req, res) => {
+app.delete('/api/mercadopago/disconnect/:userId', requireAuthentication, async (req, res) => {
   try {
-    const { userId } = req.params;
+    const userId = req.authUser.id;
+    if (req.params.userId !== userId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
 
     const { error } = await supabase
       .from('mercadopago_accounts')
@@ -2117,7 +2126,7 @@ app.delete('/api/mercadopago/disconnect/:userId', async (req, res) => {
       .eq('user_id', userId);
 
     if (error) {
-      console.error('Error disconnecting account:', error);
+      console.error('Error disconnecting account:');
       return res.status(500).json({ error: 'Failed to disconnect account' });
     }
 
@@ -2134,13 +2143,13 @@ app.delete('/api/mercadopago/disconnect/:userId', async (req, res) => {
       .eq('id', userId);
 
     if (profileError) {
-      console.warn('Warning: Failed to sync disconnection to profiles table:', profileError);
+      console.warn('Warning: Failed to sync disconnection to profiles table:');
     }
 
     res.json({ success: true });
 
   } catch (error) {
-    console.error('Disconnect error:', error);
+    console.error('Disconnect error:');
     res.status(500).json({ error: 'Internal server error' });
   }
 });

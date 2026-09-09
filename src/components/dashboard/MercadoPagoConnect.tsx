@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -108,13 +109,21 @@ export const MercadoPagoConnect: React.FC = () => {
     return messages[error] || 'Error desconocido';
   };
 
+  const accountAuthorization = async () => {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error || !session?.access_token) throw new Error('No authenticated session');
+    return { Authorization: `Bearer ${session.access_token}` };
+  };
+
   const checkConnection = async () => {
     if (!user?.id) return;
 
     try {
       setIsLoading(true);
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-      const response = await fetch(`${API_BASE_URL}/api/mercadopago/account/${user.id}`);
+      const response = await fetch(`${API_BASE_URL}/api/mercadopago/account/${user.id}`, {
+        headers: await accountAuthorization(),
+      });
       
       if (!response.ok) {
         throw new Error('Failed to check connection');
@@ -136,7 +145,8 @@ export const MercadoPagoConnect: React.FC = () => {
       const response = await fetch(`${API_BASE_URL}/api/mercadopago/save-account`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...await accountAuthorization()
         },
         body: JSON.stringify(accountData)
       });
@@ -211,7 +221,8 @@ export const MercadoPagoConnect: React.FC = () => {
       setIsDisconnecting(true);
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
       const response = await fetch(`${API_BASE_URL}/api/mercadopago/disconnect/${user.id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: await accountAuthorization()
       });
 
       if (!response.ok) {
