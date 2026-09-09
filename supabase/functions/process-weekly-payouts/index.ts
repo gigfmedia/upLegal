@@ -1,5 +1,5 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,7 +11,6 @@ const corsHeaders = {
 interface PaymentRecord {
   id: string
   lawyer_id: string
-  lawyer_user_id?: string | null
   lawyer_amount: number
   currency: string | null
 }
@@ -62,7 +61,7 @@ serve(async (req) => {
     const cutoffDate = getPreviousMonday()
     const { data: payments, error } = await supabase
       .from('payments')
-      .select('id, lawyer_id, lawyer_user_id, lawyer_amount, currency, created_at')
+      .select('id, lawyer_id, lawyer_amount, currency, created_at')
       .eq('status', 'succeeded')
       .eq('payout_status', 'pending')
       .lt('created_at', cutoffDate.toISOString())
@@ -76,7 +75,7 @@ serve(async (req) => {
     }
 
     const grouped = groupPayments(payments)
-    const results = [] as Array<{ lawyerId: string; status: 'completed' | 'skipped' | 'failed'; reason?: string }>
+    const results = [] as Array<{ lawyerId: string; status: 'completed' | 'skipped' | 'failed' | 'reconciliation_required'; reason?: string }>
 
     for (const payout of grouped) {
       const result = await processPayout(supabase, payout)
@@ -100,14 +99,13 @@ function validateSecret(req: Request) {
   const configuredSecret = Deno.env.get('PAYOUT_CRON_SECRET');
 
   if (!configuredSecret) {
-    console.warn('PAYOUT_CRON_SECRET is not set; skipping auth guard');
-    return;
+    throw new Error('PAYOUT_CRON_SECRET is not configured');
   }
 
   const headerSecret = req.headers.get('x-cron-secret');
 
   if (!headerSecret || headerSecret !== configuredSecret) {
-    throw new Error(`Unauthorized: missing or invalid cron secret. Received: ${headerSecret}`);
+    throw new Error('Unauthorized: missing or invalid cron secret');
   }
 }
 
@@ -124,7 +122,7 @@ function groupPayments(payments: PaymentRecord[]): PayoutGroup[] {
   const map = new Map<string, PayoutGroup>()
 
   payments.forEach((payment) => {
-    const canonicalLawyerId = payment.lawyer_id || payment.lawyer_user_id
+    const canonicalLawyerId = payment.lawyer_id
     if (!canonicalLawyerId) return
 
     if (!map.has(canonicalLawyerId)) {
@@ -137,52 +135,65 @@ function groupPayments(payments: PaymentRecord[]): PayoutGroup[] {
     }
 
     const group = map.get(canonicalLawyerId)!
-    group.totalAmount += payment.lawyer_amount ?? 0
     group.paymentIds.push(payment.id)
     if (!group.currency && payment.currency) {
       group.currency = payment.currency
     }
   })
 
-  return Array.from(map.values()).filter((group) => group.totalAmount > 0)
+  return Array.from(map.values())
 }
 
-async function processPayout(supabase: ReturnType<typeof createClient>, payout: PayoutGroup) {
+async function processPayout(supabase: SupabaseClient, payout: PayoutGroup) {
   // Claim payments atomically to prevent concurrent double-processing
   const { data: claimed, error: claimError } = await supabase
     .from('payments')
     .update({ payout_status: 'processing', payout_error: null })
     .in('id', payout.paymentIds)
     .eq('payout_status', 'pending')
-    .select('id');
-  if (claimError || !claimed || claimed.length === 0) {
+    .eq('status', 'succeeded')
+    .eq('lawyer_id', payout.lawyerId)
+    .select('id, lawyer_id, lawyer_amount, currency');
+  if (claimError) {
+    throw new Error('Payout claim failed; reconciliation may be required');
+  }
+  if (!claimed || claimed.length === 0) {
     return { lawyerId: payout.lawyerId, status: 'skipped' as const, reason: 'Already processing or claimed' };
   }
-  // Use only claimed ids for this attempt (handles concurrent workers)
-  payout.paymentIds = claimed.map((r: any) => r.id);
-  payout.totalAmount = payout.paymentIds.length === 0 ? 0 : payout.totalAmount; // keep original total if all claimed, else recalc not needed for this fix
+  // Never use the candidate total; only this atomic transition authorizes payment.
+  payout = { ...payout, paymentIds: claimed.map((row: PaymentRecord) => row.id), totalAmount: 0, currency: DEFAULT_CURRENCY };
+  let providerConfirmed = false;
+  let requestedAmount = 0;
+  let transferReference: string | null = null;
   try {
-    const { data: lawyer, error: profileError } = await supabase
-      .from('profiles')
-      .select('mp_access_token, email, full_name')
-      .eq('id', payout.lawyerId)
+    for (const row of claimed as PaymentRecord[]) {
+      if (row.lawyer_id !== payout.lawyerId || row.currency !== DEFAULT_CURRENCY) {
+        throw new Error('Claimed payments have inconsistent lawyer or currency');
+      }
+      if (!Number.isSafeInteger(row.lawyer_amount) || row.lawyer_amount <= 0) {
+        throw new Error('Invalid claimed lawyer_amount; manual review required');
+      }
+      payout.totalAmount += row.lawyer_amount;
+    }
+    // payout_logs.total_amount is a PostgreSQL INTEGER.
+    if (!Number.isSafeInteger(payout.totalAmount) || payout.totalAmount > 2147483647) {
+      throw new Error('Claimed amount exceeds supported integer range');
+    }
+    const { data: account, error: accountError } = await supabase
+      .from('mercadopago_accounts')
+      .select('mercadopago_user_id, access_token')
+      .eq('user_id', payout.lawyerId)
       .single()
-
-    if (profileError) {
-      await markPaymentsFailed(supabase, payout.paymentIds, `Perfil no encontrado: ${profileError.message}`)
-      console.error('Perfil no encontrado para abogado', payout.lawyerId, profileError)
-      return { lawyerId: payout.lawyerId, status: 'failed', reason: 'Perfil no encontrado' } as const
+    if (accountError || !account?.access_token || !account?.mercadopago_user_id) {
+      throw new Error('Missing linked Mercado Pago account; manual review required');
     }
 
-    if (!lawyer?.mp_access_token) {
-      const reason = 'El abogado no tiene configurado su token de MercadoPago'
-      await markPaymentsFailed(supabase, payout.paymentIds, reason)
-      return { lawyerId: payout.lawyerId, status: 'failed', reason } as const
-    }
+    requestedAmount = payout.totalAmount;
+    const transfer = await createTransfer(payout, account.mercadopago_user_id)
+    providerConfirmed = true;
+    transferReference = String(transfer.id);
 
-    const transfer = await createTransfer(payout, lawyer.mp_access_token)
-
-    await supabase
+    const { data: completed, error: completionError } = await supabase
       .from('payments')
       .update({
         payout_status: 'completed',
@@ -191,8 +202,13 @@ async function processPayout(supabase: ReturnType<typeof createClient>, payout: 
         payout_error: null,
       })
       .in('id', payout.paymentIds)
+      .eq('payout_status', 'processing')
+      .select('id')
+    if (completionError || completed?.length !== payout.paymentIds.length) {
+      throw new Error('Provider succeeded but local completion failed; reconciliation required');
+    }
 
-    await supabase.from('payout_logs').insert({
+    const { error: logError } = await supabase.from('payout_logs').insert({
       lawyer_user_id: payout.lawyerId,
       total_amount: payout.totalAmount,
       payment_ids: payout.paymentIds,
@@ -201,15 +217,20 @@ async function processPayout(supabase: ReturnType<typeof createClient>, payout: 
       metadata: transfer ?? null,
     })
 
+    if (logError) throw new Error('Provider succeeded but payout log failed; reconciliation required');
     return { lawyerId: payout.lawyerId, status: 'completed' } as const
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error desconocido'
     console.error('Error procesando payout', payout.lawyerId, message)
 
+    if (providerConfirmed) {
+      // Never release or resend after external success, including a failed log write.
+      return { lawyerId: payout.lawyerId, status: 'reconciliation_required', reason: message, reference: transferReference } as const;
+    }
     await markPaymentsFailed(supabase, payout.paymentIds, message)
     await supabase.from('payout_logs').insert({
       lawyer_user_id: payout.lawyerId,
-      total_amount: payout.totalAmount,
+      total_amount: requestedAmount,
       payment_ids: payout.paymentIds,
       status: 'failed',
       error: message,
@@ -219,7 +240,7 @@ async function processPayout(supabase: ReturnType<typeof createClient>, payout: 
   }
 }
 
-async function markPaymentsFailed(supabase: ReturnType<typeof createClient>, paymentIds: string[], reason: string) {
+async function markPaymentsFailed(supabase: SupabaseClient, paymentIds: string[], reason: string) {
   if (paymentIds.length === 0) return
 
   await supabase
@@ -228,21 +249,20 @@ async function markPaymentsFailed(supabase: ReturnType<typeof createClient>, pay
     .in('id', paymentIds)
 }
 
-async function createTransfer(payout: PayoutGroup, lawyerAccessToken: string) {
+async function createTransfer(payout: PayoutGroup, providerUserId: string | number) {
   const platformToken = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN')
   if (!platformToken) {
     throw new Error('MERCADOPAGO_ACCESS_TOKEN is not configured')
   }
 
-  // The lawyer token is currently only used as a sanity check. Include it for auditing.
+  // Destination is the provider account linked to the canonical lawyer identity.
   const payload = {
     amount: payout.totalAmount,
     currency_id: payout.currency || DEFAULT_CURRENCY,
-    user_id: payout.lawyerId,
+    user_id: providerUserId,
     external_reference: `PAYOUT-${new Date().toISOString()}`,
     metadata: {
       payment_ids: payout.paymentIds,
-      lawyer_access_token_present: Boolean(lawyerAccessToken),
     },
   }
 
@@ -256,11 +276,14 @@ async function createTransfer(payout: PayoutGroup, lawyerAccessToken: string) {
   })
 
   if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`MercadoPago transfer error (${response.status}): ${errorText}`)
+    throw new Error(`MercadoPago transfer error (${response.status}); manual review required`)
   }
 
-  return await response.json()
+  const transfer = await response.json()
+  if (!transfer?.id || (transfer.status && !['approved', 'completed', 'succeeded', 'success'].includes(transfer.status))) {
+    throw new Error('Transfer not confirmed; manual reconciliation required');
+  }
+  return transfer
 }
 
 function jsonResponse(body: Record<string, unknown>, status = 200) {
