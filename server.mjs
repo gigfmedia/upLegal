@@ -216,13 +216,12 @@ const sendGA4PurchaseEvent = async (params) => {
 
     const url = `https://www.google-analytics.com/mp/collect?measurement_id=${ga4MeasurementId}&api_secret=${ga4ApiSecret}`;
 
-    const effectiveClientId = ga_client_id || transaction_id;
-    if (!effectiveClientId) {
-      console.warn('[GA4] Skipping purchase — no ga_client_id and no transaction_id');
+    if (!ga_client_id) {
+      console.warn('[GA4] Skipping purchase — no ga_client_id, not fabricating from transaction_id');
       return;
     }
     const payload: any = {
-      client_id: effectiveClientId,
+      client_id: ga_client_id,
       events: [
         {
           name: 'purchase',
