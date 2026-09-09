@@ -248,7 +248,7 @@ const BlogArticle = () => {
               </Link>
             </div>
           </div>
-          <InArticleCTA category="Derecho Civil" title="¿Recibiste una orden de desalojo?" message="Un abogado puede revisar la resolución, explicarte qué significa y orientarte sobre las alternativas disponibles en tu situación." buttonText="Revisar mi caso" />
+          <InArticleCTA category="Derecho Civil" targetUrl="/abogado-arriendo" title="¿Recibiste una orden o aviso de desalojo?" message="Si necesitas revisar qué significa para tu caso y qué opciones tienes, puedes consultar con un abogado de arriendos." buttonText="Ver abogados de arriendos disponibles" priceNote="Consultas desde $35.000 — 60 minutos" />
 
 
           <div className="mb-12">

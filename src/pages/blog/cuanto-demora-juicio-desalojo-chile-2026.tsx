@@ -253,9 +253,11 @@ const BlogArticle = () => {
 
           <InArticleCTA
             category="Derecho Civil"
+            targetUrl="/abogado-arriendo"
             title="¿Ya estás enfrentando un juicio de desalojo?"
-            message="Los plazos y alternativas dependen de la etapa del procedimiento. Un abogado puede revisar tu caso y orientarte sobre qué hacer ahora."
-            buttonText="Consultar con un abogado"
+            message="Los plazos pueden variar según el procedimiento y lo que ocurra en el caso. Si necesitas revisar tu situación concreta, puedes consultar con un abogado de arriendos."
+            buttonText="Ver abogados de arriendos disponibles"
+            priceNote="Consultas desde $35.000 — 60 minutos"
           />
 
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">

@@ -262,12 +262,6 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
-          
-          <InArticleCTA 
-            category="Derecho Civil"
-            title="¿Debes meses de arriendo y temes un desalojo?"
-            message="Un abogado especializado puede evaluar tu situación, negociar con el arrendador y buscar alternativas para evitar el lanzamiento."
-          />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuánto tiempo tienes antes de ser desalojado?</h2>

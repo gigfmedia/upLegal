@@ -216,9 +216,11 @@ const BlogArticle = () => {
           </div>
 <InArticleCTA
             category="Derecho Civil"
-            title="¿Te están intentando desalojar?"
-            message="Si recibiste una notificación o tienes problemas con tu arrendador, un abogado puede revisar tu situación y explicarte qué opciones tienes."
-            buttonText="Revisar mi caso"
+            targetUrl="/abogado-arriendo"
+            title="¿Ya te avisaron que debes dejar la propiedad?"
+            message="Si recibiste una notificación, demanda o aviso y necesitas saber qué opciones tienes según tus antecedentes, puedes revisar tu caso con un abogado de arriendos."
+            buttonText="Ver abogados de arriendos disponibles"
+            priceNote="Consultas desde $35.000 — 60 minutos"
           />
 
 
