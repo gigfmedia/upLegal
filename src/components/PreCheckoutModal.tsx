@@ -154,8 +154,9 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
       }
 
       const isAppointment = checkoutData.type === 'appointment';
-      const distinctId = posthog.get_distinct_id();
-      const articleSlugFromCheckout = (checkoutData as any).article_slug || null;
+      const { getBookingAttribution } = await import('@/lib/bookingAttribution');
+      const attribution = await getBookingAttribution();
+      const articleSlugFromCheckout = (checkoutData as any).article_slug || attribution.article_slug || null;
       const payload = isAppointment
         ? {
             lawyer_id: checkoutData.lawyer_id,
@@ -169,8 +170,13 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
             price: checkoutData.price,
             booking_type: 'appointment',
             experiment_variant: checkoutData.experiment_variant || null,
-            posthog_distinct_id: distinctId || null,
+            posthog_distinct_id: attribution.posthog_distinct_id,
+            ga_client_id: attribution.ga_client_id,
+            ga_session_id: attribution.ga_session_id,
             article_slug: articleSlugFromCheckout,
+            utm_source: attribution.utm_source,
+            utm_medium: attribution.utm_medium,
+            utm_campaign: attribution.utm_campaign,
           }
         : {
             lawyer_id: checkoutData.lawyer_id,
@@ -185,7 +191,13 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
             service_description: (checkoutData as ServiceCheckoutData).service_description,
             service_delivery_time: (checkoutData as ServiceCheckoutData).service_delivery_time,
             requires_meeting: (checkoutData as ServiceCheckoutData).requires_meeting,
+            posthog_distinct_id: attribution.posthog_distinct_id,
+            ga_client_id: attribution.ga_client_id,
+            ga_session_id: attribution.ga_session_id,
             article_slug: articleSlugFromCheckout,
+            utm_source: attribution.utm_source,
+            utm_medium: attribution.utm_medium,
+            utm_campaign: attribution.utm_campaign,
           };
 
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/bookings/create`, {

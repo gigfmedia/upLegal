@@ -575,16 +575,8 @@ export default function BookingPage() {
     setIsProcessingPayment(true);
 
     try {
-      const articleSlugForBooking = searchParams.get('article_slug') || (() => { try { return sessionStorage.getItem('legalup_article_slug') || null; } catch { return null; } })();
-      const utmParams = (() => { try { const p = new URLSearchParams(window.location.search); return { utm_source: p.get('utm_source') || sessionStorage.getItem('utm_source'), utm_medium: p.get('utm_medium') || sessionStorage.getItem('utm_medium'), utm_campaign: p.get('utm_campaign') || sessionStorage.getItem('utm_campaign') }; } catch { return {}; } })() as any;
-      let gaAttribution: any = {};
-      try {
-        const { getGA4Attribution } = await import('@/lib/ga4');
-        gaAttribution = await Promise.race([
-          getGA4Attribution(),
-          new Promise((resolve) => setTimeout(() => resolve({}), 400)),
-        ]) as any;
-      } catch {}
+      const { getBookingAttribution } = await import('@/lib/bookingAttribution');
+      const attribution = await getBookingAttribution();
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/bookings/create`, {
         method: 'POST',
         headers: {
@@ -600,13 +592,13 @@ export default function BookingPage() {
           duration,
           price: totalPrice,
           experiment_variant: variant || null,
-          posthog_distinct_id: posthog.get_distinct_id() || null,
-          ga_client_id: (gaAttribution as any).ga_client_id || null,
-          ga_session_id: (gaAttribution as any).ga_session_id || null,
-          article_slug: articleSlugForBooking,
-          utm_source: utmParams.utm_source || null,
-          utm_medium: utmParams.utm_medium || null,
-          utm_campaign: utmParams.utm_campaign || null,
+          posthog_distinct_id: attribution.posthog_distinct_id,
+          ga_client_id: attribution.ga_client_id,
+          ga_session_id: attribution.ga_session_id,
+          article_slug: attribution.article_slug,
+          utm_source: attribution.utm_source,
+          utm_medium: attribution.utm_medium,
+          utm_campaign: attribution.utm_campaign,
         })
       });
 
