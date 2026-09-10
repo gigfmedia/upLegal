@@ -61,8 +61,8 @@ const BlogArticle = () => {
   return (
     <div className="min-h-screen bg-white">
       <BlogGrowthHacks
-        title="¿Cuántos meses sin pagar arriendo antes del desalojo en Chile? (2026) | LegalUp"
-        description="Con 1 mes de deuda de arriendo el arrendador ya puede demandarte. Descubre cuánto tiempo tienes realmente, cómo funciona el proceso y qué puedes hacer para protegerte."
+        title="¿Cuántos meses de arriendo puedo deber? Con 1 mes pueden demandarte"
+        description="Con 1 mes de deuda el arrendador ya puede demandar. Revisa cuánto puede demorar el proceso de desalojo, qué ocurre después y qué opciones tienes si debes arriendo."
         image="/assets/desalojo-3-chile-2026.png"
         url="https://legalup.cl/blog/cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026"
         datePublished="2026-04-20"
