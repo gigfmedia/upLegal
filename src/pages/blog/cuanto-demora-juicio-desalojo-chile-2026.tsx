@@ -8,6 +8,7 @@ import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import BlogContextualCTAV2 from "@/components/blog/BlogContextualCTAV2";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
@@ -251,14 +252,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-            category="Derecho Civil"
-            targetUrl="/abogado-arriendo"
-            title="¿Ya estás enfrentando un juicio de desalojo?"
-            message="Los plazos pueden variar según el procedimiento y lo que ocurra en el caso. Si necesitas revisar tu situación concreta, puedes consultar con un abogado de arriendos."
-            buttonText="Ver abogados de arriendos disponibles"
-            priceNote="Consultas desde $35.000 — 60 minutos"
-          />
+          <BlogContextualCTAV2 articleSlug="cuanto-demora-juicio-desalojo-chile-2026" legalCategory="arriendo" />
 
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Guía Pilar</p>

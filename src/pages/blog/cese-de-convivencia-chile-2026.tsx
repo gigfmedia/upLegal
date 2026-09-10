@@ -18,6 +18,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import BlogContextualCTAV2 from "@/components/blog/BlogContextualCTAV2";
 import { ReadTime } from "@/components/blog/ReadTime";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
@@ -243,7 +244,7 @@ const BlogArticle = () => {
                             Por esta razón, muchas personas llevan años viviendo separadas pero enfrentan dificultades al momento de divorciarse porque nunca formalizaron ni documentaron adecuadamente dicha situación. Comprender esta diferencia puede evitar problemas importantes en el futuro.
                         </p>
                     </div>
-<InArticleCTA category="Derecho de Familia"  title="¿Necesitas acreditar el cese de convivencia para divorciarte?" message="Un abogado de familia puede ayudarte a reunir pruebas, fijar la fecha correcta y proteger tus derechos patrimoniales." />
+<BlogContextualCTAV2 articleSlug="cese-de-convivencia-chile-2026" legalCategory="familia" />
 
 
                     {/* COMO REALIZAR CESE EN REGISTRO CIVIL */}
