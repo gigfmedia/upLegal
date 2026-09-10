@@ -38,8 +38,8 @@ const BlogArticle = () => {
   return (
     <div className="min-h-screen bg-white">
       <BlogGrowthHacks
-        title="¿Cuánto dura un juicio laboral en Chile 2026? Plazos reales y etapas"
-        description="¿Cuánto se demora un juicio laboral por despido injustificado en Chile? Conoce los plazos reales de las audiencias, cuánto tarda la sentencia y cómo acelerar el proceso en 2026."
+        title="¿Cuánto dura un juicio laboral en Chile? Plazos y tiempos 2026"
+        description="¿Cuánto demora un juicio laboral en Chile? Revisa los plazos de las audiencias y sentencia, cuánto puede tardar el proceso y qué factores pueden alargarlo."
         image="/assets/duracion-juicio-laboral-chile-2026.png"
         url="https://legalup.cl/blog/cuanto-dura-juicio-laboral-despido-injustificado-chile-2026"
         datePublished="2026-05-05"
