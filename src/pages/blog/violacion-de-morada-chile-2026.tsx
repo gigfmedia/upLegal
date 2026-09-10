@@ -50,6 +50,10 @@ const BlogArticle = () => {
             question: "¿Qué diferencia hay entre violación de morada y usurpación?",
             answer: "La violación de morada sanciona el ingreso o permanencia ilegítima en un domicilio. La usurpación busca proteger la posesión o tenencia de un inmueble durante un período prolongado.",
         },
+        {
+            question: "¿Qué es el allanamiento de morada en Chile?",
+            answer: "En Chile, 'allanamiento de morada' puede usarse de forma general para referirse a la entrada a un domicilio, pero jurídicamente es importante distinguir quién ingresa. La entrada de un particular contra la voluntad del morador puede configurar violación de morada del artículo 144 del Código Penal. Cuando se trata del ingreso o registro realizado por autoridades en una investigación penal, se aplican las reglas de entrada y registro del Código Procesal Penal.",
+        },
     ];
 
     return (
