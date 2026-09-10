@@ -1,3 +1,5 @@
+import { bookingClientTotal } from '../../../shared/bookingPricing.mjs';
+import { useBookingPricing } from '@/hooks/useBookingPricing';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
@@ -19,7 +21,7 @@ import posthog from 'posthog-js';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { isInitialConsultationService } from '@/lib/serviceBooking';
 import PreCheckoutModal, { type ServiceCheckoutData } from '@/components/PreCheckoutModal';
-import { applyClientSurcharge, roundToThousands, serviceRequiresMeeting } from '@/lib/serviceBooking';
+import { serviceRequiresMeeting } from '@/lib/serviceBooking';
 import type {
   AssistantLawyer,
   AssistantLawyerService,
@@ -67,6 +69,7 @@ export default function LegalUpAssistant({ source = 'widget' }: LegalUpAssistant
     }
   });
   const [input, setInput] = useState('');
+  const { clientSurchargePercent, pricingReady } = useBookingPricing();
   const [loading, setLoading] = useState(false);
   const [stage, setStage] = useState<AssistantStage>('initial');
   const [infoOpen, setInfoOpen] = useState(false);
@@ -247,6 +250,7 @@ export default function LegalUpAssistant({ source = 'widget' }: LegalUpAssistant
   };
 
   const handleBook = (lawyer: AssistantLawyer, service: AssistantLawyerService) => {
+    if (!pricingReady) return;
     import('@/lib/bookingFunnel').then(({ trackBookingStarted }) => trackBookingStarted({ lawyer_id: lawyer.id, service_id: service.id, source: 'assistant', article_slug: null }));
     // legacy direct
     posthog.capture('booking_started', {
@@ -261,7 +265,7 @@ export default function LegalUpAssistant({ source = 'widget' }: LegalUpAssistant
       return;
     }
 
-    const displayPrice = roundToThousands(applyClientSurcharge(service.price_clp));
+    const displayPrice = bookingClientTotal(service.price_clp, clientSurchargePercent);
     setCheckoutData({
       type: 'service',
       lawyer_id: lawyer.id,

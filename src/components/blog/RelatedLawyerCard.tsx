@@ -1,3 +1,5 @@
+import { bookingClientTotal } from '../../../shared/bookingPricing.mjs';
+import { useBookingPricing } from '@/hooks/useBookingPricing';
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -52,9 +54,8 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact, articleSlug }: 
   const rating = lawyer.rating || 0;
   const reviewCount = lawyer.review_count || lawyer.reviews || 0;
   const price = lawyer.consultationPrice || lawyer.hourlyRate || 0;
-  const clientSurchargePercent = 0.1;
-  const roundToThousands = (amount: number) => Math.round(amount / 1000) * 1000;
-  const displayPrice = roundToThousands(price * (1 + clientSurchargePercent));
+  const { clientSurchargePercent } = useBookingPricing();
+  const displayPrice = bookingClientTotal(price, clientSurchargePercent);
   const isVerified = Boolean(lawyer.verified || lawyer.pjud_verified);
   const experienceYears = lawyer.experience_years || 0;
 

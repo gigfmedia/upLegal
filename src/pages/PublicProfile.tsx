@@ -1,3 +1,5 @@
+import { bookingClientTotal } from '../../shared/bookingPricing.mjs';
+import { useBookingPricing } from '@/hooks/useBookingPricing';
 import { useState, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
@@ -190,15 +192,9 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  const clientSurchargePercent = 0.1;
-
-  // Redondear a miles: < 500 → abajo, ≥ 500 → arriba
-  const roundToThousands = (amount: number): number => {
-    return Math.round(amount / 1000) * 1000;
-  };
-
+  const { clientSurchargePercent } = useBookingPricing();
   const displayHourlyRate = lawyer?.hourly_rate_clp !== null && lawyer?.hourly_rate_clp !== undefined
-    ? roundToThousands(lawyer.hourly_rate_clp * (1 + clientSurchargePercent))
+    ? bookingClientTotal(lawyer.hourly_rate_clp, clientSurchargePercent)
     : lawyer?.hourly_rate_clp;
   const [authAction, setAuthAction] = useState<(() => void) | null>(null);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');

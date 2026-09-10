@@ -1,3 +1,5 @@
+import { bookingClientTotal } from '../../shared/bookingPricing.mjs';
+import { useBookingPricing } from '@/hooks/useBookingPricing';
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,9 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import PreCheckoutModal, { type ServiceCheckoutData } from '@/components/PreCheckoutModal';
 import {
-  applyClientSurcharge,
   isInitialConsultationService,
-  roundToThousands,
   serviceRequiresMeeting,
 } from '@/lib/serviceBooking';
 
@@ -38,6 +38,7 @@ export function ServicesSection({
   lawyerId: lawyerIdProp,
   lawyerName = 'Abogado',
 }: ServicesSectionProps) {
+  const { clientSurchargePercent, pricingReady } = useBookingPricing();
   const [checkoutData, setCheckoutData] = useState<ServiceCheckoutData | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
   const navigate = useNavigate();
@@ -60,11 +61,11 @@ export function ServicesSection({
     }).format(price);
 
   const getDisplayPrice = (service: Service) => {
-    return roundToThousands(applyClientSurcharge(service.price_clp));
+    return bookingClientTotal(service.price_clp, clientSurchargePercent);
   };
 
   const handleServiceSelect = (service: Service) => {
-    if (!service.available) return;
+    if (!service.available || !pricingReady) return;
 
     if (isInitialConsultationService(service.title)) {
       if (!lawyerIdProp) {

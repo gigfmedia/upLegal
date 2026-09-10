@@ -1,3 +1,5 @@
+import { consultationBase, bookingClientTotal } from '../../shared/bookingPricing.mjs';
+import { useBookingPricing } from '@/hooks/useBookingPricing';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
@@ -157,6 +159,7 @@ function getAvailabilityForDay(
 }
 
 export default function BookingPage() {
+  const { clientSurchargePercent, pricingReady, pricingError } = useBookingPricing();
   const { lawyerId } = useParams<{ lawyerId: string }>();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
@@ -806,34 +809,8 @@ export default function BookingPage() {
     }
   };
 
-  const clientSurchargePercent = 0.1;
-
-  // Redondear a miles: < 500 → abajo, ≥ 500 → arriba
-  const roundToThousands = (amount: number): number => {
-    return Math.round(amount / 1000) * 1000;
-  };
-
-  const getClientPriceForDuration = (minutes: 30 | 60 | 90 | 120) => {
-    if (!lawyer) return 0;
-
-    let base = lawyer.hourly_rate_clp;
-    switch (minutes) {
-      case 30:
-        base = Math.round(lawyer.hourly_rate_clp / 2);
-        break;
-      case 60:
-        base = lawyer.hourly_rate_clp;
-        break;
-      case 90:
-        base = Math.round(lawyer.hourly_rate_clp * 1.5);
-        break;
-      case 120:
-        base = lawyer.hourly_rate_clp * 2;
-        break;
-    }
-
-    return roundToThousands(base * (1 + clientSurchargePercent));
-  };
+  const getClientPriceForDuration = (minutes: 30 | 60 | 90 | 120) =>
+    lawyer ? bookingClientTotal(consultationBase(lawyer.hourly_rate_clp, minutes), clientSurchargePercent) : 0;
 
   const totalPrice = getClientPriceForDuration(duration);
 
@@ -886,7 +863,9 @@ export default function BookingPage() {
     </div>
   );
 
-  if (loading) {
+  if (pricingError) return <div role="alert">No se pudo verificar el precio. Recarga la página para intentar nuevamente.</div>;
+
+  if (loading || !pricingReady) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />

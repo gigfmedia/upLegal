@@ -1,3 +1,4 @@
+import { consultationBase, bookingClientTotal, bookingPricingSnapshot } from './shared/bookingPricing.mjs';
 import { confirmCompanyCancellation } from './server/subscriptions/companyCancellation.mjs';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -1343,14 +1344,17 @@ app.post('/api/bookings/create', async (req, res) => {
 
     // FASE 4B-2 C3: server-side price — NEVER fallback to client
     let computedPrice;
+    let authoritativeBase;
+    let pricingSnapshot;
     let priceSource;
     try {
-      const { data: platformSettings } = await supabase
+      const { data: platformSettings, error: pricingSettingsError } = await supabase
         .from('platform_settings')
-        .select('client_surcharge_percent')
+        .select('client_surcharge_percent, platform_fee_percent')
         .order('updated_at', { ascending: false })
         .limit(1)
         .maybeSingle();
+      if (pricingSettingsError) throw pricingSettingsError;
       const surcharge = Number(platformSettings?.client_surcharge_percent ?? 0.1);
       if (isServiceBooking) {
         if (!service_id) {
@@ -1371,7 +1375,8 @@ app.post('/api/bookings/create', async (req, res) => {
           return res.status(422).json({ error: 'Precio de servicio no configurado', code: 'NO_VALID_PRICE' });
         }
         const original = Number(service.price_clp);
-        computedPrice = Math.round(original * (1 + surcharge));
+        authoritativeBase = original;
+        computedPrice = bookingClientTotal(original, surcharge);
         priceSource = 'service';
       } else {
         const { data: profile } = await supabase
@@ -1383,9 +1388,14 @@ app.post('/api/bookings/create', async (req, res) => {
         if (!Number.isFinite(hourlyRate) || hourlyRate <= 0 || !resolvedDuration) {
           return res.status(422).json({ error: 'Tarifa del abogado no configurada', code: 'NO_VALID_PRICE' });
         }
-        const original = Math.round(hourlyRate * resolvedDuration / 60);
-        computedPrice = Math.round(original * (1 + surcharge));
+        const original = consultationBase(hourlyRate, resolvedDuration);
+        authoritativeBase = original;
+        computedPrice = bookingClientTotal(original, surcharge);
         priceSource = 'hourly';
+      }
+      pricingSnapshot = bookingPricingSnapshot(authoritativeBase, surcharge, Number(platformSettings?.platform_fee_percent ?? 0.2));
+      if (!Number.isFinite(computedPrice) || computedPrice <= 0) {
+        return res.status(422).json({ error: 'Precio final no válido', code: 'NO_VALID_PRICE' });
       }
       if (computedPrice !== price) {
         console.warn(`[4B-2] client price ignored: client ${price} vs server ${computedPrice} (${priceSource}) lawyer ${lawyer_id}`);
@@ -1406,27 +1416,6 @@ app.post('/api/bookings/create', async (req, res) => {
     };
 
     // Snapshot checkout economics for idempotent webhook (C12)
-    let pricingSnapshot = null;
-    try {
-      const { data: snapSettings } = await supabase.from('platform_settings').select('client_surcharge_percent, platform_fee_percent').order('updated_at', { ascending: false }).limit(1).maybeSingle();
-      const snapSurchargePercent = Number(snapSettings?.client_surcharge_percent ?? 0.10);
-      const snapPlatformPercent = Number(snapSettings?.platform_fee_percent ?? 0.20);
-      const snapBase = Math.round(computedPrice / (1 + snapSurchargePercent));
-      const snapSurcharge = Math.max(computedPrice - snapBase, 0);
-      const snapPlatform = Math.round(snapBase * snapPlatformPercent);
-      const snapLawyer = Math.max(snapBase - snapPlatform, 0);
-      pricingSnapshot = {
-        base_amount: snapBase,
-        client_total: computedPrice,
-        client_surcharge: snapSurcharge,
-        client_surcharge_percent: snapSurchargePercent,
-        platform_fee: snapPlatform,
-        platform_fee_percent: snapPlatformPercent,
-        lawyer_amount: snapLawyer,
-        currency: 'CLP',
-      };
-    } catch {}
-
     const bookingInsert = {
       lawyer_id,
       user_id: user_id || null,

@@ -16,7 +16,7 @@ const DEFAULT_SETTINGS: PlatformSettings = {
   currency: 'CLP',
 }
 
-export async function fetchPlatformSettings(): Promise<PlatformSettings> {
+export async function fetchPlatformSettings(strict = false): Promise<PlatformSettings> {
   const { data, error } = await supabase
     .from('platform_settings')
     .select('*')
@@ -25,6 +25,7 @@ export async function fetchPlatformSettings(): Promise<PlatformSettings> {
     .maybeSingle()
 
   if (error) {
+    if (strict) throw error
     console.error('Failed to load platform settings:', error)
     return DEFAULT_SETTINGS
   }

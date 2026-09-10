@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect, vi } from 'vitest';
+import { bookingClientTotal, consultationBase } from '../shared/bookingPricing.mjs';
 import { getDocumentProduct } from './documents/catalog.mjs';
 
 // Helpers mirroring server logic
@@ -10,11 +11,11 @@ function computeBookingPrice({ isService, service, hourlyRate, duration, surchar
     // caller must check ownership separately
     const original = Number(service.price_clp);
     if (!Number.isFinite(original) || original <= 0) return { error: 'NO_VALID_PRICE' };
-    return { price: Math.round(original * (1 + surcharge)), source: 'service' };
+    return { price: bookingClientTotal(original, surcharge), source: 'service' };
   } else {
     if (!Number.isFinite(hourlyRate) || hourlyRate <= 0 || !duration) return { error: 'NO_VALID_PRICE' };
-    const original = Math.round(hourlyRate * duration / 60);
-    return { price: Math.round(original * (1 + surcharge)), source: 'hourly' };
+    const original = consultationBase(hourlyRate, duration);
+    return { price: bookingClientTotal(original, surcharge), source: 'hourly' };
   }
 }
 

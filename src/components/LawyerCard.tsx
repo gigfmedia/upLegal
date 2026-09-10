@@ -1,3 +1,5 @@
+import { bookingClientTotal } from '../../shared/bookingPricing.mjs';
+import { useBookingPricing } from '@/hooks/useBookingPricing';
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -159,14 +161,8 @@ export function LawyerCard({
 
   const navigate = useNavigate();
 
-  const clientSurchargePercent = 0.1;
-
-  // Redondear a miles: < 500 → abajo, ≥ 500 → arriba
-  const roundToThousands = (amount: number): number => {
-    return Math.round(amount / 1000) * 1000;
-  };
-
-  const displayHourlyRate = roundToThousands(lawyer.hourlyRate * (1 + clientSurchargePercent));
+  const { clientSurchargePercent } = useBookingPricing();
+  const displayHourlyRate = bookingClientTotal(lawyer.hourlyRate, clientSurchargePercent);
 
   // Helper to normalize day names for availability lookup
   const normalizeDayKey = (key: string) =>
