@@ -32,6 +32,8 @@ import { trackOnboardingViewed, trackBookingCreated } from '@/lib/activationAnal
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AppointmentForm } from '@/components/appointments/AppointmentForm';
 import { useLawyerClients } from '@/hooks/useLawyerClients';
+import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
+import posthog from 'posthog-js';
 
 export default function LawyerDashboardPage() {
   const navigate = useNavigate();
@@ -56,7 +58,9 @@ export default function LawyerDashboardPage() {
     }
   }, [searchParams, toast, navigate]);
 
-  const { hasProAccess: hasProAccessCheck } = useProSubscription();
+  const { hasProAccess } = useProSubscription();
+  const hasProAccessCheck = hasProAccess;
+  const [proPaywallOpen, setProPaywallOpen] = useState(false);
   useEffect(() => {
     if (searchParams.get('pro_subscription_success') === 'true') {
       if (hasProAccessCheck) {
@@ -155,28 +159,53 @@ export default function LawyerDashboardPage() {
 
       <OnboardingCard />
 
-      {!loading && stats.clients === 0 && stats.cases === 0 && (
+      {!loading && stats.clients === 0 && stats.cases === 0 && !hasProAccess && (
         <Card className="border-dashed">
           <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
-              <div className="font-medium text-sm">¿Quieres ver cómo se ve con datos?</div>
-              <div className="text-xs text-gray-500">Carga datos de demostración (2 clientes, 2 casos, 4 citas) solo para este abogado.</div>
+              <div className="font-medium text-sm">Empieza a organizar tu práctica con LegalUp Pro</div>
+              <div className="text-xs text-gray-500">Gestiona clientes, casos, solicitudes y citas desde un solo lugar.</div>
+            </div>
+            <Button
+              size="sm"
+              className="bg-gray-900 hover:bg-green-900 shrink-0"
+              onClick={() => {
+                try { posthog.capture('pro_paywall_opened', { action: 'dashboard_get_started' }); } catch {}
+                setProPaywallOpen(true);
+              }}
+            >
+              Activar LegalUp Pro
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {!loading && stats.clients === 0 && stats.cases === 0 && hasProAccess && (
+        <Card className="border-dashed">
+          <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <div className="font-medium text-sm">¿Quieres ver cómo funciona con datos de ejemplo?</div>
+              <div className="text-xs text-gray-500">Agrega datos de ejemplo para conocer el flujo de LegalUp Pro. Son datos reales de ejemplo (2 clientes, 2 casos, 4 citas) que puedes eliminar después manualmente.</div>
             </div>
             <Button
               variant="outline"
               size="sm"
+              className="shrink-0"
               onClick={async () => {
                 if (!user?.id) return;
+                try { posthog.capture('pro_demo_data_clicked', { source: 'dashboard' }); } catch {}
                 try {
                   const res = await loadDemoData(user.id);
+                  try { posthog.capture('pro_demo_data_loaded', { created: (res as any).created ?? 6 }); } catch {}
                   toast({ title: res.message });
                   setTimeout(() => window.location.reload(), 500);
                 } catch (e) {
-                  toast({ title: 'Error', description: e instanceof Error ? e.message : 'No se pudo cargar demo', variant: 'destructive' });
+                  try { posthog.capture('pro_demo_data_failed', { error: e instanceof Error ? e.message : 'unknown' }); } catch {}
+                  toast({ title: 'Error', description: e instanceof Error ? e.message : 'No se pudo cargar datos de ejemplo', variant: 'destructive' });
                 }
               }}
             >
-              Cargar demo
+              Cargar datos de ejemplo
             </Button>
           </CardContent>
         </Card>
@@ -429,6 +458,7 @@ export default function LawyerDashboardPage() {
           />
         </DialogContent>
       </Dialog>
+      <ProPricingModal open={proPaywallOpen} onOpenChange={setProPaywallOpen} triggerAction="dashboard_get_started" />
     </div>
   );
 }
