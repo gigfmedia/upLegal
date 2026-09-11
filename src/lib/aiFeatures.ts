@@ -48,7 +48,7 @@ export const AI_PRO_LIMITS = {
 const PLAN_FEATURES: Record<string, AIFeatureKey[]> = {
   free: [],
   essential: AI_FEATURES.map(f => f.key),
-  pro_limited: ['document_analysis', 'case_chat'],
+  pro_limited: ['document_analysis', 'case_chat', 'case_analysis'],
 };
 
 /**
