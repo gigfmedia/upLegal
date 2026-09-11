@@ -430,9 +430,47 @@ const AI_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 // ---- LegalUp Pro — Fase 3B-1: Founder 15 $19.990 ----
 const PRO_SUBSCRIPTION_PLAN = 'saas_essential';
 const PRO_SUBSCRIPTION_PRICE_CLP = 19990;
+const PRO_INTRO_PRICE_CLP = 19990;
+const PRO_STANDARD_PRICE_CLP = 49990;
+const PRO_INTRO_SUCCESSFUL_PAYMENTS = 3;
 const PRO_EXTERNAL_REF_PREFIX = 'PRO_';
 const PRO_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 const PRO_FOUNDER_LIMIT = 15;
+
+// ---- Pro billing intro → standard (4.28B.2) helpers ----
+async function ensureProStandardPrice(subscription) {
+  if (!subscription?.provider_subscription_id) return;
+  if (subscription.status === 'cancelled' || subscription.status === 'expired') return;
+  // Provider-first reconciliation: GET preapproval
+  try {
+    const r = await fetch(`https://api.mercadopago.com/preapproval/${subscription.provider_subscription_id}`, { headers: { Authorization: `Bearer ${mercadopagoAccessToken}` } });
+    if (!r.ok) return;
+    const pre = await r.json().catch(() => ({}));
+    const providerAmount = Number(pre.auto_recurring?.transaction_amount ?? pre.transaction_amount);
+    if (providerAmount === PRO_STANDARD_PRICE_CLP) {
+      if (Number(subscription.amount_clp) !== PRO_STANDARD_PRICE_CLP) {
+        await supabase.from('lawyer_subscriptions').update({ amount_clp: PRO_STANDARD_PRICE_CLP, updated_at: new Date().toISOString() }).eq('id', subscription.id);
+      }
+      return;
+    }
+    if (providerAmount !== PRO_INTRO_PRICE_CLP) return; // unexpected, do not overwrite
+    // provider is intro, need to transition
+    const put = await fetch(`https://api.mercadopago.com/preapproval/${subscription.provider_subscription_id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${mercadopagoAccessToken}` },
+      body: JSON.stringify({ auto_recurring: { transaction_amount: PRO_STANDARD_PRICE_CLP, currency_id: 'CLP' } }),
+    });
+    if (!put.ok) return;
+    const updated = await put.json().catch(() => ({}));
+    const newAmount = Number(updated.auto_recurring?.transaction_amount ?? PRO_STANDARD_PRICE_CLP);
+    if (newAmount === PRO_STANDARD_PRICE_CLP || put.ok) {
+      await supabase.from('lawyer_subscriptions').update({ amount_clp: PRO_STANDARD_PRICE_CLP, updated_at: new Date().toISOString() }).eq('id', subscription.id);
+    }
+  } catch {}
+}
+
+const PRO_INTRO_PRICE_LABEL = '$19.990';
+const PRO_STANDARD_PRICE_LABEL = '$49.990';
 
 // Límites de uso (Bloque 22). Solo aplican durante el trial; el plan Essential activo no limita.
 // Coinciden con la política del trigger en la BD (3 casos / 10 documentos).
@@ -5527,7 +5565,37 @@ const handleProAuthorizedPayment = async (payment) => {
       return;
     }
   }
+  // Ledger for intro → standard (4.28B.2) — dedup via provider_authorized_payment_id UNIQUE, lifetime per lawyer
+  try {
+    const { error: ledgerErr } = await supabase.from('pro_subscription_payments').insert({
+      lawyer_subscription_id: subscription.id,
+      lawyer_id: subscription.lawyer_id,
+      provider_authorized_payment_id: providerEventId,
+      provider_payment_id: String(payment.payment_id || payment.id || ''),
+      amount_clp: Number(payment.transaction_amount || 0) || 0,
+      currency: 'CLP',
+      status: String(payment.status || ''),
+      paid_at: providerEventAt,
+    });
+    if (ledgerErr && String(ledgerErr.code) === '23505') {
+      await supabase.from('pro_subscription_payments').update({
+        provider_payment_id: String(payment.payment_id || payment.id || ''),
+        amount_clp: Number(payment.transaction_amount || 0) || 0,
+        status: String(payment.status || ''),
+        paid_at: providerEventAt,
+      }).eq('provider_authorized_payment_id', providerEventId);
+    }
+  } catch {}
+
   if (payment.status === 'approved') {
+    // Lifetime intro count (approved only) per lawyer — determines transition and future checkout price
+    try {
+      const { count: lifetimeApproved } = await supabase.from('pro_subscription_payments').select('id', { count: 'exact', head: true }).eq('lawyer_id', subscription.lawyer_id).eq('status', 'approved');
+      if ((lifetimeApproved ?? 0) >= PRO_INTRO_SUCCESSFUL_PAYMENTS) {
+        // One-way transition 19990 → 49990, provider-first
+        await ensureProStandardPrice({ ...subscription, amount_clp: subscription.amount_clp });
+      }
+    } catch {}
     const now = new Date();
     const paymentDate = new Date(providerEventAt);
     const periodStart = !isNaN(paymentDate.getTime()) ? paymentDate : now;
@@ -5540,7 +5608,7 @@ const handleProAuthorizedPayment = async (payment) => {
       await markSubscriptionEventFailed(supabase, { productType: 'pro', providerEventId });
       throw e;
     }
-    await capturePostHog('pro_subscription_activated', subscription.lawyer_id, { price_clp: PRO_SUBSCRIPTION_PRICE_CLP });
+    await capturePostHog('pro_subscription_activated', subscription.lawyer_id, { price_clp: subscription.amount_clp ?? PRO_INTRO_PRICE_CLP });
   } else if (payment.status === 'rejected' || payment.status === 'refused') {
     await supabase.from('lawyer_subscriptions').update({ status: 'past_due', updated_at: new Date().toISOString() }).eq('id', subscription.id);
     await capturePostHog('pro_subscription_payment_failed', subscription.lawyer_id, { payment_id: String(payment.id) });
@@ -8545,6 +8613,17 @@ app.post('/api/pro/subscribe', async (req, res) => {
 
     const appUrl = process.env.APP_URL || process.env.FRONTEND_URL || 'https://legalup.cl';
 
+    // Lifetime intro price decision: first 3 successful payments at intro, then standard
+    let initialPrice = PRO_INTRO_PRICE_CLP;
+    try {
+      const { count: lifetimeApproved } = await supabase
+        .from('pro_subscription_payments')
+        .select('id', { count: 'exact', head: true })
+        .eq('lawyer_id', userId)
+        .eq('status', 'approved');
+      if ((lifetimeApproved ?? 0) >= PRO_INTRO_SUCCESSFUL_PAYMENTS) initialPrice = PRO_STANDARD_PRICE_CLP;
+    } catch {}
+
     if (!subscription) {
       const { data, error } = await supabase
         .from('lawyer_subscriptions')
@@ -8553,7 +8632,7 @@ app.post('/api/pro/subscribe', async (req, res) => {
           plan: PRO_SUBSCRIPTION_PLAN,
           status: 'pending',
           provider: 'mercadopago',
-          amount_clp: PRO_SUBSCRIPTION_PRICE_CLP,
+          amount_clp: initialPrice,
           is_founder: isFounderSlot,
         })
         .select()
@@ -8561,10 +8640,10 @@ app.post('/api/pro/subscribe', async (req, res) => {
       if (error) throw error;
       subscription = data;
     } else {
-      // Reactivar pending/cancelled/expired
+      // Reactivar pending/cancelled/expired — actualizar amount según lifetime intro
       const { data, error } = await supabase
         .from('lawyer_subscriptions')
-        .update({ status: 'pending', is_founder: isFounderSlot, updated_at: new Date().toISOString() })
+        .update({ status: 'pending', amount_clp: initialPrice, is_founder: isFounderSlot, updated_at: new Date().toISOString() })
         .eq('id', subscription.id)
         .select()
         .single();
@@ -8580,7 +8659,7 @@ app.post('/api/pro/subscribe', async (req, res) => {
       auto_recurring: {
         frequency: 1,
         frequency_type: 'months',
-        transaction_amount: PRO_SUBSCRIPTION_PRICE_CLP,
+        transaction_amount: initialPrice,
         currency_id: 'CLP',
         start_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       },

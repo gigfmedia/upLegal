@@ -80,6 +80,7 @@ export function ProPricingModal({ open, onOpenChange, triggerAction }: ProPricin
               $19.990<span className="text-sm font-medium text-muted-foreground">/mes</span>
             </p>
             <p className="text-sm text-muted-foreground">por 3 meses</p>
+            <p className="mt-1 text-xs text-muted-foreground">$19.990/mes durante tus primeros 3 cobros. Desde el cuarto cobro, $49.990/mes.</p>
             <p className="mt-2 text-xs text-green-700 font-medium">Precio Founder disponible para los primeros 15 abogados.</p>
             <ul className="mt-4 space-y-2">
               {PERKS.map((perk) => (

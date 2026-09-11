@@ -539,7 +539,7 @@ export default function LegalUpPro() {
             </AccordionItem>
             <AccordionItem value="q2">
               <AccordionTrigger>¿Cuánto cuesta?</AccordionTrigger>
-              <AccordionContent className="text-gray-600">$19.990/mes durante los primeros 3 meses para los primeros 15 abogados Founder. Después de ese período, el precio puede actualizarse.</AccordionContent>
+              <AccordionContent className="text-gray-600">$19.990/mes durante tus primeros 3 cobros. Desde el cuarto cobro, $49.990/mes.</AccordionContent>
             </AccordionItem>
             <AccordionItem value="q3">
               <AccordionTrigger>¿Qué pasa después de los 3 meses?</AccordionTrigger>
