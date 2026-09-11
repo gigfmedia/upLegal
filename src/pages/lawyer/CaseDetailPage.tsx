@@ -17,14 +17,10 @@ import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { AICaseWorkspaceContent } from '@/components/legalup-ai/AICaseWorkspaceContent';
 import { useAIDocuments } from '@/hooks/useAIDocuments';
 import { AIDocumentList } from '@/components/legalup-ai/AIDocumentList';
 import { AIDocumentUpload } from '@/components/legalup-ai/AIDocumentUpload';
-import { AICaseCommandCenter } from '@/components/legalup-ai/AICaseCommandCenter';
-import { AICaseIntelligence } from '@/components/legalup-ai/AICaseIntelligence';
-import { AICaseTimeline } from '@/components/legalup-ai/AICaseTimeline';
-import { AIResearchPanel } from '@/components/legalup-ai/AIResearchPanel';
-import { AICaseChatDrawer } from '@/components/legalup-ai/AICaseChatDrawer';
 
 const statuses: CaseStatus[] = ['new', 'quoted', 'paid', 'in_progress', 'delivered', 'closed', 'cancelled'];
 
@@ -69,29 +65,12 @@ export default function CaseDetailPage() {
   const [caseBookings, setCaseBookings] = useState<any[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
-  const rawTab = (searchParams.get('tab') as string) || 'overview';
-  const tabMap: Record<string, string> = { ai: 'intelligence', activity: 'timeline' };
-  const activeTab = tabMap[rawTab] || rawTab;
+  const activeTab = (searchParams.get('tab') as string) || 'overview';
   const setActiveTab = (v: string) => setSearchParams(prev => { const p = new URLSearchParams(prev); p.set('tab', v); return p; }, { replace: true });
   const provisionHook = useProvisionAIWorkspace();
   const [provisionedWorkspaceId, setProvisionedWorkspaceId] = useState<string | null>(null);
   const effectiveWorkspaceId = provisionedWorkspaceId || caseData?.ai_workspace_id || null;
   const aiDocumentsQuery = useAIDocuments(effectiveWorkspaceId || undefined);
-  // Chat continuity state for AI tabs (mirrors AICaseWorkspaceContent)
-  const [chatQuestion, setChatQuestion] = useState<string | null>(null);
-  const [chatPanelOpen, setChatPanelOpen] = useState(false);
-  const [chatOrigin, setChatOrigin] = useState<string | null>(null);
-  const [pendingWorkflowActionId, setPendingWorkflowActionId] = useState<string | null>(null);
-  const [briefWorkflowActionId, setBriefWorkflowActionId] = useState<string | null>(null);
-  const [chatDocumentId, setChatDocumentId] = useState<string | null>(null);
-  const documentsForChat = aiDocumentsQuery.data ?? [];
-  const handleChatOpenChange = (open: boolean) => {
-    setChatPanelOpen(open);
-    if (!open && chatOrigin === 'workflow' && pendingWorkflowActionId) {
-      setBriefWorkflowActionId(pendingWorkflowActionId);
-      setChatOrigin(null); setPendingWorkflowActionId(null); setChatDocumentId(null);
-    } else if (!open) { setChatOrigin(null); setPendingWorkflowActionId(null); setChatDocumentId(null); }
-  };
 
   // hydrate when case loads
   useState(() => {
@@ -217,75 +196,164 @@ export default function CaseDetailPage() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
         <TabsList className="sticky top-16 z-10 mb-4 flex h-auto w-full flex-wrap justify-start gap-0 border border-gray-200 bg-white shadow-sm p-0">
           <TabsTrigger value="overview" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Resumen</TabsTrigger>
-          <TabsTrigger value="documents" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Documentos y análisis</TabsTrigger>
-          <TabsTrigger value="research" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Investigar jurisprudencia</TabsTrigger>
-          <TabsTrigger value="intelligence" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Inteligencia del caso</TabsTrigger>
-          <TabsTrigger value="timeline" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Timeline del caso</TabsTrigger>
+          <TabsTrigger value="documents" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Documentos</TabsTrigger>
+          <TabsTrigger value="ai" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">IA</TabsTrigger>
+          <TabsTrigger value="activity" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Actividad</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-4">
-          {effectiveWorkspaceId ? (
-            <AICaseCommandCenter
-              workspaceId={effectiveWorkspaceId}
-              workspaceName={caseData.title}
-              onOpenWorkflowAction={(id) => setBriefWorkflowActionId(id)}
-              onViewDocuments={() => setActiveTab('documents')}
-              onViewIntelligence={() => setActiveTab('intelligence')}
-              onAskQuestion={(q) => { setChatOrigin('command_center'); setPendingWorkflowActionId(null); setChatDocumentId(null); setChatQuestion(q); setChatPanelOpen(true); }}
-              onWorkflowAsk={(q, actionId) => { setChatOrigin('workflow'); setPendingWorkflowActionId(actionId); setChatDocumentId(null); setChatQuestion(q); setChatPanelOpen(true); }}
-            />
-          ) : (
-            <>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    {caseData.title}
-                    {caseData.source && caseData.source !== 'UNKNOWN' && (<Badge variant="outline">{sourceLabels[caseData.source] || caseData.source}</Badge>)}
-                    <Badge>{statusLabels[caseData.status] || caseData.status}</Badge>
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground">Creado {new Date(caseData.created_at).toLocaleString('es-CL')} · Actualizado {new Date(caseData.updated_at).toLocaleString('es-CL')}</p>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2"><Label>Título *</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} /></div>
-                    <div className="space-y-2"><Label>Estado</Label><Select value={status} onValueChange={(v) => setStatus(v as CaseStatus)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{statuses.map((s) => (<SelectItem key={s} value={s}>{statusLabels[s]}</SelectItem>))}</SelectContent></Select></div>
-                    <div className="space-y-2"><Label>Cliente</Label><Select value={clientId} onValueChange={setClientId}><SelectTrigger><SelectValue placeholder="Sin cliente" /></SelectTrigger><SelectContent><SelectItem value="none">Sin cliente</SelectItem>{clients.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name} {c.email ? `· ${c.email}` : ''}</SelectItem>))}</SelectContent></Select>{caseData.client && (<Link to={`/lawyer/clients/${caseData.client_id}`} className="text-sm text-green-500 hover:text-green-600 hover:underline">Ver ficha de {caseData.client.name}</Link>)}</div>
-                    <div className="space-y-2"><Label>Solicitud / cita de origen</Label><div className="text-sm">{caseData.booking ? (<div className="border rounded p-2"><div className="font-medium">{caseData.booking.service_title || 'Reserva'}</div><div className="text-xs text-gray-500">{bookingStatusLabels[caseData.booking.status] || statusLabels[caseData.booking.status as CaseStatus] || caseData.booking.status} · {caseData.booking.user_name}</div></div>) : (<span className="text-gray-400">Sin reserva de origen</span>)}</div></div>
-                  </div>
-                  <div className="space-y-2"><Label>Descripción</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} placeholder="Descripción del caso" /></div>
-                  <div className="flex gap-2"><Button onClick={handleSave} disabled={saving} className="bg-gray-900 hover:bg-green-900">{saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />} Guardar</Button><Button variant="outline" onClick={handleDelete} className="text-red-600 border-red-200 hover:bg-red-50"><Trash2 className="h-4 w-4 mr-1" /> Eliminar</Button></div>
-                </CardContent>
-              </Card>
-              <Card className="mt-4">
-                <CardHeader><div className="flex items-center justify-between"><CardTitle className="text-base flex items-center gap-2"><Calendar className="h-4 w-4" /> Citas del caso<Badge variant="outline">{caseBookings.length}</Badge></CardTitle><Button size="sm" onClick={handleNewAppointmentForCase} className="bg-gray-900 hover:bg-green-900"><Plus className="h-4 w-4 mr-1" /> Nueva cita para este caso</Button></div></CardHeader>
-                <CardContent>
-                  {loadingBookings ? (<div className="flex items-center gap-2 text-sm text-gray-500"><Loader2 className="h-4 w-4 animate-spin" /> Cargando citas...</div>) : caseBookings.length === 0 ? (<div className="text-center py-6"><Calendar className="mx-auto h-8 w-8 text-gray-300" /><p className="text-sm font-medium mt-2">Sin citas para este caso</p><p className="text-xs text-gray-500">Las citas creadas para este caso aparecerán aquí.</p></div>) : (<div className="divide-y">{caseBookings.map((b: any) => (<div key={b.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0"><div><div className="font-medium text-sm">{b.scheduled_date ? format(new Date(b.scheduled_date), 'dd-MM-yyyy') : format(new Date(b.created_at), 'dd-MM-yyyy')} {b.scheduled_time?.slice(0,5) ? `· ${b.scheduled_time.slice(0,5)}` : ''} · {b.service_title || 'Cita agendada'}</div><div className="text-xs text-gray-500">{bookingStatusLabels[b.status] || statusLabels[b.status as CaseStatus] || b.status} {b.price ? `· $${b.price.toLocaleString('es-CL')}` : ''}</div></div><Link to={`/lawyer/citas`} className="text-xs text-green-600 hover:underline">Ver agenda</Link></div>))}</div>)}
-                </CardContent>
-              </Card>
-              {caseData.client_id && (<Card className="mt-4"><CardHeader><CardTitle className="text-base">Cliente asociado</CardTitle></CardHeader><CardContent><Link to={`/lawyer/clients/${caseData.client_id}`} className="text-green-500 hover:text-green-600 hover:underline">Ver cliente</Link></CardContent></Card>)}
-              {!provisionedWorkspaceId && !caseData.ai_workspace_id && (
-                <Card className="mt-4">
-                  <CardContent className="py-8 text-center space-y-3">
-                    <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-green-50 text-green-700"><Sparkles className="h-5 w-5" /></div>
-                    <p className="font-medium">Activa LegalUp AI en este caso</p>
-                    <p className="text-sm text-muted-foreground">Analiza documentos y trabaja con IA contextual del caso.</p>
-                    <Button onClick={handleProvision} disabled={provisionHook.isPending} className="bg-gray-900 hover:bg-green-900">{provisionHook.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />} Activar IA en este caso</Button>
-                  </CardContent>
-                </Card>
+          <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            {caseData.title}
+            {caseData.source && caseData.source !== 'UNKNOWN' && (
+              <Badge variant="outline">{sourceLabels[caseData.source] || caseData.source}</Badge>
+            )}
+            <Badge>{statusLabels[caseData.status] || caseData.status}</Badge>
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Creado {new Date(caseData.created_at).toLocaleString('es-CL')} · Actualizado {new Date(caseData.updated_at).toLocaleString('es-CL')}
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Título *</Label>
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Estado</Label>
+              <Select value={status} onValueChange={(v) => setStatus(v as CaseStatus)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {statuses.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {statusLabels[s]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Cliente</Label>
+              <Select value={clientId} onValueChange={setClientId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sin cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sin cliente</SelectItem>
+                  {clients.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name} {c.email ? `· ${c.email}` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {caseData.client && (
+                <Link to={`/lawyer/clients/${caseData.client_id}`} className="text-sm text-green-500 hover:text-green-600 hover:underline">
+                  Ver ficha de {caseData.client.name}
+                </Link>
               )}
-            </>
+            </div>
+            <div className="space-y-2">
+              <Label>Solicitud / cita de origen</Label>
+              <div className="text-sm">
+                {caseData.booking ? (
+                  <div className="border rounded p-2">
+                    <div className="font-medium">{caseData.booking.service_title || 'Reserva'}</div>
+                    <div className="text-xs text-gray-500">
+                      {bookingStatusLabels[caseData.booking.status] || statusLabels[caseData.booking.status as CaseStatus] || caseData.booking.status} · {caseData.booking.user_name}
+                    </div>
+                  </div>
+                ) : (
+                  <span className="text-gray-400">Sin reserva de origen</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Descripción</Label>
+            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} placeholder="Descripción del caso" />
+          </div>
+
+          <div className="flex gap-2">
+            <Button onClick={handleSave} disabled={saving} className="bg-gray-900 hover:bg-green-900">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />} Guardar
+            </Button>
+            <Button variant="outline" onClick={handleDelete} className="text-red-600 border-red-200 hover:bg-red-50">
+              <Trash2 className="h-4 w-4 mr-1" /> Eliminar
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Citas del caso — 1:N */}
+      <Card className="mt-4">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Calendar className="h-4 w-4" /> Citas del caso
+              <Badge variant="outline">{caseBookings.length}</Badge>
+            </CardTitle>
+            <Button size="sm" onClick={handleNewAppointmentForCase} className="bg-gray-900 hover:bg-green-900">
+              <Plus className="h-4 w-4 mr-1" /> Nueva cita para este caso
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loadingBookings ? (
+            <div className="flex items-center gap-2 text-sm text-gray-500"><Loader2 className="h-4 w-4 animate-spin" /> Cargando citas...</div>
+          ) : caseBookings.length === 0 ? (
+            <div className="text-center py-6">
+              <Calendar className="mx-auto h-8 w-8 text-gray-300" />
+              <p className="text-sm font-medium mt-2">Sin citas para este caso</p>
+              <p className="text-xs text-gray-500">Las citas creadas para este caso aparecerán aquí.</p>
+            </div>
+          ) : (
+            <div className="divide-y">
+              {caseBookings.map((b: any) => (
+                <div key={b.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                  <div>
+                    <div className="font-medium text-sm">
+                      {b.scheduled_date ? format(new Date(b.scheduled_date), 'dd-MM-yyyy') : format(new Date(b.created_at), 'dd-MM-yyyy')} {b.scheduled_time?.slice(0,5) ? `· ${b.scheduled_time.slice(0,5)}` : ''} · {b.service_title || 'Cita agendada'}
+                    </div>
+                    <div className="text-xs text-gray-500">{bookingStatusLabels[b.status] || statusLabels[b.status as CaseStatus] || b.status} {b.price ? `· $${b.price.toLocaleString('es-CL')}` : ''}</div>
+                  </div>
+                  <Link to={`/lawyer/citas`} className="text-xs text-green-600 hover:underline">Ver agenda</Link>
+                </div>
+              ))}
+            </div>
           )}
+        </CardContent>
+      </Card>
+
+      {caseData.client_id && (
+        <Card className="mt-4">
+          <CardHeader>
+            <CardTitle className="text-base">Cliente asociado</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Link to={`/lawyer/clients/${caseData.client_id}`} className="text-green-500 hover:text-green-600 hover:underline">
+              Ver cliente
+            </Link>
+          </CardContent>
+        </Card>
+      )}
         </TabsContent>
 
         <TabsContent value="documents" className="mt-4">
-          {!effectiveWorkspaceId ? (
-            <Card><CardContent className="py-10 text-center space-y-4"><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-50 text-green-700"><Sparkles className="h-6 w-6" /></div><div><p className="font-medium text-gray-900">LegalUp AI para este caso</p><p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">Activa la IA para gestionar documentos y análisis.</p></div><Button onClick={handleProvision} disabled={provisionHook.isPending} className="bg-gray-900 hover:bg-green-900">{provisionHook.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />} Activar IA en este caso</Button></CardContent></Card>
-          ) : (
+          {effectiveWorkspaceId ? (
             <Card>
-              <CardHeader><CardTitle className="text-base flex items-center gap-2"><Calendar className="h-4 w-4" /> Documentos y análisis</CardTitle><p className="text-sm text-muted-foreground">Los documentos del caso se gestionan con LegalUp AI como fuente única.</p></CardHeader>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2"><Calendar className="h-4 w-4" /> Documentos del caso</CardTitle>
+                <p className="text-sm text-muted-foreground">Los documentos de este caso se gestionan con LegalUp AI como fuente única.</p>
+              </CardHeader>
               <CardContent>
                 {aiDocumentsQuery.isLoading ? <Skeleton className="h-20 w-full" /> : aiDocumentsQuery.isError ? <p className="text-sm text-destructive">No se pudieron cargar los documentos.</p> : (
                   <div className="space-y-4">
@@ -295,34 +363,35 @@ export default function CaseDetailPage() {
                 )}
               </CardContent>
             </Card>
+          ) : (
+            <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">Los documentos del caso aparecerán aquí cuando actives las herramientas de IA.</CardContent></Card>
           )}
         </TabsContent>
 
-        <TabsContent value="research" className="mt-4">
+        <TabsContent value="ai" className="mt-4">
           {!effectiveWorkspaceId ? (
-            <Card><CardContent className="py-10 text-center space-y-4"><p className="text-sm text-muted-foreground">Activa la IA para investigar jurisprudencia.</p><Button onClick={handleProvision} disabled={provisionHook.isPending} className="bg-gray-900 hover:bg-green-900">{provisionHook.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />} Activar IA en este caso</Button></CardContent></Card>
+            <Card>
+              <CardContent className="py-10 text-center space-y-4">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-50 text-green-700"><Sparkles className="h-6 w-6" /></div>
+                <div>
+                  <p className="font-medium text-gray-900">LegalUp AI para este caso</p>
+                  <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">Analiza documentos, detecta riesgos, contradicciones y trabaja con el contexto del caso.</p>
+                </div>
+                {provisionHook.error && <p className="text-sm text-destructive flex items-center justify-center gap-1"><AlertTriangle className="h-4 w-4" />{provisionHook.error}</p>}
+                <Button onClick={handleProvision} disabled={provisionHook.isPending} className="bg-gray-900 hover:bg-green-900">
+                  {provisionHook.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />} Activar IA en este caso
+                </Button>
+              </CardContent>
+            </Card>
           ) : (
-            <AIResearchPanel workspaceId={effectiveWorkspaceId} />
+            <AICaseWorkspaceContent workspaceId={effectiveWorkspaceId} workspaceName={caseData.title} embedded onOpenDocuments={() => setActiveTab('documents')} />
           )}
         </TabsContent>
 
-        <TabsContent value="intelligence" className="mt-4">
-          {!effectiveWorkspaceId ? (
-            <Card><CardContent className="py-10 text-center space-y-4"><p className="text-sm text-muted-foreground">Activa la IA para ver la inteligencia del caso.</p><Button onClick={handleProvision} disabled={provisionHook.isPending} className="bg-gray-900 hover:bg-green-900">{provisionHook.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />} Activar IA en este caso</Button></CardContent></Card>
-          ) : (
-            <AICaseIntelligence workspaceId={effectiveWorkspaceId} externalWorkflowActionId={briefWorkflowActionId} onExternalWorkflowActionHandled={() => setBriefWorkflowActionId(null)} onQuestionClick={(q) => { setChatOrigin('intelligence'); setPendingWorkflowActionId(null); setChatDocumentId(null); setChatQuestion(q); setChatPanelOpen(true); }} onWorkflowAsk={(q, actionId) => { setChatOrigin('workflow'); setPendingWorkflowActionId(actionId); setChatDocumentId(null); setChatQuestion(q); setChatPanelOpen(true); }} onOpenChat={() => { setChatOrigin('intelligence'); setPendingWorkflowActionId(null); setChatDocumentId(null); setChatPanelOpen(true); }} onNavigateToDocuments={() => setActiveTab('documents')} />
-          )}
-        </TabsContent>
-
-        <TabsContent value="timeline" className="mt-4">
-          {!effectiveWorkspaceId ? (
-            <Card><CardContent className="py-10 text-center space-y-4"><p className="text-sm text-muted-foreground">Activa la IA para ver el timeline del caso.</p><Button onClick={handleProvision} disabled={provisionHook.isPending} className="bg-gray-900 hover:bg-green-900">{provisionHook.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />} Activar IA en este caso</Button></CardContent></Card>
-          ) : (
-            <AICaseTimeline workspaceId={effectiveWorkspaceId} />
-          )}
+        <TabsContent value="activity" className="mt-4">
+          <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">La actividad del caso aparecerá aquí.</CardContent></Card>
         </TabsContent>
       </Tabs>
-      <AICaseChatDrawer open={chatPanelOpen} onOpenChange={handleChatOpenChange} workspaceId={effectiveWorkspaceId || ''} workspaceName={caseData.title} documents={documentsForChat} documentId={chatDocumentId} externalQuestion={chatQuestion} onExternalQuestionHandled={() => setChatQuestion(null)} />
     </div>
   );
 }
