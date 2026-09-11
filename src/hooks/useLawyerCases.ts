@@ -143,3 +143,47 @@ export function useLawyerCase(caseId: string | undefined) {
 
   return { caseData, loading, error };
 }
+
+// Fase 4.27B — provisioning lazy de AI workspace para un lawyer_case (server-side, idempotente)
+const getApiBaseUrl = (): string => {
+  const base = (import.meta as unknown as { env: Record<string, string> }).env?.VITE_API_BASE_URL || (import.meta as unknown as { env: Record<string, string> }).env?.VITE_API_URL;
+  return (base || 'http://localhost:3001').replace(/\/+$/, '');
+};
+
+export type ProvisionAIWorkspaceResult = {
+  workspace: { id: string; lawyer_id: string; name: string; description: string | null; practice_area: string | null; created_at: string; updated_at: string };
+  created: boolean;
+};
+
+export async function provisionAIWorkspace(caseId: string): Promise<ProvisionAIWorkspaceResult> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  if (!token) throw new Error('Sesión no válida. Vuelve a iniciar sesión.');
+  const res = await fetch(`${getApiBaseUrl()}/api/lawyer/cases/${caseId}/ai-workspace`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw Object.assign(new Error(body?.error || 'No se pudo provisionar el workspace.'), { code: body?.code, status: res.status });
+  return body as ProvisionAIWorkspaceResult;
+}
+
+export function useProvisionAIWorkspace() {
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const provision = useCallback(async (caseId: string) => {
+    setIsPending(true);
+    setError(null);
+    try {
+      const result = await provisionAIWorkspace(caseId);
+      return result;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Error al provisionar';
+      setError(msg);
+      throw e;
+    } finally {
+      setIsPending(false);
+    }
+  }, []);
+  return { provision, isPending, error };
+}

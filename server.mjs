@@ -8952,6 +8952,99 @@ const getAIWorkspaceOwned = async (workspaceId, userId) => {
   return data;
 };
 
+const getLawyerCaseOwned = async (caseId, userId) => {
+  const { data, error } = await supabase
+    .from('lawyer_cases')
+    .select('id, lawyer_id, title, practice_area, description, ai_workspace_id')
+    .eq('id', caseId)
+    .eq('lawyer_id', userId)
+    .maybeSingle();
+  if (error || !data) return null;
+  return data;
+};
+
+// POST /api/lawyer/cases/:caseId/ai-workspace — provisioning lazy idempotente (Fase 4.27B)
+// Auth: lawyer dueño del caso Pro. No requiere AI entitlement (infraestructura, no consumo LLM).
+app.post('/api/lawyer/cases/:caseId/ai-workspace', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    const caseId = req.params.caseId;
+    const ownedCase = await getLawyerCaseOwned(caseId, userId);
+    if (!ownedCase) return res.status(404).json({ error: 'Caso no encontrado.', code: 'LAWYER_CASE_NOT_FOUND' });
+
+    // Caso 1: ya tiene workspace linkeado
+    if (ownedCase.ai_workspace_id) {
+      const ws = await getAIWorkspaceOwned(ownedCase.ai_workspace_id, userId);
+      if (!ws) {
+        console.warn('[LegalUpAI] ai-workspace link invalid', JSON.stringify({ caseId, workspace_id: ownedCase.ai_workspace_id }));
+        return res.status(409).json({ error: 'El caso tiene un workspace asociado inválido. Contacta soporte.', code: 'AI_WORKSPACE_LINK_INVALID' });
+      }
+      return res.json({ workspace: ws, created: false });
+    }
+
+    // Caso 3: crear workspace candidate (solo name/practice_area/description, no PII cliente)
+    const candidatePayload = {
+      lawyer_id: userId,
+      name: ownedCase.title,
+      practice_area: ownedCase.practice_area || null,
+      description: ownedCase.description ? String(ownedCase.description).trim().slice(0, 500) || null : null,
+    };
+    const { data: candidate, error: insertError } = await supabase.from('ai_workspaces').insert(candidatePayload).select().single();
+    if (insertError || !candidate) {
+      console.error('[LegalUpAI] ai-workspace create failed', insertError);
+      const msg = String(insertError?.message || '');
+      if (/limit|trial|quota/i.test(msg)) {
+        return res.status(403).json({ error: insertError.message, code: 'AI_LIMIT_REACHED' });
+      }
+      return res.status(500).json({ error: 'No se pudo crear el workspace AI.', code: 'AI_WORKSPACE_CREATE_FAILED' });
+    }
+
+    // Intento de link condicional (mitiga carrera sin UNIQUE)
+    const { data: linked, error: linkError } = await supabase
+      .from('lawyer_cases')
+      .update({ ai_workspace_id: candidate.id })
+      .eq('id', caseId)
+      .eq('lawyer_id', userId)
+      .is('ai_workspace_id', null)
+      .select('ai_workspace_id')
+      .maybeSingle();
+
+    if (linkError) {
+      console.error('[LegalUpAI] ai-workspace link failed', linkError);
+      // cleanup candidate huérfano
+      try { await supabase.from('ai_workspaces').delete().eq('id', candidate.id).eq('lawyer_id', userId); } catch {}
+      return res.status(500).json({ error: 'No se pudo vincular el workspace.', code: 'AI_WORKSPACE_LINK_FAILED' });
+    }
+
+    if (linked && linked.ai_workspace_id === candidate.id) {
+      // ganamos carrera
+      return res.json({ workspace: candidate, created: true });
+    }
+
+    // perdimos carrera: otro request vinculó primero → reread winner + cleanup candidate
+    const { data: reread } = await supabase.from('lawyer_cases').select('ai_workspace_id').eq('id', caseId).eq('lawyer_id', userId).maybeSingle();
+    const winnerId = reread?.ai_workspace_id;
+    if (winnerId && winnerId !== candidate.id) {
+      const winner = await getAIWorkspaceOwned(winnerId, userId);
+      // cleanup candidate loser (no documentos aún, seguro)
+      try {
+        const { error: delErr } = await supabase.from('ai_workspaces').delete().eq('id', candidate.id).eq('lawyer_id', userId);
+        if (delErr) console.warn('[LegalUpAI] AI_WORKSPACE_ORPHAN_CLEANUP_FAILED', JSON.stringify({ caseId, candidate_id: candidate.id, winner_id: winnerId }));
+      } catch (e) {
+        console.warn('[LegalUpAI] AI_WORKSPACE_ORPHAN_CLEANUP_FAILED', String(e).slice(0,200));
+      }
+      if (winner) return res.json({ workspace: winner, created: false });
+    }
+    // fallback: retornar candidate si winner no resoluble
+    return res.json({ workspace: candidate, created: true });
+  } catch (err) {
+    console.error('[LegalUpAI] ai-workspace provision error:', err);
+    res.status(500).json({ error: 'No se pudo provisionar el workspace.', code: 'AI_WORKSPACE_PROVISION_FAILED' });
+  }
+});
+
 const getAIConversationOwned = async (conversationId, userId) => {
   const { data, error } = await supabase
     .from('ai_conversations')
