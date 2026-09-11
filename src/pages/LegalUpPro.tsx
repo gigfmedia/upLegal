@@ -265,16 +265,10 @@ export default function LegalUpPro() {
       </header>
 
       {userRole === "client" && (
-        <section className="bg-amber-50 border-b border-amber-200">
-          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">LegalUp Pro es para abogados</h2>
-              <p className="text-sm text-gray-600">Si necesitas asesoría legal, encuentra un abogado según tu necesidad en LegalUp.</p>
-            </div>
-            <div className="flex gap-3 shrink-0">
-              <Button onClick={() => handleCTAClick("client_banner")} className="bg-gray-900 hover:bg-green-900">Buscar abogado</Button>
-              <Button variant="outline" onClick={() => navigate("/")}>Volver a LegalUp</Button>
-            </div>
+        <section className="bg-blue-50 border-b border-blue-200">
+          <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
+            <h2 className="text-sm font-semibold text-blue-900">LegalUp Pro es para abogados</h2>
+            <p className="text-sm text-blue-700">Si necesitas asesoría legal, encuentra un abogado según tu necesidad en LegalUp — usa “Buscar abogado” en el menú superior.</p>
           </div>
         </section>
       )}

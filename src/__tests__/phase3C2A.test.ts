@@ -76,9 +76,9 @@ describe('FASE 3C.2A — Fix rol cliente en /pro', () => {
     const c = readFileSync(proPath, 'utf-8');
     // Header checks
     expect(c).toContain('userRole === "client"');
-    // Desktop and mobile both should have Buscar abogado
+    // Desktop and mobile both should have Buscar abogado (banner ya no duplica)
     const matches = (c.match(/Buscar abogado/g) || []).length;
-    expect(matches).toBeGreaterThanOrEqual(3); // desktop + mobile + banner
+    expect(matches).toBeGreaterThanOrEqual(2); // desktop + mobile
     expect(c).toContain('Volver a LegalUp');
   });
 
@@ -86,7 +86,8 @@ describe('FASE 3C.2A — Fix rol cliente en /pro', () => {
     const c = readFileSync(proPath, 'utf-8');
     expect(c).toContain('LegalUp Pro es para abogados');
     expect(c).toContain('Si necesitas asesoría legal');
-    expect(c).toContain('client_banner');
+    // Banner informativo, sin CTA duplicado — solo texto, acción en header
+    expect(c).toContain('usa “Buscar abogado” en el menú superior');
   });
 
   it('T7 — backend POST /api/pro/subscribe bloquea client con 403 NOT_LAWYER', () => {
