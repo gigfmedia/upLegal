@@ -8318,7 +8318,7 @@ app.post('/api/ai/trial/start', async (req, res) => {
 
     // Brand-new user without legacy AI history → require Pro, do not create standalone trial
     if (!existing) {
-      return res.status(402).json({ error: 'LegalUp AI está incluido en LegalUp Pro. Activa Pro para continuar.', code: 'AI_REQUIRES_PRO', upgradePath: '/legalup-pro' });
+      return res.status(402).json({ error: 'LegalUp AI está incluido en LegalUp Pro. Activa Pro para continuar.', code: 'AI_REQUIRES_PRO', upgradePath: '/pro' });
     }
 
     // Ya tiene trial o suscripción activa: no duplicar, devolver lo existente.
@@ -8415,7 +8415,7 @@ app.post('/api/ai/subscribe', async (req, res) => {
 
     const subscription = await getAILawyerSubscription(userId);
     if (!subscription) {
-      return res.status(402).json({ error: 'LegalUp AI está incluido en LegalUp Pro. Activa Pro para continuar.', code: 'AI_REQUIRES_PRO', upgradePath: '/legalup-pro' });
+      return res.status(402).json({ error: 'LegalUp AI está incluido en LegalUp Pro. Activa Pro para continuar.', code: 'AI_REQUIRES_PRO', upgradePath: '/pro' });
     }
 
     // Legacy exists — prevent duplicate active/pending
@@ -8437,7 +8437,7 @@ app.post('/api/ai/subscribe', async (req, res) => {
     const withinTrial2 = trialEndMs2 > Date.now();
     const hasLegacyAccess = (subscription.status === 'active' && periodEndMs2 > Date.now()) || (subscription.status === 'trialing' && withinTrial2) || (subscription.status === 'cancelled' && (periodEndMs2 > Date.now() || withinTrial2));
     if (!hasLegacyAccess) {
-      return res.status(402).json({ error: 'LegalUp AI está incluido en LegalUp Pro. Activa Pro para continuar.', code: 'AI_REQUIRES_PRO', upgradePath: '/legalup-pro' });
+      return res.status(402).json({ error: 'LegalUp AI está incluido en LegalUp Pro. Activa Pro para continuar.', code: 'AI_REQUIRES_PRO', upgradePath: '/pro' });
     }
     // Legacy has valid access — do not create another subscription
     return res.status(409).json({ error: 'Ya tienes acceso a LegalUp AI.', code: 'AI_SUBSCRIPTION_ALREADY_EXISTS' });

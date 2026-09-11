@@ -1956,7 +1956,7 @@ function LegalUpAI() {
         setShowPricingModal(true);
       } else if ((err instanceof AITrialError && (err.code === "AI_REQUIRES_PRO" || err.code === "AI_INCLUDED_IN_PRO")) || msg.includes("LegalUp AI está incluido")) {
         toast.info("LegalUp AI está incluido en LegalUp Pro.");
-        navigate("/legalup-pro");
+        navigate("/pro");
       } else {
         toast.info(msg || "No se pudo iniciar la prueba gratuita.");
         navigate("/lawyer/ai");
@@ -2005,7 +2005,7 @@ function LegalUpAI() {
     }
     // Nuevo producto: sin legacy AI y sin Pro → Pro es único pago
     if (aiSub.status === 'none' && !proSub.hasProAccess) {
-      navigate("/legalup-pro");
+      navigate("/pro");
       return;
     }
     startTrialFlow();
