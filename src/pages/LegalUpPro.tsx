@@ -126,6 +126,26 @@ export default function LegalUpPro() {
     const utms = getUTMs();
     const authenticated = !!user;
     const hasProAccess = !!pro.hasProAccess;
+
+    if (authLoading) return;
+
+    // Client → excluded from Pro funnel
+    if (userRole === "client") {
+      try {
+        posthog.capture("pro_landing_client_excluded", {
+          location,
+          authenticated: true,
+          role: "client",
+          path: utms.path,
+          utm_source: utms.source,
+          utm_medium: utms.medium,
+          utm_campaign: utms.campaign,
+        });
+      } catch {}
+      navigate("/search");
+      return;
+    }
+
     try {
       posthog.capture("pro_landing_cta_clicked", {
         location,
@@ -136,8 +156,6 @@ export default function LegalUpPro() {
         utm_campaign: utms.campaign,
       });
     } catch {}
-
-    if (authLoading) return;
 
     // Not authenticated -> open signup as lawyer
     if (!user) {
@@ -157,14 +175,8 @@ export default function LegalUpPro() {
       return;
     }
 
-    // Authenticated but not lawyer (client/company) -> send to their dashboard, pricing not applicable
-    // Do not silently fail; go to home with info
-    if (userRole === "client") {
-      navigate("/dashboard");
-      return;
-    }
-    // fallback: go to lawyer dashboard (RequireLawyer will redirect correctly)
-    navigate("/lawyer/dashboard");
+    // Other roles (company/admin/unknown) → safe fallback, not Pro funnel
+    navigate("/");
   };
 
   return (
@@ -209,12 +221,16 @@ export default function LegalUpPro() {
                   Comenzar con LegalUp Pro
                 </Button>
               </>
+            ) : userRole === "client" ? (
+              <Button onClick={() => handleCTAClick("header")} className="bg-gray-900 hover:bg-green-900">
+                Buscar abogado
+              </Button>
             ) : pro.hasProAccess ? (
               <Button onClick={() => navigate("/lawyer/dashboard")} className="bg-gray-900 hover:bg-green-900">Ir al dashboard</Button>
             ) : userRole === "lawyer" ? (
               <Button onClick={() => setPricingOpen(true)} className="bg-gray-900 hover:bg-green-900">Activar Pro</Button>
             ) : (
-              <Button onClick={() => navigate(userRole === "client" ? "/dashboard" : "/lawyer/dashboard")} variant="outline">Ir al panel</Button>
+              <Button onClick={() => navigate("/")} variant="outline">Volver a LegalUp</Button>
             )}
           </div>
           <button onClick={() => setMobileMenuOpen((v) => !v)} className="md:hidden p-2" aria-label="Menu">
@@ -233,14 +249,35 @@ export default function LegalUpPro() {
                     <Button variant="outline" onClick={() => { setAuthMode("login"); setAuthOpen(true); setMobileMenuOpen(false); }}>Iniciar sesión</Button>
                     <Button onClick={() => handleCTAClick("header_mobile")} className="bg-gray-900 hover:bg-green-900">Comenzar con LegalUp Pro</Button>
                   </>
+                ) : userRole === "client" ? (
+                  <Button onClick={() => handleCTAClick("header_mobile")} className="bg-gray-900 hover:bg-green-900">Buscar abogado</Button>
+                ) : pro.hasProAccess ? (
+                  <Button onClick={() => { setMobileMenuOpen(false); navigate("/lawyer/dashboard"); }} className="bg-gray-900 hover:bg-green-900">Ir al dashboard</Button>
+                ) : userRole === "lawyer" ? (
+                  <Button onClick={() => { setMobileMenuOpen(false); setPricingOpen(true); }} className="bg-gray-900 hover:bg-green-900">Activar Pro</Button>
                 ) : (
-                  <Button onClick={() => handleCTAClick("header_mobile")} className="bg-gray-900 hover:bg-green-900">Continuar</Button>
+                  <Button onClick={() => { setMobileMenuOpen(false); navigate("/"); }} variant="outline">Volver a LegalUp</Button>
                 )}
               </div>
             </div>
           </div>
         )}
       </header>
+
+      {userRole === "client" && (
+        <section className="bg-amber-50 border-b border-amber-200">
+          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">LegalUp Pro es para abogados</h2>
+              <p className="text-sm text-gray-600">Si necesitas asesoría legal, encuentra un abogado según tu necesidad en LegalUp.</p>
+            </div>
+            <div className="flex gap-3 shrink-0">
+              <Button onClick={() => handleCTAClick("client_banner")} className="bg-gray-900 hover:bg-green-900">Buscar abogado</Button>
+              <Button variant="outline" onClick={() => navigate("/")}>Volver a LegalUp</Button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* HERO */}
       <section className="bg-cream-900 border-b border-gray-100">
