@@ -8308,7 +8308,18 @@ app.post('/api/ai/trial/start', async (req, res) => {
       });
     }
 
+    // 4.28C.2: Pro includes AI — block new AI trial for Pro users
+    const proAccessForTrial = await getProLawyerAccess(userId);
+    if (proAccessForTrial.hasAccess) {
+      return res.status(409).json({ error: 'LegalUp AI está incluido en LegalUp Pro.', code: 'AI_INCLUDED_IN_PRO' });
+    }
+
     const existing = await getAILawyerSubscription(userId);
+
+    // Brand-new user without legacy AI history → require Pro, do not create standalone trial
+    if (!existing) {
+      return res.status(402).json({ error: 'LegalUp AI está incluido en LegalUp Pro. Activa Pro para continuar.', code: 'AI_REQUIRES_PRO', upgradePath: '/legalup-pro' });
+    }
 
     // Ya tiene trial o suscripción activa: no duplicar, devolver lo existente.
     if (existing && ['trialing', 'active'].includes(existing.status)) {
@@ -8389,22 +8400,47 @@ app.post('/api/ai/trial/start', async (req, res) => {
 });
 
 // POST /api/ai/subscribe — crea el preapproval recurrente en Mercado Pago.
+// 4.28C.2: Pro is single paid product. New standalone AI subscriptions disabled.
 app.post('/api/ai/subscribe', async (req, res) => {
   let userId = null;
   try {
     userId = await requireAILawyer(req, res);
     if (!userId) return;
 
-    const subscription = await getAILawyerSubscription(userId);
-    if (!subscription) {
-      return res.status(409).json({ error: 'Primero inicia tu prueba gratuita.', code: 'TRIAL_REQUIRED' });
+    // Pro includes AI — block new AI purchase for Pro users
+    const proAccess = await getProLawyerAccess(userId);
+    if (proAccess.hasAccess) {
+      return res.status(409).json({ error: 'LegalUp AI está incluido en LegalUp Pro.', code: 'AI_INCLUDED_IN_PRO' });
     }
 
+    const subscription = await getAILawyerSubscription(userId);
+    if (!subscription) {
+      return res.status(402).json({ error: 'LegalUp AI está incluido en LegalUp Pro. Activa Pro para continuar.', code: 'AI_REQUIRES_PRO', upgradePath: '/legalup-pro' });
+    }
+
+    // Legacy exists — prevent duplicate active/pending
     if (subscription.status === 'active' && subscription.provider_subscription_id) {
       return res.status(409).json({ error: 'Ya tienes una suscripción activa.', code: 'ALREADY_SUBSCRIBED' });
     }
-
-    const userData = await getAILawyerEmail(userId);
+    if (subscription.status === 'pending' && subscription.provider_subscription_id) {
+      return res.status(409).json({ error: 'Ya tienes una suscripción pendiente de aprobación.', code: 'AI_SUBSCRIPTION_PENDING' });
+    }
+    if (subscription.status === 'trialing') {
+      const trialEndMs = subscription.trial_ends_at ? Date.parse(subscription.trial_ends_at) : 0;
+      if (trialEndMs > Date.now()) {
+        return res.status(409).json({ error: 'Tu prueba gratuita está activa.', code: 'AI_TRIAL_ACTIVE' });
+      }
+    }
+    // Expired legacy without Pro → require Pro, do not create new AI
+    const trialEndMs2 = subscription.trial_ends_at ? Date.parse(subscription.trial_ends_at) : 0;
+    const periodEndMs2 = subscription.current_period_end ? Date.parse(subscription.current_period_end) : 0;
+    const withinTrial2 = trialEndMs2 > Date.now();
+    const hasLegacyAccess = (subscription.status === 'active' && periodEndMs2 > Date.now()) || (subscription.status === 'trialing' && withinTrial2) || (subscription.status === 'cancelled' && (periodEndMs2 > Date.now() || withinTrial2));
+    if (!hasLegacyAccess) {
+      return res.status(402).json({ error: 'LegalUp AI está incluido en LegalUp Pro. Activa Pro para continuar.', code: 'AI_REQUIRES_PRO', upgradePath: '/legalup-pro' });
+    }
+    // Legacy has valid access — do not create another subscription
+    return res.status(409).json({ error: 'Ya tienes acceso a LegalUp AI.', code: 'AI_SUBSCRIPTION_ALREADY_EXISTS' });
 
     const preapprovalData = {
       reason: 'LegalUp AI - Suscripción mensual',

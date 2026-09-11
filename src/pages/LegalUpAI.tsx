@@ -57,6 +57,7 @@ import {
   AITrialError,
   resendAIEmailConfirmation,
 } from "@/hooks/useAISubscription";
+import { useProSubscription } from "@/hooks/useProSubscription";
 // Cargado como texto e inyectado en un <style> que se elimina al desmontar la
 // landing. Todo el CSS está aislado bajo `.legalup-landing` (ver comentario en
 // `legalup-standalone.css`), de modo que no pisa las utilidades responsivas del
@@ -1856,6 +1857,7 @@ function LegalUpAI() {
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const aiSub = useAISubscription();
+  const proSub = useProSubscription();
   const startTrial = useStartAITrial();
 
   // Misma regla que usa el guard existente /lawyer/* (RequireLawyer): el rol
@@ -1869,25 +1871,30 @@ function LegalUpAI() {
   const needsProfile = !!user && !isLawyer;
   const canResume = aiSub.status === "cancelled" || aiSub.status === "past_due";
 
-  // El estado real lo decide el backend (useAISubscription); aquí solo se elige copy/CTA.
+  // El estado real lo decide el backend (useAISubscription + Pro); Pro es producto único.
+  const isPro = proSub.hasProAccess;
   const ctaLabel = needsProfile
     ? "Completar perfil"
-    : canResume
-      ? "Reanudar LegalUp AI"
-      : aiSub.isActive
-        ? "Abrir LegalUp AI"
-        : aiSub.hasAccess
-          ? "Ir a LegalUp AI"
-          : "Probar gratis 5 días";
+    : isPro
+      ? "Usar LegalUp AI"
+      : canResume
+        ? "Reanudar LegalUp AI"
+        : aiSub.isActive
+          ? "Abrir LegalUp AI"
+          : aiSub.hasAccess
+            ? "Ir a LegalUp AI"
+            : "Activar LegalUp Pro";
   const headerCtaLabel = needsProfile
     ? "Completar perfil"
-    : canResume
-      ? "Reanudar"
-      : aiSub.isActive
-        ? "Abrir LegalUp AI"
-        : aiSub.hasAccess
-          ? "Ir a LegalUp AI"
-          : "Probar gratis";
+    : isPro
+      ? "Usar IA"
+      : canResume
+        ? "Reanudar"
+        : aiSub.isActive
+          ? "Abrir LegalUp AI"
+          : aiSub.hasAccess
+            ? "Ir a LegalUp AI"
+            : "Activar Pro";
 
   // Email campaign: si el abogado llegó desde el email LegalUp AI, medir el click del email
   useEffect(() => {
@@ -1947,6 +1954,9 @@ function LegalUpAI() {
           "Tu prueba gratuita ya fue utilizada. Continúa con LegalUp AI por $49.900 CLP/mes."
         );
         setShowPricingModal(true);
+      } else if ((err instanceof AITrialError && (err.code === "AI_REQUIRES_PRO" || err.code === "AI_INCLUDED_IN_PRO")) || msg.includes("LegalUp AI está incluido")) {
+        toast.info("LegalUp AI está incluido en LegalUp Pro.");
+        navigate("/legalup-pro");
       } else {
         toast.info(msg || "No se pudo iniciar la prueba gratuita.");
         navigate("/lawyer/ai");
@@ -1991,6 +2001,11 @@ function LegalUpAI() {
     // FLUJOS 3/4/5/6: abogado → trial directo o, si ya accede, al workspace.
     if (aiSub.hasAccess) {
       navigate("/lawyer/ai");
+      return;
+    }
+    // Nuevo producto: sin legacy AI y sin Pro → Pro es único pago
+    if (aiSub.status === 'none' && !proSub.hasProAccess) {
+      navigate("/legalup-pro");
       return;
     }
     startTrialFlow();

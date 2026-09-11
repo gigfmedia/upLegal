@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, Crown, Clock } from 'lucide-react';
 import { useAISubscription } from '@/hooks/useAISubscription';
+import { useProSubscription } from '@/hooks/useProSubscription';
 import {
   AI_SUBSCRIPTION_PRICE_LABEL,
   AI_SUBSCRIPTION_TRIAL_DAYS,
@@ -18,6 +19,7 @@ import { AIPricingModal } from '@/components/legalup-ai/AIPricingModal';
  */
 export function AISubscriptionBanner() {
   const sub = useAISubscription();
+  const pro = useProSubscription();
   const [pricingOpen, setPricingOpen] = useState(false);
 
   const { hasAccess, isActive, isTrialing, status, trialDaysRemaining } = sub;
@@ -25,6 +27,31 @@ export function AISubscriptionBanner() {
   if (isActive) return null;
   // Pro includes AI — hide AI subscription banner when access is via Pro
   if (status === 'pro_limited' && hasAccess) return null;
+  // New Pro-only product: for users without any legacy AI history, promote Pro, not standalone AI trial
+  const isNewWithoutLegacy = status === 'none' && !pro.hasProAccess;
+  if (isNewWithoutLegacy) {
+    return (
+      <>
+        <div className="flex flex-col gap-3 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-white to-white p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+              <Sparkles className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <p className="font-semibold text-gray-900">LegalUp AI está incluido en LegalUp Pro</p>
+              <p className="text-sm text-muted-foreground">Activa Pro para usar la IA en tus casos. $19.990/mes durante tus primeros 3 cobros. Desde el cuarto cobro, $49.990/mes.</p>
+            </div>
+          </div>
+          <div className="shrink-0">
+            <Button type="button" onClick={() => setPricingOpen(true)} className="w-full bg-gray-900 text-white hover:bg-green-900 sm:w-auto">
+              Ver LegalUp Pro
+            </Button>
+          </div>
+        </div>
+        <AIPricingModal open={pricingOpen} onOpenChange={setPricingOpen} />
+      </>
+    );
+  }
 
   const neverStarted = status === 'none';
   const expired = status === 'expired' || status === 'past_due';
