@@ -11,6 +11,9 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useProSubscription } from '@/hooks/useProSubscription';
+import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
+import posthog from 'posthog-js';
 
 interface Service {
   id?: string;
@@ -41,6 +44,9 @@ interface EditingService {
 export default function ServicesPage() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { hasProAccess } = useProSubscription();
+  const [proPaywallOpen, setProPaywallOpen] = useState(false);
+  const [proPaywallAction, setProPaywallAction] = useState<string>('create_service');
   const [isLoading, setIsLoading] = useState(true);
   
   // Services state
@@ -91,6 +97,12 @@ export default function ServicesPage() {
   }, [user, toast]);
   
   const handleAddService = () => {
+    if (!hasProAccess) {
+      posthog.capture('pro_paywall_opened', { action: 'create_service' });
+      setProPaywallAction('create_service');
+      setProPaywallOpen(true);
+      return;
+    }
     setEditingService({
       id: null,
       title: '',
@@ -106,6 +118,12 @@ export default function ServicesPage() {
   };
   
   const handleEditService = (service: Service) => {
+    if (!hasProAccess) {
+      posthog.capture('pro_paywall_opened', { action: 'edit_service' });
+      setProPaywallAction('edit_service');
+      setProPaywallOpen(true);
+      return;
+    }
     // Extraer duración y días de entrega del delivery_time
     const raw = (service.delivery_time || '').trim();
     let parsedDuration = '';
@@ -161,6 +179,12 @@ export default function ServicesPage() {
   };
   
   const handleSaveService = async () => {
+    if (!hasProAccess) {
+      posthog.capture('pro_paywall_opened', { action: editingService.id ? 'edit_service' : 'create_service' });
+      setProPaywallAction(editingService.id ? 'edit_service' : 'create_service');
+      setProPaywallOpen(true);
+      return;
+    }
     if (!user) {
       toast({
         title: 'Error',
@@ -306,11 +330,23 @@ export default function ServicesPage() {
   };
   
   const handleDeleteClick = (id: string) => {
+    if (!hasProAccess) {
+      posthog.capture('pro_paywall_opened', { action: 'delete_service' });
+      setProPaywallAction('delete_service');
+      setProPaywallOpen(true);
+      return;
+    }
     setServiceToDelete(id);
     setIsDeleteDialogOpen(true);
   };
 
   const handleDeleteService = async () => {
+    if (!hasProAccess) {
+      posthog.capture('pro_paywall_opened', { action: 'delete_service' });
+      setProPaywallAction('delete_service');
+      setProPaywallOpen(true);
+      return;
+    }
     if (!serviceToDelete) return;
     
     try {
@@ -804,8 +840,9 @@ export default function ServicesPage() {
               )}
             </Button>
           </DialogFooter>
-        </DialogContent>
+          </DialogContent>
       </Dialog>
+      <ProPricingModal open={proPaywallOpen} onOpenChange={setProPaywallOpen} triggerAction={proPaywallAction} />
     </div>
   );
 }
