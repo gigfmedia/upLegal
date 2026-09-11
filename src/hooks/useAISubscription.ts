@@ -15,6 +15,7 @@ export type AIAccessStatus =
   | 'cancelled'
   | 'past_due'
   | 'expired'
+  | 'pro_limited'
   | 'none';
 
 const getApiBaseUrl = (): string => {
@@ -58,6 +59,21 @@ export function useAISubscription() {
     },
   });
 
+  // Pro entitlement fallback (unified access): si no hay AI access, verifica lawyer_subscriptions
+  const proQuery = useQuery<{ status: string; current_period_end: string | null } | null>({
+    queryKey: ['pro-subscription-for-ai', lawyerId],
+    enabled: !!lawyerId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('lawyer_subscriptions')
+        .select('status, current_period_end')
+        .eq('lawyer_id', lawyerId!)
+        .maybeSingle();
+      if (error) return null;
+      return data as { status: string; current_period_end: string | null } | null;
+    },
+  });
+
   const subscription = query.data ?? null;
   const now = Date.now();
 
@@ -76,10 +92,27 @@ export function useAISubscription() {
   const isCancelledWithAccess =
     subscription?.status === 'cancelled' && (periodEndMs > now || withinTrial);
 
-  const hasAccess = isTrialing || isActive || isCancelledWithAccess;
+  let hasAccess: boolean = isTrialing || isActive || isCancelledWithAccess;
+  let isProLimited = false;
+  let proCurrentPeriodEnd: string | null = null;
+
+  // Pro fallback — mirrors server getAILawyerAccess pro_limited (7920-7937)
+  if (!hasAccess) {
+    const pro = proQuery.data;
+    const proPeriodEndMs = pro?.current_period_end ? Date.parse(pro.current_period_end) : 0;
+    const proValid =
+      (pro?.status === 'active' || pro?.status === 'cancelled') && proPeriodEndMs > now;
+    if (proValid) {
+      hasAccess = true;
+      isProLimited = true;
+      proCurrentPeriodEnd = pro.current_period_end ?? null;
+    }
+  }
 
   let status: AIAccessStatus;
-  if (!subscription) {
+  if (isProLimited) {
+    status = 'pro_limited';
+  } else if (!subscription) {
     status = 'none';
   } else if (isActive) {
     status = 'active';
@@ -99,18 +132,22 @@ export function useAISubscription() {
   const trialDaysRemaining =
     trialEndMs > now ? Math.max(1, Math.ceil((trialEndMs - now) / DAY_MS)) : 0;
 
+  const isLoading = query.isLoading || proQuery.isLoading;
+
   return {
     ...query,
     subscription,
     status,
-    plan: subscription?.plan ?? 'free',
+    plan: isProLimited ? 'pro_limited' : (subscription?.plan ?? 'free'),
     isTrialing,
     isActive,
     hasAccess,
+    isProLimited,
     trialEndsAt,
     trialDaysRemaining,
-    currentPeriodEnd,
+    currentPeriodEnd: isProLimited ? proCurrentPeriodEnd : currentPeriodEnd,
     cancelAtPeriodEnd: !!subscription?.cancel_at_period_end,
+    isLoading,
   };
 }
 

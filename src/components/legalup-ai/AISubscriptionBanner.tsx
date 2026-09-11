@@ -23,6 +23,8 @@ export function AISubscriptionBanner() {
   const { hasAccess, isActive, isTrialing, status, trialDaysRemaining } = sub;
 
   if (isActive) return null;
+  // Pro includes AI — hide AI subscription banner when access is via Pro
+  if (status === 'pro_limited' && hasAccess) return null;
 
   const neverStarted = status === 'none';
   const expired = status === 'expired' || status === 'past_due';
