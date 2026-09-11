@@ -10,11 +10,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { useLawyerCases } from '@/hooks/useLawyerCases';
 import { useLawyerClients } from '@/hooks/useLawyerClients';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Loader2, Plus, Eye, FileText } from 'lucide-react';
+import { Search, Loader2, Plus, Eye, FileText, FolderOpen, CalendarDays, Clock, AlertTriangle, RefreshCw, Trash2, Pencil } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useProSubscription } from '@/hooks/useProSubscription';
 import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
 import posthog from 'posthog-js';
+import { format, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 const statusColors: Record<string, string> = {
   new: 'bg-yellow-100 text-yellow-800',
@@ -41,6 +44,15 @@ const sourceLabels: Record<string, string> = {
   LEGALUP_MARKETPLACE: 'Marketplace',
   UNKNOWN: 'Desconocido',
 };
+
+function formatDate(value: string): string {
+  try { return format(parseISO(value), "d 'de' MMMM yyyy", { locale: es }); } catch { return value; }
+}
+function CaseCardSkeleton() {
+  return (
+    <Card><CardContent className="p-5 space-y-3"><Skeleton className="h-5 w-2/3" /><Skeleton className="h-4 w-1/3" /><Skeleton className="h-4 w-full" /><Skeleton className="h-9 w-28" /></CardContent></Card>
+  );
+}
 
 export default function CasesPage() {
   const { cases, loading, error, createCase } = useLawyerCases();
@@ -100,14 +112,23 @@ export default function CasesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh] px-8 py-6">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Casos</h1>
+            <p className="text-muted-foreground">Expedientes del estudio — vinculados a cliente y reserva</p>
+          </div>
+          <Button disabled className="bg-gray-900"><Loader2 className="h-4 w-4 animate-spin mr-1" /> Cargando</Button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CaseCardSkeleton /><CaseCardSkeleton /><CaseCardSkeleton /><CaseCardSkeleton />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div className="mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
       <div className="flex flex-col sm:flex-row justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Casos</h1>
@@ -148,54 +169,59 @@ export default function CasesPage() {
       </div>
 
       {error && (
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="p-4 text-sm text-red-800">{error}</CardContent>
+        <Card>
+          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+            <AlertTriangle className="h-10 w-10 text-amber-500" />
+            <p className="font-medium text-gray-900">No pudimos cargar tus casos</p>
+            <p className="max-w-sm text-sm text-muted-foreground">{error}</p>
+            <Button type="button" variant="outline" onClick={() => window.location.reload()}><RefreshCw className="h-4 w-4 mr-1" /> Reintentar</Button>
+          </CardContent>
         </Card>
       )}
 
-      {filtered.length === 0 ? (
+      {!error && filtered.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center">
-            <FileText className="mx-auto h-12 w-12 text-gray-300" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No hay casos</h3>
-            <p className="mt-1 text-sm text-gray-500">Crea tu primer caso o procesa una solicitud.</p>
+          <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
+            <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-green-50 text-green-700"><FolderOpen className="h-7 w-7" /></span>
+            <p className="text-lg font-medium text-gray-900">No hay casos</p>
+            <p className="max-w-sm text-sm text-muted-foreground">Crea tu primer caso o procesa una solicitud. Tus expedientes aparecerán aquí con el mismo formato que LegalUp AI.</p>
+            <Button onClick={() => {
+              if (!hasProAccess) { posthog.capture('pro_paywall_opened', { action: 'create_case' }); setProPaywallOpen(true); return; }
+              setOpen(true);
+            }} className="mt-2 bg-green-900 text-white hover:bg-green-800"><Plus className="h-4 w-4 mr-1" /> Crear mi primer caso</Button>
           </CardContent>
         </Card>
-      ) : (
-        <div className="grid gap-4">
+      ) : !error && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filtered.map((c) => (
-            <Card key={c.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <Card key={c.id} className="transition-shadow hover:shadow-md">
+              <CardContent className="flex h-full flex-col gap-3 p-5">
+                <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold truncate">{c.title}</h3>
+                    <h3 className="truncate font-semibold text-gray-900">{c.title}</h3>
+                    {c.practice_area ? <Badge variant="secondary" className="mt-1 bg-green-50 text-green-800">{c.practice_area}</Badge> : <span className="mt-1 block text-xs text-muted-foreground">Sin área jurídica</span>}
+                    <div className="mt-2 flex flex-wrap gap-1.5">
                       <Badge className={`${statusColors[c.status] || 'bg-gray-100 text-gray-800'} border-0 text-xs`}>{statusLabels[c.status] || c.status}</Badge>
-                      {c.source && c.source !== 'UNKNOWN' && (
-                        <Badge variant="outline" className="text-xs">
-                          {sourceLabels[c.source] || c.source}
-                        </Badge>
-                      )}
+                      {c.source && c.source !== 'UNKNOWN' && <Badge variant="outline" className="text-xs">{sourceLabels[c.source] || c.source}</Badge>}
                     </div>
-                    <div className="mt-2 text-sm text-gray-600">
-                      {c.client ? (
-                        <span>
-                          Cliente: <Link to={`/lawyer/clients/${c.client.id}`} className="text-green-500 hover:text-green-600 hover:underline">{c.client.name}</Link>
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">Sin cliente</span>
-                      )}
-                      {c.booking && <span className="ml-2">· Reserva: {c.booking.service_title || statusLabels[c.booking.status] || c.booking.status}</span>}
-                    </div>
-                    {c.description && <p className="text-sm text-gray-500 bg-gray-50 p-2 rounded mt-2 line-clamp-2">{c.description}</p>}
-                    <div className="text-xs text-gray-400 mt-2">{new Date(c.created_at).toLocaleDateString('es-CL')} · {c.currency} {c.price_clp ? `$${c.price_clp.toLocaleString('es-CL')}` : ''}</div>
                   </div>
-                  <Link to={`/lawyer/cases/${c.id}`}>
-                    <Button variant="outline" size="sm">
-                      <Eye className="h-4 w-4 mr-1" /> Ver
-                    </Button>
-                  </Link>
+                  <div className="flex items-center gap-1">
+                    <Link to={`/lawyer/cases/${c.id}`} className="rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700" aria-label={`Ver caso ${c.title}`}><Eye className="h-4 w-4" /></Link>
+                  </div>
                 </div>
+                {c.description ? <p className="line-clamp-2 text-sm text-muted-foreground">{c.description}</p> : null}
+                <div className="text-sm text-gray-600 truncate">
+                  {c.client ? <span>Cliente: <Link to={`/lawyer/clients/${c.client.id}`} className="text-green-600 hover:underline">{c.client.name}</Link></span> : <span className="text-gray-400">Sin cliente</span>}
+                </div>
+                <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5" /> Creado: {formatDate(c.created_at)}</span>
+                  <span className="inline-flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> Actualizado: {formatDate(c.updated_at)}</span>
+                </div>
+                <Link to={`/lawyer/cases/${c.id}`} className="mt-1">
+                  <Button variant="outline" className="w-full border-gray-900 text-green-900 bg-green-300 hover:bg-green-400 hover:text-green-900">
+                    <FolderOpen className="h-4 w-4 mr-1" /> Abrir caso
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           ))}

@@ -294,7 +294,7 @@ export default function CaseDetailPage() {
       </Card>
 
       {/* Citas del caso — 1:N */}
-      <Card>
+      <Card className="mt-4">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
@@ -334,7 +334,7 @@ export default function CaseDetailPage() {
       </Card>
 
       {caseData.client_id && (
-        <Card>
+        <Card className="mt-4">
           <CardHeader>
             <CardTitle className="text-base">Cliente asociado</CardTitle>
           </CardHeader>
