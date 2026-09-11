@@ -78,9 +78,12 @@ export default function CasesPage() {
     [cases, search, statusFilter]
   );
 
+  const qualifyingDirectCases = useMemo(() => cases.filter((c) => c.source === 'LAWYER_DIRECT'), [cases]);
+  const canCreateCase = hasProAccess || qualifyingDirectCases.length === 0;
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!hasProAccess) {
+    if (!canCreateCase) {
       posthog.capture('pro_paywall_opened', { action: 'create_case' });
       setProPaywallOpen(true);
       return;
@@ -135,7 +138,7 @@ export default function CasesPage() {
           <p className="text-muted-foreground">Expedientes del estudio — vinculados a cliente y reserva</p>
         </div>
         <Button onClick={() => {
-          if (!hasProAccess) {
+          if (!canCreateCase) {
             posthog.capture('pro_paywall_opened', { action: 'create_case' });
             setProPaywallOpen(true);
             return;
@@ -186,7 +189,7 @@ export default function CasesPage() {
             <p className="text-lg font-medium text-gray-900">No hay casos</p>
             <p className="max-w-sm text-sm text-muted-foreground">Crea tu primer caso o procesa una solicitud. Tus expedientes aparecerán aquí con el mismo formato que LegalUp AI.</p>
             <Button onClick={() => {
-              if (!hasProAccess) { posthog.capture('pro_paywall_opened', { action: 'create_case' }); setProPaywallOpen(true); return; }
+              if (!canCreateCase) { posthog.capture('pro_paywall_opened', { action: 'create_case' }); setProPaywallOpen(true); return; }
               setOpen(true);
             }} className="mt-2 bg-green-900 text-white hover:bg-green-800"><Plus className="h-4 w-4 mr-1" /> Crear mi primer caso</Button>
           </CardContent>
