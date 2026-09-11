@@ -29,6 +29,8 @@ interface AuthModalProps {
   /** Variante de la landing de LegalUp AI: oculta el selector de rol, fuerza
    *  el registro como abogado y muestra el badge "AI" junto al logo. */
   aiLanding?: boolean;
+  /** Variante /pro: oculta selector rol, fuerza abogado, mantiene RUT/PJUD y tema claro */
+  proLanding?: boolean;
 }
 
 const resolveApiBaseUrl = () => {
@@ -48,7 +50,7 @@ const resolveApiBaseUrl = () => {
   return '';
 };
 
-export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess, aiLanding = false }: AuthModalProps) {
+export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess, aiLanding = false, proLanding = false }: AuthModalProps) {
   const { login, signup, user } = useAuth();
   const [isEmailVerified, setIsEmailVerified] = useState(true);
   const [showResendButton, setShowResendButton] = useState(false);
@@ -90,10 +92,10 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
 
   // En la variante de la landing, el registro es siempre de abogado.
   useEffect(() => {
-    if (aiLanding && isOpen && mode === 'signup') {
+    if ((aiLanding || proLanding) && isOpen && mode === 'signup') {
       setFormData((prev) => (prev.role === 'lawyer' ? prev : { ...prev, role: 'lawyer' }));
     }
-  }, [aiLanding, isOpen, mode]);
+  }, [aiLanding, proLanding, isOpen, mode]);
 
   // Tema de la landing (oscuro, acento esmeralda). Las cadenas vacías cuando
   // aiLanding=false mantienen intacto el tema claro del resto de la app.
@@ -1017,7 +1019,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
               </div>
             )}
 
-          {mode === 'signup' && !aiLanding && (
+          {mode === 'signup' && !aiLanding && !proLanding && (
             <>
               <div className="space-y-3">
                 <h3 className="text-lg font-medium text-gray-900">¿Cómo planeas usar LegalUp?</h3>

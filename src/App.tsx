@@ -124,6 +124,7 @@ const ReviewPage = lazy(() => import('./pages/ReviewPage'));
 const CAELanding = lazy(() => import('./pages/CAELanding'));
 const CategoryLanding = lazy(() => import('./pages/CategoryLanding'));
 const LegalUpAI = lazy(() => import('./pages/LegalUpAI'));
+const LegalUpPro = lazy(() => import('./pages/LegalUpPro'));
 const DivorcioUnilateralLanding = lazy(() => import('./pages/DivorcioUnilateralLanding'));
 const PensionAlimentosLanding = lazy(() => import('./pages/PensionAlimentosLanding'));
 const FiniquitoLanding = lazy(() => import('./pages/FiniquitoLanding'));
@@ -410,6 +411,7 @@ const AppContent = () => {
           {!location.pathname.startsWith('/lawyer') &&
             !location.pathname.startsWith('/admin') &&
             !location.pathname.startsWith('/empresa') &&
+            !location.pathname.startsWith('/pro') &&
             !location.pathname.startsWith('/dashboard/settings') &&
             !location.pathname.startsWith('/dashboard/payment-settings') && (
             <Suspense fallback={null}>
@@ -458,6 +460,7 @@ const AppContent = () => {
 
               <Route path="/cae" element={<CAELanding />} />
               <Route path="/ai" element={<LegalUpAI />} />
+              <Route path="/pro" element={<LegalUpPro />} />
               <Route path="/legalup-empresas" element={<LegalUpEmpresas />} />
               <Route path="/empresa/registro" element={<CompanyRegister />} />
               <Route path="/abogado-divorcio-unilateral" element={<DivorcioUnilateralLanding />} />
@@ -646,7 +649,7 @@ const AppContent = () => {
             </Routes>
           </Suspense>
         </main>
-        {!location.pathname.startsWith('/empresa') && !location.pathname.startsWith('/ai') && !location.pathname.startsWith('/lawyer') && !location.pathname.startsWith('/dashboard') && <Footer />}
+        {!location.pathname.startsWith('/empresa') && !location.pathname.startsWith('/ai') && !location.pathname.startsWith('/pro') && !location.pathname.startsWith('/lawyer') && !location.pathname.startsWith('/dashboard') && <Footer />}
       </TooltipProvider>
     </div>
   );
