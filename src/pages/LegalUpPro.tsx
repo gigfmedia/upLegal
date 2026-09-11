@@ -39,10 +39,10 @@ function DashboardPreview() {
       </div>
       <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4 sm:p-6 bg-cream-900">
         {[
-          { label: "Solicitudes pendientes", icon: Inbox, value: "2" },
-          { label: "Citas hoy", icon: Calendar, value: "4" },
-          { label: "Casos activos", icon: Briefcase, value: "3" },
-          { label: "Ingresos del mes", icon: DollarSign, value: "1.500.000" },
+          { label: "Solicitudes pendientes", icon: Inbox, value: "3" },
+          { label: "Citas hoy", icon: Calendar, value: "2" },
+          { label: "Casos activos", icon: Briefcase, value: "6" },
+          { label: "Ingresos del mes", icon: DollarSign, value: "$2.450.000" },
         ].map((kpi) => (
           <div key={kpi.label} className="rounded-xl border border-gray-100 bg-white p-4">
             <div className="flex items-center justify-between">
@@ -282,10 +282,10 @@ export default function LegalUpPro() {
       {/* HERO */}
       <section className="bg-cream-900 border-b border-gray-100">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:py-20">
-        <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
-          <div>
+        <div className="grid gap-10 lg:grid-cols-12 lg:items-center">
+          <div className="lg:col-span-5">
             <Badge className="mb-4 bg-green-50 text-green-800 border-green-200 hover:bg-green-50">Founder — 15 cupos iniciales</Badge>
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl leading-[1.05]">
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 leading-[1.05]">
               Tu práctica legal, organizada en un solo lugar.
             </h1>
             <p className="mt-4 text-lg leading-relaxed text-gray-600">
@@ -307,7 +307,7 @@ export default function LegalUpPro() {
             </div>
             <p className="mt-3 text-xs text-gray-500">Sin compromiso anual. Cancela cuando quieras según condiciones vigentes.</p>
           </div>
-          <div className="relative">
+          <div className="relative lg:col-span-7 lg:pl-4">
             <DashboardPreview />
             <p className="mt-3 text-center text-xs text-gray-400">Vista del dashboard real de LegalUp Pro (datos ilustrativos anonimizados).</p>
           </div>
