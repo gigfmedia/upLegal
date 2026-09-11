@@ -472,6 +472,26 @@ async function ensureProStandardPrice(subscription) {
 const PRO_INTRO_PRICE_LABEL = '$19.990';
 const PRO_STANDARD_PRICE_LABEL = '$49.990';
 
+// ---- AI Feature gating (4.29D) — server authority mirrors src/lib/aiFeatures.ts ----
+const AI_FEATURES_ALL = ['document_analysis','case_chat','jurisprudence','document_drafting','case_analysis','workflow_generation'];
+const PLAN_FEATURES_SERVER = {
+  free: [],
+  essential: [...AI_FEATURES_ALL],
+  pro_limited: ['document_analysis','case_chat','case_analysis'],
+};
+function serverCanUseAIFeature(feature, plan = 'free') {
+  const allowed = PLAN_FEATURES_SERVER[plan] ?? PLAN_FEATURES_SERVER.free;
+  return allowed.includes(feature);
+}
+function getPlanForAccess(access) {
+  if (!access) return 'free';
+  if (access.isProLimited || access.plan === 'pro_limited') return 'pro_limited';
+  if (access.isTrialing || access.isActive) return 'essential';
+  // fallback: if hasAccess but plan unknown, treat as essential for legacy
+  if (access.hasAccess) return 'essential';
+  return 'free';
+}
+
 // Límites de uso (Bloque 22). Solo aplican durante el trial; el plan Essential activo no limita.
 // Coinciden con la política del trigger en la BD (3 casos / 10 documentos).
 const AI_MAX_DOCUMENT_SIZE_MB = 20;
@@ -9687,6 +9707,15 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
     const entitlement = await requireAIEntitlement(req, res, userId);
     if (entitlement.res) return entitlement.res;
 
+    // 4.29D: advanced feature — Pro limited cannot call jurisprudence
+    {
+      const _access = await getAILawyerAccess(userId);
+      const _plan = getPlanForAccess(_access);
+      if (!serverCanUseAIFeature('jurisprudence', _plan)) {
+        return res.status(403).json({ error: 'Función no incluida en tu plan.', code: 'AI_FEATURE_NOT_AVAILABLE', feature: 'jurisprudence' });
+      }
+    }
+
     if (!isAIProviderConfigured()) {
       console.error('[LegalUpAI] jurisprudence blocked: AI_PROVIDER_API_KEY not configured.');
       return res.status(500).json({
@@ -10368,6 +10397,14 @@ app.post('/api/ai/cases/:caseId/workflow/sync', async (req, res) => {
     if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
     const entitlement = await requireAIEntitlement(req, res, userId);
     if (entitlement.res) return entitlement.res;
+    // 4.29D: workflow generation is advanced — pro_limited cannot call sync
+    {
+      const _access = await getAILawyerAccess(userId);
+      const _plan = getPlanForAccess(_access);
+      if (!serverCanUseAIFeature('workflow_generation', _plan)) {
+        return res.status(403).json({ error: 'Función no incluida en tu plan.', code: 'AI_FEATURE_NOT_AVAILABLE', feature: 'workflow_generation' });
+      }
+    }
     const items = await syncCaseWorkflowItems(workspace.id, userId);
     res.json({ items });
   } catch (error) {

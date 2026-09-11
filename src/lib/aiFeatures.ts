@@ -11,7 +11,8 @@ export type AIFeatureKey =
   | 'case_chat'
   | 'jurisprudence'
   | 'document_drafting'
-  | 'case_analysis';
+  | 'case_analysis'
+  | 'workflow_generation';
 
 export type AIFeature = {
   key: AIFeatureKey;
@@ -24,6 +25,7 @@ export const AI_FEATURES: AIFeature[] = [
   { key: 'jurisprudence', label: 'Investigar jurisprudencia' },
   { key: 'document_drafting', label: 'Redactar documento' },
   { key: 'case_analysis', label: 'Analizar mi caso' },
+  { key: 'workflow_generation', label: 'Generar workflow' },
 ];
 
 export const AI_SUBSCRIPTION_PLAN = 'essential';
