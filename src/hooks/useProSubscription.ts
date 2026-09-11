@@ -8,7 +8,7 @@ export function useProSubscription() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: subscription, isLoading } = useQuery({
+  const { data: subscription, isLoading, isFetching, refetch } = useQuery({
     queryKey: [...PRO_SUBSCRIPTION_QUERY_KEY, user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -51,6 +51,8 @@ export function useProSubscription() {
     isPending,
     status: subscription?.status ?? null,
     isLoading,
+    isFetching,
+    refetch,
     plan: subscription?.plan ?? null,
     isFounder: !!subscription?.is_founder,
     currentPeriodEnd: subscription?.current_period_end ?? null,

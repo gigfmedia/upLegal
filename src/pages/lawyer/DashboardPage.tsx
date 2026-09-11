@@ -58,21 +58,62 @@ export default function LawyerDashboardPage() {
     }
   }, [searchParams, toast, navigate]);
 
-  const { hasProAccess } = useProSubscription();
+  const { hasProAccess, refetch: refetchPro, isFetching: isFetchingPro, status: proStatus } = useProSubscription();
   const hasProAccessCheck = hasProAccess;
   const [proPaywallOpen, setProPaywallOpen] = useState(false);
+  const [proVerificationState, setProVerificationState] = useState<'idle' | 'verifying' | 'timeout'>('idle');
+  const [proVerificationAttempts, setProVerificationAttempts] = useState(0);
+
+  const isProReturn = searchParams.get('pro_subscription_success') === 'true';
+
   useEffect(() => {
-    if (searchParams.get('pro_subscription_success') === 'true') {
-      if (hasProAccessCheck) {
-        toast({ title: '¡Pro activado!', description: 'Tu suscripción Pro está activa.' });
-      } else {
-        toast({ title: 'Verificando pago', description: 'Estamos verificando tu pago. Te avisaremos cuando esté activo.' });
-      }
+    if (!isProReturn) return;
+    // Si ya tiene Pro, éxito inmediato
+    if (hasProAccessCheck) {
+      try { posthog.capture('pro_checkout_returned', { status: 'success' }); } catch {}
+      try { posthog.capture('pro_access_confirmed', { attempts: 0, elapsed_ms: 0 }); } catch {}
+      toast({ title: '¡LegalUp Pro activado!', description: 'Ya puedes gestionar clientes, casos, solicitudes, citas y usar AI Limited.' });
       const newParams = new URLSearchParams(searchParams);
       newParams.delete('pro_subscription_success');
       navigate(`/lawyer/dashboard${newParams.toString() ? `?${newParams.toString()}` : ''}`, { replace: true });
+      setProVerificationState('idle');
+      return;
     }
-  }, [searchParams, hasProAccessCheck, toast, navigate]);
+
+    // No tiene Pro aún → iniciar verificación con polling acotado
+    let cancelled = false;
+    const start = Date.now();
+    const run = async () => {
+      try { posthog.capture('pro_checkout_returned', { status: 'success' }); } catch {}
+      setProVerificationState('verifying');
+      for (let i = 0; i < 5; i++) {
+        if (cancelled) return;
+        setProVerificationAttempts(i + 1);
+        const result: any = await refetchPro();
+        const sub = result.data as any;
+        const periodEndMs = sub?.current_period_end ? Date.parse(sub.current_period_end) : 0;
+        const isActiveNow = sub && (sub.status === 'active' || sub.status === 'cancelled') && periodEndMs > Date.now();
+        // También considerar hasProAccess actualizado del hook en siguiente render, pero usamos result
+        if (isActiveNow) {
+          if (cancelled) return;
+          try { posthog.capture('pro_access_confirmed', { attempts: i + 1, elapsed_ms: Date.now() - start }); } catch {}
+          toast({ title: '¡LegalUp Pro activado!', description: 'Ya puedes gestionar clientes, casos, solicitudes, citas y usar AI Limited.' });
+          const newParams = new URLSearchParams(searchParams);
+          newParams.delete('pro_subscription_success');
+          navigate(`/lawyer/dashboard${newParams.toString() ? `?${newParams.toString()}` : ''}`, { replace: true });
+          setProVerificationState('idle');
+          return;
+        }
+        if (i < 4) await new Promise((r) => setTimeout(r, 1500));
+      }
+      if (!cancelled) {
+        setProVerificationState('timeout');
+        try { posthog.capture('pro_access_verification_timeout', { attempts: 5 }); } catch {}
+      }
+    };
+    run();
+    return () => { cancelled = true; };
+  }, [isProReturn, hasProAccessCheck, refetchPro, searchParams, toast, navigate]);
 
   useEffect(() => {
     if (user?.id) trackOnboardingViewed(user.id);
@@ -206,6 +247,56 @@ export default function LawyerDashboardPage() {
               }}
             >
               Cargar datos de ejemplo
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {isProReturn && proVerificationState === 'verifying' && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="p-4 flex items-center gap-3">
+            <Loader2 className="h-5 w-5 animate-spin text-amber-600 shrink-0" />
+            <div>
+              <div className="font-medium text-sm text-amber-900">Estamos verificando tu pago</div>
+              <div className="text-xs text-amber-700">Esto puede tardar unos segundos. Intento {proVerificationAttempts}/5{isFetchingPro ? ' · verificando…' : ''}</div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {isProReturn && proVerificationState === 'timeout' && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <div className="font-medium text-sm text-amber-900">Tu pago está siendo procesado</div>
+              <div className="text-xs text-amber-700">Si Mercado Pago aprobó la suscripción, el acceso se activará automáticamente. Puedes actualizar en unos segundos.</div>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="shrink-0"
+              disabled={isFetchingPro}
+              onClick={async () => {
+                setProVerificationState('verifying');
+                setProVerificationAttempts(0);
+                const result: any = await refetchPro();
+                const sub = result.data as any;
+                const periodEndMs = sub?.current_period_end ? Date.parse(sub.current_period_end) : 0;
+                const isActiveNow = sub && (sub.status === 'active' || sub.status === 'cancelled') && periodEndMs > Date.now();
+                if (isActiveNow) {
+                  try { posthog.capture('pro_access_confirmed', { attempts: 1, elapsed_ms: 0 }); } catch {}
+                  toast({ title: '¡LegalUp Pro activado!', description: 'Ya puedes gestionar clientes, casos, solicitudes, citas y usar AI Limited.' });
+                  const newParams = new URLSearchParams(searchParams);
+                  newParams.delete('pro_subscription_success');
+                  navigate(`/lawyer/dashboard${newParams.toString() ? `?${newParams.toString()}` : ''}`, { replace: true });
+                  setProVerificationState('idle');
+                } else {
+                  setProVerificationState('timeout');
+                  try { posthog.capture('pro_access_verification_timeout', { attempts: 1 }); } catch {}
+                }
+              }}
+            >
+              {isFetchingPro ? <><Loader2 className="h-4 w-4 animate-spin mr-1" /> Verificando…</> : 'Verificar nuevamente'}
             </Button>
           </CardContent>
         </Card>

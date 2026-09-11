@@ -39,10 +39,10 @@ function DashboardPreview() {
       </div>
       <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4 sm:p-6 bg-cream-900">
         {[
-          { label: "Solicitudes pendientes", icon: Inbox, value: "—" },
-          { label: "Citas hoy", icon: Calendar, value: "—" },
-          { label: "Casos activos", icon: Briefcase, value: "—" },
-          { label: "Ingresos del mes", icon: DollarSign, value: "—" },
+          { label: "Solicitudes pendientes", icon: Inbox, value: "2" },
+          { label: "Citas hoy", icon: Calendar, value: "4" },
+          { label: "Casos activos", icon: Briefcase, value: "3" },
+          { label: "Ingresos del mes", icon: DollarSign, value: "1.500.000" },
         ].map((kpi) => (
           <div key={kpi.label} className="rounded-xl border border-gray-100 bg-white p-4">
             <div className="flex items-center justify-between">
@@ -61,8 +61,8 @@ function DashboardPreview() {
         </div>
         <div className="space-y-2">
           {[
-            { time: "10:00", name: "Cliente demo", service: "Consulta" },
-            { time: "15:30", name: "Cliente demo", service: "Reunión" },
+            { time: "10:00", name: "Cliente Maria F.", service: "Consulta" },
+            { time: "15:30", name: "Cliente Felipe P.", service: "Reunión" },
           ].map((a, i) => (
             <div key={i} className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2.5">
               <div>
