@@ -22,6 +22,21 @@ vi.mock('@/hooks/useAIDocuments', () => ({
 vi.mock('@/components/legalup-ai/AICaseWorkspaceContent', () => ({
   AICaseWorkspaceContent: ({ workspaceId }: { workspaceId: string }) => <div data-testid="ai-workspace-content">workspace:{workspaceId}</div>,
 }));
+vi.mock('@/components/legalup-ai/AICaseCommandCenter', () => ({
+  AICaseCommandCenter: ({ workspaceId }: { workspaceId: string }) => <div data-testid="ai-command-center">workspace:{workspaceId}</div>,
+}));
+vi.mock('@/components/legalup-ai/AICaseIntelligence', () => ({
+  AICaseIntelligence: ({ workspaceId }: { workspaceId: string }) => <div data-testid="ai-intelligence">workspace:{workspaceId}</div>,
+}));
+vi.mock('@/components/legalup-ai/AIResearchPanel', () => ({
+  AIResearchPanel: ({ workspaceId }: { workspaceId: string }) => <div data-testid="ai-research">workspace:{workspaceId}</div>,
+}));
+vi.mock('@/components/legalup-ai/AICaseTimeline', () => ({
+  AICaseTimeline: ({ workspaceId }: { workspaceId: string }) => <div data-testid="ai-timeline">workspace:{workspaceId}</div>,
+}));
+vi.mock('@/components/legalup-ai/AICaseChatDrawer', () => ({
+  AICaseChatDrawer: () => <div data-testid="ai-chat-drawer" />,
+}));
 vi.mock('@/components/legalup-ai/AIDocumentList', () => ({
   AIDocumentList: () => <div data-testid="doc-list" />,
 }));
@@ -69,38 +84,38 @@ describe('CaseDetailPage — IA inside Pro (4.27C)', () => {
   it('AI tab without workspace shows CTA, no auto provision', async () => {
     mockUseLawyerCase.mockReturnValue({ caseData: { id: 'case-1', title: 'Caso 1', status: 'new', source: 'LAWYER_DIRECT', practice_area: null, description: null, client_id: null, ai_workspace_id: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as unknown as ReturnType<typeof useLawyerCase>['caseData'], loading: false, error: null } as ReturnType<typeof useLawyerCase>);
     mockUseProvision.mockReturnValue({ provision: vi.fn(), isPending: false, error: null } as unknown as ReturnType<typeof useProvisionAIWorkspace>);
-    renderWithRoute('/lawyer/cases/case-1?tab=ai');
-    expect(await screen.findByText('LegalUp AI para este caso')).toBeInTheDocument();
+    renderWithRoute('/lawyer/cases/case-1?tab=intelligence');
+    expect(await screen.findByText('Activa la IA para ver la inteligencia del caso.')).toBeInTheDocument();
     expect(screen.getByText('Activar IA en este caso')).toBeInTheDocument();
-    expect(screen.queryByTestId('ai-workspace-content')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('ai-intelligence')).not.toBeInTheDocument();
   });
 
   it('provision click creates workspace and shows AI content', async () => {
     mockUseLawyerCase.mockReturnValue({ caseData: { id: 'case-123', title: 'Caso 123', status: 'new', source: 'LAWYER_DIRECT', practice_area: null, description: null, client_id: null, ai_workspace_id: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as unknown as ReturnType<typeof useLawyerCase>['caseData'], loading: false, error: null } as ReturnType<typeof useLawyerCase>);
     const prov = vi.fn().mockResolvedValue({ workspace: { id: 'ws-999', name: 'Caso 123' }, created: true });
     mockUseProvision.mockReturnValue({ provision: prov, isPending: false, error: null } as unknown as ReturnType<typeof useProvisionAIWorkspace>);
-    renderWithRoute('/lawyer/cases/case-123?tab=ai');
+    renderWithRoute('/lawyer/cases/case-123?tab=intelligence');
     fireEvent.click(screen.getByText('Activar IA en este caso'));
     await waitFor(() => expect(prov).toHaveBeenCalledWith('case-123'));
-    expect(await screen.findByTestId('ai-workspace-content')).toBeInTheDocument();
-    expect(screen.getByTestId('ai-workspace-content').textContent).toContain('ws-999');
+    expect(await screen.findByTestId('ai-intelligence')).toBeInTheDocument();
+    expect(screen.getByTestId('ai-intelligence').textContent).toContain('ws-999');
   });
 
   it('existing workspace → no provisioning, AI content receives ws-999', async () => {
     mockUseLawyerCase.mockReturnValue({ caseData: { id: 'case-123', title: 'Caso 123', status: 'new', source: 'LAWYER_DIRECT', practice_area: null, description: null, client_id: null, ai_workspace_id: 'ws-999', created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as unknown as ReturnType<typeof useLawyerCase>['caseData'], loading: false, error: null } as ReturnType<typeof useLawyerCase>);
     const prov = vi.fn();
     mockUseProvision.mockReturnValue({ provision: prov, isPending: false, error: null } as unknown as ReturnType<typeof useProvisionAIWorkspace>);
-    renderWithRoute('/lawyer/cases/case-123?tab=ai');
-    expect(await screen.findByTestId('ai-workspace-content')).toBeInTheDocument();
+    renderWithRoute('/lawyer/cases/case-123?tab=intelligence');
+    expect(await screen.findByTestId('ai-intelligence')).toBeInTheDocument();
     expect(prov).not.toHaveBeenCalled();
-    expect(screen.getByTestId('ai-workspace-content').textContent).toBe('workspace:ws-999');
+    expect(screen.getByTestId('ai-intelligence').textContent).toBe('workspace:ws-999');
   });
 
   it('ID mapping critical: case-123 → ws-999, no cross-ID', async () => {
     mockUseLawyerCase.mockReturnValue({ caseData: { id: 'case-123', title: 'Caso', status: 'new', source: 'LAWYER_DIRECT', practice_area: null, description: null, client_id: null, ai_workspace_id: 'ws-999', created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as unknown as ReturnType<typeof useLawyerCase>['caseData'], loading: false, error: null } as ReturnType<typeof useLawyerCase>);
     mockUseProvision.mockReturnValue({ provision: vi.fn(), isPending: false, error: null } as unknown as ReturnType<typeof useProvisionAIWorkspace>);
-    renderWithRoute('/lawyer/cases/case-123?tab=ai');
-    const el = await screen.findByTestId('ai-workspace-content');
+    renderWithRoute('/lawyer/cases/case-123?tab=intelligence');
+    const el = await screen.findByTestId('ai-intelligence');
     expect(el.textContent).not.toContain('case-123');
     expect(el.textContent).toContain('ws-999');
   });
@@ -117,16 +132,15 @@ describe('CaseDetailPage — IA inside Pro (4.27C)', () => {
     mockUseLawyerCase.mockReturnValue({ caseData: { id: 'case-1', title: 'Caso 1', status: 'new', source: 'LAWYER_DIRECT', practice_area: null, description: null, client_id: null, ai_workspace_id: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as unknown as ReturnType<typeof useLawyerCase>['caseData'], loading: false, error: null } as ReturnType<typeof useLawyerCase>);
     const prov = vi.fn().mockRejectedValue(Object.assign(new Error('limit'), { code: 'AI_LIMIT_REACHED', status: 403 }));
     mockUseProvision.mockReturnValue({ provision: prov, isPending: false, error: 'No fue posible activar IA' } as unknown as ReturnType<typeof useProvisionAIWorkspace>);
-    renderWithRoute('/lawyer/cases/case-1?tab=ai');
-    // CTA still visible, error shown
-    expect(await screen.findByText('LegalUp AI para este caso')).toBeInTheDocument();
+    renderWithRoute('/lawyer/cases/case-1?tab=intelligence');
+    expect(await screen.findByText('Activa la IA para ver la inteligencia del caso.')).toBeInTheDocument();
   });
 
   it('double click protection: pending disables button, only 1 request', async () => {
     mockUseLawyerCase.mockReturnValue({ caseData: { id: 'case-1', title: 'Caso 1', status: 'new', source: 'LAWYER_DIRECT', practice_area: null, description: null, client_id: null, ai_workspace_id: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as unknown as ReturnType<typeof useLawyerCase>['caseData'], loading: false, error: null } as ReturnType<typeof useLawyerCase>);
     const prov = vi.fn().mockImplementation(() => new Promise(() => {}));
     mockUseProvision.mockReturnValue({ provision: prov, isPending: true, error: null } as unknown as ReturnType<typeof useProvisionAIWorkspace>);
-    renderWithRoute('/lawyer/cases/case-1?tab=ai');
+    renderWithRoute('/lawyer/cases/case-1?tab=intelligence');
     const btn = screen.getByText('Activar IA en este caso').closest('button')!;
     expect(btn).toBeDisabled();
   });
@@ -135,7 +149,7 @@ describe('CaseDetailPage — IA inside Pro (4.27C)', () => {
     const prov = vi.fn();
     mockUseLawyerCase.mockReturnValue({ caseData: { id: 'case-1', title: 'Caso 1', status: 'new', source: 'LAWYER_DIRECT', practice_area: null, description: null, client_id: null, ai_workspace_id: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as unknown as ReturnType<typeof useLawyerCase>['caseData'], loading: false, error: null } as ReturnType<typeof useLawyerCase>);
     mockUseProvision.mockReturnValue({ provision: prov, isPending: false, error: null } as unknown as ReturnType<typeof useProvisionAIWorkspace>);
-    renderWithRoute('/lawyer/cases/case-1?tab=ai');
+    renderWithRoute('/lawyer/cases/case-1?tab=intelligence');
     await new Promise(r => setTimeout(r, 100));
     expect(prov).not.toHaveBeenCalled();
   });
