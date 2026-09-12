@@ -36,7 +36,7 @@ function setup(opts: { cases?: unknown[]; hasProAccess?: boolean }) {
     error: null,
     createCase: vi.fn(),
   });
-  hookMocks.clients.mockReturnValue({ clients: [] });
+  hookMocks.clients.mockReturnValue({ clients: [], loading: false, error: null, refetch: vi.fn() });
   hookMocks.pro.mockReturnValue({ hasProAccess: opts.hasProAccess ?? false });
   render(
     <MemoryRouter>

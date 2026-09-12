@@ -56,7 +56,7 @@ function CaseCardSkeleton() {
 
 export default function CasesPage() {
   const { cases, loading, error, createCase } = useLawyerCases();
-  const { clients } = useLawyerClients();
+  const { clients, loading: clientsLoading, error: clientsError, refetch: refetchClients } = useLawyerClients();
   const { toast } = useToast();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -80,6 +80,13 @@ export default function CasesPage() {
 
   const qualifyingDirectCases = useMemo(() => cases.filter((c) => c.source === 'LAWYER_DIRECT'), [cases]);
   const canCreateCase = hasProAccess || qualifyingDirectCases.length === 0;
+
+  // 4.31C: always fetch fresh clients when opening the modal, so the
+  // dropdown never depends on having visited ClientsPage first.
+  const openDialog = () => {
+    setOpen(true);
+    refetchClients();
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,7 +150,7 @@ export default function CasesPage() {
             setProPaywallOpen(true);
             return;
           }
-          setOpen(true);
+          openDialog();
         }} className="bg-gray-900 hover:bg-green-900">
           <Plus className="h-4 w-4 mr-1" /> Nuevo caso
         </Button>
@@ -193,7 +200,7 @@ export default function CasesPage() {
             ) : null}
             <Button onClick={() => {
               if (!canCreateCase) { posthog.capture('pro_paywall_opened', { action: 'create_case' }); setProPaywallOpen(true); return; }
-              setOpen(true);
+              openDialog();
             }} className="mt-2 bg-green-900 text-white hover:bg-green-800"><Plus className="h-4 w-4 mr-1" /> Crear mi primer caso</Button>
           </CardContent>
         </Card>
@@ -249,19 +256,29 @@ export default function CasesPage() {
             </div>
             <div className="space-y-2">
               <Label>Cliente</Label>
-              <Select value={clientId} onValueChange={setClientId}>
+              <Select value={clientId} onValueChange={setClientId} disabled={clientsLoading}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar cliente (opcional)" />
+                  <SelectValue placeholder={clientsLoading ? "Cargando clientes…" : "Seleccionar cliente (opcional)"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Sin cliente</SelectItem>
-                  {clients.map((cl) => (
-                    <SelectItem key={cl.id} value={cl.id}>
-                      {cl.name} {cl.email ? `· ${cl.email}` : ''}
-                    </SelectItem>
-                  ))}
+                  {clientsLoading ? (
+                    <SelectItem value="__loading" disabled>Cargando clientes…</SelectItem>
+                  ) : (
+                    clients.map((cl) => (
+                      <SelectItem key={cl.id} value={cl.id}>
+                        {cl.name} {cl.email ? `· ${cl.email}` : ''}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
+              {clientsError ? (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>No se pudieron cargar los clientes.</span>
+                  <Button type="button" variant="outline" size="sm" onClick={() => refetchClients()}>Reintentar</Button>
+                </div>
+              ) : null}
             </div>
             <div className="space-y-2">
               <Label>Descripción</Label>
