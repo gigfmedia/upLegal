@@ -8921,11 +8921,32 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
       }).eq('id', doc.id);
     }
 
-    await supabase.from('ai_documents').update({ analysis_status: 'processing', analysis_error: null, model }).eq('id', doc.id);
-
     // Fase 4.26.2 hardening: documento sin texto suficiente no debe llegar al LLM (evita costo y falla predecible)
     if (!text || text.trim().length < 20) {
       throw new Error('El documento no contiene texto suficiente para analizar. Asegúrate de que sea un PDF textual (no escaneado).');
+    }
+
+    // 4.29E concurrency lock — at most one active analysis per document
+    const STALE_MS = 5 * 60 * 1000;
+    const nowIso = new Date().toISOString();
+    // Try to acquire lock where not already processing
+    let lockAcquired = false;
+    {
+      const { data: locked } = await supabase.from('ai_documents').update({ analysis_status: 'processing', analysis_error: null, model, updated_at: nowIso }).eq('id', doc.id).neq('analysis_status', 'processing').select('id').maybeSingle();
+      if (locked) lockAcquired = true;
+      else {
+        // Check stale: if currently processing but updated_at older than threshold, allow recovery
+        const { data: current } = await supabase.from('ai_documents').select('analysis_status, updated_at').eq('id', doc.id).maybeSingle();
+        const updatedAtMs = current?.updated_at ? Date.parse(current.updated_at) : 0;
+        const isStale = current?.analysis_status === 'processing' && !isNaN(updatedAtMs) && (Date.now() - updatedAtMs) > STALE_MS;
+        if (isStale) {
+          const { data: staleLocked } = await supabase.from('ai_documents').update({ analysis_status: 'processing', analysis_error: null, model, updated_at: nowIso }).eq('id', doc.id).eq('analysis_status', 'processing').select('id').maybeSingle();
+          if (staleLocked) lockAcquired = true;
+        }
+      }
+    }
+    if (!lockAcquired) {
+      return res.status(409).json({ error: 'El análisis ya está en curso. Intenta nuevamente en unos momentos.', code: 'AI_DOCUMENT_ANALYSIS_IN_PROGRESS' });
     }
 
     const { data: raw, raw: rawText, usage } = await chatCompletion({
