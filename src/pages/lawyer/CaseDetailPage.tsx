@@ -18,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AICaseWorkspaceContent } from '@/components/legalup-ai/AICaseWorkspaceContent';
+import { CaseActivity } from '@/components/lawyer/CaseActivity';
 import { useAIFeatureAccess } from '@/hooks/useAISubscription';
 import { useCaseDocumentWorkspace } from '@/hooks/useCaseDocumentWorkspace';
 import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
@@ -356,7 +357,12 @@ function CaseDetailContent() {
         </TabsContent>
 
         <TabsContent value="activity" className="mt-4">
-          <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">La actividad del caso aparecerá aquí.</CardContent></Card>
+          <CaseActivity
+            caseData={caseData}
+            workspaceId={effectiveWorkspaceId}
+            bookings={caseBookings}
+            onOpenDocuments={() => setActiveTab('documents')}
+          />
         </TabsContent>
       </Tabs>
       <ProPricingModal open={proOpen} onOpenChange={setProOpen} triggerAction="case_ai" />
