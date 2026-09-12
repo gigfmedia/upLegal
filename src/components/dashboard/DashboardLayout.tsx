@@ -255,7 +255,7 @@ function DashboardLayout() {
         // 4.30D: Cases is the primary product entry. Standalone AI is only a
         // secondary compatibility entry for legacy AI users.
         ...(showLegacyAI
-          ? [{ href: '/lawyer/ai', icon: Scale, label: 'IA heredada', highlightIcon: false, aiBadge: false }]
+          ? [{ href: '/lawyer/ai', icon: Scale, label: 'LegalUp', highlightIcon: false, aiBadge: true }]
           : []),
         { href: '/lawyer/profile', icon: User, label: 'Perfil' },
         { href: '/lawyer/services', icon: FileText, label: 'Servicios', badge: showServicesBadge },
