@@ -188,6 +188,9 @@ export default function CasesPage() {
             <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-green-50 text-green-700"><FolderOpen className="h-7 w-7" /></span>
             <p className="text-lg font-medium text-gray-900">No hay casos</p>
             <p className="max-w-sm text-sm text-muted-foreground">Crea tu primer caso o procesa una solicitud. Tus expedientes aparecerán aquí con el mismo formato que LegalUp AI.</p>
+            {canCreateCase && !hasProAccess && qualifyingDirectCases.length === 0 ? (
+              <p className="max-w-sm text-xs text-muted-foreground">Crea tu primer caso sin suscripción. Podrás organizar al cliente y sus documentos; las funciones de IA están incluidas con LegalUp Pro.</p>
+            ) : null}
             <Button onClick={() => {
               if (!canCreateCase) { posthog.capture('pro_paywall_opened', { action: 'create_case' }); setProPaywallOpen(true); return; }
               setOpen(true);
@@ -236,6 +239,9 @@ export default function CasesPage() {
           <DialogHeader>
             <DialogTitle>Nuevo caso</DialogTitle>
           </DialogHeader>
+          {canCreateCase && !hasProAccess && qualifyingDirectCases.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Tu primer caso no requiere suscripción a Pro. Las funciones de IA requieren LegalUp Pro.</p>
+          ) : null}
           <form onSubmit={handleCreate} className="space-y-4">
             <div className="space-y-2">
               <Label>Título *</Label>

@@ -90,7 +90,6 @@ export function ProPricingModal({ open, onOpenChange, triggerAction }: ProPricin
                 </li>
               ))}
             </ul>
-            <p className="mt-3 text-xs text-gray-500">AI Full con jurisprudencia y acceso completo: $49.900/mes</p>
           </div>
 
           {isActive && (

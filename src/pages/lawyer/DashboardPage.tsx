@@ -172,13 +172,29 @@ export default function LawyerDashboardPage() {
 
   // 4.30D: Cases is the primary product entry. The AI card guides to
   // Cases, where AI works contextually inside each case.
+  // 4.31B F3: one paid product. Users without legacy AI history never see
+  // standalone AI purchase; AI is presented as a Pro capability in Cases.
+  const hasLegacyAI = !!aiSub.subscription;
   const handleLegalUpAIClick = () => {
-    navigate('/lawyer/cases');
+    if (hasLegacyAI) {
+      navigate('/lawyer/ai');
+      return;
+    }
+    if (hasProAccess) {
+      navigate('/lawyer/cases');
+      return;
+    }
+    setProPaywallOpen(true);
   };
 
   let aiBadgeText = 'IA diseñada para abogados. Analiza documentos, resume causas y redacta más rápido.';
   let aiCtaText = 'Conocer más';
-  if (aiSub.status === 'none') {
+  if (!hasLegacyAI) {
+    aiBadgeText = hasProAccess
+      ? 'La IA trabaja dentro de tus casos: analiza documentos, detecta riesgos y conversa con el contexto de cada caso.'
+      : 'La IA trabaja dentro de tus casos con LegalUp Pro.';
+    aiCtaText = hasProAccess ? 'Ir a mis casos' : 'Conocer LegalUp Pro';
+  } else if (aiSub.status === 'none') {
     aiBadgeText = 'Prueba LegalUp AI gratis durante 5 días. Sin tarjeta.';
     aiCtaText = 'Empezar prueba gratis';
   } else if ((aiSub as any).isTrialing) {

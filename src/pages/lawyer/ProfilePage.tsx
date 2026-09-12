@@ -18,6 +18,7 @@ import { initializeFormData } from '@/utils/initializeFormData';
 import { supabase } from '@/lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { AISubscriptionCard } from '@/components/legalup-ai/AISubscriptionCard';
+import { useAISubscription } from '@/hooks/useAISubscription';
 import { DocumentUpload } from '@/components/ui/document-upload';
 import { ProfileAvatarUpload } from '@/components/ProfileAvatarUpload';
 import { useProfile } from '@/hooks/useProfile';
@@ -64,6 +65,9 @@ export interface ProfileFormData {
 export default function LawyerProfilePage() {
   const { user, updateProfile } = useAuth();
   const { toast } = useToast();
+  // 4.31B F3: standalone AI subscription card is legacy-only. Normal users
+  // without AI history must not see a separate AI purchase surface.
+  const { subscription: legacyAISubscription } = useAISubscription();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -1560,7 +1564,7 @@ export default function LawyerProfilePage() {
         </div>
       </form>
 
-      <AISubscriptionCard />
+      {legacyAISubscription ? <AISubscriptionCard /> : null}
     </div>
   );
 }

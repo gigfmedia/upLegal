@@ -7,6 +7,7 @@ import posthog from 'posthog-js';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useAICaseIntelligence } from '@/hooks/useAIDocuments';
+import { useAIFeatureAccess } from '@/hooks/useAISubscription';
 import { useAICaseWorkflow, useSyncAICaseWorkflow, useUpdateAICaseWorkflow } from '@/hooks/useAICaseWorkflow';
 import { EvidenceNavigator, type EvidenceReference } from './EvidenceNavigator';
 import { AICaseWorkflowActionDrawer } from './AICaseWorkflowActionDrawer';
@@ -58,9 +59,14 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToD
     }
   }, [workflowQuery.isError, workflowQuery.error, workspaceId]);
 
-  // Sync workflow once when intelligence ready and workflow empty
+  // Sync workflow once when intelligence ready and workflow empty.
+  // 4.31B F1: only attempt generation when the entitlement includes
+  // workflow_generation; otherwise this would 403 and leave workflow empty.
+  const { canUse } = useAIFeatureAccess();
+  const canGenerateWorkflow = canUse('workflow_generation');
   useEffect(() => {
     if (!data || workflowQuery.isLoading || syncWorkflow.isPending) return;
+    if (!canGenerateWorkflow) return;
     const items = workflowQuery.data?.items ?? [];
     if (items.length === 0) {
       // Only sync if there are persistable actions
@@ -69,7 +75,7 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToD
       if (hasPersistable) syncWorkflow.mutate();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data?.document_count, workflowQuery.data?.items?.length]);
+  }, [data?.document_count, workflowQuery.data?.items?.length, canGenerateWorkflow]);
 
   useEffect(() => {
     if (externalWorkflowActionId && workflowQuery.data?.items) {
