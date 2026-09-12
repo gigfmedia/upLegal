@@ -198,19 +198,7 @@ function CaseDetailContent() {
 
         <TabsContent value="overview" className="mt-4">
           <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            {caseData.title}
-            {caseData.source && caseData.source !== 'UNKNOWN' && (
-              <Badge variant="outline">{sourceLabels[caseData.source] || caseData.source}</Badge>
-            )}
-            <Badge>{statusLabels[caseData.status] || caseData.status}</Badge>
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Creado {new Date(caseData.created_at).toLocaleString('es-CL')} · Actualizado {new Date(caseData.updated_at).toLocaleString('es-CL')}
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Título *</Label>
