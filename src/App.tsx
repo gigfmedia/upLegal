@@ -110,13 +110,14 @@ const BookingSuccessPage = lazy(() => import('./pages/BookingSuccessPage'));
 const CheckoutResume = lazy(() => import('./pages/CheckoutResume'));
 const QuoteRequestsPage = lazy(() => import('./pages/lawyer/QuoteRequestsPage'));
 const LegalUpAIWorkspace = lazy(() => import('./pages/lawyer/LegalUpAIWorkspace'));
-const AICaseDetail = lazy(() => import('./pages/lawyer/AICaseDetail'));
+const LegacyAICaseRoute = lazy(() => import('./pages/lawyer/LegacyAICaseRoute'));
 
-// Prefetch del chunk de AICaseDetail en cargas directas a /lawyer: arranca la
-// descarga en paralelo al layout para que el Suspense interno de DashboardLayout
-// resuelva al instante y el loading no aparezca dos veces (layout + caso).
+// Prefetch del chunk de LegacyAICaseRoute en cargas directas a /lawyer: arranca
+// la descarga en paralelo al layout para que el Suspense interno de
+// DashboardLayout resuelva al instante y el loading no aparezca dos veces
+// (layout + caso).
 if (typeof window !== 'undefined' && window.location.pathname.startsWith('/lawyer')) {
-  void import('./pages/lawyer/AICaseDetail').catch(() => {});
+  void import('./pages/lawyer/LegacyAICaseRoute').catch(() => {});
 }
 const NotFound = lazy(() => import('@/pages/NotFound'));
 const LegalUpAssistant = lazy(() => import('@/components/assistant/LegalUpAssistant'));
@@ -600,7 +601,7 @@ const AppContent = () => {
                 <Route path="favorites" element={<DashboardFavorites />} />
                 <Route path="quotes/:quoteRequestId" element={<QuoteRequestsPage />} />
                 <Route path="ai" element={<LegalUpAIWorkspace />} />
-                <Route path="ai/cases/:caseId" element={<AICaseDetail />} />
+                <Route path="ai/cases/:caseId" element={<LegacyAICaseRoute />} />
                 <Route path="notificaciones" element={<NotificationsPage />} />
                 {/* <Route path="empresas" element={<LawyerEmpresasRequests />} /> */}
               </Route>

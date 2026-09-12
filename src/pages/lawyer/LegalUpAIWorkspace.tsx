@@ -36,6 +36,7 @@ import { AIPricingModal } from '@/components/legalup-ai/AIPricingModal';
 import { AIUsageMeter } from '@/components/legalup-ai/AIUsageMeter';
 import { AICaseTimelinePreview } from '@/components/legalup-ai/AICaseTimelinePreview';
 import { useAISubscription } from '@/hooks/useAISubscription';
+import { useLawyerCases } from '@/hooks/useLawyerCases';
 import type { AIFeatureKey } from '@/lib/aiFeatures';
 
 const FEATURES: {
@@ -117,7 +118,22 @@ export default function LegalUpAIWorkspace() {
   const [caseToEdit, setCaseToEdit] = useState<AIWorkspace | null>(null);
   const [pricingOpen, setPricingOpen] = useState(false);
   const casesRef = useRef<HTMLElement | null>(null);
-  const { hasAccess } = useAISubscription();
+  const { hasAccess, subscription } = useAISubscription();
+  // 4.30D: new work starts in Cases. Standalone workspace creation is only
+  // exposed to legacy AI users (existing ai_subscriptions history).
+  const hasLegacyHistory = !!subscription;
+  const { cases: proCases } = useLawyerCases();
+  const caseIdByWorkspaceId = new Map(
+    (proCases ?? []).map((c) => [c.ai_workspace_id, c.id] as const).filter(([ws]) => !!ws) as [string, string][]
+  );
+  const openWorkspace = (workspaceId: string, tab?: string) => {
+    const linkedCaseId = caseIdByWorkspaceId.get(workspaceId);
+    if (linkedCaseId) {
+      navigate(`/lawyer/cases/${linkedCaseId}?tab=ai`);
+      return;
+    }
+    navigate(`/lawyer/ai/cases/${workspaceId}${tab ? `?tab=${tab}` : ''}`);
+  };
 
   useEffect(() => {
     posthog.capture('ai_workspace_viewed');
@@ -148,6 +164,11 @@ export default function LegalUpAIWorkspace() {
       openPaywall();
       return;
     }
+    // 4.30D: new work starts in Cases, not in standalone workspaces.
+    if (!hasLegacyHistory) {
+      navigate('/lawyer/cases');
+      return;
+    }
     if (feature === 'document_analysis') {
       // Atajo: crea un caso → workspace → subir documento.
       setCreateOpen(true);
@@ -161,7 +182,7 @@ export default function LegalUpAIWorkspace() {
       // La investigación de jurisprudencia vive dentro de un caso.
       if (hasCases) {
         // Abre el caso más reciente, donde vive el panel de investigación.
-        navigate(`/lawyer/ai/cases/${workspaces![0].id}`);
+        openWorkspace(workspaces![0].id);
       } else {
         setCreateOpen(true);
       }
@@ -309,20 +330,31 @@ export default function LegalUpAIWorkspace() {
               Organiza tus casos y trabaja cada uno con las herramientas de LegalUp AI.
             </p>
           </div>
-          <Button
-            type="button"
-            onClick={() => {
-              if (!hasAccess) {
-                openPaywall();
-                return;
-              }
-              setCreateOpen(true);
-            }}
-            className="bg-gray-900 text-white hover:bg-green-900"
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            Nuevo caso
-          </Button>
+          {hasLegacyHistory ? (
+            <Button
+              type="button"
+              onClick={() => {
+                if (!hasAccess) {
+                  openPaywall();
+                  return;
+                }
+                setCreateOpen(true);
+              }}
+              className="bg-gray-900 text-white hover:bg-green-900"
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Nuevo caso
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              onClick={() => navigate('/lawyer/cases')}
+              className="bg-gray-900 text-white hover:bg-green-900"
+            >
+              <FolderOpen className="h-4 w-4" aria-hidden="true" />
+              Ir a Casos
+            </Button>
+          )}
         </div>
 
         <div className="mt-6">
@@ -364,20 +396,31 @@ export default function LegalUpAIWorkspace() {
                   Crea tu primer caso, sube un PDF y descubre cómo LegalUp AI puede
                   ayudarte con tu trabajo jurídico.
                 </p>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    if (!hasAccess) {
-                      openPaywall();
-                      return;
-                    }
-                    setCreateOpen(true);
-                  }}
-                  className="mt-2 bg-green-900 text-white hover:bg-green-800"
-                >
-                  <Plus className="h-4 w-4" aria-hidden="true" />
-                  Crear mi primer caso
-                </Button>
+                {hasLegacyHistory ? (
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      if (!hasAccess) {
+                        openPaywall();
+                        return;
+                      }
+                      setCreateOpen(true);
+                    }}
+                    className="mt-2 bg-green-900 text-white hover:bg-green-800"
+                  >
+                    <Plus className="h-4 w-4" aria-hidden="true" />
+                    Crear mi primer caso
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    onClick={() => navigate('/lawyer/cases')}
+                    className="mt-2 bg-green-900 text-white hover:bg-green-800"
+                  >
+                    <FolderOpen className="h-4 w-4" aria-hidden="true" />
+                    Ir a Casos
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ) : (
@@ -450,7 +493,7 @@ export default function LegalUpAIWorkspace() {
                           openPaywall();
                           return;
                         }
-                        navigate(`/lawyer/ai/cases/${workspace.id}?tab=timeline`);
+                        openWorkspace(workspace.id, 'timeline');
                       }}
                     />
 
@@ -462,7 +505,7 @@ export default function LegalUpAIWorkspace() {
                           openPaywall();
                           return;
                         }
-                        navigate(`/lawyer/ai/cases/${workspace.id}`);
+                        openWorkspace(workspace.id);
                       }}
                       className="mt-1 w-full border-gray-900 text-green-900 bg-green-300 hover:bg-green-400 hover:text-green-900"
                     >

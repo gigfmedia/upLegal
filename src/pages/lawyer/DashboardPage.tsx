@@ -170,8 +170,10 @@ export default function LawyerDashboardPage() {
     fetch();
   }, [user?.id]);
 
+  // 4.30D: Cases is the primary product entry. The AI card guides to
+  // Cases, where AI works contextually inside each case.
   const handleLegalUpAIClick = () => {
-    navigate('/lawyer/ai');
+    navigate('/lawyer/cases');
   };
 
   let aiBadgeText = 'IA diseñada para abogados. Analiza documentos, resume causas y redacta más rápido.';

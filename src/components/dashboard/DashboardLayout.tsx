@@ -27,6 +27,7 @@ import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { supabase } from '@/lib/supabaseClient';
 import Header from '@/components/Header';
 import { GlobalSearch } from '@/components/lawyer/GlobalSearch';
+import { useLegacyAICompat } from '@/hooks/useLegacyAICompat';
 
 type NavItem = {
   href: string;
@@ -48,6 +49,10 @@ function DashboardLayout() {
   const [userRole, setUserRole] = useState<UserRole>('client');
   const [showServicesBadge, setShowServicesBadge] = useState(false);
   const [navCounts, setNavCounts] = useState<Record<string, number>>({});
+  // 4.30D: standalone /lawyer/ai is compatibility infrastructure, not the
+  // primary product. Only legacy AI users see it as a secondary entry.
+  const { data: legacyAICompat } = useLegacyAICompat();
+  const showLegacyAI = legacyAICompat?.showLegacyAI ?? false;
   
   // Get user role safely
   const getUserRole = (): UserRole => {
@@ -247,7 +252,11 @@ function DashboardLayout() {
         { href: '/lawyer/cases', icon: Briefcase, label: 'Casos' },
         { href: '/lawyer/citas', icon: Calendar, label: 'Citas' },
         { href: '/lawyer/earnings', icon: TrendingUp, label: 'Ingresos' },
-        { href: '/lawyer/ai', icon: Scale, label: 'LegalUp', highlightIcon: true, aiBadge: true },
+        // 4.30D: Cases is the primary product entry. Standalone AI is only a
+        // secondary compatibility entry for legacy AI users.
+        ...(showLegacyAI
+          ? [{ href: '/lawyer/ai', icon: Scale, label: 'IA heredada', highlightIcon: false, aiBadge: false }]
+          : []),
         { href: '/lawyer/profile', icon: User, label: 'Perfil' },
         { href: '/lawyer/services', icon: FileText, label: 'Servicios', badge: showServicesBadge },
         { href: '/lawyer/notificaciones', icon: Bell, label: 'Notificaciones' },
