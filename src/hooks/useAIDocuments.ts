@@ -149,14 +149,13 @@ export function useAIDocumentAnalysis(documentId: string | undefined, enabled = 
 }
 
 /** Sube un PDF a un caso: crea la fila (id generado en cliente) y sube al bucket privado. */
-export function useUploadAIDocument(workspaceId: string | undefined) {
+export function useUploadAIDocument(workspace: string | undefined | (() => Promise<string>)) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
   return useMutation<AIDocument, Error, File>({
     mutationFn: async (file) => {
       if (!user?.id) throw new Error('Sesión no válida. Vuelve a iniciar sesión.');
-      if (!workspaceId) throw new Error('Falta el identificador del caso.');
 
       if (file.type !== 'application/pdf') {
         throw new Error('Solo se permiten archivos PDF.');
@@ -167,6 +166,9 @@ export function useUploadAIDocument(workspaceId: string | undefined) {
       if (isDocumentOverMaxSize(file.size)) {
         throw new Error('El PDF no puede superar los 20 MB.');
       }
+
+      const workspaceId = typeof workspace === 'function' ? await workspace() : workspace;
+      if (!workspaceId) throw new Error('Falta el identificador del caso.');
 
       const documentId = crypto.randomUUID();
       const filePath = `${user.id}/${workspaceId}/${documentId}/original.pdf`;

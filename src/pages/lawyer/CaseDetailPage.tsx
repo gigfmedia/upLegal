@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useLawyerCase, useLawyerCases, type CaseStatus, useProvisionAIWorkspace } from '@/hooks/useLawyerCases';
+import { useLawyerCase, useLawyerCases, type CaseStatus } from '@/hooks/useLawyerCases';
 import { useLawyerClients } from '@/hooks/useLawyerClients';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowLeft, Save, Trash2, Calendar, Plus, Sparkles, AlertTriangle } from 'lucide-react';
@@ -18,9 +18,10 @@ import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AICaseWorkspaceContent } from '@/components/legalup-ai/AICaseWorkspaceContent';
-import { useAIDocuments } from '@/hooks/useAIDocuments';
-import { AIDocumentList } from '@/components/legalup-ai/AIDocumentList';
-import { AIDocumentUpload } from '@/components/legalup-ai/AIDocumentUpload';
+import { useAIFeatureAccess } from '@/hooks/useAISubscription';
+import { useCaseDocumentWorkspace } from '@/hooks/useCaseDocumentWorkspace';
+import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
+import { CaseDocuments } from '@/components/lawyer/CaseDocuments';
 
 const statuses: CaseStatus[] = ['new', 'quoted', 'paid', 'in_progress', 'delivered', 'closed', 'cancelled'];
 
@@ -50,6 +51,12 @@ const sourceLabels: Record<string, string> = {
 };
 
 export default function CaseDetailPage() {
+  const { caseId } = useParams();
+  const { user } = useAuth();
+  return <CaseDetailContent key={`${user?.id}:${caseId}`} />;
+}
+
+function CaseDetailContent() {
   const { caseId } = useParams<{ caseId: string }>();
   const { caseData, loading, error } = useLawyerCase(caseId);
   const { updateCase, deleteCase } = useLawyerCases();
@@ -67,10 +74,9 @@ export default function CaseDetailPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (searchParams.get('tab') as string) || 'overview';
   const setActiveTab = (v: string) => setSearchParams(prev => { const p = new URLSearchParams(prev); p.set('tab', v); return p; }, { replace: true });
-  const provisionHook = useProvisionAIWorkspace();
-  const [provisionedWorkspaceId, setProvisionedWorkspaceId] = useState<string | null>(null);
-  const effectiveWorkspaceId = provisionedWorkspaceId || caseData?.ai_workspace_id || null;
-  const aiDocumentsQuery = useAIDocuments(effectiveWorkspaceId || undefined);
+  const { workspaceId: effectiveWorkspaceId, ensureWorkspace } = useCaseDocumentWorkspace(caseId, caseData?.id === caseId ? caseData.ai_workspace_id : null);
+  const { canUse, isLoading: accessLoading } = useAIFeatureAccess();
+  const [proOpen, setProOpen] = useState(false);
 
   // hydrate when case loads
   useState(() => {
@@ -162,20 +168,6 @@ export default function CaseDetailPage() {
     );
   }
 
-  const handleProvision = async () => {
-    if (!caseId) return;
-    try {
-      const res = await provisionHook.provision(caseId);
-      setProvisionedWorkspaceId(res.workspace.id);
-      toast({ title: 'IA activada', description: 'LegalUp AI ya está disponible para este caso.' });
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'No se pudo activar la IA';
-      const code = (e as { code?: string })?.code;
-      if (code === 'AI_LIMIT_REACHED') toast({ title: 'Límite alcanzado', description: 'No fue posible activar IA para este caso con tu acceso actual.', variant: 'destructive' });
-      else if (code === 'AI_WORKSPACE_LINK_INVALID') toast({ title: 'Configuración inconsistente', description: 'Este caso tiene una configuración de IA inconsistente. Contacta soporte.', variant: 'destructive' });
-      else toast({ title: 'Error', description: msg, variant: 'destructive' });
-    }
-  };
 
   return (
     <div className="mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -348,41 +340,28 @@ export default function CaseDetailPage() {
         </TabsContent>
 
         <TabsContent value="documents" className="mt-4">
-          {effectiveWorkspaceId ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2"><Calendar className="h-4 w-4" /> Documentos del caso</CardTitle>
-                <p className="text-sm text-muted-foreground">Los documentos de este caso se gestionan con LegalUp AI como fuente única.</p>
-              </CardHeader>
-              <CardContent>
-                {aiDocumentsQuery.isLoading ? <Skeleton className="h-20 w-full" /> : aiDocumentsQuery.isError ? <p className="text-sm text-destructive">No se pudieron cargar los documentos.</p> : (
-                  <div className="space-y-4">
-                    <AIDocumentUpload workspaceId={effectiveWorkspaceId} onUploaded={() => aiDocumentsQuery.refetch?.()} />
-                    <AIDocumentList documents={aiDocumentsQuery.data ?? []} selectedId={null} onSelect={() => {}} />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">Los documentos del caso aparecerán aquí cuando actives las herramientas de IA.</CardContent></Card>
-          )}
+          <Card>
+            <CardHeader><CardTitle>Documentos del caso</CardTitle></CardHeader>
+            <CardContent>
+              <CaseDocuments key={caseId} workspaceId={effectiveWorkspaceId} ensureWorkspace={ensureWorkspace}
+                canAnalyze={canUse('document_analysis')} accessLoading={accessLoading}
+                onUpgrade={() => setProOpen(true)} onOpenAI={() => setActiveTab('ai')} />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="ai" className="mt-4">
-          {!effectiveWorkspaceId ? (
-            <Card>
-              <CardContent className="py-10 text-center space-y-4">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-50 text-green-700"><Sparkles className="h-6 w-6" /></div>
-                <div>
-                  <p className="font-medium text-gray-900">LegalUp AI para este caso</p>
-                  <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">Analiza documentos, detecta riesgos, contradicciones y trabaja con el contexto del caso.</p>
-                </div>
-                {provisionHook.error && <p className="text-sm text-destructive flex items-center justify-center gap-1"><AlertTriangle className="h-4 w-4" />{provisionHook.error}</p>}
-                <Button onClick={handleProvision} disabled={provisionHook.isPending} className="bg-gray-900 hover:bg-green-900">
-                  {provisionHook.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />} Activar IA en este caso
-                </Button>
-              </CardContent>
-            </Card>
+          {accessLoading ? <Skeleton className="h-24 w-full" /> : !canUse('case_analysis') ? (
+            <Card><CardContent className="py-10 text-center space-y-4">
+              <p>Las herramientas de IA están incluidas en LegalUp Pro.</p>
+              <Button onClick={() => setProOpen(true)}>Ver LegalUp Pro</Button>
+            </CardContent></Card>
+          ) : !effectiveWorkspaceId ? (
+            <Card><CardContent className="py-10 text-center space-y-4">
+              <p className="font-medium">Aún no hay documentos analizados.</p>
+              <p className="text-sm text-muted-foreground">Agrega un documento en la pestaña Documentos para comenzar a trabajar este caso con IA.</p>
+              <Button onClick={() => setActiveTab('documents')}>Ir a Documentos</Button>
+            </CardContent></Card>
           ) : (
             <AICaseWorkspaceContent workspaceId={effectiveWorkspaceId} workspaceName={caseData.title} embedded onOpenDocuments={() => setActiveTab('documents')} />
           )}
@@ -392,6 +371,7 @@ export default function CaseDetailPage() {
           <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">La actividad del caso aparecerá aquí.</CardContent></Card>
         </TabsContent>
       </Tabs>
+      <ProPricingModal open={proOpen} onOpenChange={setProOpen} triggerAction="case_ai" />
     </div>
   );
 }

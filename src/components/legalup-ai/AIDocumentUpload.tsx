@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import posthog from 'posthog-js';
 import { FileText, Loader2 } from 'lucide-react';
@@ -11,17 +11,19 @@ import {
 } from '@/hooks/useAIDocuments';
 
 type AIDocumentUploadProps = {
-  workspaceId: string;
+  workspaceId?: string;
+  ensureWorkspace?: () => Promise<string>;
   onUploaded: (doc: AIDocument) => void;
 };
 
-export function AIDocumentUpload({ workspaceId, onUploaded }: AIDocumentUploadProps) {
-  const upload = useUploadAIDocument(workspaceId);
+export function AIDocumentUpload({ workspaceId, ensureWorkspace, onUploaded }: AIDocumentUploadProps) {
+  const upload = useUploadAIDocument(workspaceId || ensureWorkspace);
+  const busy = useRef(false);
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
       const file = acceptedFiles[0];
-      if (!file) return;
+      if (!file || busy.current) return;
 
       if (file.type !== 'application/pdf') {
         toast.error('Solo se permiten archivos PDF.');
@@ -36,9 +38,11 @@ export function AIDocumentUpload({ workspaceId, onUploaded }: AIDocumentUploadPr
         return;
       }
 
+      busy.current = true;
       posthog.capture('ai_document_upload_started');
 
       upload.mutate(file, {
+        onSettled: () => { busy.current = false; },
         onSuccess: (doc) => {
           posthog.capture('ai_document_uploaded', { file_size_bytes: doc.file_size_bytes });
           toast.success('Documento subido', { description: doc.original_filename });
@@ -78,7 +82,7 @@ export function AIDocumentUpload({ workspaceId, onUploaded }: AIDocumentUploadPr
       )}
       <div>
         <p className="text-sm font-medium">
-          {upload.isPending ? 'Subiendo…' : 'Sube un PDF de tu caso'}
+          {upload.isPending ? 'Preparando y subiendo documento…' : 'Sube un PDF de tu caso'}
         </p>
         <p className="text-xs text-muted-foreground">o arrástralo aquí</p>
       </div>
