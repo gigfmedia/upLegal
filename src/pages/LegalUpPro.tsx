@@ -278,7 +278,7 @@ export default function LegalUpPro() {
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:py-20">
         <div className="grid gap-10 lg:grid-cols-12 lg:items-center">
           <div className="lg:col-span-5">
-            <Badge className="mb-4 bg-green-50 text-green-800 border-green-200 hover:bg-green-50">Founder — 15 cupos iniciales</Badge>
+            <Badge className="mb-4 bg-green-50 text-green-800 border-green-200 hover:bg-green-50">Founder — primeros 15 en contratar Pro</Badge>
             <h1 className="text-4xl font-bold tracking-tight text-gray-900 leading-[1.05]">
               Tu práctica legal, organizada en un solo lugar.
             </h1>
@@ -288,7 +288,7 @@ export default function LegalUpPro() {
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3">
                 <div className="text-2xl font-bold text-gray-900">$19.990<span className="text-sm font-medium text-gray-500">/mes</span></div>
-                <div className="text-xs text-green-700 font-medium">Founder — por 3 meses · 15 cupos iniciales</div>
+                <div className="text-xs text-green-700 font-medium">$19.990/mes durante tus primeros 3 cobros · Badge Founder a los primeros 15 en contratar</div>
               </div>
             </div>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -496,26 +496,26 @@ export default function LegalUpPro() {
       {/* PRICING */}
       <section id="pricing" className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20">
         <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight">Un precio Founder, simple</h2>
-          <p className="mt-3 text-gray-600">Empieza con LegalUp Pro y accede a las mejoras que sigamos sumando durante tu período Founder.</p>
+          <h2 className="text-3xl font-bold tracking-tight">Un precio simple</h2>
+          <p className="mt-3 text-gray-600">Empieza con LegalUp Pro y accede a las mejoras que sigamos sumando.</p>
         </div>
         <div className="mx-auto mt-10 max-w-md">
           <Card className="overflow-hidden border-green-200 shadow-lg">
             <div className="bg-gradient-to-br from-green-50 to-white p-6 sm:p-8">
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="text-lg font-bold">LegalUp Pro — Founder</h3>
-                  <p className="text-sm text-gray-500">Para los primeros 15 abogados</p>
+                  <h3 className="text-lg font-bold">LegalUp Pro</h3>
+                  <p className="text-sm text-gray-500">Para abogados independientes y estudios boutique</p>
                 </div>
                 <Badge className="bg-green-100 text-green-800 border-green-200">Founder 15</Badge>
               </div>
               <div className="mt-6">
                 <div className="text-4xl font-bold">$19.990<span className="text-base font-medium text-gray-500">/mes</span></div>
-                <div className="text-sm font-medium text-green-700">durante los primeros 3 meses</div>
-                <p className="mt-2 text-xs text-gray-500">Los primeros 15 cupos. Luego el precio puede actualizarse y se informará antes de aplicar cambios.</p>
+                <div className="text-sm font-medium text-green-700">durante tus primeros 3 cobros</div>
+                <p className="mt-2 text-xs text-gray-500">$19.990/mes durante tus primeros 3 cobros. Desde el cuarto cobro, $49.990/mes.</p>
               </div>
               <ul className="mt-6 space-y-2 text-sm">
-                {["Solicitudes", "Clientes", "Casos", "Citas", "Servicios / gestión disponible", "Ingresos", "LegalUp AI Limited (1 caso, 3 documentos)", "Acceso a futuras mejoras de Pro durante el período Founder"].map((perk) => (
+                {["Solicitudes", "Clientes", "Casos", "Citas", "Servicios / gestión disponible", "Ingresos", "LegalUp AI Limited (1 caso, 3 documentos)", "Acceso a futuras mejoras de Pro"].map((perk) => (
                   <li key={perk} className="flex gap-2"><Check className="h-4 w-4 text-green-600 mt-0.5" /> {perk}</li>
                 ))}
               </ul>
@@ -568,7 +568,7 @@ export default function LegalUpPro() {
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Organiza tu práctica con LegalUp Pro.</h2>
           <p className="mt-4 text-gray-600">Únete a los primeros abogados que están probando una nueva forma de gestionar su trabajo en LegalUp.</p>
           <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-4 py-2 text-sm font-medium text-green-800">
-            Founder $19.990/mes por 3 meses · 15 cupos iniciales
+            $19.990/mes durante tus primeros 3 cobros · Badge Founder a los primeros 15 en contratar
           </div>
           <div className="mt-6 flex justify-center">
             <Button size="lg" onClick={() => handleCTAClick("final")} className="bg-gray-900 hover:bg-green-900 h-12 px-8 text-base">

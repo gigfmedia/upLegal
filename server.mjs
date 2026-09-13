@@ -5616,6 +5616,16 @@ const handleProAuthorizedPayment = async (payment) => {
         await ensureProStandardPrice({ ...subscription, amount_clp: subscription.amount_clp });
       }
     } catch {}
+    // 4.32B.3 Founder: first 15 DISTINCT paying lawyers. Non-blocking —
+    // payment truth is durable in the ledger; reconcile_pro_founders() repairs.
+    try {
+      const { shouldAttemptFounderClaim } = await import('./server/proFounder.mjs');
+      if (shouldAttemptFounderClaim(payment.status)) {
+        await supabase.rpc('claim_pro_founder_slot', { p_lawyer_id: subscription.lawyer_id });
+      }
+    } catch (e) {
+      console.error('[LegalUpPro] founder claim failed (reconciliable via reconcile_pro_founders)', e?.message || e);
+    }
     const now = new Date();
     const paymentDate = new Date(providerEventAt);
     const periodStart = !isNaN(paymentDate.getTime()) ? paymentDate : now;
