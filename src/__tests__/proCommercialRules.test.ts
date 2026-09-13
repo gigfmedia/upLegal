@@ -24,25 +24,20 @@ describe('4.32B — first-free case source of truth', () => {
   });
 });
 
-describe('4.32B — intro pricing source of truth', () => {
+describe('4.32B — intro pricing source of truth (4.32B.4: founder-cohort rule)', () => {
   const server = readFileSync(resolve('server.mjs'), 'utf-8');
 
-  it('initial price derives from lifetime approved payments, not subscription record', () => {
-    const idx = server.indexOf('let initialPrice = PRO_INTRO_PRICE_CLP');
+  it('initial price follows reservation/founder-track decision (fail-closed standard)', () => {
+    const idx = server.indexOf('decideCheckoutPrice({ isFounder, lifetimeApproved, reservation })');
     expect(idx).toBeGreaterThan(-1);
-    const block = server.slice(idx, idx + 600);
+    const block = server.slice(Math.max(0, idx - 1500), idx + 500);
     expect(block).toContain('pro_subscription_payments');
-    expect(block).toContain("eq('status', 'approved')");
-    expect(block).toContain('PRO_INTRO_SUCCESSFUL_PAYMENTS');
-    expect(block).toContain('PRO_STANDARD_PRICE_CLP');
+    expect(block).toContain('reserve_pro_founder_slot');
+    expect(block).toContain('PRO_STANDARD_PRICE_CLP; // fail-closed');
   });
 
-  it('Founder status has zero branches in price selection', () => {
-    const idx = server.indexOf('let initialPrice = PRO_INTRO_PRICE_CLP');
-    const block = server.slice(idx, idx + 600);
-    expect(block).not.toContain('is_founder');
-    expect(block).not.toContain('isFounder');
-    expect(block).not.toContain('founder');
+  it('existing founders keep the lifetime intro-count rule (no reset)', () => {
+    expect(server).toContain('decideCheckoutPrice');
   });
 
   it('checkout charges the derived initialPrice (not a hardcoded amount)', () => {

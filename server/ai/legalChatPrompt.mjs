@@ -199,19 +199,27 @@ function formatAnalysis(analysis) {
 
 /**
  * Construye el contexto privado del caso.
- * @param {{ workspace: object, documents: Array<{id, original_filename, extracted_text}>, analyses: Record<string, object>, question?: string }} params
+ * @param {{ workspace: object, documents: Array<{id, original_filename, extracted_text}>, analyses: Record<string, object>, question?: string, proCase?: object|null }} params
  *  - question: texto de la pregunta del abogado. Si se provee, en documentos
  *    extensos se recupera el tramo más relevante (chunking) en lugar de cortar
  *    el inicio; si no, se usa el inicio del documento.
+ *  - proCase: header normalizado en vivo del caso Pro (getProCaseHeader). Cuando
+ *    está presente sus valores ganan a la copia de provisioning del workspace.
  * @returns {{ context: string, tooLarge: boolean }}
  *  - context: texto separado por documento (CASO / DOCUMENTO N / CONTENIDO / ANÁLISIS),
  *    acotado a MAX_CHAT_CONTEXT_CHARS mediante recuperación por relevancia.
  *  - tooLarge: siempre false (el chunking garantiza contexto que cabe en la consulta).
  */
-export function buildChatContext({ workspace, documents = [], analyses = {}, question = '' }) {
-  const caseLines = [`Nombre: ${workspace.name || 'Sin nombre'}`];
-  if (workspace.practice_area) caseLines.push(`Área: ${workspace.practice_area}`);
-  if (workspace.description) caseLines.push(`Descripción: ${workspace.description}`);
+export function buildChatContext({ workspace, documents = [], analyses = {}, question = '', proCase = null }) {
+  // FASE 4.33B: datos en vivo del caso Pro ganan a la copia de provisioning.
+  const live = proCase && typeof proCase === 'object' ? proCase : null;
+  const caseLines = [`Nombre: ${(live && live.title) || workspace.name || 'Sin nombre'}`];
+  if ((live && live.clientName)) caseLines.push(`Cliente: ${live.clientName}`);
+  const liveArea = live && live.practiceArea;
+  if (liveArea || workspace.practice_area) caseLines.push(`Área: ${liveArea || workspace.practice_area}`);
+  const liveDesc = live && live.description;
+  if (liveDesc || workspace.description) caseLines.push(`Descripción: ${liveDesc || workspace.description}`);
+  if (live && live.status) caseLines.push(`Estado: ${live.status}`);
   const caseBlock = caseLines.join('\n');
 
   const questionTokens = tokenize(question);

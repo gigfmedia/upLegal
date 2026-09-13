@@ -29,6 +29,7 @@ import {
   buildChatUserPrompt,
   CHAT_LIMITS,
 } from './server/ai/legalChatPrompt.mjs';
+import { getProCaseHeader } from './server/ai/proCaseContext.mjs';
 import {
   searchJurisprudence,
   validateResearchQuery,
@@ -9462,6 +9463,16 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
     const analyses = {};
     for (const row of analysisRows || []) analyses[row.document_id] = row;
 
+    // FASE 4.33B: encabezado en vivo del caso Pro (runtime composition, sin
+    // writes). Legacy (sin link) y ambigüedad → contexto workspace sin cambios.
+    let proCase = null;
+    try {
+      const resolved = await getProCaseHeader(supabase, { workspaceId: workspace.id, lawyerId: userId });
+      if (resolved.status === 'linked') proCase = resolved.header;
+    } catch (e) {
+      console.error('[LegalUpAI] pro case header failed (continuing without it)', e?.message || e);
+    }
+
     // Construye el contexto. Si el conjunto supera el límite, no truncar ni
     // descartar documentos: informar al usuario.
     const { context, tooLarge } = buildChatContext({
@@ -9469,6 +9480,7 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       documents: readyDocs,
       analyses,
       question: message,
+      proCase,
     });
     if (tooLarge) {
       return res.status(422).json({
@@ -10444,8 +10456,19 @@ app.get('/api/ai/cases/:caseId/intelligence', async (req, res) => {
     // Resumen del caso: concatenación de summaries verificados (sin LLM)
     const caseSummary = (analyses || []).map((a) => String(a.summary || '').trim()).filter(Boolean).join('\n\n');
 
+    // FASE 4.33B: mismo encabezado en vivo para que el Command Center refleje
+    // el encuadre actual del caso Pro. Determinista, sin provider calls.
+    let proCase = null;
+    try {
+      const resolved = await getProCaseHeader(supabase, { workspaceId: workspace.id, lawyerId: userId });
+      if (resolved.status === 'linked') proCase = resolved.header;
+    } catch (e) {
+      console.error('[LegalUpAI] pro case header failed (intelligence continues without it)', e?.message || e);
+    }
+
     res.json({
       workspace_id: workspace.id,
+      proCase,
       document_count: (docs || []).length,
       documents: docs || [],
       pending_count: pendingDocs.length,
