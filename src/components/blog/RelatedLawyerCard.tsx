@@ -119,7 +119,14 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact, articleSlug }: 
             </div>
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="text-md font-bold text-gray-900">{displayName}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-md font-bold text-gray-900 truncate">{displayName}</h3>
+              {lawyer.is_founder ? (
+                <span className="inline-flex shrink-0 items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800">
+                  Founder
+                </span>
+              ) : null}
+            </div>
             <div className="mt-0.5 flex items-center min-h-[21px]">
               {reviewCount > 0 ? (
                 <div className="flex items-center gap-1.5">

@@ -111,6 +111,7 @@ interface LawyerProfile {
   review_count?: number;
   experience_years?: number | null;
   verified?: boolean;
+  is_founder?: boolean;
   languages?: string[] | null;
   availability?: Availability | string | null;
   education?: string;
@@ -426,6 +427,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
       hourly_rate_clp: typeof profile.hourly_rate_clp === 'number' ? profile.hourly_rate_clp : null,
       experience_years: typeof profile.experience_years === 'number' ? profile.experience_years : null,
       verified: !!profile.verified,
+      is_founder: (profile as Record<string, unknown>).is_founder === true,
       languages: Array.isArray(profile.languages) ? profile.languages : [],
       education: profile.education,
       university: profile.university,
@@ -1009,6 +1011,13 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                         </div>
                       </div>
                     )}
+                    {lawyer?.is_founder ? (
+                      <div className="sm:hidden absolute -bottom-1 -left-1 z-10">
+                        <div className="flex items-center gap-1.5 bg-amber-50 text-amber-800 px-2 py-0.5 rounded-full whitespace-nowrap border border-amber-200">
+                          <span className="text-xs font-medium">Founder</span>
+                        </div>
+                      </div>
+                    ) : null}
                     <div className="relative h-28 w-28 md:h-32 md:w-32 rounded-md ring-4 ring-white shadow-md overflow-hidden">
                       <Avatar className="h-full w-full rounded-md">
                         <AvatarImage
@@ -1057,6 +1066,11 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                             </span>
                           </div>
                         )}
+                        {lawyer?.is_founder ? (
+                          <div className="hidden sm:flex items-center gap-1.5 bg-amber-50 text-amber-800 px-2 py-0.5 rounded-full self-start mt-2 border border-amber-200">
+                            <span className="text-xs font-medium">Founder</span>
+                          </div>
+                        ) : null}
                       </div>
                       {lawyer && (
                         <div className="hidden sm:flex items-center">

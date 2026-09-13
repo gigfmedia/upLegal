@@ -161,7 +161,7 @@ export async function searchLawyers(params: SearchParams = {}) {
       orderBy = 'review_count',
       orderDirection = 'desc',
       // Optimized selection: removed unused fields and truncated bio to save bandwidth
-      select = 'id, user_id, first_name, last_name, specialties, rating, review_count, location, bio, avatar_url, hourly_rate_clp, contact_fee_clp, experience_years, verified, pjud_verified, blocked, availability, created_at'
+      select = 'id, user_id, first_name, last_name, specialties, rating, review_count, location, bio, avatar_url, hourly_rate_clp, contact_fee_clp, experience_years, verified, pjud_verified, is_founder, blocked, availability, created_at'
     } = params;
 
     // Validar parámetros

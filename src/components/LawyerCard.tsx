@@ -43,6 +43,7 @@ export interface Lawyer {
   bio: string;
   verified: boolean;
   pjud_verified?: boolean;
+  is_founder?: boolean;
   blocked?: boolean;
   availability: {
     availableToday: boolean;
@@ -417,6 +418,11 @@ export function LawyerCard({
                     title={displayName}>
                     {displayName}
                   </h3>
+                  {lawyer.is_founder ? (
+                    <Badge variant="outline" className="shrink-0 border-amber-200 bg-amber-50 text-[11px] font-medium text-amber-800">
+                      Founder
+                    </Badge>
+                  ) : null}
                   {/*{lawyer.hourlyRate > 60000 && (
                     <div className="flex-shrink-0">
                       <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
