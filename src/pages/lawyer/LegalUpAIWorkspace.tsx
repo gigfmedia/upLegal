@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -11,10 +11,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   FileText,
-  Scale,
-  PenLine,
-  ChartPie,
-  Plus,
   Trash2,
   Pencil,
   FolderOpen,
@@ -22,14 +18,12 @@ import {
   Clock,
   AlertTriangle,
   RefreshCw,
-  ArrowRight,
 } from 'lucide-react';
 import {
   useAIWorkspaces,
   useDeleteAIWorkspace,
   type AIWorkspace,
 } from '@/hooks/useAIWorkspaces';
-import { NewCaseModal } from '@/components/legalup-ai/NewCaseModal';
 import { EditCaseModal } from '@/components/legalup-ai/EditCaseModal';
 import { AISubscriptionBanner } from '@/components/legalup-ai/AISubscriptionBanner';
 import { AIPricingModal } from '@/components/legalup-ai/AIPricingModal';
@@ -37,55 +31,6 @@ import { AIUsageMeter } from '@/components/legalup-ai/AIUsageMeter';
 import { AICaseTimelinePreview } from '@/components/legalup-ai/AICaseTimelinePreview';
 import { useAISubscription } from '@/hooks/useAISubscription';
 import { useLawyerCases } from '@/hooks/useLawyerCases';
-import type { AIFeatureKey } from '@/lib/aiFeatures';
-
-const FEATURES: {
-  key: AIFeatureKey;
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  description: string;
-  secondary?: string;
-  status: 'available' | 'coming_soon';
-  cta: string;
-}[] = [
-  {
-    key: 'document_analysis',
-    icon: FileText,
-    title: 'Analizar documento',
-    description: 'Sube un documento y obtén un análisis jurídico estructurado con IA.',
-    secondary:
-      'Identifica obligaciones, riesgos, alertas e información relevante del documento.',
-    status: 'available',
-    cta: 'Analizar documento',
-  },
-  {
-    key: 'case_analysis',
-    icon: ChartPie,
-    title: 'Analizar mi caso',
-    description:
-      'Crea un workspace privado para organizar documentos, análisis y conversaciones de un caso.',
-    status: 'available',
-    cta: 'Abrir workspace',
-  },
-  {
-    key: 'jurisprudence',
-    icon: Scale,
-    title: 'Investigar jurisprudencia',
-    description:
-      'Encuentra jurisprudencia y normativa relevante para tus casos, con fuentes verificables.',
-    status: 'available',
-    cta: 'Investigar jurisprudencia',
-  },
-  {
-    key: 'document_drafting',
-    icon: PenLine,
-    title: 'Redactar documento',
-    description:
-      'Crea borradores jurídicos utilizando el contexto de tus casos y documentos.',
-    status: 'coming_soon',
-    cta: 'Próximamente',
-  },
-];
 
 function formatDate(value: string): string {
   try {
@@ -113,15 +58,10 @@ export default function LegalUpAIWorkspace() {
   const { data: workspaces, isLoading, isError, error, refetch } = useAIWorkspaces();
   const deleteCase = useDeleteAIWorkspace();
 
-  const [createOpen, setCreateOpen] = useState(false);
   const [caseToDelete, setCaseToDelete] = useState<AIWorkspace | null>(null);
   const [caseToEdit, setCaseToEdit] = useState<AIWorkspace | null>(null);
   const [pricingOpen, setPricingOpen] = useState(false);
-  const casesRef = useRef<HTMLElement | null>(null);
   const { hasAccess, subscription } = useAISubscription();
-  // 4.30D: new work starts in Cases. Standalone workspace creation is only
-  // exposed to legacy AI users (existing ai_subscriptions history).
-  const hasLegacyHistory = !!subscription;
   const { cases: proCases } = useLawyerCases();
   const caseIdByWorkspaceId = new Map(
     (proCases ?? []).map((c) => [c.ai_workspace_id, c.id] as const).filter(([ws]) => !!ws) as [string, string][]
@@ -155,45 +95,8 @@ export default function LegalUpAIWorkspace() {
 
   const openPaywall = () => {
     posthog.capture('ai_paywall_opened', { source: 'workspace' });
-    setPricingOpen(true);
-  };
-
-  const handleAvailableClick = (feature: AIFeatureKey) => {
-    posthog.capture('ai_feature_clicked', { feature });
-    if (!hasAccess) {
-      openPaywall();
-      return;
-    }
-    // 4.30D: new work starts in Cases, not in standalone workspaces.
-    if (!hasLegacyHistory) {
-      navigate('/lawyer/cases');
-      return;
-    }
-    if (feature === 'document_analysis') {
-      // Atajo: crea un caso → workspace → subir documento.
-      setCreateOpen(true);
-    } else if (feature === 'case_analysis') {
-      if (hasCases) {
-        casesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else {
-        setCreateOpen(true);
-      }
-    } else if (feature === 'jurisprudence') {
-      // La investigación de jurisprudencia vive dentro de un caso.
-      if (hasCases) {
-        // Abre el caso más reciente, donde vive el panel de investigación.
-        openWorkspace(workspaces![0].id);
-      } else {
-        setCreateOpen(true);
-      }
-    }
-  };
-
-  const handleComingSoonClick = (feature: AIFeatureKey) => {
-    posthog.capture('ai_feature_clicked', { feature });
-    toast('Próximamente', {
-      description: 'Esta función estará disponible próximamente.',
-    });
+    if (subscription) setPricingOpen(true);
+    else navigate('/pro');
   };
 
   const confirmDelete = async () => {
@@ -220,141 +123,36 @@ export default function LegalUpAIWorkspace() {
               AI
             </span>
             <span className="text-sm font-medium text-green-900">
-              Tu espacio de trabajo jurídico inteligente.
+              Tus casos anteriores de LegalUp AI.
             </span>
           </h2>
           <p className="text-muted-foreground max-w-2xl">
-            Analiza, investiga y trabaja tus casos desde un solo lugar.
+            Los nuevos casos se crean en LegalUp Pro. Aquí conservas tus casos anteriores.
           </p>
         </div>
         {hasAccess && <AIUsageMeter />}
       </header>
 
-      <AISubscriptionBanner />
-
-      {/* ¿Qué necesitas hacer? */}
-      <section aria-labelledby="ai-actions-title">
-        <h2
-          id="ai-actions-title"
-          className="text-xl font-semibold tracking-tight text-gray-900"
-        >
-          ¿Qué necesitas hacer?
-        </h2>
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {FEATURES.map(
-            ({ key, icon: Icon, title, description, secondary, status, cta }) => {
-              const available = status === 'available';
-              // Una feature "disponible" solo se habilita con acceso (trial o plan).
-              const enabled = available && hasAccess;
-              return (
-                <Card
-                  key={key}
-                  className={`relative flex flex-col gap-4 p-5 shadow-sm ${
-                    enabled
-                      ? 'border-gray-200 transition-all hover:border-green-300 hover:shadow-md'
-                      : 'border-gray-200 bg-gray-50'
-                  }`}
-                >
-                  <div className="flex w-full items-center justify-between">
-                    <span
-                      className={`inline-flex h-11 w-11 items-center justify-center rounded-lg transition-colors ${
-                        enabled
-                          ? 'bg-green-50 text-green-700 group-hover:bg-green-100'
-                          : 'bg-gray-100 text-gray-400'
-                      }`}
-                    >
-                      <Icon className="h-5 w-5" aria-hidden="true" />
-                    </span>
-                    {enabled ? (
-                      <Badge className="bg-green-100 text-green-800 font-medium">
-                        Disponible
-                      </Badge>
-                    ) : available ? (
-                      <Badge
-                        variant="secondary"
-                        className="bg-amber-100 text-amber-800 font-medium"
-                      >
-                        Requiere plan
-                      </Badge>
-                    ) : (
-                      <Badge
-                        variant="secondary"
-                        className="bg-gray-200 text-gray-500 font-medium"
-                      >
-                        Próximamente
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">{title}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-                    {secondary && (
-                      <p className="mt-2 text-sm text-gray-500">{secondary}</p>
-                    )}
-                  </div>
-                  <Button
-                    type="button"
-                    disabled={!enabled}
-                    onClick={() =>
-                      available
-                        ? handleAvailableClick(key)
-                        : handleComingSoonClick(key)
-                    }
-                    className={`w-full ${
-                      enabled
-                        ? 'bg-gray-900 text-white hover:bg-green-900'
-                        : 'bg-gray-100 text-gray-400 cursor-not-allowed hover:bg-gray-100'
-                    }`}
-                  >
-                    {enabled ? cta : available ? 'Activa tu prueba' : cta}
-                    {enabled && <ArrowRight className="h-4 w-4" aria-hidden="true" />}
-                  </Button>
-                </Card>
-              );
-            }
-          )}
-        </div>
-      </section>
+      {subscription && <AISubscriptionBanner />}
 
       {/* Mis casos */}
-      <section ref={casesRef} id="ai-cases" aria-labelledby="ai-cases-title">
+      <section id="ai-cases" aria-labelledby="ai-cases-title">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2
               id="ai-cases-title"
               className="text-xl font-semibold tracking-tight text-gray-900"
             >
-              Mis casos
+              Casos anteriores
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Organiza tus casos y trabaja cada uno con las herramientas de LegalUp AI.
+              Abre tus casos existentes. Para empezar uno nuevo, ve a Casos de LegalUp Pro.
             </p>
           </div>
-          {hasLegacyHistory ? (
-            <Button
-              type="button"
-              onClick={() => {
-                if (!hasAccess) {
-                  openPaywall();
-                  return;
-                }
-                setCreateOpen(true);
-              }}
-              className="bg-gray-900 text-white hover:bg-green-900"
-            >
-              <Plus className="h-4 w-4" aria-hidden="true" />
-              Nuevo caso
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              onClick={() => navigate('/lawyer/cases')}
-              className="bg-gray-900 text-white hover:bg-green-900"
-            >
-              <FolderOpen className="h-4 w-4" aria-hidden="true" />
-              Ir a Casos
-            </Button>
-          )}
+          <Button type="button" onClick={() => navigate('/lawyer/cases')} className="bg-gray-900 text-white hover:bg-green-900">
+            <FolderOpen className="h-4 w-4" aria-hidden="true" />
+            Crear caso en LegalUp Pro
+          </Button>
         </div>
 
         <div className="mt-6">
@@ -390,37 +188,15 @@ export default function LegalUpAIWorkspace() {
                   <FolderOpen className="h-7 w-7" aria-hidden="true" />
                 </span>
                 <p className="text-lg font-medium text-gray-900">
-                  Analiza tu primer documento
+                  Tus nuevos casos están en LegalUp Pro
                 </p>
                 <p className="max-w-sm text-sm text-muted-foreground">
-                  Crea tu primer caso, sube un PDF y descubre cómo LegalUp AI puede
-                  ayudarte con tu trabajo jurídico.
+                  LegalUp AI ahora trabaja dentro de tus casos de LegalUp Pro.
                 </p>
-                {hasLegacyHistory ? (
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      if (!hasAccess) {
-                        openPaywall();
-                        return;
-                      }
-                      setCreateOpen(true);
-                    }}
-                    className="mt-2 bg-green-900 text-white hover:bg-green-800"
-                  >
-                    <Plus className="h-4 w-4" aria-hidden="true" />
-                    Crear mi primer caso
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    onClick={() => navigate('/lawyer/cases')}
-                    className="mt-2 bg-green-900 text-white hover:bg-green-800"
-                  >
-                    <FolderOpen className="h-4 w-4" aria-hidden="true" />
-                    Ir a Casos
-                  </Button>
-                )}
+                <Button type="button" onClick={() => navigate('/lawyer/cases')} className="mt-2 bg-green-900 text-white hover:bg-green-800">
+                  <FolderOpen className="h-4 w-4" aria-hidden="true" />
+                  Ver mis casos
+                </Button>
               </CardContent>
             </Card>
           ) : (
@@ -520,12 +296,6 @@ export default function LegalUpAIWorkspace() {
         </div>
       </section>
 
-      <NewCaseModal
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        onCreated={(workspace) => navigate(`/lawyer/ai/cases/${workspace.id}`)}
-      />
-
       <EditCaseModal
         caseToEdit={caseToEdit}
         onOpenChange={(open) => {
@@ -533,7 +303,7 @@ export default function LegalUpAIWorkspace() {
         }}
       />
 
-      <AIPricingModal open={pricingOpen} onOpenChange={setPricingOpen} />
+      {subscription && <AIPricingModal open={pricingOpen} onOpenChange={setPricingOpen} />}
 
       <ConfirmDialog
         open={caseToDelete !== null}

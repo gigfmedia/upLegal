@@ -40,24 +40,12 @@ import {
   ArrowDown,
   ChevronRight,
   ChevronDown,
-  MailWarning,
-  Send,
   type LucideIcon,
 } from "lucide-react";
-import { toast, Toaster } from "sonner";
+import { Toaster } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import posthog from "posthog-js";
-import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
-import { AuthModal } from "@/components/AuthModal";
-import { AIPricingModal } from "@/components/legalup-ai/AIPricingModal";
-import {
-  useAISubscription,
-  useStartAITrial,
-  AITrialError,
-  resendAIEmailConfirmation,
-} from "@/hooks/useAISubscription";
-import { useProSubscription } from "@/hooks/useProSubscription";
 // Cargado como texto e inyectado en un <style> que se elimina al desmontar la
 // landing. Todo el CSS está aislado bajo `.legalup-landing` (ver comentario en
 // `legalup-standalone.css`), de modo que no pisa las utilidades responsivas del
@@ -139,7 +127,7 @@ function Header({
   fixed = true,
   onAuthClick,
   onCtaClick,
-  ctaLabel = "Probar gratis",
+  ctaLabel = "Activar LegalUp Pro",
 }: {
   hasBackground?: boolean;
   visible?: boolean;
@@ -422,7 +410,7 @@ function AIWorkspace() {
             <span className="h-2 w-2 rounded-full bg-[var(--foreground)]/15" />
             <span className="h-2 w-2 rounded-full bg-[var(--primary)]/60" />
             <span className="ml-3 font-[var(--font-mono)] text-[0.65rem] tracking-wide text-[var(--muted-foreground)]">
-              legalup.ai / workspace
+              LegalUp Pro / Caso / IA
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -896,7 +884,7 @@ const FEATURES = [
   },
   {
     icon: Shield,
-    title: "Workspace Privado",
+    title: "Contexto privado del caso",
     description:
       "Cada caso vive en un espacio privado con sus documentos, análisis y conversaciones, separado del resto de abogados.",
     visual: "secure" as const,
@@ -1229,7 +1217,7 @@ const PILLARS = [
   {
     icon: EyeOff,
     label: "Confidencialidad",
-    copy: "Tus documentos viven en tu workspace y no se comparten entre abogados.",
+    copy: "Tus documentos están asociados a tu caso y no se comparten entre abogados.",
   },
   {
     icon: Lock,
@@ -1275,7 +1263,7 @@ function SecuritySection() {
             <span className="text-[var(--ink-dim)]">son tuyos.</span>
           </h2>
           <p className="mt-5 text-base leading-relaxed text-[var(--muted-foreground)]">
-            Tus documentos están asociados a tu workspace y protegidos mediante
+            Tus documentos están asociados a tu caso y protegidos mediante
             controles de acceso, para que cada abogado pueda acceder únicamente
             a sus propios casos y documentos.
           </p>
@@ -1346,7 +1334,7 @@ const VS_GENERAL_ROWS: VSRow[] = [
     ai: "✓",
   },
   {
-    feature: "Workspace organizado por caso",
+    feature: "Documentos organizados por caso",
     general: "Depende de la herramienta y configuración",
     ai: "✓ Diseñado alrededor del caso",
   },
@@ -1634,7 +1622,7 @@ function AICommercialSection() {
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-[var(--muted-foreground)]">
             LegalUp AI reúne tus casos, documentos, análisis y conversaciones
-            en un workspace pensado para el trabajo jurídico.
+            dentro de tus casos de LegalUp Pro.
           </p>
         </motion.div>
       </div>
@@ -1648,7 +1636,7 @@ const WHY_NOT_CHATGPT = [
   {
     id: "01",
     title: "Tu caso",
-    copy: "Cada caso tiene su propio workspace, documentos y conversación.",
+    copy: "Cada caso reúne sus documentos, análisis y conversación.",
   },
   {
     id: "02",
@@ -1728,7 +1716,7 @@ function AIWhyNotChatgptSection() {
 /* ───── PricingSection ───── */
 
 function PricingSection({
-  ctaLabel = "Probar gratis 5 días",
+  ctaLabel = "Activar LegalUp Pro",
   onStart,
   loading,
 }: {
@@ -1737,7 +1725,7 @@ function PricingSection({
   loading: boolean;
 }) {
   const PRICING_FEATURES = [
-    "Workspace privado por caso",
+    "Clientes y casos en LegalUp Pro",
     "Análisis de documentos con IA",
     "Análisis de riesgos y obligaciones",
     "Chat contextual con tus documentos",
@@ -1792,20 +1780,19 @@ function PricingSection({
             <div>
               <div className="flex items-center gap-3">
                 <h3 className="font-[var(--font-display)] text-2xl font-bold tracking-tight">
-                  LegalUp AI Essential
+                  LegalUp Pro
                 </h3>
                 <span
                   className="rounded-full border border-[var(--primary)]/40 px-3 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-[var(--primary)]"
                   style={{ backgroundColor: "var(--emerald-soft)" }}
                 >
-                  5 días gratis
+                  IA incluida
                 </span>
               </div>
               <p className="mt-5 flex items-baseline gap-2">
-                <span className="font-[var(--font-display)] text-5xl font-bold tracking-tight">
-                  $49.900
+                <span className="font-[var(--font-display)] text-3xl font-bold tracking-tight">
+                  IA incluida en tu plan
                 </span>
-                <span className="text-[var(--muted-foreground)]">CLP/mes</span>
               </p>
             </div>
 
@@ -1834,7 +1821,7 @@ function PricingSection({
             </Button>
           </div>
           <p className="mt-4 text-xs text-[var(--muted-foreground)]">
-            Sin tarjeta · $49.900 CLP/mes después del trial
+            LegalUp AI está incluido en LegalUp Pro. Consulta las condiciones vigentes del plan.
           </p>
         </motion.div>
       </div>
@@ -1845,56 +1832,12 @@ function PricingSection({
 /* ───── Main: LegalUpAI ───── */
 
 function LegalUpAI() {
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
-  const [showPricingModal, setShowPricingModal] = useState(false);
-  const [trialLoading, setTrialLoading] = useState(false);
-  const [unconfirmed, setUnconfirmed] = useState(false);
-  const [resending, setResending] = useState(false);
   const [headerHasBackground, setHeaderHasBackground] = useState(false);
   const [headerVisible, setHeaderVisible] = useState(true);
   const [headerFixed, setHeaderFixed] = useState(true);
-  const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const aiSub = useAISubscription();
-  const proSub = useProSubscription();
-  const startTrial = useStartAITrial();
-
-  // Misma regla que usa el guard existente /lawyer/* (RequireLawyer): el rol
-  // real del usuario vive en user_metadata y/o en el perfil.
-  const isLawyer =
-    user?.role === "lawyer" ||
-    user?.user_metadata?.role === "lawyer" ||
-    user?.profile?.role === "lawyer";
-
-  // Usuario autenticado sin perfil de abogado → completar el perfil antes del trial.
-  const needsProfile = !!user && !isLawyer;
-  const canResume = aiSub.status === "cancelled" || aiSub.status === "past_due";
-
-  // El estado real lo decide el backend (useAISubscription + Pro); Pro es producto único.
-  const isPro = proSub.hasProAccess;
-  const ctaLabel = needsProfile
-    ? "Completar perfil"
-    : isPro
-      ? "Usar LegalUp AI"
-      : canResume
-        ? "Reanudar LegalUp AI"
-        : aiSub.isActive
-          ? "Abrir LegalUp AI"
-          : aiSub.hasAccess
-            ? "Ir a LegalUp AI"
-            : "Activar LegalUp Pro";
-  const headerCtaLabel = needsProfile
-    ? "Completar perfil"
-    : isPro
-      ? "Usar IA"
-      : canResume
-        ? "Reanudar"
-        : aiSub.isActive
-          ? "Abrir LegalUp AI"
-          : aiSub.hasAccess
-            ? "Ir a LegalUp AI"
-            : "Activar Pro";
+  const ctaLabel = "Activar LegalUp Pro";
+  const headerCtaLabel = ctaLabel;
 
   // Email campaign: si el abogado llegó desde el email LegalUp AI, medir el click del email
   useEffect(() => {
@@ -1921,147 +1864,22 @@ function LegalUpAI() {
     }
   };
 
-  const handleCompleteProfile = () => {
-    // Intención para que, al volver de crear el perfil, la landing continúe el trial.
-    try {
-      localStorage.setItem("aiPendingTrial", "1");
-    } catch {
-      /* noop */
-    }
-    navigate("/lawyer/onboarding?from=ai");
-  };
-
-  const startTrialFlow = async () => {
-    setTrialLoading(true);
-    try {
-      await startTrial.mutateAsync();
-      navigate("/lawyer/ai");
-    } catch (err) {
-      const msg =
-        err instanceof Error && err.message ? err.message : "";
-      // EMAIL_NOT_CONFIRMED → mostrar estado claro y permitir reenviar confirmación.
-      if (err instanceof AITrialError && err.code === "EMAIL_NOT_CONFIRMED") {
-        setUnconfirmed(true);
-        toast.info("Confirma tu correo electrónico", {
-          description:
-            "Enviamos un enlace de confirmación a tu correo. Revísalo para activar tu prueba gratuita.",
-        });
-        return;
-      }
-      // TRIAL_ALREADY_USED → no crear otro trial; mostrar el flujo de suscripción.
-      if (msg.includes("Ya utilizaste tu prueba gratuita") || (err instanceof AITrialError && err.code === "TRIAL_ALREADY_USED")) {
-        toast.info(
-          "Tu prueba gratuita ya fue utilizada. Continúa con LegalUp AI por $49.900 CLP/mes."
-        );
-        setShowPricingModal(true);
-      } else if ((err instanceof AITrialError && (err.code === "AI_REQUIRES_PRO" || err.code === "AI_INCLUDED_IN_PRO")) || msg.includes("LegalUp AI está incluido")) {
-        toast.info("LegalUp AI está incluido en LegalUp Pro.");
-        navigate("/pro");
-      } else {
-        toast.info(msg || "No se pudo iniciar la prueba gratuita.");
-        navigate("/lawyer/ai");
-      }
-    } finally {
-      setTrialLoading(false);
-    }
-  };
-
-  const handleResendConfirmation = async () => {
-    setResending(true);
-    try {
-      await resendAIEmailConfirmation();
-      toast.success("Correo reenviado", {
-        description: "Revisa tu bandeja de entrada y confirma tu correo para activar la prueba gratuita.",
-      });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "No se pudo reenviar el correo.");
-    } finally {
-      setResending(false);
-    }
-  };
-
-  const handleStartTrial = (location: string) => {
+  const handleProCta = (location: string) => {
     trackCta(location);
-    if (!user) {
-      // FLUJO 1: visitante no autenticado → AuthModal existente.
-      setAuthMode("signup");
-      setShowAuthModal(true);
-      return;
+    // Forward acquisition attribution only; pricing and access remain server-authoritative.
+    const incoming = new URLSearchParams(window.location.search);
+    const attribution = new URLSearchParams();
+    for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'gclid', 'fbclid']) {
+      const value = incoming.get(key);
+      if (value) attribution.set(key, value);
     }
-    if (!isLawyer) {
-      // FLUJO 2: autenticado sin perfil de abogado → crear/completar perfil.
-      handleCompleteProfile();
-      return;
-    }
-    if (canResume) {
-      // FLUJO 7: cancelada/pendiente → reanudar con el checkout real de Mercado Pago.
-      setShowPricingModal(true);
-      return;
-    }
-    // FLUJOS 3/4/5/6: abogado → trial directo o, si ya accede, al workspace.
-    if (aiSub.hasAccess) {
-      navigate("/lawyer/ai");
-      return;
-    }
-    // Nuevo producto: sin legacy AI y sin Pro → Pro es único pago
-    if (aiSub.status === 'none' && !proSub.hasProAccess) {
-      navigate("/pro");
-      return;
-    }
-    startTrialFlow();
+    navigate(`/pro${attribution.size ? `?${attribution}` : ''}`);
   };
 
-  // Continuación tras autenticarse desde la landing.
-  const [pendingFlow, setPendingFlow] = useState(false);
-  const handleAuthModalClose = () => {
-    setShowAuthModal(false);
-    setPendingFlow(true);
-  };
+  // Old onboarding bookmarks must never resume standalone acquisition.
   useEffect(() => {
-    if (!pendingFlow || authLoading || !user) return;
-    setPendingFlow(false);
-    if (!isLawyer) {
-      handleCompleteProfile();
-      return;
-    }
-    if (canResume) {
-      setShowPricingModal(true);
-      return;
-    }
-    if (aiSub.hasAccess) {
-      navigate("/lawyer/ai");
-      return;
-    }
-    startTrialFlow();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingFlow, user, authLoading, isLawyer, canResume, aiSub.hasAccess]);
-
-  // Continuación al volver de crear el perfil de abogado (onboarding ?from=ai).
-  useEffect(() => {
-    if (authLoading || !user || !isLawyer) return;
-    let pending = false;
-    try {
-      pending = localStorage.getItem("aiPendingTrial") === "1";
-    } catch {
-      /* noop */
-    }
-    if (!pending) return;
-    try {
-      localStorage.removeItem("aiPendingTrial");
-    } catch {
-      /* noop */
-    }
-    if (canResume) {
-      setShowPricingModal(true);
-      return;
-    }
-    if (aiSub.hasAccess) {
-      navigate("/lawyer/ai");
-      return;
-    }
-    startTrialFlow();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, authLoading, isLawyer, canResume, aiSub.hasAccess]);
+    try { localStorage.removeItem("aiPendingTrial"); } catch { /* storage may be unavailable */ }
+  }, []);
 
   useEffect(() => {
     const rootEl = document.documentElement;
@@ -2125,49 +1943,17 @@ function LegalUpAI() {
         <title>LegalUp AI | Inteligencia artificial para abogados en Chile</title>
         <meta
           name="description"
-          content="Analiza documentos jurídicos, identifica riesgos y conversa con tus casos usando LegalUp AI. Prueba gratis durante 5 días."
+          content="Inteligencia artificial para abogados: analiza documentos jurídicos y conversa con el contexto de tus casos. LegalUp AI está incluido en LegalUp Pro."
         />
       </Helmet>
       <Header
         hasBackground={headerHasBackground}
         visible={headerVisible}
         fixed={headerFixed}
-        onAuthClick={() => {
-          setAuthMode("login");
-          setShowAuthModal(true);
-        }}
-        onCtaClick={() => handleStartTrial("header")}
+        onAuthClick={() => handleProCta("header_login")}
+        onCtaClick={() => handleProCta("header")}
         ctaLabel={headerCtaLabel}
       />
-
-      {/* Estado: correo sin confirmar */}
-      {unconfirmed && (
-        <div className="mx-auto max-w-7xl px-5 pt-6 sm:px-8">
-          <div className="flex flex-col gap-3 rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-3">
-              <MailWarning className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" aria-hidden="true" />
-              <div>
-                <p className="text-sm font-medium text-[var(--ink)]">
-                  Confirma tu correo electrónico
-                </p>
-                <p className="text-sm text-[var(--ink-dim)]">
-                  También enviamos un enlace de confirmación a tu bandeja de entrada.
-                  Haz clic en él para activar tu prueba gratuita de 5 días.
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={handleResendConfirmation}
-              disabled={resending}
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-[var(--hairline)] bg-[var(--surface)] px-4 py-2 text-sm font-medium text-[var(--ink)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <Send className="h-4 w-4" aria-hidden="true" />
-              {resending ? "Enviando…" : "Reenviar correo"}
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* HERO */}
       <section className="relative overflow-hidden pb-24 pt-32 sm:pb-32 sm:pt-40">
@@ -2217,8 +2003,8 @@ function LegalUpAI() {
               className="mx-auto mt-8 text-base leading-relaxed sm:text-lg"
               style={{ color: "var(--muted-foreground)" }}
             >
-              Analiza documentos jurídicos, identifica riesgos y conversa con
-              una IA sobre tus casos desde un workspace privado.
+              Analiza documentos jurídicos, identifica riesgos y conversa con el contexto
+              real de tus casos. LegalUp AI está incluido en LegalUp Pro.
             </motion.p>
 
             <motion.div
@@ -2231,17 +2017,9 @@ function LegalUpAI() {
                 variant="glow"
                 size="xl"
                 className="w-full sm:w-auto !text-md"
-                onClick={() => handleStartTrial("hero")}
-                disabled={trialLoading}
+                onClick={() => handleProCta("hero")}
               >
-                {trialLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    {ctaLabel}
-                    <ArrowRight className="h-4 w-4" />
-                  </>
-                )}
+                {ctaLabel}<ArrowRight className="h-4 w-4" />
               </Button>
               <a
                 href="#capacidades"
@@ -2261,7 +2039,7 @@ function LegalUpAI() {
               transition={{ duration: 0.8, delay: 0.45 }}
               className="mt-5 text-xs tracking-wide text-[var(--muted-foreground)]"
             >
-              5 días gratis · Sin tarjeta · Después $49.900 CLP/mes
+              LegalUp AI está incluido en LegalUp Pro.
             </motion.p>
           </div>
 
@@ -2286,9 +2064,9 @@ function LegalUpAI() {
         ctaLabel={ctaLabel}
         onStart={() => {
           try { posthog.capture("ai_landing_pricing_viewed"); } catch { /* noop */ }
-          handleStartTrial("pricing");
+          handleProCta("pricing");
         }}
-        loading={trialLoading}
+        loading={false}
       />
 
       {/* FAQ */}
@@ -2310,9 +2088,7 @@ function LegalUpAI() {
               Tu próximo caso puede empezar aquí.
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-[var(--muted-foreground)]">
-              {needsProfile
-                ? "Antes de comenzar tu prueba gratuita, necesitamos completar tu perfil de abogado."
-                : "Prueba LegalUp AI gratis durante 5 días."}
+              Trabaja con LegalUp AI dentro de tus casos de LegalUp Pro.
             </p>
             <div className="mt-9">
               <Button
@@ -2320,22 +2096,14 @@ function LegalUpAI() {
                 size="xl"
                 onClick={() => {
                   try { posthog.capture("ai_landing_final_cta_clicked", { cta_location: "final_cta" }); } catch { /* noop */ }
-                  handleStartTrial("final_cta");
+                  handleProCta("final_cta");
                 }}
-                disabled={trialLoading}
               >
-                {trialLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    {ctaLabel}
-                    <ArrowRight className="h-4 w-4" />
-                  </>
-                )}
+                {ctaLabel}<ArrowRight className="h-4 w-4" />
               </Button>
             </div>
             <p className="mt-4 text-xs text-[var(--muted-foreground)]">
-              Sin tarjeta · $49.900 CLP/mes después del trial
+              LegalUp AI está incluido en LegalUp Pro. Consulta las condiciones vigentes del plan.
             </p>
           </motion.div>
         </div>
@@ -2357,15 +2125,7 @@ function LegalUpAI() {
           </p>
         </div>
       </footer>
-      <AIPricingModal open={showPricingModal} onOpenChange={setShowPricingModal} />
 
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={handleAuthModalClose}
-        mode={authMode}
-        onModeChange={setAuthMode}
-        aiLanding
-      />
     </div>
   );
 }
@@ -2376,7 +2136,7 @@ const FAQ_ITEMS = [
   {
     question: "¿Qué es LegalUp AI?",
     answer:
-      "Un espacio de trabajo con inteligencia artificial diseñado para abogados, donde puedes analizar documentos, identificar riesgos y obligaciones y conversar con la información de tus casos.",
+      "La capacidad de inteligencia artificial incluida en LegalUp Pro para analizar documentos, identificar riesgos y conversar con la información de tus casos.",
   },
   {
     question: "¿Qué documentos puedo analizar?",
@@ -2391,17 +2151,17 @@ const FAQ_ITEMS = [
   {
     question: "¿Mis documentos y casos son privados?",
     answer:
-      "Cada abogado trabaja en su propio workspace y sus casos y documentos están protegidos mediante controles de acceso para separar la información entre usuarios.",
+      "Cada abogado trabaja con sus propios casos y documentos, protegidos mediante controles de acceso para separar la información entre usuarios.",
   },
   {
     question: "¿Cuánto cuesta?",
     answer:
-      "Puedes probar LegalUp AI gratis durante 5 días. Después, la suscripción tiene un valor de $49.900 CLP al mes.",
+      "LegalUp AI está incluido en LegalUp Pro. En la página de Pro puedes consultar el precio y las condiciones vigentes; no necesitas una suscripción AI por separado.",
   },
   {
-    question: "¿Qué pasa cuando termina la prueba?",
+    question: "¿Dónde creo mis casos?",
     answer:
-      "Al terminar los 5 días puedes continuar utilizando LegalUp AI contratando la suscripción mensual. No necesitas pagar para comenzar la prueba.",
+      "Crea tus casos en LegalUp Pro y agrega sus documentos. Las herramientas de IA trabajan dentro del mismo caso cuando tienes acceso vigente a Pro o una suscripción AI legacy válida.",
   },
 ];
 
