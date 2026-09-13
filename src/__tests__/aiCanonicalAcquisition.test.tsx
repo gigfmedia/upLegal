@@ -94,7 +94,7 @@ describe('4.33D canonical acquisition and legacy compatibility', () => {
   });
   it.each([0, 1, 2, 3, 4])('public CTA %s goes to Pro without a standalone offer', index => {
     const { container } = mount(<LegalUpAI />, '/ai');
-    expect(container.textContent).not.toMatch(/5 días gratis|Prueba gratis durante 5 días|\$49\.900|LegalUp AI Essential/);
+    expect(container.textContent).not.toMatch(/5 días gratis|Prueba gratis durante 5 días|\$49\.900|LegalUp AI Essential|Investigación de Jurisprudencia|Jurisprudencia chilena/);
     expect(screen.getAllByText(/LegalUp AI está incluido en LegalUp Pro/).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button', { name: /Activar LegalUp Pro/ }).length).toBe(5);
     fireEvent.click(screen.getAllByRole('button', { name: /Activar LegalUp Pro/ })[index]);
