@@ -44,7 +44,7 @@ export default function LawyerDashboardPage() {
   const aiSub = useAISubscription();
 
   const [loading, setLoading] = useState(true);
-  const [kpis, setKpis] = useState({ pendingRequests: 0, todayCount: 0, activeCases: 0, revenueMonth: 0 });
+  const [kpis, setKpis] = useState({ pendingRequests: 0, todayCount: 0, activeCases: 0, revenueMonth: 0, directCases: 0 });
   const [nextAppointments, setNextAppointments] = useState<any[]>([]);
   const [attention, setAttention] = useState<{ title: string; desc: string; cta: string; href: string } | null>(null);
   const [stats, setStats] = useState({ clients: 0, cases: 0, services: 0 });
@@ -129,10 +129,11 @@ export default function LawyerDashboardPage() {
         startOfMonth.setDate(1);
         startOfMonth.setHours(0, 0, 0, 0);
 
-        const [pendingRes, todayRes, casesRes, paymentsRes, clientsRes, servicesRes, nextRes, bookingsForAttention] = await Promise.all([
+        const [pendingRes, todayRes, casesRes, directCasesRes, paymentsRes, clientsRes, servicesRes, nextRes, bookingsForAttention] = await Promise.all([
           supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('lawyer_id', user.id).in('status', ['pending', 'pending_payment']),
           supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('lawyer_id', user.id).eq('booking_type', 'appointment').eq('scheduled_date', todayStr).neq('status', 'cancelled'),
           supabase.from('lawyer_cases').select('id', { count: 'exact', head: true }).eq('lawyer_id', user.id).not('status', 'in', '("delivered","closed","cancelled")'),
+          supabase.from('lawyer_cases').select('id', { count: 'exact', head: true }).eq('lawyer_id', user.id).eq('source', 'LAWYER_DIRECT'),
           supabase.from('payments').select('lawyer_amount').eq('lawyer_id', user.id).gte('created_at', startOfMonth.toISOString()),
           supabase.from('lawyer_clients').select('id', { count: 'exact', head: true }).eq('lawyer_id', user.id),
           supabase.from('lawyer_services').select('id', { count: 'exact', head: true }).eq('lawyer_user_id', user.id),
@@ -145,7 +146,7 @@ export default function LawyerDashboardPage() {
         const activeCases = casesRes.count ?? 0;
         const revenueMonth = (paymentsRes.data || []).reduce((s: number, p: any) => s + (p.lawyer_amount ?? 0), 0);
 
-        setKpis({ pendingRequests, todayCount, activeCases, revenueMonth });
+        setKpis({ pendingRequests, todayCount, activeCases, revenueMonth, directCases: directCasesRes.count ?? 0 });
         setNextAppointments(nextRes.data || []);
         setStats({ clients: clientsRes.count ?? 0, cases: activeCases, services: servicesRes.count ?? 0 });
 
@@ -218,7 +219,25 @@ export default function LawyerDashboardPage() {
 
       <OnboardingCard />
 
-      {!loading && stats.clients === 0 && stats.cases === 0 && !hasProAccess && (
+      {!loading && stats.clients === 0 && stats.cases === 0 && !hasProAccess && kpis.directCases === 0 && (
+        <Card className="border-dashed">
+          <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <div className="font-medium text-sm">Crea tu primer caso</div>
+              <div className="text-xs text-gray-500">Organiza tu primer cliente y caso sin costo. Tu primer caso directo no requiere Pro.</div>
+            </div>
+            <Button
+              size="sm"
+              className="bg-gray-900 hover:bg-green-900 shrink-0"
+              onClick={() => navigate('/lawyer/cases')}
+            >
+              Crear mi primer caso
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {!loading && stats.clients === 0 && stats.cases === 0 && !hasProAccess && kpis.directCases > 0 && (
         <Card className="border-dashed">
           <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>

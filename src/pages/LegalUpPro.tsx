@@ -473,7 +473,7 @@ export default function LegalUpPro() {
                 <Sparkles className="h-4 w-4 text-emerald-400" />
                 <span className="text-sm font-medium">Incluido en Pro: 1 caso + 3 documentos</span>
               </div>
-              <p className="mt-3 text-xs text-gray-400">LegalUp AI Full está disponible por separado por $49.900/mes.</p>
+              <p className="mt-3 text-xs text-gray-400">Incluye LegalUp AI Limited: análisis de documentos y chat sobre tus casos.</p>
             </div>
             <Card className="bg-white/[0.06] border-white/10 backdrop-blur-xl">
               <CardContent className="p-6">
@@ -486,7 +486,7 @@ export default function LegalUpPro() {
                   <li className="flex gap-2"><Check className="h-4 w-4 text-emerald-400 mt-0.5" /> Hasta 3 documentos</li>
                   <li className="flex gap-2"><Check className="h-4 w-4 text-emerald-400 mt-0.5" /> Análisis de documentos y chat sobre casos</li>
                 </ul>
-                <p className="mt-4 text-xs leading-relaxed text-gray-400">No incluye jurisprudencia/research Full. Para acceso completo, contrata LegalUp AI Full por separado.</p>
+                <p className="mt-4 text-xs leading-relaxed text-gray-400">Análisis de documentos y chat sobre tus casos. Funciones avanzadas como jurisprudencia aún no están incluidas.</p>
               </CardContent>
             </Card>
           </div>
@@ -522,7 +522,7 @@ export default function LegalUpPro() {
               <Button onClick={() => handleCTAClick("pricing")} className="mt-6 w-full bg-gray-900 hover:bg-green-900 h-11 text-base">
                 Activar LegalUp Pro <ArrowRight className="h-4 w-4" />
               </Button>
-              <p className="mt-3 text-center text-xs text-gray-500">Incluye AI Limited. AI Full ($49.900/mes) se contrata por separado.</p>
+              <p className="mt-3 text-center text-xs text-gray-500">Incluye LegalUp AI Limited: análisis de documentos y chat sobre tus casos.</p>
             </div>
           </Card>
         </div>
@@ -543,11 +543,11 @@ export default function LegalUpPro() {
             </AccordionItem>
             <AccordionItem value="q3">
               <AccordionTrigger>¿Qué pasa después de los 3 meses?</AccordionTrigger>
-              <AccordionContent className="text-gray-600">El precio Founder aplica durante los primeros tres meses. Cualquier cambio posterior será informado antes de aplicarse. No hay un precio regular definitivo comunicado en esta etapa.</AccordionContent>
+              <AccordionContent className="text-gray-600">Los primeros 3 cobros son de $19.990/mes. Desde el cuarto cobro, el precio es $49.990/mes. Si cancelas y vuelves, tus cobros anteriores se mantienen y el conteo no se reinicia.</AccordionContent>
             </AccordionItem>
             <AccordionItem value="q4">
               <AccordionTrigger>¿LegalUp Pro incluye LegalUp AI?</AccordionTrigger>
-              <AccordionContent className="text-gray-600">Sí, incluye LegalUp AI Limited: 1 caso y hasta 3 documentos, con análisis de documentos y chat sobre casos. LegalUp AI Full (jurisprudencia y acceso completo) se contrata por separado por $49.900/mes.</AccordionContent>
+              <AccordionContent className="text-gray-600">Sí, incluye LegalUp AI Limited: 1 caso y hasta 3 documentos, con análisis de documentos y chat sobre casos.</AccordionContent>
             </AccordionItem>
             <AccordionItem value="q5">
               <AccordionTrigger>¿Puedo cancelar?</AccordionTrigger>
@@ -575,7 +575,7 @@ export default function LegalUpPro() {
               Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
-          <p className="mt-3 text-xs text-gray-500">Incluye LegalUp AI Limited (1 caso, 3 documentos). AI Full por separado: $49.900/mes.</p>
+          <p className="mt-3 text-xs text-gray-500">Incluye LegalUp AI Limited: análisis de documentos y chat sobre tus casos.</p>
           </div>
         </div>
       </section>

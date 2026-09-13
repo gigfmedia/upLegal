@@ -36,13 +36,11 @@ describe('FASE 3C — LegalUp Pro landing', () => {
     expect(c).toContain('15');
   });
 
-  it('NO comunica AI Full como incluida', () => {
+  it('NO ofrece AI Full como producto separado (4.32B: Pro es el único producto pago)', () => {
     const c = readFileSync(proPath, 'utf-8');
-    // Debe mencionar AI Full por separado, no como incluida gratis sin aclarar
-    expect(c).toContain('AI Full');
-    // No debe decir que Pro incluye AI Full directamente
-    expect(c).not.toContain('incluye LegalUp AI Full');
-    expect(c).not.toContain('AI Full incluida');
+    // Supersede Fase 3C: ya no se vende AI standalone a usuarios nuevos.
+    expect(c).not.toContain('AI Full');
+    expect(c).not.toContain('por separado');
   });
 
   it('Comunica AI Limited 1 caso / 3 documentos', () => {
@@ -78,10 +76,12 @@ describe('FASE 3C — LegalUp Pro landing', () => {
     expect(s).toContain("app.post('/api/bookings/create'");
   });
 
-  it('AI Full permanece $49.900', () => {
+  it('Precios públicos son Pro 19.990 → 49.990; server conserva legacy AI 49900', () => {
     const c = readFileSync(proPath, 'utf-8');
-    expect(c).toContain('$49.900');
-    // Y server mantiene 49900? Check AI pricing not touched
+    expect(c).toContain('$19.990');
+    expect(c).toContain('$49.990');
+    expect(c).not.toContain('$49.900');
+    // Server mantiene legacy AI billing intacto (compatibilidad, sin venta nueva)
     const s = readFileSync(serverPath, 'utf-8');
     expect(s).toContain('49900');
   });
