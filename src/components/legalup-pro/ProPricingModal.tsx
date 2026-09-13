@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Check, Loader2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import posthog from 'posthog-js';
-import { useProSubscription, useProSubscribe } from '@/hooks/useProSubscription';
+import { useProSubscription, useProSubscribe, useProFounderStatus } from '@/hooks/useProSubscription';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -45,6 +45,12 @@ export function ProPricingModal({ open, onOpenChange, triggerAction }: ProPricin
   const [subscribing, setSubscribing] = useState(false);
 
   const { status, hasProAccess, isActive, isPastDue } = sub;
+  // 4.32B.4: display-only preview; POST /api/pro/subscribe is the authority.
+  const founderStatus = useProFounderStatus(open);
+  const previewPrice = founderStatus.data?.previewPriceClp ?? 19990;
+  const slotsRemaining = founderStatus.data?.founderSlotsRemaining ?? null;
+  const isFounderRate = previewPrice === 19990;
+  const fmtPrice = (v: number) => `$${v.toLocaleString('es-CL')}`;
 
   const handleSubscribe = async () => {
     setSubscribing(true);
@@ -77,11 +83,21 @@ export function ProPricingModal({ open, onOpenChange, triggerAction }: ProPricin
           <div className="relative overflow-hidden rounded-xl border border-green-200 bg-gradient-to-br from-green-50 to-white p-6">
             <Badge className="absolute right-4 top-4 bg-green-100 text-green-800">Founder 15</Badge>
             <p className="text-3xl font-bold text-gray-900">
-              $19.990<span className="text-sm font-medium text-muted-foreground">/mes</span>
+              {fmtPrice(previewPrice)}<span className="text-sm font-medium text-muted-foreground">/mes</span>
             </p>
-            <p className="text-sm text-muted-foreground">por 3 meses</p>
-            <p className="mt-1 text-xs text-muted-foreground">$19.990/mes durante tus primeros 3 cobros. Desde el cuarto cobro, $49.990/mes.</p>
-            <p className="mt-2 text-xs text-green-700 font-medium">Los primeros 15 abogados en contratar Pro obtienen el badge Founder.</p>
+            {isFounderRate ? (
+              <>
+                <p className="text-sm text-muted-foreground">por 3 cobros</p>
+                <p className="mt-1 text-xs text-muted-foreground">$19.990/mes durante tus primeros 3 cobros. Desde el cuarto cobro, $49.990/mes.</p>
+                <p className="mt-2 text-xs text-green-700 font-medium">
+                  {slotsRemaining != null && slotsRemaining > 0
+                    ? `¡Quedan ${slotsRemaining} cupos Founder! Los primeros 15 abogados en contratar Pro obtienen el badge Founder permanente.`
+                    : 'Los primeros 15 abogados en contratar Pro obtienen el badge Founder permanente.'}
+                </p>
+              </>
+            ) : (
+              <p className="mt-1 text-xs text-muted-foreground">$49.990/mes. Los cupos Founder ya fueron asignados.</p>
+            )}
             <ul className="mt-4 space-y-2">
               {PERKS.map((perk) => (
                 <li key={perk} className="flex items-start gap-2 text-sm text-gray-700">

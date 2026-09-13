@@ -513,6 +513,7 @@ export default function LegalUpPro() {
                 <div className="text-4xl font-bold">$19.990<span className="text-base font-medium text-gray-500">/mes</span></div>
                 <div className="text-sm font-medium text-green-700">durante tus primeros 3 cobros</div>
                 <p className="mt-2 text-xs text-gray-500">$19.990/mes durante tus primeros 3 cobros. Desde el cuarto cobro, $49.990/mes.</p>
+                <p className="mt-1 text-xs text-gray-500">Después de los 15 cupos Founder, Pro cuesta $49.990/mes. El badge Founder queda permanentemente en tu perfil.</p>
               </div>
               <ul className="mt-6 space-y-2 text-sm">
                 {["Solicitudes", "Clientes", "Casos", "Citas", "Servicios / gestión disponible", "Ingresos", "LegalUp AI Limited (1 caso, 3 documentos)", "Acceso a futuras mejoras de Pro"].map((perk) => (

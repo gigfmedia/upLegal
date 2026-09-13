@@ -106,8 +106,19 @@ describe('4.32B.2 — Founder billing safety (profiles.is_founder)', () => {
     expect(gate).not.toContain('founder');
   });
 
-  it('profiles.is_founder is never read in server billing/entitlement paths', () => {
-    expect(server).not.toContain('profiles.is_founder');
-    expect(server).not.toContain('.is_founder === true');
+  it('profiles.is_founder reads are limited to founder-track price decision', () => {
+    // 4.32B.4: the only legitimate server read is the checkout price branch
+    // (existing Founder → intro-count rule). No other billing/entitlement read.
+    const reads = server.split('\n').filter((l) => l.includes('prof?.is_founder'));
+    expect(reads.length).toBeGreaterThan(0);
+    expect(reads.length).toBeLessThanOrEqual(2);
+    for (const line of reads) {
+      expect(line).toMatch(/isFounder|initialPrice|founderTrack/);
+    }
+  });
+
+  it('server never writes profiles.is_founder (only claim/reconcile SQL do)', () => {
+    expect(server).not.toMatch(/SET is_founder/i);
+    expect(server).not.toMatch(/is_founder:\s*true/);
   });
 });

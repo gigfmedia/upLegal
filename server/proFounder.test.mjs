@@ -3,8 +3,11 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import {
   PRO_FOUNDER_MAX,
+  PRO_INTRO_PRICE_CLP,
+  PRO_STANDARD_PRICE_CLP,
   shouldAttemptFounderClaim,
   selectFounderCohort,
+  decideCheckoutPrice,
 } from './proFounder.mjs';
 
 const row = (lawyer_id, paid_at, ap_id, status = 'approved') => ({
@@ -84,6 +87,65 @@ describe('4.32B.3 — cohort selection (deterministic)', () => {
   });
 });
 
+describe('4.32B.4 — checkout price matrix (server-authoritative)', () => {
+  it('Founder: 0/1/2 successful → 19990; 3/4+ → 49990', () => {
+    for (const n of [0, 1, 2]) {
+      expect(decideCheckoutPrice({ isFounder: true, lifetimeApproved: n, reservation: null })).toBe(19990);
+    }
+    for (const n of [3, 4, 10]) {
+      expect(decideCheckoutPrice({ isFounder: true, lifetimeApproved: n, reservation: null })).toBe(49990);
+    }
+    expect(PRO_INTRO_PRICE_CLP).toBe(19990);
+    expect(PRO_STANDARD_PRICE_CLP).toBe(49990);
+  });
+
+  it('Non-Founder: any lifetime count → 49990 unless reserved', () => {
+    for (const n of [0, 1, 2, 3, 10]) {
+      expect(decideCheckoutPrice({ isFounder: false, lifetimeApproved: n, reservation: 'standard_no_slot' })).toBe(49990);
+      expect(decideCheckoutPrice({ isFounder: false, lifetimeApproved: n, reservation: null })).toBe(49990);
+    }
+    expect(decideCheckoutPrice({ isFounder: false, lifetimeApproved: 0, reservation: 'reserved' })).toBe(19990);
+  });
+
+  it('Reservation failure fails closed to standard (retry re-reserves)', () => {
+    expect(decideCheckoutPrice({ isFounder: false, lifetimeApproved: 0, reservation: undefined })).toBe(49990);
+  });
+});
+
+describe('4.32B.4 — reservation SQL semantics (source assertions)', () => {
+  const sql = readFileSync(resolve('supabase/migrations/20260921000000_pro_founder_reservations.sql'), 'utf-8');
+
+  it('serializes concurrent claims (advisory lock)', () => {
+    expect(sql).toContain('pg_advisory_xact_lock');
+  });
+
+  it('capacity counts claimed founders PLUS valid reservations (UNION)', () => {
+    expect(sql).toContain('is_founder = true');
+    expect(sql).toContain('expires_at > now()');
+    expect(sql).toContain('UNION');
+    expect(sql).toContain('>= 15');
+  });
+
+  it('same-lawyer retry renews instead of consuming a new slot', () => {
+    expect(sql).toContain('ON CONFLICT (lawyer_id)');
+  });
+
+  it('expired reservations recycle (no permanent squat)', () => {
+    expect(sql).toContain('DELETE FROM public.pro_founder_reservations WHERE expires_at <=');
+  });
+
+  it('unknown/non-lawyer profiles can never reserve', () => {
+    expect(sql).toContain("p.role = 'lawyer'");
+    expect(sql).toContain('standard_no_slot');
+  });
+
+  it('profiles.is_founder cannot be self-granted (trigger guard)', () => {
+    expect(sql).toContain('protect_profiles_is_founder');
+    expect(sql).toContain('service_role');
+    expect(sql).toContain('BEFORE INSERT OR UPDATE');
+  });
+});
+
 describe('4.32B.3 — webhook integration (source assertions)', () => {
   const server = readFileSync(resolve('server.mjs'), 'utf-8');
 
@@ -111,5 +173,28 @@ describe('4.32B.3 — webhook integration (source assertions)', () => {
   it('claim RPC passes the subscription lawyer (never client input)', () => {
     expect(server).toContain('p_lawyer_id');
     expect(server).toContain('subscription.lawyer_id');
+  });
+
+  it('checkout never reads a client-supplied price', () => {
+    const start = server.indexOf("app.post('/api/pro/subscribe'");
+    const end = server.indexOf("app.post('/api/pro/subscription/cancel'");
+    const block = server.slice(start, end);
+    expect(block).not.toContain('req.body');
+    expect(block).toContain('transaction_amount: initialPrice');
+  });
+
+  it('profiles.is_founder cannot be self-granted via RLS (trigger guard)', () => {
+    const sql = readFileSync(
+      resolve('supabase/migrations/20260921000000_pro_founder_reservations.sql'),
+      'utf-8'
+    );
+    // Trigger fires on both INSERT and UPDATE of the flag...
+    expect(sql).toContain('BEFORE INSERT OR UPDATE');
+    // ...forces the flag for non-service JWTs...
+    expect(sql).toContain("IS DISTINCT FROM 'service_role'");
+    expect(sql).toContain('NEW.is_founder := false');
+    expect(sql).toContain('NEW.is_founder := OLD.is_founder');
+    // ...while service_role (server/webhooks) and migrations stay unaffected.
+    expect(sql).toContain('pro_founder_reservations');
   });
 });

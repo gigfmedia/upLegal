@@ -59,6 +59,37 @@ export function useProSubscription() {
   };
 }
 
+export type ProFounderStatus = {
+  isFounder: boolean;
+  founderSlotsRemaining: number;
+  previewPriceClp: number;
+  introPriceClp: number;
+  standardPriceClp: number;
+};
+
+/**
+ * 4.32B.4 — read-only checkout preview (display only).
+ * NEVER a price authority: POST /api/pro/subscribe reserves atomically.
+ */
+export function useProFounderStatus(enabled = true) {
+  const { user } = useAuth();
+  const query = useQuery<ProFounderStatus | null>({
+    queryKey: ['pro-founder-status', user?.id],
+    enabled: enabled && !!user?.id,
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return null;
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/pro/founder-status`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (!res.ok) return null;
+      return (await res.json()) as ProFounderStatus;
+    },
+  });
+  return query;
+}
+
 export function useProSubscribe() {
   const queryClient = useQueryClient();
   const { user } = useAuth();

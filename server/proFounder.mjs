@@ -5,6 +5,28 @@
 // webhook gating.
 
 export const PRO_FOUNDER_MAX = 15;
+export const PRO_FOUNDER_RESERVATION_TTL_SECONDS = 72 * 3600; // 72h: covers weekend checkout delays, recycles abandonment
+export const PRO_INTRO_PRICE_CLP = 19990;
+export const PRO_STANDARD_PRICE_CLP = 49990;
+export const PRO_INTRO_SUCCESSFUL_PAYMENTS = 3;
+
+/**
+ * Server-authoritative checkout price.
+ * - Existing Founder: intro-count rule (reactivation never resets).
+ * - Otherwise: price follows the atomic reservation result.
+ * - Fail-closed: unknown/failed reservation → standard (retry re-reserves).
+ */
+export function decideCheckoutPrice({ isFounder, lifetimeApproved, reservation }) {
+  if (isFounder) {
+    return lifetimeApproved >= PRO_INTRO_SUCCESSFUL_PAYMENTS
+      ? PRO_STANDARD_PRICE_CLP
+      : PRO_INTRO_PRICE_CLP;
+  }
+  if (reservation === 'reserved' || reservation === 'already_founder') {
+    return PRO_INTRO_PRICE_CLP;
+  }
+  return PRO_STANDARD_PRICE_CLP;
+}
 
 /** Only approved payments can qualify. Never trust redirect/checkout/pending. */
 export function shouldAttemptFounderClaim(paymentStatus) {
