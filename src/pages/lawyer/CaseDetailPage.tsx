@@ -330,7 +330,8 @@ function CaseDetailContent() {
 
         <TabsContent value="documents" className="mt-4">
           <Card>
-            <CardHeader><CardTitle>Documentos del caso</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-base">Documentos del caso</CardTitle></CardHeader>
             <CardContent>
               <CaseDocuments key={caseId} workspaceId={effectiveWorkspaceId} ensureWorkspace={ensureWorkspace}
                 canAnalyze={canUse('document_analysis')} accessLoading={accessLoading}

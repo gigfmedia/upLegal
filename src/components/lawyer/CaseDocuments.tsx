@@ -35,7 +35,7 @@ export function CaseDocuments({ workspaceId, ensureWorkspace, canAnalyze, access
   };
   return <div className="space-y-4">
     {!documents.data?.length && <div>
-      <h3 className="font-medium">Agrega documentos a este caso</h3>
+      <p className="text-sm">Agrega documentos a este caso</p>
       <p className="text-sm text-muted-foreground">Sube contratos, escritos, resoluciones u otros antecedentes para mantenerlos asociados al caso y analizarlos cuando lo necesites.</p>
     </div>}
     {/* Keep this mounted when provisioning changes the document query's loading state. */}
