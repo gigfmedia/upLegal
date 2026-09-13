@@ -507,7 +507,7 @@ export default function LegalUpPro() {
                   <h3 className="text-lg font-bold">LegalUp Pro</h3>
                   <p className="text-sm text-gray-500">Para abogados independientes y estudios boutique</p>
                 </div>
-                <Badge className="bg-green-100 text-green-800 border-green-200">Founder 15</Badge>
+                <Badge className="bg-green-100 text-green-800 border-green-200">Founder</Badge>
               </div>
               <div className="mt-6">
                 <div className="text-4xl font-bold">$19.990<span className="text-base font-medium text-gray-500">/mes</span></div>
