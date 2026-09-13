@@ -31,6 +31,13 @@ export function useLawyerClients() {
     setLoading(true);
     setError(null);
     try {
+      // 4.31C.1: RLS returns 0 rows with NO error when the JWT session is
+      // gone (proven: unauthenticated query → [] without error). Never treat
+      // that silent-empty as "lawyer has no clients".
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        throw new Error('Sesión no válida. Vuelve a iniciar sesión.');
+      }
       const { data, error } = await supabase
         .from('lawyer_clients')
         .select('*')
