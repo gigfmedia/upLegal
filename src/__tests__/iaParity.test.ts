@@ -43,9 +43,9 @@ describe('4.34J — IA navigation contract', () => {
 });
 
 describe('4.34N — case summary text and timeline parity', () => {
-  it('resumen exposes dates, preview and timeline entry with converged copy', () => {
+  it('resumen exposes dates and timeline entry with converged copy (no activity preview)', () => {
     const c = read('src/pages/lawyer/CaseDetailPage.tsx');
-    expect(c).toContain('CaseActivityPreview');
+    expect(c).not.toContain('CaseActivityPreview');
     expect(c).toContain("d 'de' MMMM yyyy");
     expect(c).toContain('Timeline del caso');
     expect(c).not.toContain('>Actividad<');

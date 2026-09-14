@@ -17,7 +17,7 @@ import { AICaseCommandCenter } from '@/components/legalup-ai/AICaseCommandCenter
 import { AICaseIntelligence } from '@/components/legalup-ai/AICaseIntelligence';
 import { AIResearchPanel } from '@/components/legalup-ai/AIResearchPanel';
 import { AICaseChatDrawer } from '@/components/legalup-ai/AICaseChatDrawer';
-import { CaseActivity, CaseActivityPreview } from '@/components/lawyer/CaseActivity';
+import { CaseActivity } from '@/components/lawyer/CaseActivity';
 import { useAIDocuments } from '@/hooks/useAIDocuments';
 import { useAIFeatureAccess } from '@/hooks/useAISubscription';
 import { useCaseDocumentWorkspace } from '@/hooks/useCaseDocumentWorkspace';
@@ -215,13 +215,6 @@ function CaseDetailContent() {
               onInvestigate={() => setActiveTab('research')}
             />
           )}
-          <CaseActivityPreview
-            caseData={viewCase}
-            workspaceId={effectiveWorkspaceId}
-            bookings={caseBookings}
-            onOpenTimeline={() => setActiveTab('activity')}
-          />
-
       {/* Citas del caso — 1:N */}
       <Card className="mt-4">
         <CardHeader>
