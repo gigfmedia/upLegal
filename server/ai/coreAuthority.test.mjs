@@ -6,7 +6,7 @@ import ts from 'typescript';
 import { z } from 'zod';
 import { hasCanonicalDocumentReference, resolveAnalysisModel, honestEvidenceLocation, fragmentIndexFromId } from './coreAuthority.mjs';
 import { buildChatContext, buildChatSystemPrompt, buildChatUserPrompt, CHAT_LIMITS } from './legalChatPrompt.mjs';
-import { getProCaseHeader } from './proCaseContext.mjs';
+import { getProCaseHeader, formatProCaseBlock } from './proCaseContext.mjs';
 import { verifyDocumentClaims } from './documentGrounding.mjs';
 import { buildAnalysisSystemPrompt, buildAnalysisUserPrompt } from './legalPrompt.mjs';
 const src = readFileSync(new URL('../../server.mjs', import.meta.url), 'utf8');
@@ -42,7 +42,7 @@ function harness({paid=true, linked=true, count=3}={}) {
  }};
  const provider=vi.fn(async()=>({data:{answer:'Respuesta documental.',sources:[],summary:'Resumen',document_type:'contrato',parties:[],key_points:[],obligations:[],deadlines:[],risks:[],recommendations:[]},usage:{total_tokens:100,input_tokens:80,output_tokens:20}}));
  const routes={}, quiet={log(){},warn(){},error(){}};
-  const ctx=vm.createContext({console:quiet,z,Buffer,supabase,hasCanonicalDocumentReference,resolveAnalysisModel,honestEvidenceLocation,buildChatContext,buildChatSystemPrompt,buildChatUserPrompt,CHAT_LIMITS,getProCaseHeader,verifyDocumentClaims,buildAnalysisSystemPrompt,buildAnalysisUserPrompt,
+  const ctx=vm.createContext({console:quiet,z,Buffer,supabase,hasCanonicalDocumentReference,resolveAnalysisModel,honestEvidenceLocation,buildChatContext,buildChatSystemPrompt,buildChatUserPrompt,CHAT_LIMITS,getProCaseHeader,formatProCaseBlock,verifyDocumentClaims,buildAnalysisSystemPrompt,buildAnalysisUserPrompt,
   app:{get:(p,h)=>routes[`get ${p}`]=h,post:(p,h)=>routes[`post ${p}`]=h,delete:(p,h)=>routes[`delete ${p}`]=h},getUserIdFromToken:async()=>tokenUser,
  chatCompletion:provider,isAIProviderConfigured:()=>true,AI_DEFAULT_MODEL:'gpt-4o-mini',AI_CHAT_MAX_TOKENS:2400,AI_DOCUMENTS_BUCKET:'ai-documents',MAX_EXTRACTED_TEXT_CHARS:80000,
  pdfParse:async()=>({text:'Contrato documental de prueba con obligaciones entre partes.',numpages:1}),

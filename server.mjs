@@ -30,7 +30,7 @@ import {
   buildChatUserPrompt,
   CHAT_LIMITS,
 } from './server/ai/legalChatPrompt.mjs';
-import { getProCaseHeader } from './server/ai/proCaseContext.mjs';
+import { getProCaseHeader, formatProCaseBlock } from './server/ai/proCaseContext.mjs';
 import {
   searchJurisprudence,
   validateResearchQuery,
@@ -10069,7 +10069,16 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
             lawyerId: userId,
           });
 
-    const caseContext = buildJurisprudenceCaseContext(workspace);
+    // FASE 4.34D: encabezado en vivo del caso Pro (runtime, sin writes).
+    // Legacy (sin link) y ambigüedad → contexto workspace sin cambios.
+    let proCaseBlock = '';
+    try {
+      const resolved = await getProCaseHeader(supabase, { workspaceId: workspace.id, lawyerId: userId });
+      if (resolved.status === 'linked') proCaseBlock = formatProCaseBlock(resolved.header);
+    } catch (e) {
+      console.error('[LegalUpAI] research pro case header failed (continuing without it)', e?.message || e);
+    }
+    const caseContext = [proCaseBlock, buildJurisprudenceCaseContext(workspace)].filter(Boolean).join('\n');
 
     // Fase 4.2.4: el retry de JSON/schema inválido vive en el pipeline puro.
     // chatCompletion cubre el retry temporal del proveedor (429/5xx/red); este

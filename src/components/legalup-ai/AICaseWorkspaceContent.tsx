@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft } from 'lucide-react';
+import { useAIFeatureAccess } from '@/hooks/useAISubscription';
 import { AICaseCommandCenter } from '@/components/legalup-ai/AICaseCommandCenter';
 import { AICaseIntelligence } from '@/components/legalup-ai/AICaseIntelligence';
 import { AICaseTimeline } from '@/components/legalup-ai/AICaseTimeline';
@@ -60,6 +62,20 @@ export function AICaseWorkspaceContent({ workspaceId, workspaceName, embedded = 
   const chat = useChatState();
   const [showIntelligence, setShowIntelligence] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  // 4.34D: research subview + deep link ?tab=ai&view=research. Local state is
+  // the source of truth; the URL only mirrors it for shareable links.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [showResearch, setShowResearch] = useState(() => searchParams.get('view') === 'research');
+  const setSearchParamsHelper = (view: string | null) => {
+    setSearchParams((prev) => {
+      const p = new URLSearchParams(prev);
+      if (view) p.set('view', view);
+      else p.delete('view');
+      return p;
+    }, { replace: true });
+  };
+  const { canUse, isLoading: accessLoading } = useAIFeatureAccess();
+  const researchLocked = !accessLoading && !canUse('jurisprudence');
 
   const chatDrawer = (
     <AICaseChatDrawer
@@ -77,8 +93,10 @@ export function AICaseWorkspaceContent({ workspaceId, workspaceName, embedded = 
   // 4.30C: embedded lawyer-case experience — flattened, no nested tab bar.
   // Command Center is the default surface; deep intelligence is a local
   // subview ("Ver análisis completo"). No inner Documents tab (outer Case
-  // Documents is canonical), no Research surface (Pro does not include it;
-  // legacy keeps it in standalone route).
+  // Documents is canonical).
+  // 4.34D: research mounts as a second local subview ("Investigar") reusing
+  // AIResearchPanel. Feature-gated: without `jurisprudence` entitlement the
+  // panel shows history + neutral locked state, never provider calls.
   if (isEmbedded) {
     return (
       <div className="space-y-6">
@@ -90,13 +108,19 @@ export function AICaseWorkspaceContent({ workspaceId, workspaceName, embedded = 
           onViewIntelligence={() => setShowIntelligence(true)}
           onAskQuestion={(q) => { chat.setChatOrigin('command_center'); chat.setPendingWorkflowActionId(null); chat.setChatDocumentId(null); chat.setChatQuestion(q); chat.setChatPanelOpen(true); }}
           onWorkflowAsk={(q, actionId) => { chat.setChatOrigin('workflow'); chat.setPendingWorkflowActionId(actionId); chat.setChatDocumentId(null); chat.setChatQuestion(q); chat.setChatPanelOpen(true); }}
+          onInvestigate={() => { setShowResearch(true); setSearchParamsHelper('research'); }}
         />
 
         {!showIntelligence ? (
-          <div>
+          <div className="flex flex-col gap-2">
             <Button type="button" variant="outline" className="w-full" onClick={() => setShowIntelligence(true)}>
               Ver análisis completo
             </Button>
+            {!showResearch && (
+              <Button type="button" variant="outline" className="w-full" onClick={() => { setShowResearch(true); setSearchParamsHelper('research'); }}>
+                Investigar este caso
+              </Button>
+            )}
           </div>
         ) : (
           <section aria-label="Análisis completo del caso">
@@ -112,6 +136,21 @@ export function AICaseWorkspaceContent({ workspaceId, workspaceName, embedded = 
               onWorkflowAsk={(q, actionId) => { chat.setChatOrigin('workflow'); chat.setPendingWorkflowActionId(actionId); chat.setChatDocumentId(null); chat.setChatQuestion(q); chat.setChatPanelOpen(true); }}
               onOpenChat={() => { chat.setChatOrigin('intelligence'); chat.setPendingWorkflowActionId(null); chat.setChatDocumentId(null); chat.setChatPanelOpen(true); }}
               onNavigateToDocuments={() => onOpenDocuments?.()}
+            />
+          </section>
+        )}
+
+        {showResearch && (
+          <section aria-label="Investigación jurídica del caso">
+            <Button type="button" variant="ghost" className="-ml-2 mb-2" onClick={() => { setShowResearch(false); setSearchParamsHelper(null); }}>
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+              Volver al resumen
+            </Button>
+            <AIResearchPanel
+              workspaceId={workspaceId}
+              locked={researchLocked}
+              analyticsSurface="case"
+              initialQuery={workspaceName ? `¿Qué normativa y jurisprudencia aplican al caso "${workspaceName}"?` : undefined}
             />
           </section>
         )}

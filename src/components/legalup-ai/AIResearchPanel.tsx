@@ -31,6 +31,18 @@ import {
 
 type AIResearchPanelProps = {
   workspaceId: string;
+  /**
+   * 4.34D — modo embebido en Caso Pro. Con `locked`, el formulario de nueva
+   * investigación se deshabilita con copy neutral (sin mencionar planes
+   * futuros ni precios) pero el historial sigue legible: leer resultados
+   * históricos requiere entitlement general, crear requiere el gate
+   * `jurisprudence` del backend. Abrir el panel nunca dispara provider.
+   */
+  locked?: boolean;
+  /** Superficie para analytics (metadata-only). Standalone no la envía. */
+  analyticsSurface?: string;
+  /** Texto inicial contextual del caso. Nunca se auto-envía. */
+  initialQuery?: string;
 };
 
 const escapeHtml = (text: string): string =>
@@ -517,11 +529,12 @@ const RETRIABLE_CODES = new Set([
   'OUTPUT_TOKEN_LIMIT',
 ]);
 
-export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
+export function AIResearchPanel({ workspaceId, locked = false, analyticsSurface, initialQuery }: AIResearchPanelProps) {
   const researchQuery = useAICaseResearch(workspaceId, true);
   const runMutation = useRunAIResearch(workspaceId);
+  const surfaceMeta = analyticsSurface ? { surface: analyticsSurface } : {};
 
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState(initialQuery ?? '');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [lastQuery, setLastQuery] = useState('');
@@ -542,9 +555,11 @@ export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
   }, [researchQuery.isError, researchQuery.failureCount]);
 
   const runResearch = (query: string) => {
+    if (locked) return;
     setWarnings([]);
     posthog.capture('ai_jurisprudence_research_started', {
       query_length: query.length,
+      ...surfaceMeta,
     });
     runMutation.mutate(
       { query },
@@ -563,11 +578,13 @@ export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
           }
           posthog.capture('ai_jurisprudence_research_completed', {
             source_count: data.sources?.length ?? 0,
+            ...surfaceMeta,
           });
         },
         onError: (err) => {
           posthog.capture('ai_jurisprudence_research_failed', {
             error_code: err.code || 'provider_error',
+            ...surfaceMeta,
           });
         },
       }
@@ -575,6 +592,7 @@ export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
   };
 
   const handleSubmit = () => {
+    if (locked) return;
     const trimmed = input.trim();
     if (!trimmed || runMutation.isPending) return;
     setLastQuery(trimmed);
@@ -582,6 +600,7 @@ export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
   };
 
   const handleRetry = () => {
+    if (locked) return;
     if (!lastQuery || runMutation.isPending) return;
     runResearch(lastQuery);
   };
@@ -602,12 +621,20 @@ export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
+        {locked && (
+          <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3" role="note">
+            <p className="text-sm font-medium text-gray-900">Investigación avanzada</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Esta capacidad no está incluida en tu plan actual. Tus investigaciones anteriores de este caso siguen disponibles abajo.
+            </p>
+          </div>
+        )}
         <div className="space-y-2">
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ej.: ¿Qué dice la jurisprudencia sobre la indemnización por despido injustificado?"
-            disabled={runMutation.isPending}
+            disabled={locked || runMutation.isPending}
             aria-label="Consulta de jurisprudencia"
             rows={5}
             className="resize-none"
@@ -616,7 +643,8 @@ export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
             <p className="text-xs text-muted-foreground">
               Fuentes: Tribunal Constitucional · BCN/LeyChile · Doctrina académica.
             </p>
-            
+
+            {!locked && (
             <Button
               type="button"
               onClick={handleSubmit}
@@ -635,6 +663,7 @@ export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
                 </>
               )}
             </Button>
+            )}
           </div>
         </div>
 

@@ -20,11 +20,13 @@ type Props = {
   onViewIntelligence?: () => void;
   onAskQuestion?: (question: string) => void;
   onWorkflowAsk?: (question: string, actionId: string) => void;
+  /** 4.34D: abre la investigación del caso actual (solo se renderiza si se provee). */
+  onInvestigate?: () => void;
   externalWorkflowActionId?: string | null;
   onExternalWorkflowActionHandled?: () => void;
 };
 
-export function AICaseCommandCenter({ workspaceId, workspaceName, onOpenWorkflowAction, onViewDocuments, onViewIntelligence, onAskQuestion, onWorkflowAsk, externalWorkflowActionId, onExternalWorkflowActionHandled }: Props) {
+export function AICaseCommandCenter({ workspaceId, workspaceName, onOpenWorkflowAction, onViewDocuments, onViewIntelligence, onAskQuestion, onWorkflowAsk, onInvestigate, externalWorkflowActionId, onExternalWorkflowActionHandled }: Props) {
   const intelligenceQuery = useAICaseIntelligence(workspaceId, true);
   const workflowQuery = useAICaseWorkflow(workspaceId);
   const documentsQuery = useAIDocuments(workspaceId);
@@ -315,6 +317,7 @@ export function AICaseCommandCenter({ workspaceId, workspaceName, onOpenWorkflow
         <CardHeader><CardTitle className="text-sm">Acciones rápidas</CardTitle></CardHeader>
         <CardContent className="flex flex-wrap gap-2">
           {onAskQuestion && <Button size="sm" onClick={() => onAskQuestion('¿Qué debería revisar ahora en este caso?')}>Preguntar a LegalUp AI</Button>}
+          {onInvestigate && <Button size="sm" variant="outline" onClick={onInvestigate}>Investigar</Button>}
           {onViewDocuments && <Button size="sm" variant="outline" onClick={onViewDocuments}>Ver documentos</Button>}
           {onViewIntelligence && <Button size="sm" variant="outline" onClick={onViewIntelligence}>Ver inteligencia completa</Button>}
         </CardContent>
