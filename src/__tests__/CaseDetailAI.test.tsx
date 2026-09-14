@@ -4,10 +4,10 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 
-const state = vi.hoisted(() => ({ caseData: null as Record<string, unknown> | null, allowed: true, docs: [] as Record<string, unknown>[], provision: vi.fn(), upload: vi.fn(), analyze: vi.fn(), toast: vi.fn() }));
+const state = vi.hoisted(() => ({ caseData: null as Record<string, unknown> | null, allowed: true, docs: [] as Record<string, unknown>[], provision: vi.fn(), upload: vi.fn(), analyze: vi.fn(), toast: vi.fn(), update: vi.fn(), delete: vi.fn() }));
 vi.mock('@/hooks/useLawyerCases', () => ({
   useLawyerCase: () => ({caseData:state.caseData,loading:false,error:null}),
-  useLawyerCases: () => ({updateCase:vi.fn(),deleteCase:vi.fn()}),
+  useLawyerCases: () => ({updateCase:state.update,deleteCase:state.delete}),
   useProvisionAIWorkspace: () => ({provision:state.provision}),
 }));
 vi.mock('@/hooks/useLawyerClients', () => ({useLawyerClients:()=>({clients:[]})}));
@@ -73,5 +73,58 @@ describe('4.30B case documents',()=>{
  it('concurrent ensure calls share provisioning promise',async()=>{
   function Probe(){const {ensureWorkspace}=useCaseDocumentWorkspace('C1',null);const [done,setDone]=useState(false);return <button onClick={()=>Promise.all([ensureWorkspace(),ensureWorkspace()]).then(()=>setDone(true))}>{done?'done':'start'}</button>;}
   render(<Probe/>);fireEvent.click(screen.getByText('start'));await screen.findByText('done');expect(state.provision).toHaveBeenCalledTimes(1);
+ });
+});
+
+describe('4.34L case first-view hierarchy',()=>{
+ beforeEach(()=>{state.update.mockResolvedValue({id:'C1',title:'Caso editado'});state.delete.mockResolvedValue(undefined);});
+ it('title once as h1; no inline edit form; edit button opens modal with values',async()=>{
+  state.caseData={...(state.caseData as object),client_id:null} as never;renderCase('overview');
+  expect(screen.getByRole('heading',{level:1})).toHaveTextContent('Caso');
+  expect(screen.queryByLabelText(/Título/i)).not.toBeInTheDocument();
+  expect(screen.queryByText('Guardar')).not.toBeInTheDocument();
+  expect(screen.queryByText('Eliminar')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button',{name:/editar caso/i}));
+  await screen.findByRole('dialog');
+  expect(screen.getByDisplayValue('Caso')).toBeInTheDocument();
+ });
+ it('tabs follow header; resumen renders command center first',()=>{
+  state.caseData!.ai_workspace_id='W1';renderCase('overview');
+  expect(screen.getByTestId('cc')).toHaveTextContent('W1');
+  expect(screen.queryByText('Cliente asociado')).not.toBeInTheDocument();
+ });
+ it('client name links to client without email in header',()=>{
+  const cd = state.caseData as unknown as Record<string, unknown>;
+  cd.client_id='CL1';cd.client={name:'Juan'};
+  renderCase('overview');
+  const link=screen.getByRole('link',{name:'Juan'});
+  expect(link.getAttribute('href')).toBe('/lawyer/clients/CL1');
+  expect(screen.queryByText(/@/)).not.toBeInTheDocument();
+ });
+ it('save uses existing mutation and refreshes header; failure stays honest',async()=>{
+  renderCase('overview');
+  fireEvent.click(screen.getByRole('button',{name:/editar caso/i}));
+  await screen.findByRole('dialog');
+  fireEvent.change(screen.getByDisplayValue('Caso'),{target:{value:'Caso editado'}});
+  fireEvent.click(screen.getByRole('button',{name:/^guardar$/i}));
+  await waitFor(()=>expect(state.update).toHaveBeenCalledWith('C1',expect.objectContaining({title:'Caso editado'})));
+  expect(screen.getByRole('heading',{level:1})).toHaveTextContent('Caso editado');
+  state.update.mockRejectedValueOnce(new Error('offline'));
+  fireEvent.click(screen.getByRole('button',{name:/editar caso/i}));
+  await screen.findByRole('dialog');
+  fireEvent.click(screen.getByRole('button',{name:/^guardar$/i}));
+  await waitFor(()=>expect(state.update).toHaveBeenCalledTimes(2));
+  expect(screen.getByRole('dialog')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button',{name:/cancelar/i}));
+  await waitFor(()=>expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  expect(screen.getByRole('heading',{level:1})).toHaveTextContent('Caso editado');
+ });
+ it('delete lives inside modal with confirmation preserved',async()=>{
+  Object.defineProperty(window,'confirm',{value:vi.fn(()=>true),configurable:true});
+  renderCase('overview');
+  fireEvent.click(screen.getByRole('button',{name:/editar caso/i}));
+  await screen.findByRole('dialog');
+  fireEvent.click(screen.getByRole('button',{name:/eliminar caso/i}));
+  await waitFor(()=>expect(state.delete).toHaveBeenCalledWith('C1'));
  });
 });

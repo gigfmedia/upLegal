@@ -2,14 +2,10 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useLawyerCase, useLawyerCases, type CaseStatus } from '@/hooks/useLawyerCases';
+import { useLawyerCase, useLawyerCases, type CaseStatus, type LawyerCase } from '@/hooks/useLawyerCases';
 import { useLawyerClients } from '@/hooks/useLawyerClients';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowLeft, Save, Trash2, Calendar, Plus, Sparkles, AlertTriangle } from 'lucide-react';
@@ -27,8 +23,7 @@ import { useAIFeatureAccess } from '@/hooks/useAISubscription';
 import { useCaseDocumentWorkspace } from '@/hooks/useCaseDocumentWorkspace';
 import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
 import { CaseDocuments } from '@/components/lawyer/CaseDocuments';
-
-const statuses: CaseStatus[] = ['new', 'quoted', 'paid', 'in_progress', 'delivered', 'closed', 'cancelled'];
+import { CaseEditDialog } from '@/components/lawyer/CaseEditDialog';
 
 const statusLabels: Record<CaseStatus, string> = {
   new: 'Nuevo',
@@ -64,18 +59,18 @@ export default function CaseDetailPage() {
 function CaseDetailContent() {
   const { caseId } = useParams<{ caseId: string }>();
   const { caseData, loading, error } = useLawyerCase(caseId);
-  const { updateCase, deleteCase } = useLawyerCases();
   const { clients } = useLawyerClients();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [status, setStatus] = useState<CaseStatus>('new');
-  const [clientId, setClientId] = useState<string>('none');
-  const [saving, setSaving] = useState(false);
   const [caseBookings, setCaseBookings] = useState<any[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
+  const [editOpen, setEditOpen] = useState(false);
+  const [patched, setPatched] = useState<Partial<LawyerCase> | null>(null);
+  // 4.34L: administrative editing lives in the Edit modal. The merged view
+  // reflects saves without reload (useLawyerCase fetches once per case).
+  useEffect(() => { setPatched(null); }, [caseId]);
+  const viewCase = caseData ? { ...caseData, ...patched } : null;
   const [searchParams, setSearchParams] = useSearchParams();
   // 4.34K: direct capability tabs. Backward compat: legacy ?tab=ai[&view=]
   // maps to the equivalent direct tab (4.34J deep links keep working).
@@ -102,25 +97,6 @@ function CaseDetailContent() {
   };
   const researchLocked = !accessLoading && !canUse('jurisprudence');
 
-  // hydrate when case loads
-  useState(() => {
-    if (caseData) {
-      setTitle(caseData.title);
-      setDescription(caseData.description || '');
-      setStatus(caseData.status);
-      setClientId(caseData.client_id || 'none');
-    }
-  });
-
-  // useEffect for initial load
-  if (caseData && title === '' && caseData.title) {
-    // initial sync (avoid flicker)
-    setTitle(caseData.title);
-    setDescription(caseData.description || '');
-    setStatus(caseData.status);
-    setClientId(caseData.client_id || 'none');
-  }
-
   useEffect(() => {
     if (!caseId || !user?.id) return;
     setLoadingBookings(true);
@@ -136,35 +112,6 @@ function CaseDetailContent() {
         setLoadingBookings(false);
       });
   }, [caseId, user?.id]);
-
-  const handleSave = async () => {
-    if (!caseId) return;
-    setSaving(true);
-    try {
-      await updateCase(caseId, {
-        title,
-        description: description || null,
-        status,
-        client_id: clientId === 'none' ? null : clientId,
-      });
-      toast({ title: 'Caso actualizado' });
-    } catch (e) {
-      toast({ title: 'Error', description: e instanceof Error ? e.message : 'No se pudo actualizar', variant: 'destructive' });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!caseId || !confirm('¿Eliminar caso?')) return;
-    try {
-      await deleteCase(caseId);
-      toast({ title: 'Caso eliminado' });
-      navigate('/lawyer/cases');
-    } catch (e) {
-      toast({ title: 'Error', description: e instanceof Error ? e.message : 'No se pudo eliminar', variant: 'destructive' });
-    }
-  };
 
   const handleNewAppointmentForCase = () => {
     if (!caseData?.client_id) {
@@ -200,17 +147,34 @@ function CaseDetailContent() {
       </Button>
 
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">{caseData.title}</h1>
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">{viewCase.title}</h1>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            {caseData.client && <span>Cliente: {caseData.client.name}</span>}
-            {caseData.practice_area && <Badge variant="secondary">{caseData.practice_area}</Badge>}
-            <Badge variant="outline">{sourceLabels[caseData.source] || caseData.source}</Badge>
-            <Badge>{statusLabels[caseData.status] || caseData.status}</Badge>
+            <Badge>{statusLabels[viewCase.status] || viewCase.status}</Badge>
+            {viewCase.client && (
+              <Link to={`/lawyer/clients/${viewCase.client_id}`} className="font-medium text-gray-900 hover:underline">
+                {viewCase.client.name}
+              </Link>
+            )}
+            {viewCase.practice_area && <Badge variant="secondary">{viewCase.practice_area}</Badge>}
+            {caseBookings.some((b) => b.status === 'confirmed') && (
+              <Link to="/lawyer/citas" className="hover:underline">Reserva confirmada</Link>
+            )}
           </div>
-          <p className="text-xs text-muted-foreground mt-1">Creado {new Date(caseData.created_at).toLocaleString('es-CL')} · Actualizado {new Date(caseData.updated_at).toLocaleString('es-CL')}</p>
         </div>
+        <Button type="button" variant="outline" onClick={() => setEditOpen(true)}>
+          Editar caso
+        </Button>
       </div>
+      {caseData && (
+        <CaseEditDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          caseData={caseData}
+          clients={clients}
+          onSaved={(row) => setPatched(row)}
+        />
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
         <TabsList className="sticky top-16 z-10 mb-4 flex h-auto w-full flex-wrap justify-start gap-0 border border-gray-200 bg-white shadow-sm p-0">
@@ -221,82 +185,24 @@ function CaseDetailContent() {
           <TabsTrigger value="activity" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Actividad</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="mt-4">
-          <Card>
-        <CardContent className="space-y-4 pt-6">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Título *</Label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Estado</Label>
-              <Select value={status} onValueChange={(v) => setStatus(v as CaseStatus)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {statuses.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {statusLabels[s]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Cliente</Label>
-              <Select value={clientId} onValueChange={setClientId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sin cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sin cliente</SelectItem>
-                  {clients.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name} {c.email ? `· ${c.email}` : ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {caseData.client && (
-                <Link to={`/lawyer/clients/${caseData.client_id}`} className="text-sm text-green-500 hover:text-green-600 hover:underline">
-                  Ver ficha de {caseData.client.name}
-                </Link>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label>Solicitud / cita de origen</Label>
-              <div className="text-sm">
-                {caseData.booking ? (
-                  <div className="border rounded p-2">
-                    <div className="font-medium">{caseData.booking.service_title || 'Reserva'}</div>
-                    <div className="text-xs text-gray-500">
-                      {bookingStatusLabels[caseData.booking.status] || statusLabels[caseData.booking.status as CaseStatus] || caseData.booking.status} · {caseData.booking.user_name}
-                    </div>
-                  </div>
-                ) : (
-                  <span className="text-gray-400">Sin reserva de origen</span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Descripción</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} placeholder="Descripción del caso" />
-          </div>
-
-          <div className="flex gap-2">
-            <Button onClick={handleSave} disabled={saving} className="bg-gray-900 hover:bg-green-900">
-              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />} Guardar
-            </Button>
-            <Button variant="outline" onClick={handleDelete} className="text-red-600 border-red-200 hover:bg-red-50">
-              <Trash2 className="h-4 w-4 mr-1" /> Eliminar
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        <TabsContent value="overview" className="mt-4 space-y-4">
+          {/* 4.34L: Resumen = workspace legal primero. Command Center es el
+              contenido primario; la edición administrativa vive en el modal. */}
+          {!accessLoading && canUse('case_analysis') && effectiveWorkspaceId && (
+            <AICaseCommandCenter
+              workspaceId={effectiveWorkspaceId}
+              workspaceName={viewCase.title}
+              onOpenWorkflowAction={(id) => setBriefWorkflowActionId(id)}
+              onViewDocuments={() => setActiveTab('documents')}
+              onViewIntelligence={() => setActiveTab('intelligence')}
+              onAskQuestion={(q) => openCaseChat(q)}
+              onWorkflowAsk={(q, actionId) => { setBriefWorkflowActionId(actionId); openCaseChat(q); }}
+              onInvestigate={() => setActiveTab('research')}
+            />
+          )}
+          {viewCase.description?.trim() ? (
+            <p className="whitespace-pre-wrap text-sm text-muted-foreground">{viewCase.description}</p>
+          ) : null}
 
       {/* Citas del caso — 1:N */}
       <Card className="mt-4">
@@ -338,34 +244,6 @@ function CaseDetailContent() {
         </CardContent>
       </Card>
 
-      {caseData.client_id && (
-        <Card className="mt-4">
-          <CardHeader>
-            <CardTitle className="text-base">Cliente asociado</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Link to={`/lawyer/clients/${caseData.client_id}`} className="text-green-500 hover:text-green-600 hover:underline">
-              Ver cliente
-            </Link>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 4.34K: AI executive summary lives in Resumen — no extra IA bucket click. */}
-      {!accessLoading && canUse('case_analysis') && effectiveWorkspaceId && (
-        <div className="mt-6">
-          <AICaseCommandCenter
-            workspaceId={effectiveWorkspaceId}
-            workspaceName={caseData.title}
-            onOpenWorkflowAction={(id) => setBriefWorkflowActionId(id)}
-            onViewDocuments={() => setActiveTab('documents')}
-            onViewIntelligence={() => setActiveTab('intelligence')}
-            onAskQuestion={(q) => openCaseChat(q)}
-            onWorkflowAsk={(q, actionId) => { setBriefWorkflowActionId(actionId); openCaseChat(q); }}
-            onInvestigate={() => setActiveTab('research')}
-          />
-        </div>
-      )}
         </TabsContent>
 
         <TabsContent value="documents" className="mt-4">
@@ -411,7 +289,7 @@ function CaseDetailContent() {
               workspaceId={effectiveWorkspaceId}
               locked={researchLocked}
               analyticsSurface="case"
-              initialQuery={caseData.title ? `¿Qué normativa y jurisprudencia aplican al caso "${caseData.title}"?` : undefined}
+              initialQuery={viewCase.title ? `¿Qué normativa y jurisprudencia aplican al caso "${viewCase.title}"?` : undefined}
             />
           ) : (
             <Card><CardContent className="py-10 text-center space-y-4">
@@ -436,7 +314,7 @@ function CaseDetailContent() {
           open={chatOpen}
           onOpenChange={(open) => { setChatOpen(open); if (!open) { setChatQuestion(null); setChatDocumentId(null); } }}
           workspaceId={effectiveWorkspaceId}
-          workspaceName={caseData.title}
+          workspaceName={viewCase.title}
           documents={chatDocumentsQuery.data ?? []}
           documentId={chatDocumentId}
           externalQuestion={chatQuestion}

@@ -99,7 +99,7 @@ export function AICaseCommandCenter({ workspaceId, workspaceName, onOpenWorkflow
       <div className="space-y-4">
         {brief && (
           <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Brain className="h-4 w-4 text-green-700" /> {workspaceName ? `Caso: ${workspaceName}` : 'Resumen del caso'}</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Brain className="h-4 w-4 text-green-700" /> Resumen del caso</CardTitle></CardHeader>
             <CardContent><p className="text-sm text-muted-foreground">No pudimos cargar las tareas pendientes.</p><Button variant="outline" size="sm" className="mt-2" onClick={() => workflowQuery.refetch()}>Reintentar</Button></CardContent>
           </Card>
         )}
@@ -124,7 +124,7 @@ export function AICaseCommandCenter({ workspaceId, workspaceName, onOpenWorkflow
         <CardContent className="space-y-3 text-center py-4">
           <Layers className="mx-auto h-8 w-8 text-gray-300" />
           <p className="text-sm font-medium text-gray-700">Este caso todavía no tiene documentos.</p>
-          <p className="text-xs text-muted-foreground">Agrega documentos para que LegalUp AI pueda analizar el caso.</p>
+          <p className="text-xs text-muted-foreground">Agrega documentos para comenzar el análisis del caso.</p>
           {onViewDocuments && <Button size="sm" onClick={onViewDocuments}>Agregar documento</Button>}
         </CardContent>
       </Card>
@@ -135,8 +135,8 @@ export function AICaseCommandCenter({ workspaceId, workspaceName, onOpenWorkflow
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">{workspaceName ? `Caso: ${workspaceName}` : 'Resumen del caso'}</CardTitle>
-          <p className="text-sm text-muted-foreground">Una visión rápida de lo que LegalUp AI ha identificado en tus documentos.</p>
+          <CardTitle className="flex items-center gap-2 text-base">Resumen del caso</CardTitle>
+          <p className="text-sm text-muted-foreground">Una visión rápida de la información, hallazgos y próximos pasos del caso.</p>
         </CardHeader>
         <CardContent className="space-y-4">
         {/* Métricas */}

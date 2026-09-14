@@ -42,6 +42,32 @@ describe('4.34J — IA navigation contract', () => {
   });
 });
 
+describe('4.34L — case first-view hierarchy', () => {
+  it('command center summary copy is product-converged, no duplicate case title', () => {
+    const c = read('src/components/legalup-ai/AICaseCommandCenter.tsx');
+    expect(c).toContain('Resumen del caso');
+    expect(c).toContain('Una visión rápida de la información, hallazgos y próximos pasos del caso.');
+    expect(c).not.toContain('Caso: ${workspaceName}');
+    expect(c).not.toContain('lo que LegalUp AI ha identificado');
+  });
+
+  it('inline edit form gone; edit modal owns admin fields + danger delete', () => {
+    const c = read('src/pages/lawyer/CaseDetailPage.tsx');
+    expect(c).toContain('CaseEditDialog');
+    expect(c).toContain('Editar caso');
+    expect(c).not.toContain('Eliminar caso?');
+    const d = read('src/components/lawyer/CaseEditDialog.tsx');
+    expect(d).toContain('Eliminar caso');
+    expect(d).toContain("confirm('¿Eliminar caso?')");
+  });
+
+  it('header links client by name only; no associated-client card', () => {
+    const c = read('src/pages/lawyer/CaseDetailPage.tsx');
+    expect(c).not.toContain('Cliente asociado');
+    expect(c).toContain('/lawyer/clients/${viewCase.client_id}');
+  });
+});
+
 describe('4.34J — documents label + notes parity', () => {
   it('top-level label sells analysis; route key unchanged', () => {
     const c = read('src/pages/lawyer/CaseDetailPage.tsx');
