@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { format, isToday, isYesterday } from 'date-fns';
+import { useState } from 'react';
+import { format, formatDistanceToNow, isToday, isYesterday } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
   FolderPlus,
@@ -17,42 +17,17 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { useAIDocuments } from '@/hooks/useAIDocuments';
-import { useAICaseWorkflow } from '@/hooks/useAICaseWorkflow';
 import {
-  useAICaseTimeline,
+  useCaseActivityItems,
+  type CaseActivityItemType,
+  type CaseBookingLike,
+  type LawyerCase,
+} from '@/hooks/useCaseActivityItems';
+import {
   useCreateAITimelineNote,
   useUpdateAITimelineNote,
   useDeleteAITimelineNote,
 } from '@/hooks/useAICaseTimeline';
-import type { LawyerCase } from '@/hooks/useLawyerCases';
-
-export type CaseActivityItemType =
-  | 'case_created'
-  | 'document_uploaded'
-  | 'document_analyzed'
-  | 'workflow_completed'
-  | 'appointment'
-  | 'note';
-
-/** Presentation-only model. No DB table, no migration. */
-export type CaseActivityItem = {
-  id: string;
-  type: CaseActivityItemType;
-  title: string;
-  description?: string | null;
-  occurredAt: string;
-  documentId?: string;
-};
-
-export type CaseBookingLike = {
-  id: string;
-  service_title?: string | null;
-  scheduled_date?: string | null;
-  scheduled_time?: string | null;
-  status?: string | null;
-  created_at?: string | null;
-};
 
 type Props = {
   caseData: LawyerCase;
@@ -93,83 +68,7 @@ function groupLabel(iso: string): string {
  * No AI entitlement required; works without workspace (case + bookings).
  */
 export function CaseActivity({ caseData, workspaceId, bookings, onOpenDocuments }: Props) {
-  const documentsQuery = useAIDocuments(workspaceId || undefined);
-  const workflowQuery = useAICaseWorkflow(workspaceId || undefined);
-  const timelineQuery = useAICaseTimeline(workspaceId || undefined);
-
-  const items = useMemo<CaseActivityItem[]>(() => {
-    const list: CaseActivityItem[] = [];
-
-    list.push({
-      id: `case-${caseData.id}`,
-      type: 'case_created',
-      title: 'Caso creado',
-      occurredAt: caseData.created_at,
-    });
-
-    for (const doc of documentsQuery.data ?? []) {
-      list.push({
-        id: `doc-${doc.id}`,
-        type: 'document_uploaded',
-        title: `${doc.original_filename} agregado`,
-        occurredAt: doc.created_at,
-        documentId: doc.id,
-      });
-      if (doc.analysis_status === 'ready') {
-        list.push({
-          id: `analysis-${doc.id}`,
-          type: 'document_analyzed',
-          title: `${doc.original_filename} analizado`,
-          occurredAt: doc.updated_at,
-          documentId: doc.id,
-        });
-      }
-    }
-
-    for (const item of workflowQuery.data?.items ?? []) {
-      if (item.status === 'completed' && item.completed_at) {
-        list.push({
-          id: `workflow-${item.id}`,
-          type: 'workflow_completed',
-          title: 'Acción completada',
-          description: item.title,
-          occurredAt: item.completed_at,
-        });
-      }
-    }
-
-    for (const b of bookings ?? []) {
-      const when = b.scheduled_date || b.created_at;
-      if (!when) continue;
-      list.push({
-        id: `booking-${b.id}`,
-        type: 'appointment',
-        title: 'Cita agendada',
-        description: b.service_title || null,
-        occurredAt: b.scheduled_time ? `${when.slice(0, 10)}T${b.scheduled_time}` : when,
-      });
-    }
-
-    for (const e of timelineQuery.data ?? []) {
-      if (e.event_type !== 'note') continue;
-      list.push({
-        id: `note-${e.id}`,
-        type: 'note',
-        title: e.title,
-        description: e.description,
-        occurredAt: e.event_date,
-      });
-    }
-
-    list.sort((a, b) => {
-      const diff = Date.parse(b.occurredAt) - Date.parse(a.occurredAt);
-      if (diff !== 0) return diff;
-      return a.id.localeCompare(b.id);
-    });
-    return list;
-  }, [caseData, documentsQuery.data, workflowQuery.data, timelineQuery.data, bookings]);
-
-  const loading = documentsQuery.isLoading || workflowQuery.isLoading || timelineQuery.isLoading;
+  const { items, loading, timelineById } = useCaseActivityItems(caseData, workspaceId, bookings);
 
   // 4.34J: note CRUD parity with legacy Timeline, reusing the same
   // ai_case_timeline_events model/hooks (RLS owner-scoped, 0 provider calls).
@@ -181,11 +80,6 @@ export function CaseActivity({ caseData, workspaceId, bookings, onOpenDocuments 
   const [noteError, setNoteError] = useState<string | null>(null);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState('');
-  const timelineById = useMemo(() => {
-    const map = new Map<string, { id: string; description: string | null }>();
-    for (const e of timelineQuery.data ?? []) map.set(`note-${e.id}`, { id: e.id, description: e.description });
-    return map;
-  }, [timelineQuery.data]);
 
   const handleCreateNote = () => {
     setNoteError(null);
@@ -238,8 +132,8 @@ export function CaseActivity({ caseData, workspaceId, bookings, onOpenDocuments 
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">Actividad del caso</h2>
-          <p className="text-sm text-muted-foreground">Revisa los movimientos recientes asociados a este caso.</p>
+          <h2 className="text-base font-semibold text-gray-900">Timeline del caso</h2>
+          <p className="text-sm text-muted-foreground">Actividad y actualizaciones del caso en orden cronológico.</p>
         </div>
         {workspaceId && !showNoteForm && (
           <Button type="button" variant="outline" size="sm" onClick={() => { setShowNoteForm(true); setNoteError(null); }}>
@@ -363,5 +257,62 @@ export function CaseActivity({ caseData, workspaceId, bookings, onOpenDocuments 
         })}
       </ol>
     </div>
+  );
+}
+
+function relativeTime(iso: string): string {
+  try {
+    return formatDistanceToNow(new Date(iso), { locale: es, addSuffix: true });
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * 4.34N — Actividad reciente para Resumen. Reutiliza la misma fuente
+ * (useCaseActivityItems): máximo 3 eventos, sin controles de edición
+ * (las notas se editan en la vista completa), 0 provider calls.
+ */
+export function CaseActivityPreview({
+  caseData,
+  workspaceId,
+  bookings,
+  onOpenTimeline,
+}: Props & { onOpenTimeline: () => void }) {
+  const { items, loading } = useCaseActivityItems(caseData, workspaceId, bookings);
+  const latest = items.slice(0, 3);
+
+  return (
+    <section aria-label="Actividad reciente">
+      <h3 className="mb-2 text-sm font-semibold text-gray-900">Actividad reciente</h3>
+      {loading && latest.length === 0 ? (
+        <Skeleton className="h-12 w-full" />
+      ) : latest.length === 0 ? null : (
+        <ul className="space-y-2">
+          {latest.map((item) => {
+            const meta = TYPE_META[item.type];
+            const Icon = meta.icon;
+            return (
+              <li key={item.id}>
+                <Card>
+                  <CardContent className="flex items-center gap-3 p-3">
+                    <span className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${meta.className}`}>
+                      <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium text-gray-900">{item.title}</span>
+                      <span className="block text-xs text-gray-400">{relativeTime(item.occurredAt)}</span>
+                    </span>
+                  </CardContent>
+                </Card>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <Button type="button" variant="outline" size="sm" className="mt-2" onClick={onOpenTimeline}>
+        Ver timeline completo
+      </Button>
+    </section>
   );
 }

@@ -128,3 +128,36 @@ describe('4.34L case first-view hierarchy',()=>{
   await waitFor(()=>expect(state.delete).toHaveBeenCalledWith('C1'));
  });
 });
+
+describe('4.34N case summary text and timeline parity',()=>{
+ it('resumen shows dates, preview and timeline tab; no LegalUp AI product copy',async()=>{
+  state.caseData={...(state.caseData as object),description:'Caso de prueba',created_at:'2026-08-02T10:00:00.000Z',updated_at:'2026-08-04T10:00:00.000Z'} as never;
+  renderCase('overview');
+  expect(screen.getByText(/Creado: 2 de agosto de 2026/)).toBeInTheDocument();
+  expect(screen.getByText(/Actualizado: 4 de agosto de 2026/)).toBeInTheDocument();
+  expect(screen.getByText('Caso de prueba')).toBeInTheDocument();
+  expect(screen.getByText('Actividad reciente')).toBeInTheDocument();
+  expect(screen.getByRole('button',{name:/ver timeline completo/i})).toBeInTheDocument();
+  expect(screen.getByRole('tab',{name:'Timeline del caso'})).toBeInTheDocument();
+  expect(screen.queryByText(/LegalUp AI/)).not.toBeInTheDocument();
+ });
+ it('preview caps at 3 items and CTA switches tab without reload',async()=>{
+  state.docs=[
+    {id:'d1',original_filename:'a.pdf',created_at:'2026-09-01T10:00:00.000Z',updated_at:'2026-09-01T10:00:00.000Z',analysis_status:'none'},
+    {id:'d2',original_filename:'b.pdf',created_at:'2026-09-02T10:00:00.000Z',updated_at:'2026-09-02T10:00:00.000Z',analysis_status:'none'},
+    {id:'d3',original_filename:'c.pdf',created_at:'2026-09-03T10:00:00.000Z',updated_at:'2026-09-03T10:00:00.000Z',analysis_status:'none'},
+    {id:'d4',original_filename:'d.pdf',created_at:'2026-09-04T10:00:00.000Z',updated_at:'2026-09-04T10:00:00.000Z',analysis_status:'none'},
+  ];
+  renderCase('overview');
+  await screen.findByText('Actividad reciente');
+  expect(screen.getByText('d.pdf agregado')).toBeInTheDocument();
+  expect(screen.queryByText('a.pdf agregado')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button',{name:/ver timeline completo/i}));
+  expect(screen.getByRole('tab',{name:'Timeline del caso',selected:true})).toBeInTheDocument();
+ });
+ it('empty description renders no description section',()=>{
+  state.caseData={...(state.caseData as object),description:''} as never;
+  const {container}=renderCase('overview');
+  expect(container.querySelector('p.whitespace-pre-wrap')).toBeNull();
+ });
+});

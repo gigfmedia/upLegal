@@ -65,9 +65,14 @@ describe('CaseActivity 4.30F — operational activity MVP', () => {
 
   it('replaces placeholder: renders case-created event from lawyer_cases.created_at', () => {
     setup({ workspaceId: null });
-    expect(screen.getByText('Actividad del caso')).toBeInTheDocument();
+    expect(screen.getByText('Timeline del caso')).toBeInTheDocument();
     expect(screen.getByText('Caso creado')).toBeInTheDocument();
     expect(screen.queryByText('La actividad del caso aparecerá aquí.')).not.toBeInTheDocument();
+  });
+  it('renders timeline heading with chronological copy', () => {
+    setup({ workspaceId: null });
+    expect(screen.getByText('Timeline del caso')).toBeInTheDocument();
+    expect(screen.getByText('Actividad y actualizaciones del caso en orden cronológico.')).toBeInTheDocument();
   });
 
   it('works without workspace (case + bookings only)', () => {

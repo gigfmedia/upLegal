@@ -42,6 +42,28 @@ describe('4.34J — IA navigation contract', () => {
   });
 });
 
+describe('4.34N — case summary text and timeline parity', () => {
+  it('resumen exposes dates, preview and timeline entry with converged copy', () => {
+    const c = read('src/pages/lawyer/CaseDetailPage.tsx');
+    expect(c).toContain('CaseActivityPreview');
+    expect(c).toContain("d 'de' MMMM 'de' yyyy");
+    expect(c).toContain('Timeline del caso');
+    expect(c).not.toContain('>Actividad<');
+  });
+
+  it('no standalone LegalUp AI product copy in case context', () => {
+    const c = read('src/pages/lawyer/CaseDetailPage.tsx') + read('src/components/lawyer/CaseActivity.tsx');
+    expect(c).not.toMatch(/LegalUp AI/);
+  });
+
+  it('preview is bounded, read-only and navigates without reload', () => {
+    const c = read('src/components/lawyer/CaseActivity.tsx');
+    expect(c).toContain('items.slice(0, 3)');
+    expect(c).toContain('Ver timeline completo');
+    expect(c).toContain('formatDistanceToNow');
+  });
+});
+
 describe('4.34L — case first-view hierarchy', () => {
   it('command center summary copy is product-converged, no duplicate case title', () => {
     const c = read('src/components/legalup-ai/AICaseCommandCenter.tsx');

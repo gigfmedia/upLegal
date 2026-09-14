@@ -80,7 +80,7 @@ describe('4.34E — deterministic workflow Core contract', () => {
   it('activity reflects completion without a second timeline', () => {
     const c = read('src/components/lawyer/CaseActivity.tsx');
     expect(c).toContain('workflow_completed');
-    expect(c).toContain('useAICaseWorkflow');
+    expect(read('src/hooks/useCaseActivityItems.ts')).toContain('useAICaseWorkflow');
   });
 
   it('copy is case-management language, not generator framing', () => {

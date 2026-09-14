@@ -17,7 +17,7 @@ import { AICaseCommandCenter } from '@/components/legalup-ai/AICaseCommandCenter
 import { AICaseIntelligence } from '@/components/legalup-ai/AICaseIntelligence';
 import { AIResearchPanel } from '@/components/legalup-ai/AIResearchPanel';
 import { AICaseChatDrawer } from '@/components/legalup-ai/AICaseChatDrawer';
-import { CaseActivity } from '@/components/lawyer/CaseActivity';
+import { CaseActivity, CaseActivityPreview } from '@/components/lawyer/CaseActivity';
 import { useAIDocuments } from '@/hooks/useAIDocuments';
 import { useAIFeatureAccess } from '@/hooks/useAISubscription';
 import { useCaseDocumentWorkspace } from '@/hooks/useCaseDocumentWorkspace';
@@ -182,7 +182,7 @@ function CaseDetailContent() {
           <TabsTrigger value="documents" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Documentos y análisis</TabsTrigger>
           <TabsTrigger value="intelligence" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Inteligencia del caso</TabsTrigger>
           <TabsTrigger value="research" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Investigar jurisprudencia</TabsTrigger>
-          <TabsTrigger value="activity" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Actividad</TabsTrigger>
+          <TabsTrigger value="activity" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Timeline del caso</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-4 space-y-4">
@@ -203,6 +203,16 @@ function CaseDetailContent() {
           {viewCase.description?.trim() ? (
             <p className="whitespace-pre-wrap text-sm text-muted-foreground">{viewCase.description}</p>
           ) : null}
+          <p className="text-xs text-muted-foreground">
+            Creado: {format(new Date(viewCase.created_at), "d 'de' MMMM 'de' yyyy", { locale: es })}
+            {' '}· Actualizado: {format(new Date(viewCase.updated_at), "d 'de' MMMM 'de' yyyy", { locale: es })}
+          </p>
+          <CaseActivityPreview
+            caseData={viewCase}
+            workspaceId={effectiveWorkspaceId}
+            bookings={caseBookings}
+            onOpenTimeline={() => setActiveTab('activity')}
+          />
 
       {/* Citas del caso — 1:N */}
       <Card className="mt-4">
