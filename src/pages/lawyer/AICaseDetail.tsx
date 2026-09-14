@@ -32,6 +32,7 @@ import {
 } from '@/hooks/useAICaseTimeline';
 import { AIPricingModal } from '@/components/legalup-ai/AIPricingModal';
 import { AICaseDocumentsWorkspace } from '@/components/legalup-ai/AICaseDocumentsWorkspace';
+import { CaseDescriptionCard } from '@/components/legalup-ai/CaseDescriptionCard';
 import { AIResearchPanel } from '@/components/legalup-ai/AIResearchPanel';
 import { AICaseTimeline } from '@/components/legalup-ai/AICaseTimeline';
 import { AICaseIntelligence } from '@/components/legalup-ai/AICaseIntelligence';
@@ -194,14 +195,7 @@ export default function AICaseDetail() {
             </div>
 
             {workspace.description ? (
-              <Card className="mb-4">
-                <CardContent className="p-5">
-                  <h2 className="text-sm font-semibold text-gray-900">Descripción</h2>
-                  <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">
-                    {workspace.description}
-                  </p>
-                </CardContent>
-              </Card>
+              <CaseDescriptionCard description={workspace.description} />
             ) : null}
 
             <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue={defaultTab} className="mb-6">

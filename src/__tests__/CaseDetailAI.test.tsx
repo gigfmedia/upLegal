@@ -31,8 +31,8 @@ vi.mock('@/hooks/useAIDocuments',async()=>{
  return {...actual,useAIDocuments:()=>({data:state.docs,isLoading:false,isError:false,refetch:vi.fn()}),useAIDocumentAnalysis:()=>({data:null}),useAnalyzeAIDocument:()=>({mutate:state.analyze,isPending:false})};
 });
 vi.mock('@/components/legalup-ai/AIDocumentList',()=>({AIDocumentList:({documents,onSelect}:{documents:{id:string;original_filename:string}[];onSelect:(id:string)=>void})=><div>{documents.map(doc=><button key={doc.id} onClick={()=>onSelect(doc.id)}>{doc.original_filename}</button>)}</div>}));
-vi.mock('@/components/legalup-ai/AIAnalysisView',()=>({AIAnalysisView:({onAnalyze}:{onAnalyze:()=>void})=><button onClick={onAnalyze}>Analizar</button>}));
 vi.mock('@/components/legalup-ai/AICaseCommandCenter',()=>({AICaseCommandCenter:({workspaceId}:{workspaceId:string})=><div data-testid="cc">{workspaceId}</div>}));
+vi.mock('@/components/legalup-ai/AIAnalysisView',()=>({AIAnalysisView:({onAnalyze}:{onAnalyze:()=>void})=><button onClick={onAnalyze}>Analizar</button>}));
 vi.mock('@/components/legalup-ai/AICaseIntelligence',()=>({AICaseIntelligence:({workspaceId}:{workspaceId:string})=><div data-testid="intel">{workspaceId}</div>}));
 vi.mock('@/components/legalup-ai/AIResearchPanel',()=>({AIResearchPanel:({workspaceId,locked}:{workspaceId:string;locked?:boolean})=><div data-testid="research">{workspaceId}:{locked?'locked':'open'}</div>}));
 vi.mock('@/components/legalup-ai/AICaseChatDrawer',()=>({AICaseChatDrawer:()=><div data-testid="chat-drawer">chat</div>}));
@@ -132,9 +132,10 @@ describe('4.34L case first-view hierarchy',()=>{
 describe('4.34N case summary text and timeline parity',()=>{
  it('resumen shows dates, preview and timeline tab; no LegalUp AI product copy',async()=>{
   state.caseData={...(state.caseData as object),description:'Caso de prueba',created_at:'2026-08-02T10:00:00.000Z',updated_at:'2026-08-04T10:00:00.000Z'} as never;
-  renderCase('overview');
-  expect(screen.getByText(/Creado: 2 de agosto de 2026/)).toBeInTheDocument();
-  expect(screen.getByText(/Actualizado: 4 de agosto de 2026/)).toBeInTheDocument();
+  const {container} = renderCase('overview');
+  const text = container.textContent ?? '';
+  expect(text).toContain('Creado: 2 de agosto 2026');
+  expect(text).toContain('Actualizado: 4 de agosto 2026');
   expect(screen.getByText('Caso de prueba')).toBeInTheDocument();
   expect(screen.getByText('Actividad reciente')).toBeInTheDocument();
   expect(screen.getByRole('button',{name:/ver timeline completo/i})).toBeInTheDocument();
@@ -159,5 +160,44 @@ describe('4.34N case summary text and timeline parity',()=>{
   state.caseData={...(state.caseData as object),description:''} as never;
   const {container}=renderCase('overview');
   expect(container.querySelector('p.whitespace-pre-wrap')).toBeNull();
+ });
+});
+
+describe('4.34Q header description above tabs',()=>{
+ it('description card renders once above tabs with legacy copy',()=>{
+  state.caseData={...(state.caseData as object),description:'Línea uno\n- item 1\n- item 2'} as never;
+  const {container}=renderCase('overview');
+  expect(screen.getByText('Descripción')).toBeInTheDocument();
+  const card=(screen.getByText('Descripción').closest('.mb-4') ?? screen.getByText('Descripción').closest('div'));
+  expect(card).not.toBeNull();
+  const tabs=container.querySelector('[role=tablist]');
+  expect(tabs).not.toBeNull();
+  expect(card!.compareDocumentPosition(tabs!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(screen.getAllByText(/Línea uno/).length).toBe(1);
+ });
+ it('description persists across all tabs',()=>{
+  state.caseData={...(state.caseData as object),description:'Contexto persistente'} as never;
+  for(const tab of ['overview','documents','research','intelligence','activity']){
+   cleanup();
+   renderCase(tab as never);
+   expect(screen.getByText('Contexto persistente')).toBeInTheDocument();
+  }
+ });
+ it('empty description renders no card',()=>{
+  state.caseData={...(state.caseData as object),description:''} as never;
+  renderCase('overview');
+  expect(screen.queryByText('Descripción')).not.toBeInTheDocument();
+ });
+ it('edit description save updates visible card without reload',async()=>{
+  state.caseData={...(state.caseData as object),description:'Vieja'} as never;
+  state.update.mockResolvedValue({id:'C1',description:'Nueva descripción'});
+  renderCase('overview');
+  expect(screen.getByText('Vieja')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button',{name:/editar caso/i}));
+  await screen.findByRole('dialog');
+  fireEvent.change(screen.getByDisplayValue('Vieja'),{target:{value:'Nueva descripción'}});
+  fireEvent.click(screen.getByRole('button',{name:/^guardar$/i}));
+  await waitFor(()=>expect(screen.getByText('Nueva descripción')).toBeInTheDocument());
+  expect(screen.queryByText('Vieja')).not.toBeInTheDocument();
  });
 });

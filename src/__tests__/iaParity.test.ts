@@ -46,7 +46,7 @@ describe('4.34N — case summary text and timeline parity', () => {
   it('resumen exposes dates, preview and timeline entry with converged copy', () => {
     const c = read('src/pages/lawyer/CaseDetailPage.tsx');
     expect(c).toContain('CaseActivityPreview');
-    expect(c).toContain("d 'de' MMMM 'de' yyyy");
+    expect(c).toContain("d 'de' MMMM yyyy");
     expect(c).toContain('Timeline del caso');
     expect(c).not.toContain('>Actividad<');
   });

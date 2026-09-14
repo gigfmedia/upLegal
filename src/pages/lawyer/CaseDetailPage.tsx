@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useLawyerCase, useLawyerCases, type CaseStatus, type LawyerCase } from '@/hooks/useLawyerCases';
 import { useLawyerClients } from '@/hooks/useLawyerClients';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowLeft, Save, Trash2, Calendar, Plus, Sparkles, AlertTriangle } from 'lucide-react';
+import { Loader2, ArrowLeft, Calendar, CalendarDays, Clock, Plus, Sparkles, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { format } from 'date-fns';
@@ -24,6 +24,7 @@ import { useCaseDocumentWorkspace } from '@/hooks/useCaseDocumentWorkspace';
 import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
 import { CaseDocuments } from '@/components/lawyer/CaseDocuments';
 import { CaseEditDialog } from '@/components/lawyer/CaseEditDialog';
+import { CaseDescriptionCard } from '@/components/legalup-ai/CaseDescriptionCard';
 
 const statusLabels: Record<CaseStatus, string> = {
   new: 'Nuevo',
@@ -176,6 +177,20 @@ function CaseDetailContent() {
         />
       )}
 
+      {/* 4.34Q: persistent Case context above tabs (legacy hierarchy). */}
+      <div className="my-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5">
+          <CalendarDays className="h-4 w-4" aria-hidden="true" />
+          Creado: {format(new Date(viewCase.created_at), "d 'de' MMMM yyyy", { locale: es })}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <Clock className="h-4 w-4" aria-hidden="true" />
+          Actualizado: {format(new Date(viewCase.updated_at), "d 'de' MMMM yyyy", { locale: es })}
+        </span>
+      </div>
+
+      <CaseDescriptionCard description={viewCase.description} />
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
         <TabsList className="sticky top-16 z-10 mb-4 flex h-auto w-full flex-wrap justify-start gap-0 border border-gray-200 bg-white shadow-sm p-0">
           <TabsTrigger value="overview" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Resumen</TabsTrigger>
@@ -200,13 +215,6 @@ function CaseDetailContent() {
               onInvestigate={() => setActiveTab('research')}
             />
           )}
-          {viewCase.description?.trim() ? (
-            <p className="whitespace-pre-wrap text-sm text-muted-foreground">{viewCase.description}</p>
-          ) : null}
-          <p className="text-xs text-muted-foreground">
-            Creado: {format(new Date(viewCase.created_at), "d 'de' MMMM 'de' yyyy", { locale: es })}
-            {' '}· Actualizado: {format(new Date(viewCase.updated_at), "d 'de' MMMM 'de' yyyy", { locale: es })}
-          </p>
           <CaseActivityPreview
             caseData={viewCase}
             workspaceId={effectiveWorkspaceId}
