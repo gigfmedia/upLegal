@@ -10,6 +10,7 @@ import { useAICaseIntelligence } from '@/hooks/useAIDocuments';
 import { useAIFeatureAccess } from '@/hooks/useAISubscription';
 import { useAICaseWorkflow, useSyncAICaseWorkflow, useUpdateAICaseWorkflow } from '@/hooks/useAICaseWorkflow';
 import { EvidenceNavigator, type EvidenceReference } from './EvidenceNavigator';
+import { fragmentLabelFromId } from '@/lib/evidenceLocation';
 import { AICaseWorkflowActionDrawer } from './AICaseWorkflowActionDrawer';
 import { deriveCaseActions } from '@/lib/caseActions';
 
@@ -228,7 +229,7 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToD
               {data.facts.map((f, i) => (
                 <div key={i} className="rounded border bg-gray-50/60 p-3">
                   <p className="text-sm text-gray-800">{f.text}</p>
-                  <p className="mt-1 text-xs text-gray-500">Fuentes: {f.source_ids.join(', ')} {f.evidences[0]?.page_number ? `· Página ${f.evidences[0].page_number}` : ''}</p>
+                  <p className="mt-1 text-xs text-gray-500">Fuentes: {f.source_ids.join(', ')} {fragmentLabelFromId(f.evidences[0]?.fragment_id) ? `· ${fragmentLabelFromId(f.evidences[0]?.fragment_id)}` : ''}</p>
                   {f.evidences[0]?.evidence && (
                     <Button variant="ghost" size="sm" className="mt-1 h-7 px-2 text-xs" onClick={() => { setEvidenceRef({ sourceId: f.source_ids[0], documentId: f.source_ids[0], fragmentId: f.evidences[0].fragment_id || null, pageNumber: f.evidences[0].page_number, evidence: f.evidences[0].evidence, sourceType: 'document', documentFilename: f.evidences[0].document_filename }); setEvidenceOpen(true); }}>
                       Ver evidencia

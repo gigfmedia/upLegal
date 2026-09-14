@@ -21,3 +21,17 @@ export function hasCanonicalDocumentReference(doc, userId, workspace) {
   return Boolean(doc.id && doc.workspace_id) &&
     doc.file_path === `${userId}/${doc.workspace_id}/${doc.id}/original.pdf`;
 }
+
+// 4.34C: honest evidence location. Extraction preserves no physical PDF page
+// boundaries (concatenated text + char-window chunks), so a chunk index must
+// never be presented as a physical page. page_number stays null (reserved for
+// future certified page tracking); fragment_index carries chunk order.
+export function fragmentIndexFromId(fragmentId) {
+  if (typeof fragmentId !== 'string') return null;
+  const n = parseInt(fragmentId.split('::').pop() || '', 10);
+  return Number.isFinite(n) ? n : null;
+}
+
+export function honestEvidenceLocation(fragmentId) {
+  return { fragment_index: fragmentIndexFromId(fragmentId), page_number: null };
+}

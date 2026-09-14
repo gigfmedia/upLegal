@@ -1,4 +1,4 @@
-import { hasCanonicalDocumentReference, resolveAnalysisModel } from './server/ai/coreAuthority.mjs';
+import { hasCanonicalDocumentReference, resolveAnalysisModel, honestEvidenceLocation } from './server/ai/coreAuthority.mjs';
 import { consultationBase, bookingClientTotal, bookingPricingSnapshot } from './shared/bookingPricing.mjs';
 import { confirmCompanyCancellation } from './server/subscriptions/companyCancellation.mjs';
 import dotenv from 'dotenv';
@@ -9029,7 +9029,7 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
       const verified = items.filter((txt) => keptMap.has(String(txt)));
       const claimsWithEvidence = verified.map((txt) => {
         const k = keptMap.get(String(txt));
-        return { text: String(txt), source_id: k.source_id, fragment_id: k.fragment_id, evidence: k.fragmento, page_number: k.fragment_id ? parseInt(String(k.fragment_id).split('::').pop() || '0', 10) + 1 : null };
+        return { text: String(txt), source_id: k.source_id, fragment_id: k.fragment_id, evidence: k.fragmento, ...honestEvidenceLocation(k.fragment_id) };
       });
       return { verified, claims: claimsWithEvidence };
     };
@@ -9058,9 +9058,8 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
       usage,
     });
 
-    // Reanalizar reemplaza el análisis anterior del documento.
-    await supabase.from('ai_document_analyses').delete().eq('document_id', doc.id);
-
+    // Reanalizar reemplaza el análisis anterior SOLO si el nuevo persiste (4.34C):
+    // el análisis bueno sigue disponible hasta que el reemplazo esté validado y guardado.
     const { data: saved, error: insertError } = await supabase
       .from('ai_document_analyses')
       .insert({
@@ -9086,6 +9085,9 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
       console.error('[LegalUpAI] Error guardando análisis:', insertError);
       throw new Error('No se pudo guardar el análisis.');
     }
+
+    // Recién ahora se retira el análisis anterior (el bueno sobrevivió a un fallo de persistencia).
+    await supabase.from('ai_document_analyses').delete().eq('document_id', doc.id).neq('id', saved.id);
 
     await supabase.from('ai_documents').update({ analysis_status: 'ready', analysis_error: null, model }).eq('id', doc.id);
 
@@ -9144,6 +9146,71 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
       } catch { /* la notificación no debe romper la respuesta */ }
     }
     res.status(500).json({ error: message });
+  }
+});
+
+// GET /api/ai/documents/:id/open — URL firmada de corta duración para vista previa (4.34C).
+// 0 LLM. Solo autenticación + ownership canónico 4.34B (sin nuevo gate de entitlement:
+// la preview ya era accesible vía Storage RLS owner-scoped).
+app.get('/api/ai/documents/:id/open', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    const doc = await getAIDocumentOwned(req.params.id, userId);
+    if (!doc) return res.status(404).json({ error: 'Documento no encontrado.' });
+    const { data, error } = await supabase.storage
+      .from(AI_DOCUMENTS_BUCKET)
+      .createSignedUrl(doc.file_path, 3600);
+    if (error || !data?.signedUrl) {
+      console.error('[LegalUpAI] open error:', error?.message);
+      return res.status(404).json({ error: 'No se pudo abrir el documento.', code: 'AI_DOCUMENT_OPEN_FAILED' });
+    }
+    res.json({ signedUrl: data.signedUrl, expiresIn: 3600, document_id: doc.id, filename: doc.original_filename });
+  } catch (error) {
+    console.error('[LegalUpAI] open error:', error);
+    res.status(500).json({ error: 'No se pudo abrir el documento.' });
+  }
+});
+
+// DELETE /api/ai/documents/:id — borrado consistente orquestado en servidor (4.34C).
+// Storage primero → fila después. Si el objeto ya no existe, igual se limpia la fila
+// (idempotente, converge en reintentos). Nunca reporta éxito total si algo falló.
+// 0 LLM. Los análisis en cascada los limpia el FK.
+app.delete('/api/ai/documents/:id', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    const doc = await getAIDocumentOwned(req.params.id, userId);
+    if (!doc) return res.status(404).json({ error: 'Documento no encontrado.' });
+
+    let storageCleaned = true;
+    const { error: storageError } = await supabase.storage
+      .from(AI_DOCUMENTS_BUCKET)
+      .remove([doc.file_path]);
+    if (storageError) {
+      const missing = /not found|does not exist|nosuchkey/i.test(storageError.message || '');
+      storageCleaned = missing;
+      if (!missing) {
+        console.error('[LegalUpAI] delete storage error:', storageError.message);
+        return res.status(502).json({ error: 'No se pudo eliminar el archivo. Inténtalo de nuevo.', code: 'AI_DOCUMENT_STORAGE_DELETE_FAILED' });
+      }
+    }
+
+    const { error: dbError } = await supabase
+      .from('ai_documents')
+      .delete()
+      .eq('id', doc.id)
+      .eq('lawyer_id', userId);
+    if (dbError) {
+      console.error('[LegalUpAI] delete db error:', dbError.message);
+      return res.status(500).json({ error: 'No se pudo eliminar el documento.', code: 'AI_DOCUMENT_DELETE_FAILED', storageCleaned });
+    }
+    res.json({ deleted: true, storageCleaned });
+  } catch (error) {
+    console.error('[LegalUpAI] delete error:', error);
+    res.status(500).json({ error: 'No se pudo eliminar el documento.' });
   }
 });
 
@@ -9558,8 +9625,7 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
           const hasEvidence = normEvidence && normDoc.includes(normEvidence.slice(0, 30));
           const validFragment = String(source.fragment_id || '').startsWith(`document::${source.document_id}::`);
           if (hasEvidence && validFragment) {
-            const idx = parseInt(String(source.fragment_id).split('::').pop() || '0', 10);
-            return { document_id: source.document_id, file_name: source.file_name, fragment_id: source.fragment_id, page_number: Number.isFinite(idx) ? idx + 1 : null, evidence: source.evidence };
+            return { document_id: source.document_id, file_name: source.file_name, fragment_id: source.fragment_id, ...honestEvidenceLocation(source.fragment_id), evidence: source.evidence };
           }
         } catch {}
         return { document_id: source.document_id, file_name: source.file_name };
@@ -9608,7 +9674,7 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
                     source_id: ec.source_id,
                     fragment_id: ec.fragment_id,
                     evidence: ec.evidence,
-                    page_number: ec.page_number || null,
+                    ...honestEvidenceLocation(ec.fragment_id),
                     source: { id: doc.id, kind: 'document' },
                   });
                 }
@@ -9621,21 +9687,19 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
             for (const k of matchedList) {
               const targetIdx = sources.findIndex((s) => s.document_id === k.source_id && (!s.fragment_id || !s.evidence));
               if (targetIdx >= 0) {
-                const idx = k.fragment_id ? parseInt(String(k.fragment_id).split('::').pop() || '0', 10) : 0;
                 sources[targetIdx] = {
                   ...sources[targetIdx],
                   fragment_id: k.fragment_id || sources[targetIdx].fragment_id,
-                  page_number: Number.isFinite(idx) ? idx + 1 : (k.page_number || null),
+                  ...honestEvidenceLocation(k.fragment_id || sources[targetIdx].fragment_id),
                   evidence: k.fragmento || k.evidence || sources[targetIdx].evidence,
                 };
               } else if (!sources.some((s) => s.document_id === k.source_id && s.fragment_id === k.fragment_id)) {
-                const idx = k.fragment_id ? parseInt(String(k.fragment_id).split('::').pop() || '0', 10) : 0;
                 const docForName = readyDocs.find((d) => d.id === k.source_id);
                 sources.push({
                   document_id: k.source_id,
                   file_name: docForName?.original_filename || k.source_id,
                   fragment_id: k.fragment_id,
-                  page_number: Number.isFinite(idx) ? idx + 1 : (k.page_number || null),
+                  ...honestEvidenceLocation(k.fragment_id),
                   evidence: k.fragmento || k.evidence,
                 });
               }
@@ -9654,20 +9718,18 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
                 const k = kept[0];
                 const targetIdx = sources.findIndex((s) => s.document_id === doc.id && (!s.fragment_id || !s.evidence));
                 if (targetIdx >= 0) {
-                  const idx = k.fragment_id ? parseInt(String(k.fragment_id).split('::').pop() || '0', 10) : 0;
                   sources[targetIdx] = {
                     ...sources[targetIdx],
                     fragment_id: k.fragment_id || sources[targetIdx].fragment_id,
-                    page_number: Number.isFinite(idx) ? idx + 1 : null,
+                    ...honestEvidenceLocation(k.fragment_id || sources[targetIdx].fragment_id),
                     evidence: k.fragmento || sources[targetIdx].evidence,
                   };
                 } else if (!sources.some((s) => s.document_id === doc.id)) {
-                  const idx = k.fragment_id ? parseInt(String(k.fragment_id).split('::').pop() || '0', 10) : 0;
                   sources.push({
                     document_id: doc.id,
                     file_name: doc.original_filename,
                     fragment_id: k.fragment_id,
-                    page_number: Number.isFinite(idx) ? idx + 1 : null,
+                    ...honestEvidenceLocation(k.fragment_id),
                     evidence: k.fragmento,
                   });
                 }
@@ -10367,7 +10429,7 @@ app.get('/api/ai/cases/:caseId/intelligence', async (req, res) => {
           source_id: c.source_id,
           fragment_id: c.fragment_id || null,
           evidence: c.evidence || '',
-          page_number: c.page_number || null,
+          ...honestEvidenceLocation(c.fragment_id),
           document_filename: doc?.original_filename || c.source_id,
         });
       }
@@ -10555,7 +10617,8 @@ app.patch('/api/ai/cases/:caseId/workflow/:itemId', async (req, res) => {
 });
 
 // GET /api/ai/documents/:documentId/evidence/:fragmentId — Evidencia contextual (Fase 4.8).
-// Devuelve solo el fragmento solicitado con page_number y evidence, validando ownership.
+// Devuelve solo el fragmento solicitado con ubicación honesta y evidence, validando ownership.
+// 4.34C: fragment_index es orden de chunk, nunca página física (la extracción no preserva páginas).
 app.get('/api/ai/documents/:documentId/evidence/:fragmentId', async (req, res) => {
   let userId = null;
   try {
@@ -10580,7 +10643,8 @@ app.get('/api/ai/documents/:documentId/evidence/:fragmentId', async (req, res) =
     res.json({
       document_id: doc.id,
       fragment_id: fragment.id,
-      page_number: fragment.index + 1,
+      fragment_index: fragment.index,
+      page_number: null,
       evidence: fragment.text,
       context_before: prev,
       context_after: next,

@@ -3,9 +3,10 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } f
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { FileText, ExternalLink, AlertTriangle } from 'lucide-react';
+import { FileText, ExternalLink, AlertTriangle, Loader2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { fragmentLabelFromId } from '@/lib/evidenceLocation';
+import { supabase } from '@/lib/supabaseClient';
 import posthog from 'posthog-js';
 
 export type EvidenceReference = {
@@ -29,29 +30,48 @@ export function EvidenceNavigator({ open, onOpenChange, reference, surface = 'ca
   const isMobile = useIsMobile();
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [loadingUrl, setLoadingUrl] = useState(false);
+  const [urlError, setUrlError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open && reference) {
       posthog.capture('ai_evidence_opened', { source_type: reference.sourceType || 'document', surface });
     }
+    if (!open) {
+      setSignedUrl(null);
+      setUrlError(null);
+      setLoadingUrl(false);
+    }
   }, [open, reference, surface]);
 
+  const getApiBaseUrl = (): string => {
+    const base = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
+    return (base || 'http://localhost:3001').replace(/\/+$/, '');
+  };
+
+  // Apertura segura: el backend valida ownership canónico 4.34B antes de firmar.
   const handleOpenDocument = async () => {
-    if (!reference?.documentId) return;
+    if (!reference?.documentId || loadingUrl) return;
     setLoadingUrl(true);
+    setUrlError(null);
     try {
-      const { getAIDocumentSignedUrl } = await import('@/hooks/useAIDocuments');
-      // Need file_path from reference? For now, we need to fetch via API
-      // Use the evidence endpoint to get signed URL
-      const token = (await import('@/lib/supabaseClient')).supabase.auth.getSession().then(r=>r.data.session?.access_token);
-      // Simplified: try to get signed URL via hook if available
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error('Sesión no válida. Vuelve a iniciar sesión.');
+      const res = await fetch(`${getApiBaseUrl()}/api/ai/documents/${reference.documentId}/open`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || !body?.signedUrl) throw new Error(body?.error || 'No se pudo abrir el documento.');
+      setSignedUrl(body.signedUrl as string);
       posthog.capture('ai_evidence_document_opened', { source_type: reference.sourceType || 'document', surface });
-    } catch {
-      // ignore
+    } catch (e) {
+      setUrlError(e instanceof Error ? e.message : 'No se pudo abrir el documento.');
     } finally {
       setLoadingUrl(false);
     }
   };
+
+  const fragmentLabel = fragmentLabelFromId(reference?.fragmentId);
 
   const content = (
     <div className="space-y-4">
@@ -61,17 +81,27 @@ export function EvidenceNavigator({ open, onOpenChange, reference, surface = 'ca
             <Badge variant="secondary" className={reference.sourceType === 'document' ? 'bg-teal-100 text-teal-800' : reference.sourceType === 'jurisprudence' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}>
               {reference.sourceType === 'document' ? 'Documento' : reference.sourceType === 'jurisprudence' ? 'Jurisprudencia' : reference.sourceType === 'normative' ? 'Normativa' : 'Doctrina'}
             </Badge>
-            {reference.pageNumber && <span className="text-xs text-muted-foreground">Página {reference.pageNumber}</span>}
+            {fragmentLabel && <span className="text-xs text-muted-foreground">{fragmentLabel}</span>}
             {reference.documentFilename && <span className="text-xs text-muted-foreground">{reference.documentFilename}</span>}
           </div>
           <div className="rounded-lg border bg-gray-50 p-4">
             <p className="whitespace-pre-wrap text-sm italic leading-relaxed text-gray-700">"{reference.evidence}"</p>
             <p className="mt-2 text-xs text-muted-foreground">Esta información proviene de los documentos del caso.</p>
           </div>
-          {reference.documentId && (
+          {reference.documentId && !signedUrl && (
             <Button variant="outline" size="sm" onClick={handleOpenDocument} disabled={loadingUrl} className="w-full">
-              {loadingUrl ? 'Cargando...' : <><ExternalLink className="mr-2 h-4 w-4" /> Abrir documento</>}
+              {loadingUrl ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Cargando…</> : <><ExternalLink className="mr-2 h-4 w-4" /> Abrir documento</>}
             </Button>
+          )}
+          {urlError && (
+            <p role="alert" className="flex items-start gap-2 text-xs text-destructive">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />{urlError}
+            </p>
+          )}
+          {signedUrl && (
+            <div className="h-[50vh] w-full overflow-hidden rounded-lg border bg-gray-50">
+              <iframe src={signedUrl} title="Vista previa del documento" className="h-full w-full" loading="lazy" />
+            </div>
           )}
         </>
       ) : (

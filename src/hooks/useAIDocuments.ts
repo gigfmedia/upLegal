@@ -232,24 +232,22 @@ export function useUploadAIDocument(workspace: string | undefined | (() => Promi
   });
 }
 
-/** Elimina un documento (fila + archivo en storage). El análisis se borra en cascada. */
+/** Elimina un documento vía orquestación servidor (Storage → fila, 4.34C).
+ * Nunca reporta éxito si la limpieza quedó incompleta; reintentar converge. */
 export function useDeleteAIDocument() {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, AIDocumentListItem>({
     mutationFn: async (doc) => {
-      const { error: delError } = await supabase.from('ai_documents').delete().eq('id', doc.id);
-      if (delError) {
-        console.error('[LegalUpAI] Error eliminando documento:', delError);
-        throw new Error('No se pudo eliminar el documento.');
-      }
+      const token = await getAccessToken();
+      if (!token) throw new Error('Sesión no válida. Vuelve a iniciar sesión.');
 
-      const { error: storageError } = await supabase.storage
-        .from(AI_DOCUMENTS_BUCKET)
-        .remove([doc.file_path]);
-      if (storageError) {
-        console.error('[LegalUpAI] Error eliminando archivo:', storageError);
-      }
+      const res = await fetch(`${getApiBaseUrl()}/api/ai/documents/${doc.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body?.error || 'No se pudo eliminar el documento.');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: AI_DOCUMENTS_QUERY_KEY });
