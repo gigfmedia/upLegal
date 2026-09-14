@@ -10561,14 +10561,10 @@ app.post('/api/ai/cases/:caseId/workflow/sync', async (req, res) => {
     if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
     const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
     if (entitlement.res) return entitlement.res;
-    // 4.29D: workflow generation is advanced — pro_limited cannot call sync
-    {
-      const _access = await getAILawyerAccess(userId);
-      const _plan = getPlanForAccess(_access);
-      if (!serverCanUseAIFeature('workflow_generation', _plan)) {
-        return res.status(403).json({ error: 'Función no incluida en tu plan.', code: 'AI_FEATURE_NOT_AVAILABLE', feature: 'workflow_generation' });
-      }
-    }
+    // 4.34E: deterministic sync derives from already-authorized stored Case
+    // intelligence (0 provider calls) — a Core Case capability, not a premium
+    // generation operation. `workflow_generation` is preserved as a feature key
+    // for future genuinely generative workflow use.
     const items = await syncCaseWorkflowItems(workspace.id, userId);
     res.json({ items });
   } catch (error) {

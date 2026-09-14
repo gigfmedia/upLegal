@@ -79,7 +79,8 @@ describe('4.34B actual Core handlers and real entitlement/metering helpers',()=>
  it.each(['provision','process','analyze','intelligence'])('cross-tenant %s denied',async route=>{const h=harness();h.asForeign();expect((await h.call(route)).statusCode).toBe(404);expect(h.download).not.toHaveBeenCalled();expect(h.provider).not.toHaveBeenCalled();});
  it('unknown model never reaches provider',async()=>{const h=harness();expect((await h.call('analyze',{model:'attacker/expensive-model'})).statusCode).toBe(400);expect(h.provider).not.toHaveBeenCalled();});
  it('existing selector model accepted',async()=>{const h=harness();expect((await h.call('analyze',{model:'openai/gpt-4o-mini'})).statusCode).toBe(200);expect(h.provider.mock.calls[0][0].model).toBe('openai/gpt-4o-mini');});
- it.each(['research','sync'])('Pro advanced %s remains denied without provider',async route=>{const h=harness();expect((await h.call(route,{query:'Contrato y normativa aplicable'})).statusCode).toBe(403);expect(h.provider).not.toHaveBeenCalled();});
+ it.each(['research'])('Pro advanced %s remains denied without provider',async route=>{const h=harness();expect((await h.call(route,{query:'Contrato y normativa aplicable'})).statusCode).toBe(403);expect(h.provider).not.toHaveBeenCalled();});
+ // 4.34E: workflow/sync is deterministic Core for Pro (no gate, 0 provider); see workflowCore.test.mjs.
   it('monthly provider quota blocks analysis but not deterministic intelligence',async()=>{const h=harness();h.rows.ai_usage_monthly.push({lawyer_id:user,period_start:new Date().toISOString().slice(0,7)+'-01',total_tokens:20000000});expect((await h.call('analyze')).statusCode).toBe(429);expect((await h.call('intelligence')).statusCode).toBe(200);expect(h.provider).not.toHaveBeenCalled();});
   it('workspace 1/1 → CREATE SECOND denied at handler with quota code and no orphan',async()=>{
    const h=harness();const secondCase=id(50);

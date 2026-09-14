@@ -50,5 +50,6 @@ describe('4.30B actual server routes, unchanged authorities',()=>{
 });
 
 describe('4.29D actual advanced routes',()=>{
- it.each(paths.slice(2))('%s denies Pro before provider',async path=>{const h=harness();h.rows.ai_workspaces.push({id:'C1',lawyer_id:'L1'});const res=await h.call(path);expect(res.statusCode).toBe(403);expect(res.body.code).toBe('AI_FEATURE_NOT_AVAILABLE');expect(h.provider).not.toHaveBeenCalled();});
+ // 4.34E: workflow/sync is deterministic Core (no gate); covered in workflowCore.test.mjs.
+ it.each(paths.slice(2,3))('%s denies Pro before provider',async path=>{const h=harness();h.rows.ai_workspaces.push({id:'C1',lawyer_id:'L1'});const res=await h.call(path);expect(res.statusCode).toBe(403);expect(res.body.code).toBe('AI_FEATURE_NOT_AVAILABLE');expect(h.provider).not.toHaveBeenCalled();});
 });
