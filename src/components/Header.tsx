@@ -23,6 +23,8 @@ interface HeaderProps {
   fixed?: boolean;
   noContainer?: boolean;
   hideNav?: boolean;
+  /** Shows a PRO badge next to the logo (e.g. lawyer dashboard with active Pro). */
+  proBadge?: boolean;
 }
 
 export default function Header({
@@ -35,7 +37,8 @@ export default function Header({
   visible = true,
   fixed = true,
   noContainer = false,
-  hideNav = false
+  hideNav = false,
+  proBadge = false
 }: HeaderProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -171,6 +174,11 @@ export default function Header({
             >
               <Scale className={cn("h-8 w-8", variant === 'dark' ? "text-white" : "text-green-900")} />
               <span className={cn("text-xl font-bold", variant === 'dark' ? "text-white" : "text-green-900")}>LegalUp</span>
+              {proBadge && (
+                <span className="inline-flex h-[18px] items-center rounded-[5px] bg-green-900 px-1.5 py-px text-[0.6rem] font-semibold leading-none tracking-[0.14em] text-white">
+                  PRO
+                </span>
+              )}
             </div>
 
             {!hideNav && (

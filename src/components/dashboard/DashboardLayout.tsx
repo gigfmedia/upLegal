@@ -28,6 +28,7 @@ import { supabase } from '@/lib/supabaseClient';
 import Header from '@/components/Header';
 import { GlobalSearch } from '@/components/lawyer/GlobalSearch';
 import { useLegacyAICompat } from '@/hooks/useLegacyAICompat';
+import { useProSubscription } from '@/hooks/useProSubscription';
 
 type NavItem = {
   href: string;
@@ -53,6 +54,7 @@ function DashboardLayout() {
   // compatibility entry remains ONLY for owners of orphan legacy workspaces
   // (no linked Case); linked history is reachable canonically via Cases.
   const { data: legacyAICompat } = useLegacyAICompat();
+  const { hasProAccess } = useProSubscription();
   const showOrphanAIHistory = legacyAICompat?.hasUnlinkedWorkspaces ?? false;
   
   // Get user role safely
@@ -344,6 +346,7 @@ function DashboardLayout() {
         noContainer
         hideTopBar
         hideNav
+        proBadge={hasProAccess}
         mobileMenuButton={
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
