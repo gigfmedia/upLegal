@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,44 +10,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { useLawyerCases } from '@/hooks/useLawyerCases';
 import { useLawyerClients } from '@/hooks/useLawyerClients';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Loader2, Plus, Eye, FileText, FolderOpen, CalendarDays, Clock, AlertTriangle, RefreshCw, Trash2, Pencil } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Search, Loader2, Plus, FolderOpen, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProSubscription } from '@/hooks/useProSubscription';
 import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
+import { SharedCaseCard } from '@/components/legalup-ai/SharedCaseCard';
+import { CaseEditDialog } from '@/components/lawyer/CaseEditDialog';
+import ConfirmDialog from '@/components/ui/confirm-dialog';
 import posthog from 'posthog-js';
-import { format, parseISO } from 'date-fns';
-import { es } from 'date-fns/locale';
 
-const statusColors: Record<string, string> = {
-  new: 'bg-yellow-100 text-yellow-800',
-  quoted: 'bg-blue-100 text-blue-800',
-  paid: 'bg-green-100 text-green-800',
-  in_progress: 'bg-indigo-100 text-indigo-800',
-  delivered: 'bg-teal-100 text-teal-800',
-  closed: 'bg-gray-200 text-gray-800',
-  cancelled: 'bg-red-100 text-red-800',
-};
-
-const statusLabels: Record<string, string> = {
-  new: 'Nuevo',
-  quoted: 'Cotizado',
-  paid: 'Pagado',
-  in_progress: 'En progreso',
-  delivered: 'Entregado',
-  closed: 'Cerrado',
-  cancelled: 'Cancelado',
-};
-
-const sourceLabels: Record<string, string> = {
-  LAWYER_DIRECT: 'Directo',
-  LEGALUP_MARKETPLACE: 'Marketplace',
-  UNKNOWN: 'Desconocido',
-};
-
-function formatDate(value: string): string {
-  try { return format(parseISO(value), "d 'de' MMMM yyyy", { locale: es }); } catch { return value; }
-}
 function CaseCardSkeleton() {
   return (
     <Card><CardContent className="p-5 space-y-3"><Skeleton className="h-5 w-2/3" /><Skeleton className="h-4 w-1/3" /><Skeleton className="h-4 w-full" /><Skeleton className="h-9 w-28" /></CardContent></Card>
@@ -55,9 +26,10 @@ function CaseCardSkeleton() {
 }
 
 export default function CasesPage() {
-  const { cases, loading, error, createCase } = useLawyerCases();
+  const { cases, loading, error, createCase, deleteCase } = useLawyerCases();
   const { clients, loading: clientsLoading, error: clientsError, refetch: refetchClients } = useLawyerClients();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [open, setOpen] = useState(false);
@@ -67,6 +39,23 @@ export default function CasesPage() {
   const [saving, setSaving] = useState(false);
   const { hasProAccess } = useProSubscription();
   const [proPaywallOpen, setProPaywallOpen] = useState(false);
+  const [editCase, setEditCase] = useState<(typeof cases)[number] | null>(null);
+  const [caseToDelete, setCaseToDelete] = useState<(typeof cases)[number] | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const confirmDeleteCase = async () => {
+    if (!caseToDelete) return;
+    setDeleting(true);
+    try {
+      await deleteCase(caseToDelete.id);
+      toast({ title: 'Caso eliminado' });
+      setCaseToDelete(null);
+    } catch (err) {
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'No se pudo eliminar', variant: 'destructive' });
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const filtered = useMemo(
     () =>
@@ -189,8 +178,7 @@ export default function CasesPage() {
         </Card>
       )}
 
-      {!error && filtered.length === 0 ? (
-        <Card>
+      {!error && filtered.length === 0 ? (        <Card>
           <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
             <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-green-50 text-green-700"><FolderOpen className="h-7 w-7" /></span>
             <p className="text-lg font-medium text-gray-900">No hay casos</p>
@@ -207,36 +195,19 @@ export default function CasesPage() {
       ) : !error && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filtered.map((c) => (
-            <Card key={c.id} className="transition-shadow hover:shadow-md">
-              <CardContent className="flex h-full flex-col gap-3 p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3 className="truncate font-semibold text-gray-900">{c.title}</h3>
-                    {c.practice_area ? <Badge variant="secondary" className="mt-1 bg-green-50 text-green-800">{c.practice_area}</Badge> : <span className="mt-1 block text-xs text-muted-foreground">Sin área jurídica</span>}
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      <Badge className={`${statusColors[c.status] || 'bg-gray-100 text-gray-800'} border-0 text-xs`}>{statusLabels[c.status] || c.status}</Badge>
-                      {c.source && c.source !== 'UNKNOWN' && <Badge variant="outline" className="text-xs">{sourceLabels[c.source] || c.source}</Badge>}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Link to={`/lawyer/cases/${c.id}`} className="rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700" aria-label={`Ver caso ${c.title}`}><Eye className="h-4 w-4" /></Link>
-                  </div>
-                </div>
-                {c.description ? <p className="line-clamp-2 text-sm text-muted-foreground">{c.description}</p> : null}
-                <div className="text-sm text-gray-600 truncate">
-                  {c.client ? <span>Cliente: <Link to={`/lawyer/clients/${c.client.id}`} className="text-green-600 hover:underline">{c.client.name}</Link></span> : <span className="text-gray-400">Sin cliente</span>}
-                </div>
-                <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5" /> Creado: {formatDate(c.created_at)}</span>
-                  <span className="inline-flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> Actualizado: {formatDate(c.updated_at)}</span>
-                </div>
-                <Link to={`/lawyer/cases/${c.id}`} className="mt-1">
-                  <Button variant="outline" className="w-full border-gray-900 text-green-900 bg-green-300 hover:bg-green-400 hover:text-green-900">
-                    <FolderOpen className="h-4 w-4 mr-1" /> Abrir caso
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+            <SharedCaseCard
+              key={c.id}
+              title={c.title}
+              practiceArea={c.practice_area}
+              description={c.description}
+              createdAt={c.created_at}
+              updatedAt={c.updated_at}
+              workspaceId={c.ai_workspace_id}
+              onOpen={() => navigate(`/lawyer/cases/${c.id}`)}
+              onTimeline={() => navigate(`/lawyer/cases/${c.id}?tab=activity`)}
+              onEdit={() => setEditCase(c)}
+              onDelete={() => setCaseToDelete(c)}
+            />
           ))}
         </div>
       )}
@@ -296,6 +267,25 @@ export default function CasesPage() {
         </DialogContent>
       </Dialog>
       <ProPricingModal open={proPaywallOpen} onOpenChange={setProPaywallOpen} triggerAction="create_case" />
+      {editCase && (
+        <CaseEditDialog
+          open={editCase !== null}
+          onOpenChange={(open) => { if (!open) setEditCase(null); }}
+          caseData={editCase}
+          clients={clients}
+          onSaved={() => setEditCase(null)}
+        />
+      )}
+      <ConfirmDialog
+        open={caseToDelete !== null}
+        onOpenChange={(open) => { if (!open) setCaseToDelete(null); }}
+        onConfirm={confirmDeleteCase}
+        title="Eliminar caso"
+        description={`¿Seguro que quieres eliminar "${caseToDelete?.title ?? ''}"? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        isDeleting={deleting}
+      />
     </div>
   );
 }

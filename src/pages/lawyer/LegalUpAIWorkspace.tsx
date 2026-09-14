@@ -1,21 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
-import { format, parseISO } from 'date-fns';
-import { es } from 'date-fns/locale';
 import posthog from 'posthog-js';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
-  FileText,
-  Trash2,
-  Pencil,
   FolderOpen,
-  CalendarDays,
-  Clock,
   AlertTriangle,
   RefreshCw,
 } from 'lucide-react';
@@ -25,16 +17,8 @@ import {
   type AIWorkspace,
 } from '@/hooks/useAIWorkspaces';
 import { EditCaseModal } from '@/components/legalup-ai/EditCaseModal';
-import { AICaseTimelinePreview } from '@/components/legalup-ai/AICaseTimelinePreview';
+import { SharedCaseCard } from '@/components/legalup-ai/SharedCaseCard';
 import { useLawyerCases } from '@/hooks/useLawyerCases';
-
-function formatDate(value: string): string {
-  try {
-    return format(parseISO(value), "d 'de' MMMM yyyy", { locale: es });
-  } catch {
-    return value;
-  }
-}
 
 function WorkspaceCardSkeleton() {
   return (
@@ -177,83 +161,20 @@ export default function LegalUpAIWorkspace() {
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {workspaces!.map((workspace) => (
-                <Card
+{workspaces!.map((workspace) => (
+                <SharedCaseCard
                   key={workspace.id}
-                  className="transition-shadow hover:shadow-md"
-                >
-                  <CardContent className="flex h-full flex-col gap-3 p-5">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <h3 className="truncate font-semibold text-gray-900">
-                          {workspace.name}
-                        </h3>
-                        {workspace.practice_area ? (
-                          <Badge
-                            variant="secondary"
-                            className="mt-1 bg-green-50 text-green-800"
-                          >
-                            {workspace.practice_area}
-                          </Badge>
-                        ) : (
-                          <span className="mt-1 block text-xs text-muted-foreground">
-                            Sin área jurídica
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => setCaseToEdit(workspace)}
-                          className="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
-                          aria-label={`Editar caso ${workspace.name}`}
-                        >
-                          <Pencil className="h-4 w-4" aria-hidden="true" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setCaseToDelete(workspace)}
-                          className="rounded-md p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-                          aria-label={`Eliminar caso ${workspace.name}`}
-                        >
-                          <Trash2 className="h-4 w-4" aria-hidden="true" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {workspace.description ? (
-                      <p className="line-clamp-2 text-sm text-muted-foreground">
-                        {workspace.description}
-                      </p>
-                    ) : null}
-
-                    <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                      <span className="inline-flex items-center gap-1.5">
-                        <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />
-                        Creado: {formatDate(workspace.created_at)}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <Clock className="h-3.5 w-3.5" aria-hidden="true" />
-                        Actualizado: {formatDate(workspace.updated_at)}
-                      </span>
-                    </div>
-
-                      <AICaseTimelinePreview
-                        workspaceId={workspace.id}
-                        onOpen={() => openWorkspace(workspace.id, 'timeline')}
-                      />
-
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => openWorkspace(workspace.id)}
-                        className="mt-1 w-full border-gray-900 text-green-900 bg-green-300 hover:bg-green-400 hover:text-green-900"
-                      >
-                      <FolderOpen className="h-4 w-4" aria-hidden="true" />
-                      Abrir caso
-                    </Button>
-                  </CardContent>
-                </Card>
+                  title={workspace.name}
+                  practiceArea={workspace.practice_area}
+                  description={workspace.description}
+                  createdAt={workspace.created_at}
+                  updatedAt={workspace.updated_at}
+                  workspaceId={workspace.id}
+                  onOpen={() => openWorkspace(workspace.id)}
+                  onTimeline={() => openWorkspace(workspace.id, 'timeline')}
+                  onEdit={() => setCaseToEdit(workspace)}
+                  onDelete={() => setCaseToDelete(workspace)}
+                />
               ))}
             </div>
           )}
