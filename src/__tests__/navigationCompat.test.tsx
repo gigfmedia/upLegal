@@ -150,9 +150,17 @@ describe('4.34H standalone shell retirement', () => {
   it('sidebar: no standalone entry without orphan data; narrow compat entry with orphans', () => {
     const c = read('src/components/dashboard/DashboardLayout.tsx');
     expect(c).toContain('hasUnlinkedWorkspaces');
-    expect(c).toContain('Historial IA');
+    expect(c).toContain("label: 'Historial de casos'");
     expect(c).not.toContain("label: 'LegalUp'");
+    expect(c).not.toContain("label: 'Historial IA'");
     expect(c).not.toContain('showLegacyAI');
+  });
+
+  it('4.34U: no LegalUp AI / IA product item in sidebar navigation', () => {
+    const c = read('src/components/dashboard/DashboardLayout.tsx');
+    expect(c).not.toMatch(/label:\s*'(LegalUp AI|IA|Historial IA)'/);
+    // The orphan compat entry carries no AI product badge.
+    expect(c).not.toMatch(/Historial de casos', highlightIcon: false, aiBadge: true/);
   });
 
   it('/lawyer/ai with zero workspaces redirects to canonical Cases', async () => {

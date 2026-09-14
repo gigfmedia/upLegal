@@ -255,10 +255,11 @@ function DashboardLayout() {
         { href: '/lawyer/cases', icon: Briefcase, label: 'Casos' },
         { href: '/lawyer/citas', icon: Calendar, label: 'Citas' },
         { href: '/lawyer/earnings', icon: TrendingUp, label: 'Ingresos' },
-        // 4.34H: Cases is the primary product entry. A narrow "Historial IA"
-        // compatibility entry appears only for orphan legacy workspaces.
+        // 4.34U: Cases is the primary product entry. A narrow neutral
+        // "Historial de casos" compatibility entry appears only for orphan
+        // legacy workspaces. No AI product branding in normal navigation.
         ...(showOrphanAIHistory
-          ? [{ href: '/lawyer/ai', icon: Scale, label: 'Historial IA', highlightIcon: false, aiBadge: true }]
+          ? [{ href: '/lawyer/ai', icon: Scale, label: 'Historial de casos', highlightIcon: false, aiBadge: false }]
           : []),
         { href: '/lawyer/profile', icon: User, label: 'Perfil' },
         { href: '/lawyer/services', icon: FileText, label: 'Servicios', badge: showServicesBadge },
