@@ -22,13 +22,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { useAIWorkspace } from '@/hooks/useAIWorkspaces';
-import {
-  useAIDocuments,
-  useAIDocumentAnalysis,
-  useProcessAIDocument,
-  useAnalyzeAIDocument,
-  type AIDocument,
-} from '@/hooks/useAIDocuments';
+import { useAIDocuments } from '@/hooks/useAIDocuments';
 import { useAIFeatureAccess } from '@/hooks/useAISubscription';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import {
@@ -37,11 +31,7 @@ import {
   AI_TIMELINE_QUERY_KEY,
 } from '@/hooks/useAICaseTimeline';
 import { AIPricingModal } from '@/components/legalup-ai/AIPricingModal';
-import { DEFAULT_AI_MODEL } from '@/lib/aiModels';
-import { AIDocumentUpload } from '@/components/legalup-ai/AIDocumentUpload';
-import { AIDocumentList } from '@/components/legalup-ai/AIDocumentList';
-import { AIAnalysisView } from '@/components/legalup-ai/AIAnalysisView';
-import { AIChat } from '@/components/legalup-ai/AIChat';
+import { AICaseDocumentsWorkspace } from '@/components/legalup-ai/AICaseDocumentsWorkspace';
 import { AIResearchPanel } from '@/components/legalup-ai/AIResearchPanel';
 import { AICaseTimeline } from '@/components/legalup-ai/AICaseTimeline';
 import { AICaseIntelligence } from '@/components/legalup-ai/AICaseIntelligence';
@@ -68,17 +58,12 @@ export default function AICaseDetail() {
 
   const defaultTab = searchParams.get('tab') || 'overview';
 
-  const processMutation = useProcessAIDocument();
-  const analyzeMutation = useAnalyzeAIDocument();
-
   const { user } = useAuth();
   const lawyerId = user?.id ?? null;
   const queryClient = useQueryClient();
   const { data: timelineEvents } = useAICaseTimeline(caseId);
   const syncTimelineInFlight = useRef(false);
 
-  const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
-  const [model, setModel] = useState(DEFAULT_AI_MODEL);
   const [pricingOpen, setPricingOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('documents');
   const [chatQuestion, setChatQuestion] = useState<string | null>(null);
@@ -103,14 +88,6 @@ export default function AICaseDetail() {
   };
 
   const documents = useMemo(() => documentsQuery.data ?? [], [documentsQuery.data]);
-  const selectedDoc =
-    documents.find((doc) => doc.id === selectedDocId) ?? documents[0] ?? null;
-
-  useEffect(() => {
-    if (selectedDocId && !documents.some((doc) => doc.id === selectedDocId)) {
-      setSelectedDocId(null);
-    }
-  }, [documents, selectedDocId]);
 
   // Sincroniza eventos automáticos del timeline (case_created, document_uploaded,
   // document_analyzed). Idempotente: verifica existencia en BD antes de insertar,
@@ -140,44 +117,6 @@ export default function AICaseDetail() {
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseId, lawyerId, workspace, documents, documentsQuery.isLoading, timelineEvents]);
-
-  const analysisQuery = useAIDocumentAnalysis(
-    selectedDoc?.id,
-    selectedDoc?.analysis_status === 'ready'
-  );
-
-  const handleProcess = (id: string) => {
-    posthog.capture('ai_document_processing_started');
-    processMutation.mutate(id, {
-      onSuccess: () => posthog.capture('ai_document_processing_completed'),
-      onError: () => posthog.capture('ai_document_processing_failed'),
-    });
-  };
-
-  useEffect(() => {
-    const pending = documents.find((doc) => doc.status === 'pending');
-    if (pending && !processMutation.isPending) {
-      handleProcess(pending.id);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [documents, processMutation.isPending]);
-
-  const handleUploaded = (doc: AIDocument) => {
-    setSelectedDocId(doc.id);
-    handleProcess(doc.id);
-  };
-
-  const handleAnalyze = () => {
-    if (!selectedDoc) return;
-    posthog.capture('ai_document_analysis_started', { model });
-    analyzeMutation.mutate(
-      { documentId: selectedDoc.id, model },
-      {
-        onSuccess: () => posthog.capture('ai_document_analysis_completed', { model }),
-        onError: () => posthog.capture('ai_document_analysis_failed', { model }),
-      }
-    );
-  };
 
   return (
     <div className="space-y-6 px-4 py-6 sm:px-6 lg:px-8">
@@ -329,202 +268,23 @@ export default function AICaseDetail() {
               </TabsContent>
 
               <TabsContent value="documents" className="mt-4">
-            {accessLoading ? (
-              <Card className="border-dashed">
-                <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-                  <Skeleton className="h-12 w-12 rounded-full" />
-                  <Skeleton className="h-5 w-56" />
-                  <Skeleton className="h-4 w-80 max-w-full" />
-                  <p className="text-sm text-muted-foreground">
-                    Cargando tu acceso a LegalUp AI…
-                  </p>
-                </CardContent>
-              </Card>
-            ) : !canAnalyze ? (
-              <Card className="border-dashed">
-                <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-500">
-                    <Lock className="h-6 w-6" aria-hidden="true" />
-                  </span>
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      Análisis de documentos no disponible
-                    </p>
-                    <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-                      Tu plan actual no incluye el análisis de documentos de LegalUp AI.
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    onClick={() => setPricingOpen(true)}
-                    className="bg-gray-900 text-white hover:bg-green-900"
-                  >
-                    Ver planes
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:min-w-0">
-                <section className="min-w-0 space-y-4">
-                  <Card id="ai-documents-section">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        <FileText className="h-4 w-4 text-green-700" aria-hidden="true" />
-                        Documentos del caso
-                      </CardTitle>
-                      <p className="text-sm text-muted-foreground">
-                        Sube y gestiona los documentos de tu caso para analizarlos con IA
-                        y generar inteligencia jurídica estructurada.
-                      </p>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 gap-4 lg:grid-cols-1">
-                        <AIDocumentUpload
-                          workspaceId={workspace.id}
-                          onUploaded={handleUploaded}
-                        />
-
-                        {documentsQuery.isLoading ? (
-                          <div className="space-y-2">
-                            <Skeleton className="h-16 w-full" />
-                            <Skeleton className="h-16 w-full" />
-                          </div>
-                        ) : documentsQuery.isError ? (
-                          <p className="text-sm text-destructive">
-                            {documentsQuery.error instanceof Error
-                              ? documentsQuery.error.message
-                              : 'No se pudieron cargar los documentos.'}
-                          </p>
-                        ) : (
-                          <AIDocumentList
-                            documents={documents}
-                            selectedId={selectedDoc?.id ?? null}
-                            onSelect={(id) => setSelectedDocId(id)}
-                          />
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <section className="lg:sticky lg:top-[calc(4rem+2.75rem)]">
-                    {!canChat ? (
-                      <Card className="border-dashed">
-                        <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-                          <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-500">
-                            <Lock className="h-6 w-6" aria-hidden="true" />
-                          </span>
-                          <div>
-                            <p className="font-medium text-gray-900">
-                              Chat del caso no disponible
-                            </p>
-                            <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-                              Tu plan actual no incluye el chat contextual de LegalUp AI.
-                            </p>
-                          </div>
-                          <Button
-                            type="button"
-                            onClick={() => setPricingOpen(true)}
-                            className="bg-gray-900 text-white hover:bg-green-900"
-                          >
-                            Ver planes
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      <AIChat
-                        workspaceId={workspace.id}
-                        documents={documents}
-                        onUploadClick={() =>
-                          document
-                            .getElementById('ai-documents-section')
-                            ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                        }
-                      />
-                    )}
-                  </section>
-                </section>
-
-                <section className="min-w-0 space-y-4">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        <Sparkles className="h-4 w-4 text-green-700" aria-hidden="true" />
-                        Análisis con IA
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {!selectedDoc ? (
-                        <div className="flex flex-col items-center gap-2 py-10 text-center">
-                          <p className="text-sm text-muted-foreground">
-                            Selecciona un documento para analizarlo con LegalUp AI.
-                          </p>
-                        </div>
-                      ) : selectedDoc.analysis_status === 'processing' ? (
-                        <div className="flex flex-col items-center gap-3 py-10 text-center">
-                          <Loader2 className="h-8 w-8 animate-spin text-green-700" aria-hidden="true" />
-                          <p className="text-sm font-medium text-gray-900">
-                            Generando análisis…
-                          </p>
-                          <p className="max-w-sm text-xs text-muted-foreground">
-                            LegalUp AI está revisando el documento. Esto puede tomar
-                            un momento.
-                          </p>
-                        </div>
-                      ) : selectedDoc.analysis_status === 'failed' ? (
-                        <div className="flex flex-col items-center gap-3 py-10 text-center">
-                          <AlertTriangle className="h-8 w-8 text-amber-500" aria-hidden="true" />
-                          <p className="text-sm font-medium text-gray-900">
-                            El análisis falló
-                          </p>
-                          <p className="max-w-sm text-sm text-muted-foreground">
-                            {selectedDoc.analysis_error ||
-                              'Ocurrió un error inesperado al analizar el documento.'}
-                          </p>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleAnalyze}
-                            disabled={analyzeMutation.isPending}
-                          >
-                            {analyzeMutation.isPending ? (
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                            ) : (
-                              <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />
-                            )}
-                            {analyzeMutation.isPending ? 'Reintentando…' : 'Reintentar análisis'}
-                          </Button>
-                        </div>
-                      ) : (
-                        <AIAnalysisView
-                          analysis={selectedDoc.analysis_status === 'ready' ? analysisQuery.data ?? null : null}
-                          model={model}
-                          analyzing={analyzeMutation.isPending}
-                          onModelChange={setModel}
-                          onAnalyze={handleAnalyze}
-                        />
-                      )}
-                      {selectedDoc && selectedDoc.analysis_status === 'ready' && (
-                        <div className="mt-4 flex justify-end border-t pt-4">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setChatOrigin('document');
-                              setChatDocumentId(selectedDoc.id);
-                              setChatQuestion('¿Qué aspectos relevantes debería revisar en este documento?');
-                              setChatPanelOpen(true);
-                              posthog.capture('ai_document_chat_clicked', { source: 'case_workspace' });
-                            }}
-                          >
-                            Preguntar sobre este documento
-                          </Button>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </section>
-              </div>
-            )}
+                <AICaseDocumentsWorkspace
+                  workspaceId={workspace?.id}
+                  canAnalyze={canAnalyze}
+                  canChat={canChat}
+                  accessLoading={accessLoading}
+                  gateUploadOnAnalyze
+                  upgradeCtaLabel="Ver planes"
+                  onUpgrade={() => setPricingOpen(true)}
+                  onAskDocument={(documentId) => {
+                    setChatOrigin('document');
+                    setChatDocumentId(documentId);
+                    setChatQuestion('¿Qué aspectos relevantes debería revisar en este documento?');
+                    setChatPanelOpen(true);
+                    posthog.capture('ai_document_chat_clicked', { source: 'case_workspace' });
+                  }}
+                  analyticsSource="case_workspace"
+                />
               </TabsContent>
 
               {/* forceMount: mantiene el panel montado entre pestañas para que

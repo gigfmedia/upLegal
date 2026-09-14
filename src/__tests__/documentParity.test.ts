@@ -37,15 +37,16 @@ describe('4.34C — honest evidence locations', () => {
 describe('4.34C — Case → Documents chat parity', () => {
   it('selected document opens the same case chat drawer, no standalone route', () => {
     const c = read('src/components/lawyer/CaseDocuments.tsx');
-    expect(c).toContain('Preguntar sobre este documento');
     expect(c).toContain('AICaseChatDrawer');
     expect(c).toContain('documentId={chatDocumentId}');
-    expect(c).toContain("posthog.capture('ai_document_chat_clicked'");
     expect(c).not.toContain('/lawyer/ai');
+    const s = read('src/components/legalup-ai/AICaseDocumentsWorkspace.tsx');
+    expect(s).toContain('Preguntar sobre este documento');
+    expect(s).toContain("posthog.capture('ai_document_chat_clicked'");
   });
 
   it('pending documents auto-process with zero-LLM extraction, same events as standalone', () => {
-    const c = read('src/components/lawyer/CaseDocuments.tsx');
+    const c = read('src/components/legalup-ai/AICaseDocumentsWorkspace.tsx');
     expect(c).toContain('useProcessAIDocument');
     expect(c).toContain("status === 'pending'");
     expect(c).toContain('ai_document_processing_started');
