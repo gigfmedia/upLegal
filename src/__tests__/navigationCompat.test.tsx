@@ -203,3 +203,68 @@ describe('4.34H standalone shell retirement', () => {
     expect(c).toContain('/lawyer/ai/cases/${caseId}');
   });
 });
+
+import LegalUpAIWorkspace from '@/pages/lawyer/LegalUpAIWorkspace';
+
+const STALE_COMMERCIAL = [
+  'Tu prueba de LegalUp AI',
+  'días restantes',
+  'Después del trial',
+  '$49.900',
+  'Administrar suscripción',
+  'Uso de IA este mes',
+  'Suscríbete para no perder el acceso',
+  'Tus casos anteriores de LegalUp AI',
+];
+
+function renderHistory() {
+  return render(
+    <MemoryRouter initialEntries={['/lawyer/ai']}>
+      <Routes>
+        <Route path="/lawyer/ai" element={<LegalUpAIWorkspace />} />
+        <Route path="/lawyer/cases" element={<div data-testid="cases-list">cases</div>} />
+      </Routes>
+    </MemoryRouter>
+  );
+}
+
+describe('4.34M legacy commercial UI removal', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    delete G.__aiWs;
+    delete G.__proCases;
+  });
+
+  it('orphan history shows neutral heading + cases, zero stale commercial copy', async () => {
+    G.__aiWs = { data: [{ id: 'ws-orphan', name: 'Orphan', created_at: '2026-01-01', updated_at: '2026-01-02' }], isLoading: false, isError: false, refetch: vi.fn() };
+    G.__proCases = { cases: [{ id: 'case-9', ai_workspace_id: 'ws-9' }], loading: false };
+    const { container } = renderHistory();
+    await waitFor(() => expect(screen.getByText('Historial de casos')).toBeInTheDocument());
+    expect(screen.getByText(/aún no están vinculados a LegalUp Pro/)).toBeInTheDocument();
+    const text = container.textContent ?? '';
+    for (const stale of STALE_COMMERCIAL) expect(text).not.toContain(stale);
+  });
+
+  it('linked-only and zero-history still redirect to canonical Cases', async () => {
+    G.__aiWs = { data: [], isLoading: false, isError: false, refetch: vi.fn() };
+    G.__proCases = { cases: [], loading: false };
+    renderHistory();
+    await waitFor(() => expect(screen.getByTestId('cases-list')).toBeInTheDocument());
+  });
+
+  it('no subscription/pricing/usage hooks wired on history screen', () => {
+    const c = read('src/pages/lawyer/LegalUpAIWorkspace.tsx');
+    expect(c).not.toContain('AISubscriptionBanner');
+    expect(c).not.toContain('AIPricingModal');
+    expect(c).not.toContain('AIUsageMeter');
+    expect(c).not.toContain('useAISubscription');
+    expect(c).not.toContain('openPaywall');
+    expect(c).not.toContain('ai_subscription_success');
+  });
+
+  it('legacy subscription backend and card remain for grandfathered users', () => {
+    const card = read('src/pages/lawyer/ProfilePage.tsx');
+    expect(card).toContain('legacyAISubscription');
+    expect(card).toContain('AISubscriptionCard');
+  });
+});

@@ -25,11 +25,7 @@ import {
   type AIWorkspace,
 } from '@/hooks/useAIWorkspaces';
 import { EditCaseModal } from '@/components/legalup-ai/EditCaseModal';
-import { AISubscriptionBanner } from '@/components/legalup-ai/AISubscriptionBanner';
-import { AIPricingModal } from '@/components/legalup-ai/AIPricingModal';
-import { AIUsageMeter } from '@/components/legalup-ai/AIUsageMeter';
 import { AICaseTimelinePreview } from '@/components/legalup-ai/AICaseTimelinePreview';
-import { useAISubscription } from '@/hooks/useAISubscription';
 import { useLawyerCases } from '@/hooks/useLawyerCases';
 
 function formatDate(value: string): string {
@@ -60,8 +56,6 @@ export default function LegalUpAIWorkspace() {
 
   const [caseToDelete, setCaseToDelete] = useState<AIWorkspace | null>(null);
   const [caseToEdit, setCaseToEdit] = useState<AIWorkspace | null>(null);
-  const [pricingOpen, setPricingOpen] = useState(false);
-  const { hasAccess, subscription } = useAISubscription();
   const { cases: proCases, loading: proCasesLoading } = useLawyerCases();
   const caseIdByWorkspaceId = new Map(
     (proCases ?? []).map((c) => [c.ai_workspace_id, c.id] as const).filter(([ws]) => !!ws) as [string, string][]
@@ -79,25 +73,7 @@ export default function LegalUpAIWorkspace() {
     posthog.capture('ai_workspace_viewed');
   }, []);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('ai_subscription_success') === 'true') {
-      toast.success('Suscripción confirmada', {
-        description: 'Tu plan LegalUp AI está activo.',
-      });
-      const url = new URL(window.location.href);
-      url.searchParams.delete('ai_subscription_success');
-      window.history.replaceState({}, '', url.toString());
-    }
-  }, []);
-
   const hasCases = Array.isArray(workspaces) && workspaces.length > 0;
-
-  const openPaywall = () => {
-    posthog.capture('ai_paywall_opened', { source: 'workspace' });
-    if (subscription) setPricingOpen(true);
-    else navigate('/pro');
-  };
 
   const confirmDelete = async () => {
     if (!caseToDelete) return;
@@ -126,23 +102,14 @@ export default function LegalUpAIWorkspace() {
       {/* Header */}
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 className="group flex flex-wrap items-center gap-1.5 text-2xl font-bold tracking-tight text-gray-900">
-            <span className="tracking-tight">LegalUp</span>
-            <span className="inline-flex h-[18.4px] items-center rounded-[5px] border border-emerald-400/30 bg-emerald-400/10 px-1.5 text-[0.6rem] font-semibold tracking-[0.14em] text-emerald-400 transition-colors group-hover:bg-emerald-400/20">
-              AI
-            </span>
-            <span className="text-sm font-medium text-green-900">
-              Tus casos anteriores de LegalUp AI.
-            </span>
+          <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+            Historial de casos
           </h2>
           <p className="text-muted-foreground max-w-2xl">
-            Los nuevos casos se crean en LegalUp Pro. Aquí conservas tus casos anteriores.
+            Aquí puedes consultar casos anteriores que aún no están vinculados a LegalUp Pro.
           </p>
         </div>
-        {hasAccess && <AIUsageMeter />}
       </header>
-
-      {subscription && <AISubscriptionBanner />}
 
       {/* Mis casos */}
       <section id="ai-cases" aria-labelledby="ai-cases-title">
@@ -271,29 +238,17 @@ export default function LegalUpAIWorkspace() {
                       </span>
                     </div>
 
-                    <AICaseTimelinePreview
-                      workspaceId={workspace.id}
-                      onOpen={() => {
-                        if (!hasAccess) {
-                          openPaywall();
-                          return;
-                        }
-                        openWorkspace(workspace.id, 'timeline');
-                      }}
-                    />
+                      <AICaseTimelinePreview
+                        workspaceId={workspace.id}
+                        onOpen={() => openWorkspace(workspace.id, 'timeline')}
+                      />
 
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        if (!hasAccess) {
-                          openPaywall();
-                          return;
-                        }
-                        openWorkspace(workspace.id);
-                      }}
-                      className="mt-1 w-full border-gray-900 text-green-900 bg-green-300 hover:bg-green-400 hover:text-green-900"
-                    >
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => openWorkspace(workspace.id)}
+                        className="mt-1 w-full border-gray-900 text-green-900 bg-green-300 hover:bg-green-400 hover:text-green-900"
+                      >
                       <FolderOpen className="h-4 w-4" aria-hidden="true" />
                       Abrir caso
                     </Button>
@@ -311,8 +266,6 @@ export default function LegalUpAIWorkspace() {
           if (!open) setCaseToEdit(null);
         }}
       />
-
-      {subscription && <AIPricingModal open={pricingOpen} onOpenChange={setPricingOpen} />}
 
       <ConfirmDialog
         open={caseToDelete !== null}
