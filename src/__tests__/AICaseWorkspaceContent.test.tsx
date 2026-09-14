@@ -61,9 +61,44 @@ describe('AICaseWorkspaceContent 4.30C — flattened embedded vs standalone', ()
   it('4.34D — embedded research entry opens panel in place, no standalone navigation', () => {
     renderEmbedded();
     expect(screen.queryByTestId('research')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('Investigar este caso'));
+    fireEvent.click(screen.getByRole('button', { name: 'Investigar jurisprudencia' }));
     expect(screen.getByTestId('research')).toBeInTheDocument();
     expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+  });
+
+  it('4.34J — IA secondary nav exposes overview/intelligence/research directly', () => {
+    renderEmbedded();
+    expect(screen.getByRole('button', { name: 'Resumen IA' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Inteligencia del caso' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Investigar jurisprudencia' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Resumen IA' })).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('4.34J — intelligence view renders via nav without hidden CTA', () => {
+    renderEmbedded();
+    expect(screen.queryByTestId('deep-intelligence')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Inteligencia del caso' }));
+    expect(screen.getByTestId('deep-intelligence')).toBeInTheDocument();
+  });
+
+  it('4.34J — deep link view=intelligence restores on load', () => {
+    render(
+      <MemoryRouter initialEntries={['/lawyer/cases/c1?tab=ai&view=intelligence']}>
+        <AICaseWorkspaceContent workspaceId="ws-1" workspaceName="Caso" mode="embedded-case" />
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId('deep-intelligence')).toBeInTheDocument();
+  });
+
+  it('4.34J — invalid view falls back to overview safely', () => {
+    render(
+      <MemoryRouter initialEntries={['/lawyer/cases/c1?tab=ai&view=foobar']}>
+        <AICaseWorkspaceContent workspaceId="ws-1" workspaceName="Caso" mode="embedded-case" />
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId('command-center')).toBeInTheDocument();
+    expect(screen.queryByTestId('deep-intelligence')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('research')).not.toBeInTheDocument();
   });
 
   it('embedded has no Timeline', () => {

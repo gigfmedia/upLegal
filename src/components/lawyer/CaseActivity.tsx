@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { format, isToday, isYesterday } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
@@ -8,12 +8,23 @@ import {
   CheckCircle2,
   Calendar,
   MessageSquarePlus,
+  Pencil,
+  Plus,
+  Trash2,
+  X,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { useAIDocuments } from '@/hooks/useAIDocuments';
 import { useAICaseWorkflow } from '@/hooks/useAICaseWorkflow';
-import { useAICaseTimeline } from '@/hooks/useAICaseTimeline';
+import {
+  useAICaseTimeline,
+  useCreateAITimelineNote,
+  useUpdateAITimelineNote,
+  useDeleteAITimelineNote,
+} from '@/hooks/useAICaseTimeline';
 import type { LawyerCase } from '@/hooks/useLawyerCases';
 
 export type CaseActivityItemType =
@@ -160,6 +171,48 @@ export function CaseActivity({ caseData, workspaceId, bookings, onOpenDocuments 
 
   const loading = documentsQuery.isLoading || workflowQuery.isLoading || timelineQuery.isLoading;
 
+  // 4.34J: note CRUD parity with legacy Timeline, reusing the same
+  // ai_case_timeline_events model/hooks (RLS owner-scoped, 0 provider calls).
+  const createNote = useCreateAITimelineNote(workspaceId || undefined);
+  const updateNote = useUpdateAITimelineNote();
+  const deleteNote = useDeleteAITimelineNote();
+  const [showNoteForm, setShowNoteForm] = useState(false);
+  const [noteDraft, setNoteDraft] = useState('');
+  const [noteError, setNoteError] = useState<string | null>(null);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState('');
+  const timelineById = useMemo(() => {
+    const map = new Map<string, { id: string; description: string | null }>();
+    for (const e of timelineQuery.data ?? []) map.set(`note-${e.id}`, { id: e.id, description: e.description });
+    return map;
+  }, [timelineQuery.data]);
+
+  const handleCreateNote = () => {
+    setNoteError(null);
+    createNote.mutate(noteDraft, {
+      onSuccess: () => { setNoteDraft(''); setShowNoteForm(false); },
+      onError: (e) => setNoteError(e instanceof Error ? e.message : 'No se pudo guardar la nota.'),
+    });
+  };
+  const handleUpdateNote = (activityId: string) => {
+    const target = timelineById.get(activityId);
+    if (!target) return;
+    setNoteError(null);
+    updateNote.mutate({ id: target.id, description: editDraft }, {
+      onSuccess: () => setEditingNoteId(null),
+      onError: (e) => setNoteError(e instanceof Error ? e.message : 'No se pudo actualizar la nota.'),
+    });
+  };
+  const handleDeleteNote = (activityId: string) => {
+    const target = timelineById.get(activityId);
+    if (!target) return;
+    if (!window.confirm('¿Eliminar esta nota? Esta acción no se puede deshacer.')) return;
+    setNoteError(null);
+    deleteNote.mutate(target.id, {
+      onError: (e) => setNoteError(e instanceof Error ? e.message : 'No se pudo eliminar la nota.'),
+    });
+  };
+
   if (loading && items.length <= 1) {
     return (
       <div className="space-y-2" aria-label="Cargando actividad">
@@ -183,10 +236,41 @@ export function CaseActivity({ caseData, workspaceId, bookings, onOpenDocuments 
 
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-base font-semibold text-gray-900">Actividad del caso</h2>
-        <p className="text-sm text-muted-foreground">Revisa los movimientos recientes asociados a este caso.</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900">Actividad del caso</h2>
+          <p className="text-sm text-muted-foreground">Revisa los movimientos recientes asociados a este caso.</p>
+        </div>
+        {workspaceId && !showNoteForm && (
+          <Button type="button" variant="outline" size="sm" onClick={() => { setShowNoteForm(true); setNoteError(null); }}>
+            <Plus className="mr-1 h-3.5 w-3.5" aria-hidden="true" /> Añadir nota
+          </Button>
+        )}
       </div>
+      {showNoteForm && (
+        <Card>
+          <CardContent className="space-y-2 p-3">
+            <Textarea
+              value={noteDraft}
+              onChange={(e) => setNoteDraft(e.target.value)}
+              placeholder="Escribe una actualización del caso…"
+              aria-label="Contenido de la nota"
+              rows={3}
+              className="resize-none"
+              disabled={createNote.isPending}
+            />
+            {noteError && <p role="alert" className="text-xs text-destructive">{noteError}</p>}
+            <div className="flex gap-2">
+              <Button type="button" size="sm" onClick={handleCreateNote} disabled={createNote.isPending || !noteDraft.trim()}>
+                Guardar nota
+              </Button>
+              <Button type="button" size="sm" variant="ghost" onClick={() => { setShowNoteForm(false); setNoteDraft(''); setNoteError(null); }}>
+                <X className="mr-1 h-3.5 w-3.5" aria-hidden="true" /> Cancelar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       <ol className="space-y-2">
         {items.map((item) => {
           const group = groupLabel(item.occurredAt);
@@ -231,6 +315,46 @@ export function CaseActivity({ caseData, workspaceId, bookings, onOpenDocuments 
                     </button>
                   ) : (
                     <div className="flex items-center gap-3">{body}</div>
+                  )}
+                  {item.type === 'note' && editingNoteId !== item.id && (
+                    <div className="mt-2 flex gap-1 pl-12">
+                      <Button
+                        type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs"
+                        aria-label={`Editar nota: ${item.title}`}
+                        onClick={() => { setEditingNoteId(item.id); setEditDraft(timelineById.get(item.id)?.description ?? ''); setNoteError(null); }}
+                      >
+                        <Pencil className="mr-1 h-3 w-3" aria-hidden="true" /> Editar
+                      </Button>
+                      <Button
+                        type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                        aria-label={`Eliminar nota: ${item.title}`}
+                        disabled={deleteNote.isPending}
+                        onClick={() => handleDeleteNote(item.id)}
+                      >
+                        <Trash2 className="mr-1 h-3 w-3" aria-hidden="true" /> Eliminar
+                      </Button>
+                    </div>
+                  )}
+                  {item.type === 'note' && editingNoteId === item.id && (
+                    <div className="mt-2 space-y-2 pl-12">
+                      <Textarea
+                        value={editDraft}
+                        onChange={(e) => setEditDraft(e.target.value)}
+                        aria-label="Editar contenido de la nota"
+                        rows={3}
+                        className="resize-none"
+                        disabled={updateNote.isPending}
+                      />
+                      {noteError && <p role="alert" className="text-xs text-destructive">{noteError}</p>}
+                      <div className="flex gap-2">
+                        <Button type="button" size="sm" onClick={() => handleUpdateNote(item.id)} disabled={updateNote.isPending || !editDraft.trim()}>
+                          Guardar
+                        </Button>
+                        <Button type="button" size="sm" variant="ghost" onClick={() => { setEditingNoteId(null); setNoteError(null); }}>
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
                   )}
                 </CardContent>
               </Card>

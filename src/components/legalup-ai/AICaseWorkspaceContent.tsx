@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft } from 'lucide-react';
 import { useAIFeatureAccess } from '@/hooks/useAISubscription';
 import { AICaseCommandCenter } from '@/components/legalup-ai/AICaseCommandCenter';
 import { AICaseIntelligence } from '@/components/legalup-ai/AICaseIntelligence';
@@ -60,17 +59,17 @@ export function AICaseWorkspaceContent({ workspaceId, workspaceName, embedded = 
   const documentsQuery = useAIDocuments(workspaceId);
   const documents = documentsQuery.data ?? [];
   const chat = useChatState();
-  const [showIntelligence, setShowIntelligence] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
-  // 4.34D: research subview + deep link ?tab=ai&view=research. Local state is
-  // the source of truth; the URL only mirrors it for shareable links.
+  // 4.34J: IA secondary nav is URL-driven (single authority). Valid views:
+  // overview (Command Center), intelligence, research. Invalid → overview.
   const [searchParams, setSearchParams] = useSearchParams();
-  const [showResearch, setShowResearch] = useState(() => searchParams.get('view') === 'research');
-  const setSearchParamsHelper = (view: string | null) => {
+  const rawView = searchParams.get('view');
+  const aiView = rawView === 'intelligence' || rawView === 'research' ? rawView : 'overview';
+  const setAiView = (view: 'overview' | 'intelligence' | 'research') => {
     setSearchParams((prev) => {
       const p = new URLSearchParams(prev);
-      if (view) p.set('view', view);
-      else p.delete('view');
+      if (view === 'overview') p.delete('view');
+      else p.set('view', view);
       return p;
     }, { replace: true });
   };
@@ -90,44 +89,59 @@ export function AICaseWorkspaceContent({ workspaceId, workspaceName, embedded = 
     />
   );
 
-  // 4.30C: embedded lawyer-case experience — flattened, no nested tab bar.
-  // Command Center is the default surface; deep intelligence is a local
-  // subview ("Ver análisis completo"). No inner Documents tab (outer Case
+  // 4.30C: embedded lawyer-case experience — flattened IA with a visible
+  // secondary nav (Resumen IA / Inteligencia / Investigar). URL-driven single
+  // authority (?tab=ai&view=...). No inner Documents tab (outer Case
   // Documents is canonical).
-  // 4.34D: research mounts as a second local subview ("Investigar") reusing
-  // AIResearchPanel. Feature-gated: without `jurisprudence` entitlement the
-  // panel shows history + neutral locked state, never provider calls.
+  // 4.34D/4.34J: research + intelligence mount as direct subviews reusing
+  // AIResearchPanel/AICaseIntelligence. Feature gates unchanged: without
+  // `jurisprudence` entitlement the panel shows history + neutral locked state.
   if (isEmbedded) {
+    const IA_VIEWS = [
+      { key: 'overview', label: 'Resumen IA' },
+      { key: 'intelligence', label: 'Inteligencia del caso' },
+      { key: 'research', label: 'Investigar jurisprudencia' },
+    ] as const;
     return (
       <div className="space-y-6">
+        <nav aria-label="Secciones de IA" className="flex flex-wrap gap-2">
+          {IA_VIEWS.map((v) => (
+            <Button
+              key={v.key}
+              type="button"
+              variant={aiView === v.key ? 'default' : 'outline'}
+              size="sm"
+              aria-current={aiView === v.key ? 'page' : undefined}
+              onClick={() => setAiView(v.key)}
+            >
+              {v.label}
+            </Button>
+          ))}
+        </nav>
+
+        {aiView === 'overview' && (
+        <>
         <AICaseCommandCenter
           workspaceId={workspaceId}
           workspaceName={workspaceName || ''}
           onOpenWorkflowAction={(id) => chat.setBriefWorkflowActionId(id)}
           onViewDocuments={() => onOpenDocuments?.()}
-          onViewIntelligence={() => setShowIntelligence(true)}
+          onViewIntelligence={() => setAiView('intelligence')}
           onAskQuestion={(q) => { chat.setChatOrigin('command_center'); chat.setPendingWorkflowActionId(null); chat.setChatDocumentId(null); chat.setChatQuestion(q); chat.setChatPanelOpen(true); }}
           onWorkflowAsk={(q, actionId) => { chat.setChatOrigin('workflow'); chat.setPendingWorkflowActionId(actionId); chat.setChatDocumentId(null); chat.setChatQuestion(q); chat.setChatPanelOpen(true); }}
-          onInvestigate={() => { setShowResearch(true); setSearchParamsHelper('research'); }}
+          onInvestigate={() => setAiView('research')}
         />
 
-        {!showIntelligence ? (
-          <div className="flex flex-col gap-2">
-            <Button type="button" variant="outline" className="w-full" onClick={() => setShowIntelligence(true)}>
-              Ver análisis completo
-            </Button>
-            {!showResearch && (
-              <Button type="button" variant="outline" className="w-full" onClick={() => { setShowResearch(true); setSearchParamsHelper('research'); }}>
-                Investigar este caso
-              </Button>
-            )}
-          </div>
-        ) : (
-          <section aria-label="Análisis completo del caso">
-            <Button type="button" variant="ghost" className="-ml-2 mb-2" onClick={() => setShowIntelligence(false)}>
-              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-              Volver al resumen
-            </Button>
+        <div>
+          <Button type="button" variant="outline" className="w-full" onClick={() => setAiView('intelligence')}>
+            Ver análisis completo
+          </Button>
+        </div>
+        </>
+        )}
+
+        {aiView === 'intelligence' && (
+          <section aria-label="Inteligencia del caso">
             <AICaseIntelligence
               workspaceId={workspaceId}
               externalWorkflowActionId={chat.briefWorkflowActionId}
@@ -140,12 +154,8 @@ export function AICaseWorkspaceContent({ workspaceId, workspaceName, embedded = 
           </section>
         )}
 
-        {showResearch && (
+        {aiView === 'research' && (
           <section aria-label="Investigación jurídica del caso">
-            <Button type="button" variant="ghost" className="-ml-2 mb-2" onClick={() => { setShowResearch(false); setSearchParamsHelper(null); }}>
-              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-              Volver al resumen
-            </Button>
             <AIResearchPanel
               workspaceId={workspaceId}
               locked={researchLocked}

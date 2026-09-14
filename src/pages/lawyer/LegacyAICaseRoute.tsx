@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
+import { Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
@@ -13,9 +13,22 @@ import AICaseDetail from '@/pages/lawyer/AICaseDetail';
  * ai_workspace_id = workspaceId) redirect to the canonical Case route.
  * Unlinked, ambiguous or foreign workspaces render the legacy detail.
  * Direct URL access is always preserved; lookup is owner-scoped.
+ *
+ * 4.34J — preserves legacy ?tab= intent when trivially mappable:
+ * research/intelligence → IA subview, documents → Documents tab,
+ * timeline → Activity, overview/unknown → IA overview.
  */
+const LEGACY_TAB_TARGET: Record<string, string> = {
+  research: '?tab=ai&view=research',
+  intelligence: '?tab=ai&view=intelligence',
+  documents: '?tab=documents',
+  timeline: '?tab=activity',
+  overview: '?tab=ai',
+};
+
 export default function LegacyAICaseRoute() {
   const { caseId: workspaceId } = useParams<{ caseId: string }>();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const [linkedCaseId, setLinkedCaseId] = useState<string | null | undefined>(undefined);
 
@@ -50,7 +63,8 @@ export default function LegacyAICaseRoute() {
   }
 
   if (linkedCaseId) {
-    return <Navigate to={`/lawyer/cases/${linkedCaseId}?tab=ai`} replace />;
+    const suffix = LEGACY_TAB_TARGET[searchParams.get('tab') ?? ''] ?? '?tab=ai';
+    return <Navigate to={`/lawyer/cases/${linkedCaseId}${suffix}`} replace />;
   }
 
   return <AICaseDetail />;

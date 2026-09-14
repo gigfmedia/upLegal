@@ -8,16 +8,15 @@ const read = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf8');
 describe('4.34D — research montado en el Caso canónico', () => {
   it('entry Investigar embebida, sin tab bar anidada ni ruta standalone', () => {
     const c = read('src/components/legalup-ai/AICaseWorkspaceContent.tsx');
-    expect(c).toContain('Investigar este caso');
+    expect(c).toContain('Investigar jurisprudencia');
     expect(c).toContain('AIResearchPanel');
-    expect(c).toContain('showResearch');
-    expect(c).toContain('Volver al resumen');
+    expect(c).toContain("setAiView('research')");
     expect(c).not.toContain('/lawyer/ai');
   });
 
-  it('deep link ?tab=ai&view=research soportado sin forzar routing', () => {
+  it('deep links ?tab=ai&view=research|intelligence con fallback overview', () => {
     const c = read('src/components/legalup-ai/AICaseWorkspaceContent.tsx');
-    expect(c).toContain("searchParams.get('view') === 'research'");
+    expect(c).toContain("rawView === 'intelligence' || rawView === 'research'");
     expect(c).toContain("p.set('view', view)");
   });
 

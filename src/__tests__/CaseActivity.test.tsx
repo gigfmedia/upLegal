@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 const mocks = {
   docs: vi.fn(),
@@ -13,8 +15,17 @@ vi.mock('@/hooks/useAIDocuments', () => ({
 vi.mock('@/hooks/useAICaseWorkflow', () => ({
   useAICaseWorkflow: (...args: unknown[]) => mocks.workflow(...args),
 }));
+const noteMocks = {
+  create: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+  update: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+  remove: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+};
+
 vi.mock('@/hooks/useAICaseTimeline', () => ({
   useAICaseTimeline: (...args: unknown[]) => mocks.timeline(...args),
+  useCreateAITimelineNote: (...args: unknown[]) => noteMocks.create(...args),
+  useUpdateAITimelineNote: (...args: unknown[]) => noteMocks.update(...args),
+  useDeleteAITimelineNote: (...args: unknown[]) => noteMocks.remove(...args),
 }));
 
 import { CaseActivity } from '@/components/lawyer/CaseActivity';
@@ -147,5 +158,69 @@ describe('CaseActivity 4.30F — operational activity MVP', () => {
     expect(screen.queryByText(/historial completo/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/auditoría/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/cronología/i)).not.toBeInTheDocument();
+  });
+});
+
+describe('CaseActivity 4.34J — note CRUD parity (legacy timeline model)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    noteMocks.create.mockReturnValue({ mutate: vi.fn(), isPending: false });
+    noteMocks.update.mockReturnValue({ mutate: vi.fn(), isPending: false });
+    noteMocks.remove.mockReturnValue({ mutate: vi.fn(), isPending: false });
+  });
+
+  const noteEvent = {
+    id: 'ev-1', workspace_id: 'ws-1', event_type: 'note', title: 'Actualización del caso',
+    description: 'Llamó el cliente', event_date: '2026-09-03T10:00:00.000Z',
+  };
+
+  it('shows add-note entry and creates via legacy hook', () => {
+    setup({ notes: [noteEvent] });
+    fireEvent.click(screen.getByRole('button', { name: /añadir nota/i }));
+    fireEvent.change(screen.getByLabelText(/contenido de la nota/i), { target: { value: 'Nueva nota QA' } });
+    const mutate = vi.mocked(noteMocks.create().mutate);
+    fireEvent.click(screen.getByRole('button', { name: /^guardar nota$/i }));
+    expect(noteMocks.create).toHaveBeenCalled();
+    expect(mutate).toHaveBeenCalledWith('Nueva nota QA', expect.anything());
+  });
+
+  it('note rows expose edit and delete controls', () => {
+    setup({ notes: [noteEvent] });
+    expect(screen.getByRole('button', { name: /editar nota/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /eliminar nota/i })).toBeInTheDocument();
+  });
+
+  it('edit flow calls update with id + description only', () => {
+    setup({ notes: [noteEvent] });
+    fireEvent.click(screen.getByRole('button', { name: /editar nota/i }));
+    fireEvent.change(screen.getByLabelText(/editar contenido de la nota/i), { target: { value: 'Editada QA' } });
+    const mutate = vi.mocked(noteMocks.update().mutate);
+    fireEvent.click(screen.getByRole('button', { name: /^guardar$/i }));
+    expect(mutate).toHaveBeenCalledWith({ id: 'ev-1', description: 'Editada QA' }, expect.anything());
+  });
+
+  it('delete asks confirmation and calls remove once', () => {
+    const confirmSpy = vi.fn(() => true);
+    Object.defineProperty(window, 'confirm', { value: confirmSpy, configurable: true });
+    setup({ notes: [noteEvent] });
+    fireEvent.click(screen.getByRole('button', { name: /eliminar nota/i }));
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(noteMocks.remove().mutate).toHaveBeenCalledWith('ev-1', expect.anything());
+  });
+
+  it('existing activity events preserved alongside notes', () => {
+    setup({
+      notes: [noteEvent],
+      docs: [{ id: 'd-1', original_filename: 'c.pdf', created_at: '2026-09-02T10:00:00.000Z', updated_at: '2026-09-02T10:00:00.000Z', analysis_status: 'ready' }],
+    });
+    expect(screen.getByText('Caso creado')).toBeInTheDocument();
+    expect(screen.getByText('Llamó el cliente')).toBeInTheDocument();
+    expect(screen.getByText('c.pdf analizado')).toBeInTheDocument();
+  });
+
+  it('note mutations bind owner explicitly; update touches description only', () => {
+    const src = readFileSync(resolve(process.cwd(), 'src/hooks/useAICaseTimeline.ts'), 'utf8');
+    expect(src).toContain('lawyer_id: lawyerId');
+    expect(src).toContain('.update({ description: trimmed })');
   });
 });
