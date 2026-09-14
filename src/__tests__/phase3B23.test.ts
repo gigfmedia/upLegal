@@ -15,10 +15,14 @@ describe('FASE 3B-2.3 — Pro Limited', () => {
     expect(c).toContain('getProLawyerAccess');
     expect(c).toContain('pro_limited');
   });
-  it('checkAILimits handles pro_limited 1/3', () => {
+  it('pro_limited 1/3 enforced at creation, never blocking use (4.34B)', () => {
     const c = readFileSync(resolve('server.mjs'), 'utf-8');
     expect(c).toContain('isProLimited');
-    expect(c).toContain('maxCases = isProLimited ? 1 : 3');
+    expect(c).toContain('pro_limited');
+    // 4.34B: creation quotas live in the DB trigger, not in a use-time helper.
+    expect(c).toContain('ai_enforce_trial_limits');
+    expect(c).toContain('metered');
+    expect(c).not.toContain('checkAILimits');
   });
   it('ProPricingModal copy', () => {
     const c = readFileSync(resolve('src/components/legalup-pro/ProPricingModal.tsx'), 'utf-8');

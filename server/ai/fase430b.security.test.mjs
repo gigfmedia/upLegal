@@ -3,12 +3,13 @@ import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
+import { hasCanonicalDocumentReference, resolveAnalysisModel } from './coreAuthority.mjs';
 const src=readFileSync(new URL('../../server.mjs',import.meta.url),'utf8');
 const ast=ts.createSourceFile('server.mjs',src,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
 const names=['getLawyerCaseOwned','getAIWorkspaceOwned','getAIDocumentOwned','requireAIEntitlement','AI_FEATURES_ALL','PLAN_FEATURES_SERVER','serverCanUseAIFeature','getPlanForAccess'];
 const paths=['/api/lawyer/cases/:caseId/ai-workspace','/api/ai/documents/:id/analyze','/api/ai/cases/:caseId/jurisprudence','/api/ai/cases/:caseId/workflow/sync'];
 function harness({access={isProLimited:true},user='L1'}={}){
- const rows={lawyer_cases:[{id:'C1',lawyer_id:'L1',title:'Case',ai_workspace_id:null}],ai_workspaces:[],ai_documents:[{id:'D1',lawyer_id:'L1',workspace_id:'W1',status:'ready',analysis_status:'pending',extracted_text:'This is a sufficiently long legal document for the test.'}],ai_document_analyses:[]};
+ const rows={lawyer_cases:[{id:'C1',lawyer_id:'L1',title:'Case',ai_workspace_id:null}],ai_workspaces:[],ai_documents:[{id:'D1',lawyer_id:'L1',workspace_id:'W1',file_path:'L1/W1/D1/original.pdf',status:'ready',analysis_status:'pending',extracted_text:'This is a sufficiently long legal document for the test.'}],ai_document_analyses:[]};
  let seq=0;const routes={};
  const provider=vi.fn(async()=>({data:{summary:'Summary',parties:[],key_points:[],obligations:[],risks:[],recommendations:[],deadlines:[]}}));
  const supabase={from(table){let action='select',payload;const filters=[];const run=()=>{
@@ -18,7 +19,7 @@ function harness({access={isProLimited:true},user='L1'}={}){
   if(action==='delete')rows[table]=list.filter(r=>!selected.includes(r));
   return {data:selected[0]?{...selected[0]}:null,error:null,count:list.length};
  };const q={select:()=>q,eq:(k,v)=>{filters.push([k,v]);return q;},is:(k,v)=>{filters.push([k,v]);return q;},neq:(k,v)=>{filters.push([k,v,'neq']);return q;},insert:p=>{action='insert';payload=p;return q;},update:p=>{action='update';payload=p;return q;},delete:()=>{action='delete';return q;},single:async()=>run(),maybeSingle:async()=>run(),then:(a,b)=>Promise.resolve(run()).then(a,b)};return q;}};
- const ctx=vm.createContext({supabase,console:{log(){},error(){},warn(){}},app:{post:(p,h)=>routes[p]=h,get(){}},
+ const ctx=vm.createContext({hasCanonicalDocumentReference,resolveAnalysisModel,supabase,console:{log(){},error(){},warn(){}},app:{post:(p,h)=>routes[p]=h,get(){}},
   requireAILawyer:async(_req,res)=>{if(!user){res.status(401).json({error:'unauthorized'});return null;}return user;},requireAIAccess:async()=>access,
   checkAILimits:async()=>null,isAIOverRateLimit:()=>false,checkAIProtectionLimits:async()=>null,
   getAILawyerAccess:async()=>access,isAIProviderConfigured:()=>true,chatCompletion:provider,AI_DEFAULT_MODEL:'existing',
@@ -30,7 +31,7 @@ function harness({access={isProLimited:true},user='L1'}={}){
   if(ts.isFunctionDeclaration(n)&&names.includes(n.name?.text))vm.runInContext(n.getText(ast),ctx);
   if(ts.isExpressionStatement(n)&&ts.isCallExpression(n.expression)&&paths.includes(n.expression.arguments[0]?.text))vm.runInContext(n.getText(ast),ctx);
  }
- async function call(path,body={}){const res={statusCode:200,status(n){this.statusCode=n;return this;},json(body){this.body=body;return this;}};await routes[path]({params:{caseId:'C1',id:'D1'},body},res);return res;}
+ async function call(path,body={}){if(path===paths[1]&&!rows.ai_workspaces.some(w=>w.id==='W1'))rows.ai_workspaces.push({id:'W1',lawyer_id:'L1'});const res={statusCode:200,status(n){this.statusCode=n;return this;},json(body){this.body=body;return this;}};await routes[path]({params:{caseId:'C1',id:'D1'},body},res);return res;}
  return {rows,provider,call,ctx};
 }
 const provision=paths[0],analyze=paths[1];

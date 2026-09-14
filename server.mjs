@@ -1,3 +1,4 @@
+import { hasCanonicalDocumentReference, resolveAnalysisModel } from './server/ai/coreAuthority.mjs';
 import { consultationBase, bookingClientTotal, bookingPricingSnapshot } from './shared/bookingPricing.mjs';
 import { confirmCompanyCancellation } from './server/subscriptions/companyCancellation.mjs';
 import dotenv from 'dotenv';
@@ -7918,7 +7919,8 @@ const getAIDocumentOwned = async (documentId, userId) => {
     .eq('id', documentId)
     .maybeSingle();
   if (error || !data || data.lawyer_id !== userId) return null;
-  return data;
+  const workspace = await getAIWorkspaceOwned(data.workspace_id, userId);
+  return hasCanonicalDocumentReference(data, userId, workspace) ? data : null;
 };
 
 // Captura de eventos en PostHog (server-side, sin datos jurídicos sensibles).
@@ -8127,7 +8129,7 @@ const isAIOverRateLimit = (userId) => {
 
 // Valida acceso + límites del trial en un endpoint de IA.
 // Devuelve `{ res: null }` si todo bien, o `{ res }` con la respuesta 402/403/429 ya enviada.
-const requireAIEntitlement = async (req, res, userId) => {
+const requireAIEntitlement = async (req, res, userId, { metered = true } = {}) => {
   const access = await requireAIAccess(userId);
   if (!access) {
     return {
@@ -8137,10 +8139,9 @@ const requireAIEntitlement = async (req, res, userId) => {
       }),
     };
   }
-  const limitError = await checkAILimits(userId, access);
-  if (limitError) {
-    return { res: res.status(403).json({ error: limitError, code: 'AI_LIMIT_REACHED' }) };
-  }
+  // Resource creation quotas are enforced by ai_enforce_trial_limits on INSERT.
+  // Using existing resources never consumes another workspace/document slot.
+  if (!metered) return { res: null };
 
   // Límites técnicos de protección (Fase 3.6): rate limit y consumo mensual.
   if (isAIOverRateLimit(userId)) {
@@ -8192,43 +8193,6 @@ const checkAIProtectionLimits = async (userId) => {
   }
   if (requests >= AI_PROTECT_MAX_MONTHLY_REQUESTS) {
     return 'Se alcanzó el límite de consultas de IA de protección de este mes. Contáctanos si necesitas más capacidad.';
-  }
-  return null;
-};
-
-// Límites de uso del trial (Bloque 22). Retorna un mensaje de error si el
-// abogado en trial superó sus límites, o null si puede continuar.
-// El plan Essential activo no tiene límite de casos/documentos.
-const checkAILimits = async (userId, access) => {
-  const isProLimited = access?.isProLimited || access?.plan === 'pro_limited';
-  const isTrialing = access?.isTrialing;
-  if (!isProLimited && !isTrialing) return null;
-  // Cuentas de prueba marcadas como ilimitadas no tienen límites de uso.
-  if (isTrialing && access.subscription?.unlimited_trial) return null;
-
-  const maxCases = isProLimited ? 1 : 3;
-  const maxDocs = isProLimited ? 3 : 10;
-
-  const [{ count: caseCount, error: casesError }, { count: docCount, error: docsError }] =
-    await Promise.all([
-      supabase.from('ai_workspaces').select('id', { count: 'exact', head: true }).eq('lawyer_id', userId),
-      supabase.from('ai_documents').select('id', { count: 'exact', head: true }).eq('lawyer_id', userId),
-    ]);
-
-  if (casesError || docsError) {
-    console.error('[LegalUpAI] limit check error:', casesError ?? docsError);
-    return null; // No bloquear si falla el conteo.
-  }
-
-  if (docCount >= maxDocs) {
-    return isProLimited
-      ? `Alcanzaste el límite de ${maxDocs} documentos de tu plan Pro. Actualiza a AI Full para más.`
-      : `Alcanzaste el límite de ${AI_TRIAL_MAX_DOCUMENTS} documentos de la prueba gratuita. Suscríbete a Pro para subir más.`;
-  }
-  if (caseCount >= maxCases) {
-    return isProLimited
-      ? `Alcanzaste el límite de ${maxCases} caso de tu plan Pro. Actualiza a AI Full para más.`
-      : `Alcanzaste el límite de ${AI_TRIAL_MAX_CASES} casos de la prueba gratuita. Suscríbete a Pro para crear más.`;
   }
   return null;
 };
@@ -8886,7 +8850,11 @@ app.post('/api/pro/subscription/cancel', async (req, res) => {
 
 const getProLawyerEmail = getAILawyerEmail;
 
-const extractTextFromStoredPdf = async (doc) => {
+const extractTextFromStoredPdf = async (doc, userId) => {
+  const workspace = await getAIWorkspaceOwned(doc.workspace_id, userId);
+  if (!hasCanonicalDocumentReference(doc, userId, workspace)) {
+    throw new Error('Referencia de documento no autorizada.');
+  }
   const { data: file, error: downloadError } = await supabase.storage
     .from(AI_DOCUMENTS_BUCKET)
     .download(doc.file_path);
@@ -8912,7 +8880,7 @@ app.post('/api/ai/documents/:id/process', async (req, res) => {
     const doc = await getAIDocumentOwned(req.params.id, userId);
     if (!doc) return res.status(404).json({ error: 'Documento no encontrado.' });
 
-    const entitlement = await requireAIEntitlement(req, res, userId);
+    const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
     if (entitlement.res) return entitlement.res;
 
     if (doc.status === 'ready' && doc.extracted_text) {
@@ -8921,7 +8889,7 @@ app.post('/api/ai/documents/:id/process', async (req, res) => {
 
     await supabase.from('ai_documents').update({ status: 'processing', analysis_error: null }).eq('id', doc.id);
 
-    const { text, pageCount } = await extractTextFromStoredPdf(doc);
+    const { text, pageCount } = await extractTextFromStoredPdf(doc, userId);
 
     await supabase.from('ai_documents').update({
       status: 'ready',
@@ -8945,7 +8913,7 @@ app.post('/api/ai/documents/:id/process', async (req, res) => {
   } catch (err) {
     console.error('[LegalUpAI] process error:', err);
     try {
-      await supabase.from('ai_documents').update({ status: 'failed', analysis_error: err.message }).eq('id', req.params.id);
+      await supabase.from('ai_documents').update({ status: 'failed', analysis_error: err.message }).eq('id', req.params.id).eq('lawyer_id', userId);
     } catch { /* el documento pudo haber sido eliminado */ }
     if (userId) {
       try {
@@ -8973,9 +8941,8 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
     userId = await requireAILawyer(req, res);
     if (!userId) return;
 
-    const model = typeof req.body?.model === 'string' && req.body.model.trim()
-      ? req.body.model.trim().slice(0, 100)
-      : AI_DEFAULT_MODEL;
+    const model = resolveAnalysisModel(req.body?.model, AI_DEFAULT_MODEL);
+    if (!model) return res.status(400).json({ error: 'Modelo no permitido.', code: 'AI_MODEL_NOT_ALLOWED' });
 
     const doc = await getAIDocumentOwned(req.params.id, userId);
     if (!doc) return res.status(404).json({ error: 'Documento no encontrado.' });
@@ -8994,7 +8961,7 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
     // Asegura el texto extraído (procesa inline si hace falta).
     let text = doc.extracted_text;
     if (doc.status !== 'ready' || !text) {
-      const extracted = await extractTextFromStoredPdf(doc);
+      const extracted = await extractTextFromStoredPdf(doc, userId);
       text = extracted.text;
       await supabase.from('ai_documents').update({
         status: 'ready',
@@ -9151,7 +9118,7 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
     console.error('[LegalUpAI] analyze error:', err, { detail: err?.detail?.slice?.(0,500), status: err?.status, code: err?.code, document_id: req.params.id, workspace_id: req.params.id ? undefined : undefined });
     // Temporal metadata-only log for 400 diagnosis
     try {
-      const docForLog = await supabase.from('ai_documents').select('id, workspace_id, original_filename, status, extracted_text').eq('id', req.params.id).maybeSingle();
+      const docForLog = await supabase.from('ai_documents').select('id, workspace_id, original_filename, status, extracted_text').eq('id', req.params.id).eq('lawyer_id', userId).maybeSingle();
       const meta = docForLog.data ? { docId: docForLog.data.id, ws: docForLog.data.workspace_id, filename: docForLog.data.original_filename, extractedLen: (docForLog.data.extracted_text||'').length, status: docForLog.data.status } : { docId: req.params.id };
       console.warn('[LegalUpAI] analyze 400 meta', JSON.stringify({ ...meta, errStatus: err?.status, errCode: err?.code, detail: String(err?.detail||'').slice(0,300) }));
     } catch {}
@@ -9159,7 +9126,7 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
       ? err.message
       : (err.message || 'No se pudo analizar el documento.');
     try {
-      await supabase.from('ai_documents').update({ analysis_status: 'failed', analysis_error: message }).eq('id', req.params.id);
+      await supabase.from('ai_documents').update({ analysis_status: 'failed', analysis_error: message }).eq('id', req.params.id).eq('lawyer_id', userId);
     } catch { /* el documento pudo haber sido eliminado */ }
     if (userId) {
       try {
@@ -9234,7 +9201,7 @@ app.post('/api/lawyer/cases/:caseId/ai-workspace', async (req, res) => {
     if (insertError || !candidate) {
       console.error('[LegalUpAI] ai-workspace create failed', insertError);
       const msg = String(insertError?.message || '');
-      if (/limit|trial|quota/i.test(msg)) {
+      if (insertError?.code === 'P0001' || /l[ií]mit|trial|quota/i.test(msg)) {
         return res.status(403).json({ error: insertError.message, code: 'AI_LIMIT_REACHED' });
       }
       return res.status(500).json({ error: 'No se pudo crear el workspace AI.', code: 'AI_WORKSPACE_CREATE_FAILED' });
@@ -9354,7 +9321,7 @@ app.get('/api/ai/cases/:caseId/chat', async (req, res) => {
     const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
     if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
 
-    const entitlement = await requireAIEntitlement(req, res, userId);
+    const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
     if (entitlement.res) return entitlement.res;
 
     const conversation = await getOrCreateAIConversation(workspace.id, userId);
@@ -9769,7 +9736,7 @@ app.get('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
     const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
     if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
 
-    const entitlement = await requireAIEntitlement(req, res, userId);
+    const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
     if (entitlement.res) return entitlement.res;
 
     const { data: research, error } = await supabase
@@ -10362,7 +10329,7 @@ app.get('/api/ai/cases/:caseId/intelligence', async (req, res) => {
     const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
     if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
 
-    const entitlement = await requireAIEntitlement(req, res, userId);
+    const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
     if (entitlement.res) return entitlement.res;
 
     // Documentos del workspace (todos, para contar pendientes)
@@ -10499,7 +10466,7 @@ app.get('/api/ai/cases/:caseId/workflow', async (req, res) => {
     if (!userId) return;
     const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
     if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
-    const entitlement = await requireAIEntitlement(req, res, userId);
+    const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
     if (entitlement.res) return entitlement.res;
     const { data, error } = await supabase
       .from('ai_case_workflow_items')
@@ -10521,7 +10488,7 @@ app.post('/api/ai/cases/:caseId/workflow/sync', async (req, res) => {
     if (!userId) return;
     const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
     if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
-    const entitlement = await requireAIEntitlement(req, res, userId);
+    const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
     if (entitlement.res) return entitlement.res;
     // 4.29D: workflow generation is advanced — pro_limited cannot call sync
     {
@@ -10546,7 +10513,7 @@ app.patch('/api/ai/cases/:caseId/workflow/:itemId', async (req, res) => {
     if (!userId) return;
     const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
     if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
-    const entitlement = await requireAIEntitlement(req, res, userId);
+    const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
     if (entitlement.res) return entitlement.res;
     const { status } = req.body || {};
     if (!WORKFLOW_STATUSES.has(status)) return res.status(400).json({ error: 'Estado no válido.' });
