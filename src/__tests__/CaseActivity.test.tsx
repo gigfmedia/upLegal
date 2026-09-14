@@ -181,7 +181,7 @@ describe('CaseActivity 4.34J — note CRUD parity (legacy timeline model)', () =
 
   it('shows add-note entry and creates via legacy hook', () => {
     setup({ notes: [noteEvent] });
-    fireEvent.click(screen.getByRole('button', { name: /añadir nota/i }));
+    fireEvent.click(screen.getByRole('button', { name: /agregar actualización/i }));
     fireEvent.change(screen.getByLabelText(/contenido de la nota/i), { target: { value: 'Nueva nota QA' } });
     const mutate = vi.mocked(noteMocks.create().mutate);
     fireEvent.click(screen.getByRole('button', { name: /^guardar nota$/i }));

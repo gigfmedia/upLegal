@@ -131,6 +131,12 @@ export function useCaseActivityItems(
   return {
     items,
     loading: documentsQuery.isLoading || workflowQuery.isLoading || timelineQuery.isLoading,
+    loadError: documentsQuery.isError || workflowQuery.isError || timelineQuery.isError,
+    refetch: () => {
+      void documentsQuery.refetch();
+      void workflowQuery.refetch();
+      void timelineQuery.refetch();
+    },
     timelineById: (() => {
       const map = new Map<string, { id: string; description: string | null }>();
       for (const e of timelineQuery.data ?? []) map.set(`note-${e.id}`, { id: e.id, description: e.description });
