@@ -62,10 +62,10 @@ describe('4.34J — documents label + notes parity', () => {
     }
   });
 
-  it('legacy redirect preserves tab intent trivially', () => {
+  it('legacy redirect preserves tab intent trivially (direct tabs)', () => {
     const c = read('src/pages/lawyer/LegacyAICaseRoute.tsx');
     expect(c).toContain('LEGACY_TAB_TARGET');
-    expect(c).toContain('?tab=ai&view=research');
-    expect(c).toContain('?tab=ai&view=intelligence');
+    expect(c).toContain("research: '?tab=research'");
+    expect(c).toContain("intelligence: '?tab=intelligence'");
   });
 });

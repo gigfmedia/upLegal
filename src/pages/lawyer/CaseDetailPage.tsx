@@ -17,8 +17,12 @@ import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { AICaseWorkspaceContent } from '@/components/legalup-ai/AICaseWorkspaceContent';
+import { AICaseCommandCenter } from '@/components/legalup-ai/AICaseCommandCenter';
+import { AICaseIntelligence } from '@/components/legalup-ai/AICaseIntelligence';
+import { AIResearchPanel } from '@/components/legalup-ai/AIResearchPanel';
+import { AICaseChatDrawer } from '@/components/legalup-ai/AICaseChatDrawer';
 import { CaseActivity } from '@/components/lawyer/CaseActivity';
+import { useAIDocuments } from '@/hooks/useAIDocuments';
 import { useAIFeatureAccess } from '@/hooks/useAISubscription';
 import { useCaseDocumentWorkspace } from '@/hooks/useCaseDocumentWorkspace';
 import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
@@ -73,11 +77,30 @@ function CaseDetailContent() {
   const [caseBookings, setCaseBookings] = useState<any[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = (searchParams.get('tab') as string) || 'overview';
+  // 4.34K: direct capability tabs. Backward compat: legacy ?tab=ai[&view=]
+  // maps to the equivalent direct tab (4.34J deep links keep working).
+  const CASE_TABS = ['overview', 'documents', 'intelligence', 'research', 'activity'] as const;
+  const rawTab = (searchParams.get('tab') as string) || 'overview';
+  const rawView = searchParams.get('view');
+  const activeTab: string = rawTab === 'ai'
+    ? (rawView === 'intelligence' ? 'intelligence' : rawView === 'research' ? 'research' : 'overview')
+    : (CASE_TABS as readonly string[]).includes(rawTab) ? rawTab : 'overview';
   const setActiveTab = (v: string) => setSearchParams(prev => { const p = new URLSearchParams(prev); p.set('tab', v); return p; }, { replace: true });
   const { workspaceId: effectiveWorkspaceId, ensureWorkspace } = useCaseDocumentWorkspace(caseId, caseData?.id === caseId ? caseData.ai_workspace_id : null);
   const { canUse, isLoading: accessLoading } = useAIFeatureAccess();
   const [proOpen, setProOpen] = useState(false);
+  // 4.34K: case-level chat (shared conversation, same as embedded IA drawer).
+  const chatDocumentsQuery = useAIDocuments(effectiveWorkspaceId || undefined);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatQuestion, setChatQuestion] = useState<string | null>(null);
+  const [chatDocumentId, setChatDocumentId] = useState<string | null>(null);
+  const [briefWorkflowActionId, setBriefWorkflowActionId] = useState<string | null>(null);
+  const openCaseChat = (question: string | null, documentId: string | null = null) => {
+    setChatQuestion(question);
+    setChatDocumentId(documentId);
+    setChatOpen(true);
+  };
+  const researchLocked = !accessLoading && !canUse('jurisprudence');
 
   // hydrate when case loads
   useState(() => {
@@ -193,7 +216,8 @@ function CaseDetailContent() {
         <TabsList className="sticky top-16 z-10 mb-4 flex h-auto w-full flex-wrap justify-start gap-0 border border-gray-200 bg-white shadow-sm p-0">
           <TabsTrigger value="overview" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Resumen</TabsTrigger>
           <TabsTrigger value="documents" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Documentos y análisis</TabsTrigger>
-          <TabsTrigger value="ai" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">IA</TabsTrigger>
+          <TabsTrigger value="intelligence" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Inteligencia del caso</TabsTrigger>
+          <TabsTrigger value="research" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Investigar jurisprudencia</TabsTrigger>
           <TabsTrigger value="activity" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Actividad</TabsTrigger>
         </TabsList>
 
@@ -326,6 +350,22 @@ function CaseDetailContent() {
           </CardContent>
         </Card>
       )}
+
+      {/* 4.34K: AI executive summary lives in Resumen — no extra IA bucket click. */}
+      {!accessLoading && canUse('case_analysis') && effectiveWorkspaceId && (
+        <div className="mt-6">
+          <AICaseCommandCenter
+            workspaceId={effectiveWorkspaceId}
+            workspaceName={caseData.title}
+            onOpenWorkflowAction={(id) => setBriefWorkflowActionId(id)}
+            onViewDocuments={() => setActiveTab('documents')}
+            onViewIntelligence={() => setActiveTab('intelligence')}
+            onAskQuestion={(q) => openCaseChat(q)}
+            onWorkflowAsk={(q, actionId) => { setBriefWorkflowActionId(actionId); openCaseChat(q); }}
+            onInvestigate={() => setActiveTab('research')}
+          />
+        </div>
+      )}
         </TabsContent>
 
         <TabsContent value="documents" className="mt-4">
@@ -335,12 +375,12 @@ function CaseDetailContent() {
             <CardContent>
               <CaseDocuments key={caseId} workspaceId={effectiveWorkspaceId} ensureWorkspace={ensureWorkspace}
                 canAnalyze={canUse('document_analysis')} accessLoading={accessLoading}
-                onUpgrade={() => setProOpen(true)} onOpenAI={() => setActiveTab('ai')} />
+                onUpgrade={() => setProOpen(true)} onOpenAI={() => setActiveTab('overview')} />
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="ai" className="mt-4">
+        <TabsContent value="intelligence" className="mt-4">
           {accessLoading ? <Skeleton className="h-24 w-full" /> : !canUse('case_analysis') ? (
             <Card><CardContent className="py-10 text-center space-y-4">
               <p>Las herramientas de IA están incluidas en LegalUp Pro.</p>
@@ -353,7 +393,32 @@ function CaseDetailContent() {
               <Button onClick={() => setActiveTab('documents')}>Ir a Documentos</Button>
             </CardContent></Card>
           ) : (
-            <AICaseWorkspaceContent workspaceId={effectiveWorkspaceId} workspaceName={caseData.title} embedded onOpenDocuments={() => setActiveTab('documents')} />
+            <AICaseIntelligence
+              workspaceId={effectiveWorkspaceId}
+              externalWorkflowActionId={briefWorkflowActionId}
+              onExternalWorkflowActionHandled={() => setBriefWorkflowActionId(null)}
+              onQuestionClick={(q) => openCaseChat(q)}
+              onWorkflowAsk={(q, actionId) => { setBriefWorkflowActionId(actionId); openCaseChat(q); }}
+              onOpenChat={() => openCaseChat(null)}
+              onNavigateToDocuments={() => setActiveTab('documents')}
+            />
+          )}
+        </TabsContent>
+
+        <TabsContent value="research" className="mt-4">
+          {effectiveWorkspaceId ? (
+            <AIResearchPanel
+              workspaceId={effectiveWorkspaceId}
+              locked={researchLocked}
+              analyticsSurface="case"
+              initialQuery={caseData.title ? `¿Qué normativa y jurisprudencia aplican al caso "${caseData.title}"?` : undefined}
+            />
+          ) : (
+            <Card><CardContent className="py-10 text-center space-y-4">
+              <p className="font-medium">Aún no hay caso inteligente.</p>
+              <p className="text-sm text-muted-foreground">Agrega un documento en la pestaña Documentos para habilitar la investigación de este caso.</p>
+              <Button onClick={() => setActiveTab('documents')}>Ir a Documentos</Button>
+            </CardContent></Card>
           )}
         </TabsContent>
 
@@ -366,6 +431,18 @@ function CaseDetailContent() {
           />
         </TabsContent>
       </Tabs>
+      {effectiveWorkspaceId && (
+        <AICaseChatDrawer
+          open={chatOpen}
+          onOpenChange={(open) => { setChatOpen(open); if (!open) { setChatQuestion(null); setChatDocumentId(null); } }}
+          workspaceId={effectiveWorkspaceId}
+          workspaceName={caseData.title}
+          documents={chatDocumentsQuery.data ?? []}
+          documentId={chatDocumentId}
+          externalQuestion={chatQuestion}
+          onExternalQuestionHandled={() => setChatQuestion(null)}
+        />
+      )}
       <ProPricingModal open={proOpen} onOpenChange={setProOpen} triggerAction="case_ai" />
     </div>
   );

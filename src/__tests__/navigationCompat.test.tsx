@@ -188,10 +188,14 @@ describe('4.34H standalone shell retirement', () => {
     expect(c).toContain("navigate(`/pro${attribution.size");
   });
 
-  it('canonical Case IA entry unchanged', () => {
+  it('4.34K canonical Case exposes direct capability tabs (no generic IA bucket)', () => {
     const c = read('src/pages/lawyer/CaseDetailPage.tsx');
-    expect(c).toContain("value=\"ai\"");
-    expect(c).toContain('AICaseWorkspaceContent');
+    expect(c).toContain("value=\"intelligence\"");
+    expect(c).toContain("value=\"research\"");
+    expect(c).toContain('AICaseIntelligence');
+    expect(c).toContain('AIResearchPanel');
+    expect(c).toContain('AICaseChatDrawer');
+    expect(c).not.toContain('AICaseWorkspaceContent');
   });
 
   it('notification ai_document links preserved via compatibility route', () => {

@@ -14,16 +14,16 @@ import AICaseDetail from '@/pages/lawyer/AICaseDetail';
  * Unlinked, ambiguous or foreign workspaces render the legacy detail.
  * Direct URL access is always preserved; lookup is owner-scoped.
  *
- * 4.34J — preserves legacy ?tab= intent when trivially mappable:
- * research/intelligence → IA subview, documents → Documents tab,
- * timeline → Activity, overview/unknown → IA overview.
+ * 4.34J — preserves legacy ?tab= intent against canonical DIRECT tabs:
+ * research/intelligence/documents/timeline/overview map to their
+ * canonical top-level tab (4.34J removed the generic IA bucket).
  */
 const LEGACY_TAB_TARGET: Record<string, string> = {
-  research: '?tab=ai&view=research',
-  intelligence: '?tab=ai&view=intelligence',
+  research: '?tab=research',
+  intelligence: '?tab=intelligence',
   documents: '?tab=documents',
   timeline: '?tab=activity',
-  overview: '?tab=ai',
+  overview: '?tab=overview',
 };
 
 export default function LegacyAICaseRoute() {
