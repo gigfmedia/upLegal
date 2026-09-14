@@ -49,10 +49,11 @@ function DashboardLayout() {
   const [userRole, setUserRole] = useState<UserRole>('client');
   const [showServicesBadge, setShowServicesBadge] = useState(false);
   const [navCounts, setNavCounts] = useState<Record<string, number>>({});
-  // 4.30D: standalone /lawyer/ai is compatibility infrastructure, not the
-  // primary product. Only legacy AI users see it as a secondary entry.
+  // 4.34H: standalone /lawyer/ai retired from normal navigation. A narrow
+  // compatibility entry remains ONLY for owners of orphan legacy workspaces
+  // (no linked Case); linked history is reachable canonically via Cases.
   const { data: legacyAICompat } = useLegacyAICompat();
-  const showLegacyAI = legacyAICompat?.showLegacyAI ?? false;
+  const showOrphanAIHistory = legacyAICompat?.hasUnlinkedWorkspaces ?? false;
   
   // Get user role safely
   const getUserRole = (): UserRole => {
@@ -252,10 +253,10 @@ function DashboardLayout() {
         { href: '/lawyer/cases', icon: Briefcase, label: 'Casos' },
         { href: '/lawyer/citas', icon: Calendar, label: 'Citas' },
         { href: '/lawyer/earnings', icon: TrendingUp, label: 'Ingresos' },
-        // 4.30D: Cases is the primary product entry. Standalone AI is only a
-        // secondary compatibility entry for legacy AI users.
-        ...(showLegacyAI
-          ? [{ href: '/lawyer/ai', icon: Scale, label: 'LegalUp', highlightIcon: false, aiBadge: true }]
+        // 4.34H: Cases is the primary product entry. A narrow "Historial IA"
+        // compatibility entry appears only for orphan legacy workspaces.
+        ...(showOrphanAIHistory
+          ? [{ href: '/lawyer/ai', icon: Scale, label: 'Historial IA', highlightIcon: false, aiBadge: true }]
           : []),
         { href: '/lawyer/profile', icon: User, label: 'Perfil' },
         { href: '/lawyer/services', icon: FileText, label: 'Servicios', badge: showServicesBadge },

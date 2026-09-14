@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import posthog from 'posthog-js';
@@ -62,7 +62,7 @@ export default function LegalUpAIWorkspace() {
   const [caseToEdit, setCaseToEdit] = useState<AIWorkspace | null>(null);
   const [pricingOpen, setPricingOpen] = useState(false);
   const { hasAccess, subscription } = useAISubscription();
-  const { cases: proCases } = useLawyerCases();
+  const { cases: proCases, loading: proCasesLoading } = useLawyerCases();
   const caseIdByWorkspaceId = new Map(
     (proCases ?? []).map((c) => [c.ai_workspace_id, c.id] as const).filter(([ws]) => !!ws) as [string, string][]
   );
@@ -111,6 +111,15 @@ export default function LegalUpAIWorkspace() {
       toast.error(err instanceof Error ? err.message : 'No se pudo eliminar el caso.');
     }
   };
+
+  // 4.34H: compatibility listing only (after all hooks). No workspaces →
+  // canonical Cases. All workspaces linked → canonical Cases. Only orphan
+  // history stays on this surface. Waits for both queries to avoid
+  // redirecting on incomplete link data.
+  if (!isLoading && !proCasesLoading && !isError && Array.isArray(workspaces)) {
+    const hasOrphans = workspaces.some((w) => !caseIdByWorkspaceId.has(w.id));
+    if (!hasOrphans) return <Navigate to="/lawyer/cases" replace />;
+  }
 
   return (
     <div className="space-y-8 px-4 sm:px-6 lg:px-8 py-6">
