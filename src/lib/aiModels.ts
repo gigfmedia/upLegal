@@ -17,3 +17,8 @@ export const AI_MODELS: AIModelOption[] = [
 ];
 
 export const DEFAULT_AI_MODEL = 'openai/gpt-4o-mini';
+
+/** Restore a document's selection only while it remains in the existing catalog. */
+export function resolveSelectableAIModel(model: string | null | undefined): string {
+  return AI_MODELS.some(option => option.id === model) ? model! : DEFAULT_AI_MODEL;
+}

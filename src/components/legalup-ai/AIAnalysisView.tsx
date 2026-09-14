@@ -1,13 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { AIAnalysisModelSelect } from './AIAnalysisModelSelect';
 import {
   CalendarClock,
   CheckCircle2,
@@ -23,7 +17,6 @@ import {
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { AI_MODELS } from '@/lib/aiModels';
 import { fragmentLabelFromId } from '@/lib/evidenceLocation';
 import type { AIDocumentAnalysis } from '@/hooks/useAIDocuments';
 
@@ -158,18 +151,7 @@ export function AIAnalysisView({
           </div>
           <div className="mt-1 flex w-full flex-col items-center gap-2">
             <div className="flex w-full max-w-md items-center justify-center gap-2">
-              <Select value={model} onValueChange={onModelChange} disabled={analyzing}>
-                <SelectTrigger className="min-w-0 flex-1 text-left" aria-label="Modelo de IA">
-                  <SelectValue placeholder="Modelo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {AI_MODELS.map((option) => (
-                    <SelectItem key={option.id} value={option.id}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <AIAnalysisModelSelect model={model} onModelChange={onModelChange} disabled={analyzing} />
               <Button
                 type="button"
                 onClick={onAnalyze}
@@ -225,18 +207,7 @@ export function AIAnalysisView({
           )}
         </div>
         <div className="flex items-center justify-end gap-2">
-          <Select value={model} onValueChange={onModelChange} disabled={analyzing}>
-            <SelectTrigger className="min-w-0 flex-1 text-left sm:flex-none sm:w-56" aria-label="Modelo de IA">
-              <SelectValue placeholder="Modelo" />
-            </SelectTrigger>
-            <SelectContent>
-              {AI_MODELS.map((option) => (
-                <SelectItem key={option.id} value={option.id}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <AIAnalysisModelSelect model={model} onModelChange={onModelChange} disabled={analyzing} className="sm:flex-none sm:w-56" />
           <Button
             type="button"
             variant="outline"

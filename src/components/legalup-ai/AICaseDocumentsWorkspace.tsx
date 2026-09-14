@@ -15,7 +15,8 @@ import { AIDocumentUpload } from '@/components/legalup-ai/AIDocumentUpload';
 import { AIDocumentList } from '@/components/legalup-ai/AIDocumentList';
 import { AIAnalysisView } from '@/components/legalup-ai/AIAnalysisView';
 import { AIChat } from '@/components/legalup-ai/AIChat';
-import { DEFAULT_AI_MODEL } from '@/lib/aiModels';
+import { resolveSelectableAIModel } from '@/lib/aiModels';
+import { AIAnalysisModelSelect } from './AIAnalysisModelSelect';
 
 export type AICaseDocumentsWorkspaceProps = {
   workspaceId: string | null | undefined;
@@ -60,13 +61,18 @@ export function AICaseDocumentsWorkspace({
   const documentsQuery = useAIDocuments(workspaceId || undefined);
   const documents = useMemo(() => documentsQuery.data ?? [], [documentsQuery.data]);
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
-  const [model, setModel] = useState(DEFAULT_AI_MODEL);
+  const [documentModels, setDocumentModels] = useState<Record<string, string>>({});
   const processMutation = useProcessAIDocument();
   const analyzeMutation = useAnalyzeAIDocument();
   const busy = useRef(false);
 
   const selectedDoc =
     documents.find((doc) => doc.id === selectedDocId) ?? documents[0] ?? null;
+  const modelKey = `${workspaceId}/${selectedDoc?.id ?? ''}`;
+  const model = resolveSelectableAIModel(documentModels[modelKey] ?? selectedDoc?.model);
+  const setModel = (value: string) => {
+    setDocumentModels(current => ({ ...current, [modelKey]: resolveSelectableAIModel(value) }));
+  };
 
   useEffect(() => {
     if (selectedDocId && !documents.some((doc) => doc.id === selectedDocId)) {
@@ -101,7 +107,7 @@ export function AICaseDocumentsWorkspace({
   };
 
   const handleAnalyze = () => {
-    if (!selectedDoc || busy.current) return;
+    if (!selectedDoc || !canAnalyze || accessLoading || analyzeMutation.isPending || selectedDoc.analysis_status === 'processing' || busy.current) return;
     busy.current = true;
     posthog.capture('ai_document_analysis_started', { model, source: analyticsSource });
     analyzeMutation.mutate(
@@ -305,6 +311,10 @@ export function AICaseDocumentsWorkspace({
                   {selectedDoc.analysis_error ||
                     'Ocurrió un error inesperado al analizar el documento.'}
                 </p>
+                <div className="w-full max-w-md space-y-2 text-left">
+                  <p className="text-sm font-medium">Modelo para reintentar</p>
+                  <AIAnalysisModelSelect model={model} onModelChange={setModel} disabled={analyzeMutation.isPending} />
+                </div>
                 <Button
                   type="button"
                   variant="outline"
