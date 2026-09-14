@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import posthog from 'posthog-js';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 
@@ -31,11 +32,21 @@ vi.mock('@/hooks/useAIDocuments',async()=>{
  return {...actual,useAIDocuments:()=>({data:state.docs,isLoading:false,isError:false,refetch:vi.fn()}),useAIDocumentAnalysis:()=>({data:null}),useAnalyzeAIDocument:()=>({mutate:state.analyze,isPending:false})};
 });
 vi.mock('@/components/legalup-ai/AIDocumentList',()=>({AIDocumentList:({documents,onSelect}:{documents:{id:string;original_filename:string}[];onSelect:(id:string)=>void})=><div>{documents.map(doc=><button key={doc.id} onClick={()=>onSelect(doc.id)}>{doc.original_filename}</button>)}</div>}));
-vi.mock('@/components/legalup-ai/AICaseCommandCenter',()=>({AICaseCommandCenter:({workspaceId}:{workspaceId:string})=><div data-testid="cc">{workspaceId}</div>}));
+vi.mock('@/components/legalup-ai/AICaseCommandCenter',()=>({AICaseCommandCenter:({workspaceId,onAskQuestion,onWorkflowAsk}:{workspaceId:string;onAskQuestion?:(q:string)=>void;onWorkflowAsk?:(q:string,a:string)=>void})=><div data-testid="cc">{workspaceId}<button onClick={()=>onAskQuestion?.('q')}>cc-ask</button><button onClick={()=>onWorkflowAsk?.('q','act-1')}>cc-wf-ask</button></div>}));
 vi.mock('@/components/legalup-ai/AIAnalysisView',()=>({AIAnalysisView:({onAnalyze}:{onAnalyze:()=>void})=><button onClick={onAnalyze}>Analizar</button>}));
-vi.mock('@/components/legalup-ai/AICaseIntelligence',()=>({AICaseIntelligence:({workspaceId}:{workspaceId:string})=><div data-testid="intel">{workspaceId}</div>}));
-vi.mock('@/components/legalup-ai/AIResearchPanel',()=>({AIResearchPanel:({workspaceId,locked}:{workspaceId:string;locked?:boolean})=><div data-testid="research">{workspaceId}:{locked?'locked':'open'}</div>}));
-vi.mock('@/components/legalup-ai/AICaseChatDrawer',()=>({AICaseChatDrawer:()=><div data-testid="chat-drawer">chat</div>}));
+vi.mock('@/components/legalup-ai/AICaseIntelligence',()=>({AICaseIntelligence:({workspaceId,externalWorkflowActionId,onExternalWorkflowActionHandled}:{workspaceId:string;externalWorkflowActionId?:string|null;onExternalWorkflowActionHandled?:()=>void})=><div data-testid="intel" data-brief={externalWorkflowActionId ?? ''}>{workspaceId}<button onClick={()=>onExternalWorkflowActionHandled?.()}>consume-brief</button></div>}));
+vi.mock('@/components/legalup-ai/AIResearchPanel',() => ({
+  AIResearchPanel: ({ workspaceId, locked }: { workspaceId: string; locked?: boolean }) => {
+    const [v, setV] = useState('');
+    return (
+      <div data-testid="research">
+        {workspaceId}:{locked ? 'locked' : 'open'}
+        <input aria-label="research-draft" value={v} onChange={(e: { target: { value: string } }) => setV(e.target.value)} />
+      </div>
+    );
+  },
+}));
+vi.mock('@/components/legalup-ai/AICaseChatDrawer',()=>({AICaseChatDrawer:({open,onOpenChange}:{open:boolean;onOpenChange:(o:boolean)=>void})=><div data-testid="chat-drawer">chat{open?<button onClick={()=>onOpenChange(false)}>close-chat</button>:null}</div>}));
 vi.mock('@/components/legalup-pro/ProPricingModal',()=>({ProPricingModal:({open}:{open:boolean})=>open?<div>Planes Pro</div>:null}));
 import CaseDetailPage from '@/pages/lawyer/CaseDetailPage';
 import { AIDocumentUpload } from '@/components/legalup-ai/AIDocumentUpload';
@@ -59,7 +70,7 @@ describe('4.30B case documents',()=>{
  it('existing workspace skips provisioning',async()=>{state.caseData!.ai_workspace_id='OLD';const v=renderCase();drop(v.container);await screen.findByText('one.pdf');expect(state.provision).not.toHaveBeenCalled();expect(state.docs[0].workspace_id).toBe('OLD');});
  it('failure prevents upload and next attempt retries',async()=>{state.provision.mockRejectedValueOnce(new Error('offline'));const v=renderCase();drop(v.container);await waitFor(()=>expect(state.toast).toHaveBeenCalled());expect(state.upload).not.toHaveBeenCalled();expect(state.docs).toHaveLength(0);drop(v.container);await screen.findByText('one.pdf');expect(state.provision).toHaveBeenCalledTimes(2);expect(state.upload).toHaveBeenCalledTimes(1);});
  it('duplicate file selection while provisioning uploads only once',async()=>{let finish:(v:unknown)=>void=()=>{};state.provision.mockImplementation(()=>new Promise(r=>{finish=r;}));const v=renderCase();drop(v.container);await waitFor(()=>expect(state.provision).toHaveBeenCalledTimes(1));drop(v.container);finish({workspace:{id:'W1'}});await screen.findByText('one.pdf');expect(state.provision).toHaveBeenCalledTimes(1);expect(state.upload).toHaveBeenCalledTimes(1);});
- it('Pro no workspace: document-first CTA switches outer tab without provisioning',async()=>{renderCase('intelligence');expect(screen.queryByText(/Activar IA/i)).not.toBeInTheDocument();fireEvent.click(screen.getByText('Ir a Documentos'));await screen.findByText('Agrega documentos a este caso');expect(state.provision).not.toHaveBeenCalled();});
+ it('Pro no workspace: document-first CTA switches outer tab without provisioning',async()=>{renderCase('intelligence');expect(screen.queryByText(/Activar IA/i)).not.toBeInTheDocument();fireEvent.click(screen.getAllByText('Ir a Documentos')[0]);await screen.findByText('Agrega documentos a este caso');expect(state.provision).not.toHaveBeenCalled();});
  it.each(['LAWYER_DIRECT','LEGALUP_MARKETPLACE'])('%s without access: paywall before provisioning; documents still upload',async source=>{state.allowed=false;state.caseData!.source=source;const v=renderCase('intelligence');fireEvent.click(screen.getByText('Ver LegalUp Pro'));expect(screen.getByText('Planes Pro')).toBeInTheDocument();expect(state.provision).not.toHaveBeenCalled();fireEvent.mouseDown(screen.getByRole('tab',{name:'Documentos y análisis'}),{button:0,ctrlKey:false});await screen.findByText('Agrega documentos a este caso');drop(v.container);await screen.findByText('one.pdf');expect(state.upload).toHaveBeenCalledTimes(1);expect(screen.queryByText('Analizar')).not.toBeInTheDocument();expect(state.analyze).not.toHaveBeenCalled();});
  it('workspace alone does not unlock IA',()=>{state.allowed=false;state.caseData!.ai_workspace_id='W1';renderCase('intelligence');expect(screen.getByText('Ver LegalUp Pro')).toBeInTheDocument();expect(screen.queryByTestId('intel')).not.toBeInTheDocument();expect(state.provision).not.toHaveBeenCalled();});
  it('existing entitled workspace renders intelligence directly',()=>{state.caseData!.ai_workspace_id='W1';renderCase('intelligence');expect(screen.getByTestId('intel')).toHaveTextContent('W1');expect(state.provision).not.toHaveBeenCalled();});
@@ -185,5 +196,49 @@ describe('4.34Q header description above tabs',()=>{
   fireEvent.click(screen.getByRole('button',{name:/^guardar$/i}));
   await waitFor(()=>expect(screen.getByText('Nueva descripción')).toBeInTheDocument());
   expect(screen.queryByText('Vieja')).not.toBeInTheDocument();
+ });
+});
+
+describe('4.34T interaction parity micro-fixes',()=>{
+ it('research draft survives tab switch (forceMount, no auto-run)',async()=>{
+  state.caseData!.ai_workspace_id='W1';renderCase('research');
+  fireEvent.change(screen.getByLabelText('research-draft'),{target:{value:'Borrador sin enviar'}});
+  fireEvent.mouseDown(screen.getByRole('tab',{name:'Inteligencia del caso'}),{button:0,ctrlKey:false});
+  // forceMount keeps the panel mounted with inactive state (hidden via CSS class).
+  expect(screen.getByLabelText('research-draft')).toHaveValue('Borrador sin enviar');
+  expect(screen.getByLabelText('research-draft').closest('[data-state="inactive"]')).not.toBeNull();
+  fireEvent.mouseDown(screen.getByRole('tab',{name:'Investigar jurisprudencia'}),{button:0,ctrlKey:false});
+  expect(screen.getByLabelText('research-draft')).toHaveValue('Borrador sin enviar');
+  expect(state.analyze).not.toHaveBeenCalled();
+ });
+ it('chat open emits analytics once with source, no PII',()=>{
+  state.caseData!.ai_workspace_id='W1';renderCase('overview');
+  const cap = vi.mocked(posthog.capture);
+  fireEvent.click(screen.getByText('cc-ask'));
+  expect(cap).toHaveBeenCalledTimes(1);
+  expect(cap).toHaveBeenCalledWith('ai_case_chat_panel_opened',{source:'command_center'});
+  fireEvent.click(screen.getByText('cc-ask'));
+  expect(cap).toHaveBeenCalledTimes(1);
+  for(const call of cap.mock.calls) expect(JSON.stringify(call)).not.toMatch(/@|Bearer|password/i);
+ });
+ it('workflow ask restores same action on close; repeated cycle clean',()=>{
+  state.caseData!.ai_workspace_id='W1';renderCase('overview');
+  const cap = vi.mocked(posthog.capture);
+  fireEvent.click(screen.getByText('cc-wf-ask'));
+  expect(cap).toHaveBeenCalledWith('ai_case_chat_panel_opened',{source:'workflow'});
+  fireEvent.click(screen.getByText('close-chat'));
+  fireEvent.mouseDown(screen.getByRole('tab',{name:'Inteligencia del caso'}),{button:0,ctrlKey:false});
+  expect(screen.getByTestId('intel')).toHaveAttribute('data-brief','act-1');
+  fireEvent.click(screen.getByText('consume-brief'));
+  fireEvent.mouseDown(screen.getByRole('tab',{name:'Resumen'}),{button:0,ctrlKey:false});
+  fireEvent.click(screen.getByText('cc-ask'));
+  fireEvent.click(screen.getByText('close-chat'));
+  fireEvent.mouseDown(screen.getByRole('tab',{name:'Inteligencia del caso'}),{button:0,ctrlKey:false});
+  expect(screen.getByTestId('intel')).toHaveAttribute('data-brief','');
+ });
+ it('document chat close preserves document context continuity',()=>{
+  state.caseData!.ai_workspace_id='W1';
+  const v=renderCase('documents');
+  expect(screen.queryByText('Analizar')).not.toBeInTheDocument();
  });
 });

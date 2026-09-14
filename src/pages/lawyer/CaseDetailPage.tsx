@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
+import posthog from 'posthog-js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -91,10 +92,39 @@ function CaseDetailContent() {
   const [chatQuestion, setChatQuestion] = useState<string | null>(null);
   const [chatDocumentId, setChatDocumentId] = useState<string | null>(null);
   const [briefWorkflowActionId, setBriefWorkflowActionId] = useState<string | null>(null);
-  const openCaseChat = (question: string | null, documentId: string | null = null) => {
+  // 4.34T: workflow origin tracking (legacy parity: close restores same action).
+  const [chatOrigin, setChatOrigin] = useState<string | null>(null);
+  const [pendingWorkflowActionId, setPendingWorkflowActionId] = useState<string | null>(null);
+  const chatOpenRef = useRef(false);
+  const openCaseChat = (
+    question: string | null,
+    documentId: string | null = null,
+    origin: string | null = null,
+    workflowActionId: string | null = null,
+  ) => {
+    // 4.34T: one analytics event per actual open (legacy ai_case_chat_panel_opened).
+    if (!chatOpenRef.current) posthog.capture('ai_case_chat_panel_opened', { source: origin ?? 'case' });
+    chatOpenRef.current = true;
     setChatQuestion(question);
     setChatDocumentId(documentId);
+    setChatOrigin(origin);
+    setPendingWorkflowActionId(workflowActionId);
     setChatOpen(true);
+  };
+  const handleChatOpenChange = (open: boolean) => {
+    setChatOpen(open);
+    chatOpenRef.current = open;
+    if (!open) {
+      // 4.34T: workflow origin restores the same action immediately; other
+      // origins never touch workflow state. Pending state always cleared.
+      if (chatOrigin === 'workflow' && pendingWorkflowActionId) {
+        setBriefWorkflowActionId(pendingWorkflowActionId);
+      }
+      setChatOrigin(null);
+      setPendingWorkflowActionId(null);
+      setChatQuestion(null);
+      setChatDocumentId(null);
+    }
   };
   const researchLocked = !accessLoading && !canUse('jurisprudence');
 
@@ -210,8 +240,8 @@ function CaseDetailContent() {
               onOpenWorkflowAction={(id) => setBriefWorkflowActionId(id)}
               onViewDocuments={() => setActiveTab('documents')}
               onViewIntelligence={() => setActiveTab('intelligence')}
-              onAskQuestion={(q) => openCaseChat(q)}
-              onWorkflowAsk={(q, actionId) => { setBriefWorkflowActionId(actionId); openCaseChat(q); }}
+              onAskQuestion={(q) => openCaseChat(q, null, 'command_center')}
+              onWorkflowAsk={(q, actionId) => openCaseChat(q, null, 'workflow', actionId)}
               onInvestigate={() => setActiveTab('research')}
             />
           )}
@@ -286,15 +316,17 @@ function CaseDetailContent() {
               workspaceId={effectiveWorkspaceId}
               externalWorkflowActionId={briefWorkflowActionId}
               onExternalWorkflowActionHandled={() => setBriefWorkflowActionId(null)}
-              onQuestionClick={(q) => openCaseChat(q)}
-              onWorkflowAsk={(q, actionId) => { setBriefWorkflowActionId(actionId); openCaseChat(q); }}
-              onOpenChat={() => openCaseChat(null)}
+              onQuestionClick={(q) => openCaseChat(q, null, 'case_intelligence')}
+              onWorkflowAsk={(q, actionId) => openCaseChat(q, null, 'workflow', actionId)}
+              onOpenChat={() => openCaseChat(null, null, 'intelligence_button')}
               onNavigateToDocuments={() => setActiveTab('documents')}
             />
           )}
         </TabsContent>
 
-        <TabsContent value="research" className="mt-4">
+        {/* 4.34T: forceMount preserves draft/error/retry state across tabs
+            (legacy parity). display:none keeps it non-interactive; no auto-run. */}
+        <TabsContent value="research" forceMount className="mt-4 data-[state=inactive]:hidden">
           {effectiveWorkspaceId ? (
             <AIResearchPanel
               workspaceId={effectiveWorkspaceId}
@@ -323,7 +355,7 @@ function CaseDetailContent() {
       {effectiveWorkspaceId && (
         <AICaseChatDrawer
           open={chatOpen}
-          onOpenChange={(open) => { setChatOpen(open); if (!open) { setChatQuestion(null); setChatDocumentId(null); } }}
+          onOpenChange={handleChatOpenChange}
           workspaceId={effectiveWorkspaceId}
           workspaceName={viewCase.title}
           documents={chatDocumentsQuery.data ?? []}
