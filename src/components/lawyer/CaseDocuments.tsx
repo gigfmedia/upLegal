@@ -11,10 +11,9 @@ type Props = {
   canChat: boolean;
   accessLoading: boolean;
   onUpgrade: () => void;
-  onOpenAI: () => void;
 };
 
-export function CaseDocuments({ workspaceId, ensureWorkspace, canAnalyze, canChat, accessLoading, onUpgrade, onOpenAI }: Props) {
+export function CaseDocuments({ workspaceId, ensureWorkspace, canAnalyze, canChat, accessLoading, onUpgrade }: Props) {
   const documentsQuery = useAIDocuments(workspaceId || undefined);
   // Chat drawer local: misma conversación del caso (get-or-create en backend),
   // con documento seleccionado priorizado. Cerrar vuelve al mismo documento.
@@ -45,7 +44,14 @@ export function CaseDocuments({ workspaceId, ensureWorkspace, canAnalyze, canCha
         analyticsSource="case_documents"
       />
       <div className="flex justify-end">
-        <Button variant="outline" onClick={onOpenAI}>Trabajar el caso con IA</Button>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setChatDocumentId(null);
+            setChatQuestion(null);
+            setChatOpen(true);
+          }}
+        >Trabajar el caso con IA</Button>
       </div>
       {workspaceId && <AICaseChatDrawer
         open={chatOpen}

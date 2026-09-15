@@ -294,7 +294,7 @@ function CaseDetailContent() {
             <CardContent>
               <CaseDocuments key={caseId} workspaceId={effectiveWorkspaceId} ensureWorkspace={ensureWorkspace}
                 canAnalyze={canUse('document_analysis')} canChat={canUse('case_chat')} accessLoading={accessLoading}
-                onUpgrade={() => setProOpen(true)} onOpenAI={() => setActiveTab('overview')} />
+                onUpgrade={() => setProOpen(true)} />
             </CardContent>
           </Card>
         </TabsContent>
