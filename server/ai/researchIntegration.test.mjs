@@ -52,7 +52,7 @@ const names = ['getAIWorkspaceOwned','requireAIEntitlement','requireAIAccess','g
  'AI_PROTECT_MAX_MONTHLY_TOKENS','AI_PROTECT_MAX_MONTHLY_REQUESTS','AI_USAGE_CREDITS_PER_TOKEN','aiRateLimiter','AI_RATE_WINDOW_MS',
  'AI_PROTECT_RATE_LIMIT_PER_MINUTE','logDiagnostic'];
 
-function harness({ plan = 'essential', docs = false } = {}) {
+function harness({ plan = 'essential', docs = false, defaultModel } = {}) {
   let tokenUser = user;
   const aiSub = plan === 'essential'
     ? [{ lawyer_id: user, status: 'active', plan: 'essential', current_period_end: '2099-01-01' }]
@@ -106,7 +106,7 @@ function harness({ plan = 'essential', docs = false } = {}) {
   } };
   const routes = {};
   const quiet = { log() {}, warn() {}, error() {} };
-  const ctx = vm.createContext({ console: quiet, z, Buffer, process: { env: {} }, supabase,
+  const ctx = vm.createContext({ console: quiet, z, Buffer, process: { env: defaultModel ? { AI_DEFAULT_MODEL: defaultModel } : {} }, supabase,
     searchJurisprudence: search, chatCompletion: provider, isAIProviderConfigured: () => true,
     validateResearchQuery, classifyLegalQuery, detectDocumentMode, selectDocumentEvidence,
     shouldAllowDocumentOnlyFallback, buildJurisprudenceSystemPrompt, buildJurisprudenceUserPrompt,
@@ -216,4 +216,12 @@ describe('4.34D research integrado al Caso Pro', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.research.map(r => r.query)).toEqual(['a']);
   });
+});
+
+it('4.35D Research uses the corrected configured default', async () => {
+ const h=harness({defaultModel:'openai/gpt-oss-20b'});
+ const res=await h.call('post',{query:'¿Qué dice la jurisprudencia sobre protección de datos?'});
+ expect(res.statusCode).toBe(200);
+ expect(h.provider).toHaveBeenCalled();
+ expect(h.provider.mock.calls.every(([args])=>args.model==='openai/gpt-oss-20b')).toBe(true);
 });

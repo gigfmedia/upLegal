@@ -56,3 +56,9 @@ describe('classifyProviderError (Fase 4.1.10)', () => {
     expect(error.status).toBe(400);
   });
 });
+
+it('404 is terminal and safe, without advising waiting or exposing provider identity', () => {
+ const error=classifyProviderError(404,JSON.stringify({error:{message:'Unavailable for free',user_id:'private-provider-id'}}));
+ expect(error.code).toBe('AI_PROVIDER_ERROR');expect(error.retriable).toBe(false);
+ expect(error.message).not.toMatch(/minutos|private-provider-id|Unavailable/);
+});

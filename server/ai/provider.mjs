@@ -133,7 +133,7 @@ export function classifyProviderError(status, text = '', retryAfterSeconds = nul
     retriable = true;
   } else {
     code = 'AI_PROVIDER_ERROR';
-    message = `El proveedor de IA no pudo procesar la solicitud (${status}). Intenta nuevamente en unos minutos.`;
+    message = `El proveedor de IA no pudo completar la solicitud (${status}).`;
     retriable = false;
   }
 

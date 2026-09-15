@@ -2,7 +2,7 @@
 const ANALYSIS_MODELS = new Set([
   'openai/gpt-4o-mini',
   'z-ai/glm-5.2:free',
-  'openai/gpt-oss-20b:free',
+  'openai/gpt-oss-20b',
   'openai/gpt-oss-120b:fastest',
   'deepseek-ai/DeepSeek-R1:fastest',
 ]);
@@ -11,6 +11,8 @@ export function resolveAnalysisModel(requested, trustedDefault) {
   if (requested == null || requested === '') return trustedDefault;
   if (typeof requested !== 'string') return null;
   const model = requested.trim();
+  // Retired by the provider: reject explicit stale requests even with an old env.
+  if (model === 'openai/gpt-oss-20b:free') return null;
   return model === trustedDefault || ANALYSIS_MODELS.has(model) ? model : null;
 }
 

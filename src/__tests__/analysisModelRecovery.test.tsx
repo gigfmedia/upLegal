@@ -87,3 +87,19 @@ describe('shared failed analysis model recovery (real mutation)',()=>{
  });
  it('initial analysis uses the same selector and current payload',async()=>{state.docs=[{...doc(),analysis_status:'none',analysis_error:null,model:null}];mount();await selectModel(C.label);fireEvent.click(screen.getByRole('button',{name:/Analizar documento/i}));await waitFor(()=>expect(fetchMock).toHaveBeenCalledOnce());expect(payload(0).model).toBe(C.id);});
 });
+
+// 4.35D: no historical row migration; recovery uses the current catalog.
+describe('retired GPT-OSS free slug', () => {
+ it('is absent from the catalog and historical retry uses the existing default', async () => {
+  expect(AI_MODELS.some(m => m.id === 'openai/gpt-oss-20b:free')).toBe(false);
+  state.docs=[doc('d1','openai/gpt-oss-20b:free')];
+  mount();expect(screen.getByRole('combobox')).toHaveTextContent(A.label);
+  await retry();expect(payload(0).model).toBe(DEFAULT_AI_MODEL);
+ });
+ it('selects the supported GPT-OSS slug and sends it unchanged', async () => {
+  const option=AI_MODELS.find(m => m.id === 'openai/gpt-oss-20b');
+  expect(option).toBeDefined();expect(option!.label).not.toMatch(/free/i);
+  mount();await selectModel(option!.label);await retry();
+  expect(payload(0).model).toBe('openai/gpt-oss-20b');
+ });
+});

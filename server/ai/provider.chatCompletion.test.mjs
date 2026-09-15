@@ -166,3 +166,18 @@ describe('chatCompletion · contrato de respuesta', () => {
     }
   });
 });
+
+it('4.35D sends the supported slug to OpenRouter without translation', async () => {
+ const previous=process.env.AI_PROVIDER_BASE_URL;
+ process.env.AI_PROVIDER_BASE_URL='https://openrouter.ai/api/v1';
+ try {
+  mockedFetch.mockResolvedValueOnce(okResponse());
+  await chatCompletion({model:'openai/gpt-oss-20b',system:'fixture',user:'fixture'});
+  expect(mockedFetch).toHaveBeenCalledTimes(1);
+  expect(mockedFetch.mock.calls[0][0]).toBe('https://openrouter.ai/api/v1/chat/completions');
+  expect(JSON.parse(mockedFetch.mock.calls[0][1].body).model).toBe('openai/gpt-oss-20b');
+ } finally {
+  if(previous===undefined)delete process.env.AI_PROVIDER_BASE_URL;
+  else process.env.AI_PROVIDER_BASE_URL=previous;
+ }
+});

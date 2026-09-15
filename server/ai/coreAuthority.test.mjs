@@ -189,3 +189,23 @@ describe('4.34B actual Core handlers and real entitlement/metering helpers',()=>
    expect(res.statusCode).toBe(404);expect(h.remove).not.toHaveBeenCalled();expect(h.createSignedUrl).not.toHaveBeenCalled();
   });
 });
+
+describe('4.35D corrected production model', () => {
+ it('accepts the replacement for analysis and rejects the retired explicit slug', async () => {
+  const h=harness();
+  expect((await h.call('analyze',{model:'openai/gpt-oss-20b:free'})).statusCode).toBe(400);
+  expect(h.provider).not.toHaveBeenCalled();
+  expect(resolveAnalysisModel('openai/gpt-oss-20b:free','openai/gpt-oss-20b:free')).toBeNull();
+  expect((await h.call('analyze',{model:'openai/gpt-oss-20b'})).statusCode).toBe(200);
+  expect(h.provider.mock.calls[0][0].model).toBe('openai/gpt-oss-20b');
+ });
+ it.each([false,true])('Chat uses the configured default; document context=%s', async documentContext => {
+  const h=harness();h.ctx.AI_DEFAULT_MODEL='openai/gpt-oss-20b';
+  expect((await h.call('process')).statusCode).toBe(200);
+  const conversation=await h.call('chatGet');
+  const body={conversation_id:conversation.body.conversation.id,message:'Pregunta sobre el contrato',...(documentContext?{document_id:id(10)}:{})};
+  expect((await h.call('chat',body)).statusCode).toBe(200);
+  expect(h.provider).toHaveBeenCalledTimes(1);
+  expect(h.provider.mock.calls[0][0].model).toBe('openai/gpt-oss-20b');
+ });
+});
