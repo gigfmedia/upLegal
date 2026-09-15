@@ -72,7 +72,7 @@ export function useAICaseChat(workspaceId: string | undefined, enabled: boolean)
   return query;
 }
 
-type SendChatInput = { conversationId: string; message: string; documentId?: string };
+type SendChatInput = { conversationId: string; message: string; documentId?: string; signal?: AbortSignal };
 type SendChatResult = {
   message: AIChatMessage;
   user_message: AIChatMessage | null;
@@ -84,15 +84,17 @@ export function useSendChatMessage(workspaceId: string | undefined) {
   const queryClient = useQueryClient();
 
   return useMutation<SendChatResult, AIChatError, SendChatInput>({
-    mutationFn: async ({ conversationId, message, documentId }) => {
+    mutationFn: async ({ conversationId, message, documentId, signal }) => {
       const token = await getAccessToken();
       if (!token) throw new Error('Sesión no válida. Vuelve a iniciar sesión.');
 
+      signal?.throwIfAborted();
       const payload: Record<string, unknown> = { conversation_id: conversationId, message };
       if (documentId) payload.document_id = documentId;
 
       const res = await fetch(`${getApiBaseUrl()}/api/ai/cases/${workspaceId}/chat`, {
         method: 'POST',
+        signal,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -105,9 +107,17 @@ export function useSendChatMessage(workspaceId: string | undefined) {
         err.code = body?.code;
         throw err;
       }
+      signal?.throwIfAborted();
+      if (!body?.message || typeof body.message.id !== 'string' ||
+          body.message.role !== 'assistant' || typeof body.message.content !== 'string' ||
+          !body.message.content.trim() || body.message.workspace_id !== workspaceId ||
+          body.message.conversation_id !== conversationId) {
+        throw new Error('La respuesta del chat no es válida. Intenta nuevamente.');
+      }
       return body as SendChatResult;
     },
     onSuccess: (data, variables) => {
+      if (variables.signal?.aborted) return;
       // Inyecta de inmediato la respuesta en el cache para que la burbuja del
       // asistente aparezca sin esperar el refetch (elimina el hueco entre el
       // loading y la respuesta). El refetch en background confirma/consolida.
@@ -119,13 +129,14 @@ export function useSendChatMessage(workspaceId: string | undefined) {
         if (data.user_message && !messages.some((m) => m.id === data.user_message?.id)) {
           messages.push(data.user_message);
         }
-        messages.push(data.message);
+        if (!messages.some((m) => m.id === data.message.id)) messages.push(data.message);
         return { ...old, messages };
       });
       // Refetch autoritativo en segundo plano: consolida lo que guardó la BD.
       queryClient.invalidateQueries({ queryKey });
     },
-    onError: () => {
+    onError: (_error, variables) => {
+      if (variables.signal?.aborted) return;
       // El backend guarda el mensaje del usuario aunque la respuesta del asistente
       // falle. Refetch para mostrar ese user como mensaje real y poder reintentarlo.
       queryClient.invalidateQueries({ queryKey: [...AI_CHAT_QUERY_KEY, workspaceId] });

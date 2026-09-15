@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import posthog from 'posthog-js';
 import {
@@ -52,7 +52,16 @@ function errorToMessage(error: AIChatError | null): string {
   }
 }
 
-export function AIChat({ workspaceId, documents, documentId, onUploadClick, externalQuestion, onExternalQuestionHandled, hideBorder, fullHeight }: AIChatProps) {
+// A context change starts a fresh request session; closing the drawer unmounts it.
+export function AIChat(props: AIChatProps) {
+  return <AIChatSession key={JSON.stringify([props.workspaceId, props.documentId])} {...props} />;
+}
+
+function captureChatEvent(...args: Parameters<typeof posthog.capture>) {
+  try { posthog.capture(...args); } catch { /* Telemetry must not interrupt chat. */ }
+}
+
+function AIChatSession({ workspaceId, documents, documentId, onUploadClick, externalQuestion, onExternalQuestionHandled, hideBorder, fullHeight }: AIChatProps) {
   const readyCount = useMemo(
     () => documents.filter((doc) => doc.status === 'ready').length,
     [documents]
@@ -67,7 +76,9 @@ export function AIChat({ workspaceId, documents, documentId, onUploadClick, exte
   const sendMutation = useSendChatMessage(workspaceId);
 
   const [input, setInput] = useState('');
-  const [sending, setSending] = useState(false);
+  const sending = sendMutation.isPending;
+  const activeRequest = useRef<AbortController | null>(null);
+  useEffect(() => () => { activeRequest.current?.abort(); }, []);
   const [pendingUser, setPendingUser] = useState<string | null>(null);
   const [error, setError] = useState<AIChatError | null>(null);
   const [failedMessage, setFailedMessage] = useState<string | null>(null);
@@ -81,7 +92,7 @@ export function AIChat({ workspaceId, documents, documentId, onUploadClick, exte
   useEffect(() => {
     if (chatEnabled && !openedTracked.current) {
       openedTracked.current = true;
-      posthog.capture('ai_chat_opened');
+      captureChatEvent('ai_chat_opened');
     }
   }, [chatEnabled]);
 
@@ -91,7 +102,7 @@ export function AIChat({ workspaceId, documents, documentId, onUploadClick, exte
   useEffect(() => {
     if (chatQuery.isError && chatQuery.failureCount > lastHistoryFailureRef.current) {
       lastHistoryFailureRef.current = chatQuery.failureCount;
-      posthog.capture('ai_chat_history_load_failed', {
+      captureChatEvent('ai_chat_history_load_failed', {
         failure_count: chatQuery.failureCount,
       });
     }
@@ -202,6 +213,44 @@ export function AIChat({ workspaceId, documents, documentId, onUploadClick, exte
     }
   }, [pendingUser, chatQuery.data]);
 
+  const { mutate } = sendMutation;
+  const runMutation = useCallback((message: string) => {
+    if (activeRequest.current || !conversationId) return;
+    const controller = new AbortController();
+    activeRequest.current = controller;
+    setError(null);
+    setFailedMessage(message);
+    captureChatEvent('ai_chat_message_sent', {
+      message_length: message.length,
+      document_count: readyCount,
+      document_id: documentId ?? undefined,
+    });
+
+    mutate(
+      { conversationId, message, documentId, signal: controller.signal },
+      {
+        onSuccess: (data) => {
+          if (controller.signal.aborted) return;
+          setFailedMessage(null);
+          // Marca la respuesta en vivo para que solo esa burbuja use typewriter.
+          setLiveAssistantIds((prev) => new Set(prev).add(data.message.id));
+          captureChatEvent('ai_chat_response_completed', {
+            document_count: readyCount,
+            source_count: data.sources?.length ?? 0,
+          });
+        },
+        onSettled: () => { activeRequest.current = null; },
+        onError: (err) => {
+          if (controller.signal.aborted) return;
+          setError(err);
+          captureChatEvent('ai_chat_response_failed', {
+            error_code: err.code || 'provider_error',
+          });
+        },
+      }
+    );
+  }, [conversationId, documentId, readyCount, mutate]);
+
   // Fase 4.18.1: pregunta externa desde Inteligencia del caso (Siguiente paso / Preguntas sugeridas)
   useEffect(() => {
     if (externalQuestion && !sending && conversationId) {
@@ -214,47 +263,11 @@ export function AIChat({ workspaceId, documents, documentId, onUploadClick, exte
       setFailedMessage(null);
       runMutation(q);
       onExternalQuestionHandled?.();
-      // Clear ref after a short delay to allow same question to be asked again manually
-      setTimeout(() => { lastExternalQuestionRef.current = null; }, 1000);
     }
     if (!externalQuestion) {
       lastExternalQuestionRef.current = null;
     }
-  }, [externalQuestion, sending, conversationId, onExternalQuestionHandled]);
-
-  const runMutation = (message: string) => {
-    setSending(true);
-    setError(null);
-    setFailedMessage(message);
-    posthog.capture('ai_chat_message_sent', {
-      message_length: message.length,
-      document_count: readyCount,
-      document_id: documentId ?? undefined,
-    });
-
-    sendMutation.mutate(
-      { conversationId: conversationId!, message, documentId },
-      {
-        onSuccess: (data) => {
-          setSending(false);
-          setFailedMessage(null);
-          // Marca la respuesta en vivo para que solo esa burbuja use typewriter.
-          setLiveAssistantIds((prev) => new Set(prev).add(data.message.id));
-          posthog.capture('ai_chat_response_completed', {
-            document_count: readyCount,
-            source_count: data.sources?.length ?? 0,
-          });
-        },
-        onError: (err) => {
-          setSending(false);
-          setError(err);
-          posthog.capture('ai_chat_response_failed', {
-            error_code: err.code || 'provider_error',
-          });
-        },
-      }
-    );
-  };
+  }, [externalQuestion, sending, conversationId, onExternalQuestionHandled, runMutation]);
 
   const handleSend = () => {
     const trimmed = input.trim();
