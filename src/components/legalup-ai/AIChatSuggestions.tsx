@@ -16,7 +16,7 @@ type AIChatSuggestionsProps = {
 
 export function AIChatSuggestions({ onSelect, disabled = false }: AIChatSuggestionsProps) {
   return (
-    <div className="rounded-2xl border border-dashed border-green-200 bg-green-50/40 p-4">
+    <div className="rounded-2xl border border-dashed border-green-200 bg-green-50/40 p-4 mt-4">
       <p className="flex items-center gap-2 text-sm font-medium text-gray-800">
         <Lightbulb className="h-4 w-4 text-green-700" aria-hidden="true" />
         Puedes preguntar:
