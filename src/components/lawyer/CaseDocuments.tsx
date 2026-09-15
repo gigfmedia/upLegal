@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { AICaseDocumentsWorkspace } from '@/components/legalup-ai/AICaseDocumentsWorkspace';
 import { AICaseChatDrawer } from '@/components/legalup-ai/AICaseChatDrawer';
 import { useAIDocuments } from '@/hooks/useAIDocuments';
@@ -43,16 +42,6 @@ export function CaseDocuments({ workspaceId, ensureWorkspace, canAnalyze, canCha
         }}
         analyticsSource="case_documents"
       />
-      <div className="flex justify-end">
-        <Button
-          variant="outline"
-          onClick={() => {
-            setChatDocumentId(null);
-            setChatQuestion(null);
-            setChatOpen(true);
-          }}
-        >Trabajar el caso con IA</Button>
-      </div>
       {workspaceId && <AICaseChatDrawer
         open={chatOpen}
         onOpenChange={(open) => {
