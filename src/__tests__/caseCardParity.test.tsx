@@ -69,11 +69,14 @@ describe('4.34R shared case card (legacy visual grammar)', () => {
     expect(pro).toContain('/lawyer/cases/${c.id}?tab=activity');
   });
 
-  it('pro card drops status badges, client line and eye icon', () => {
+  it('pro card keeps discreet colored status, drops client line and eye icon', () => {
     const pro = read('src/pages/lawyer/CasesPage.tsx');
-    expect(pro).not.toContain('statusColors');
+    expect(pro).toContain('statusColors');
+    expect(pro).toContain('statusBadge=');
     expect(pro).not.toContain('Cliente:');
     expect(pro).not.toContain('Eye');
+    const shared = read('src/components/legalup-ai/SharedCaseCard.tsx');
+    expect(shared).toContain('statusBadge');
   });
 
   it('pro edit/delete reuse safe canonical actions with confirmation', () => {

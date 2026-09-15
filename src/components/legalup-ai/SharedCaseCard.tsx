@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -22,6 +23,8 @@ export type SharedCaseCardProps = {
   updatedAt: string;
   /** Workspace for the activity preview. Null/undefined omits it (§21). */
   workspaceId?: string | null;
+  /** Optional discreet status slot (Pro only; legacy omits it). */
+  statusBadge?: ReactNode;
   onOpen: () => void;
   onTimeline: () => void;
   onEdit: () => void;
@@ -41,6 +44,7 @@ export function SharedCaseCard({
   createdAt,
   updatedAt,
   workspaceId,
+  statusBadge,
   onOpen,
   onTimeline,
   onEdit,
@@ -66,6 +70,7 @@ export function SharedCaseCard({
                 Sin área jurídica
               </span>
             )}
+            {statusBadge ? <div className="mt-1.5">{statusBadge}</div> : null}
           </div>
           <div className="flex items-center gap-1">
             <button
