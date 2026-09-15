@@ -26,6 +26,7 @@ import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
 import { CaseDocuments } from '@/components/lawyer/CaseDocuments';
 import { CaseEditDialog } from '@/components/lawyer/CaseEditDialog';
 import { CaseDescriptionCard } from '@/components/legalup-ai/CaseDescriptionCard';
+import { CASE_STATUS_COLORS } from '@/lib/caseStatus';
 
 const statusLabels: Record<CaseStatus, string> = {
   new: 'Nuevo',
@@ -181,7 +182,7 @@ function CaseDetailContent() {
         <div className="min-w-0">
           <h1 className="text-2xl font-bold tracking-tight text-gray-900">{viewCase.title}</h1>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <Badge>{statusLabels[viewCase.status] || viewCase.status}</Badge>
+            <Badge className={`${CASE_STATUS_COLORS[viewCase.status] || 'bg-gray-100 text-gray-800'} border-0`}>{statusLabels[viewCase.status] || viewCase.status}</Badge>
             {viewCase.client && (
               <Link to={`/lawyer/clients/${viewCase.client_id}`} className="font-medium text-gray-900 hover:underline">
                 {viewCase.client.name}

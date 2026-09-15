@@ -16,29 +16,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useProSubscription } from '@/hooks/useProSubscription';
 import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
 import { SharedCaseCard } from '@/components/legalup-ai/SharedCaseCard';
+import { CASE_STATUS_COLORS, CASE_STATUS_LABELS } from '@/lib/caseStatus';
 import { CaseEditDialog } from '@/components/lawyer/CaseEditDialog';
 import ConfirmDialog from '@/components/ui/confirm-dialog';
 import posthog from 'posthog-js';
-
-const statusColors: Record<string, string> = {
-  new: 'bg-yellow-100 text-yellow-800',
-  quoted: 'bg-blue-100 text-blue-800',
-  paid: 'bg-green-100 text-green-800',
-  in_progress: 'bg-indigo-100 text-indigo-800',
-  delivered: 'bg-teal-100 text-teal-800',
-  closed: 'bg-gray-200 text-gray-800',
-  cancelled: 'bg-red-100 text-red-800',
-};
-
-const statusLabels: Record<string, string> = {
-  new: 'Nuevo',
-  quoted: 'Cotizado',
-  paid: 'Pagado',
-  in_progress: 'En progreso',
-  delivered: 'Entregado',
-  closed: 'Cerrado',
-  cancelled: 'Cancelado',
-};
 
 function CaseCardSkeleton() {
   return (
@@ -225,8 +206,8 @@ export default function CasesPage() {
               updatedAt={c.updated_at}
               workspaceId={c.ai_workspace_id}
               statusBadge={
-                <Badge className={`${statusColors[c.status] || 'bg-gray-100 text-gray-800'} border-0 text-xs`}>
-                  {statusLabels[c.status] || c.status}
+                <Badge className={`${CASE_STATUS_COLORS[c.status] || 'bg-gray-100 text-gray-800'} border-0 text-xs`}>
+                  {CASE_STATUS_LABELS[c.status] || c.status}
                 </Badge>
               }
               onOpen={() => navigate(`/lawyer/cases/${c.id}`)}
