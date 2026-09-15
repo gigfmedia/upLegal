@@ -28,7 +28,7 @@ function CaseCardSkeleton() {
 }
 
 export default function CasesPage() {
-  const { cases, loading, error, createCase, deleteCase } = useLawyerCases();
+  const { cases, loading, error, createCase, deleteCase, refetch: refetchCases } = useLawyerCases();
   const { clients, loading: clientsLoading, error: clientsError, refetch: refetchClients } = useLawyerClients();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -41,7 +41,8 @@ export default function CasesPage() {
   const [saving, setSaving] = useState(false);
   const { hasProAccess } = useProSubscription();
   const [proPaywallOpen, setProPaywallOpen] = useState(false);
-  const [editCase, setEditCase] = useState<(typeof cases)[number] | null>(null);
+  const [editCaseId, setEditCaseId] = useState<string | null>(null);
+  const [editDialogKey, setEditDialogKey] = useState(0);
   const [caseToDelete, setCaseToDelete] = useState<(typeof cases)[number] | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -212,7 +213,10 @@ export default function CasesPage() {
               }
               onOpen={() => navigate(`/lawyer/cases/${c.id}`)}
               onTimeline={() => navigate(`/lawyer/cases/${c.id}?tab=activity`)}
-              onEdit={() => setEditCase(c)}
+              onEdit={() => {
+                setEditDialogKey((prev) => prev + 1);
+                setEditCaseId(c.id);
+              }}
               onDelete={() => setCaseToDelete(c)}
             />
           ))}
@@ -274,13 +278,17 @@ export default function CasesPage() {
         </DialogContent>
       </Dialog>
       <ProPricingModal open={proPaywallOpen} onOpenChange={setProPaywallOpen} triggerAction="create_case" />
-      {editCase && (
+      {editCaseId && (
         <CaseEditDialog
-          open={editCase !== null}
-          onOpenChange={(open) => { if (!open) setEditCase(null); }}
-          caseData={editCase}
+          key={editDialogKey}
+          open={editCaseId !== null}
+          onOpenChange={(open) => { if (!open) setEditCaseId(null); }}
+          caseData={cases.find((c) => c.id === editCaseId)!}
           clients={clients}
-          onSaved={() => setEditCase(null)}
+          onSaved={() => {
+            setEditCaseId(null);
+            void refetchCases();
+          }}
         />
       )}
       <ConfirmDialog

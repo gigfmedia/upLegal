@@ -108,7 +108,7 @@ export function CaseEditDialog({ open, onOpenChange, caseData, clients, onSaved 
               <Label>Estado</Label>
               <Select value={status} onValueChange={(v) => setStatus(v as CaseStatus)}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue>{statusLabels[status]}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {statuses.map((s) => (

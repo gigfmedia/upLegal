@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import posthog from 'posthog-js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -73,7 +73,7 @@ function CaseDetailContent() {
   // 4.34L: administrative editing lives in the Edit modal. The merged view
   // reflects saves without reload (useLawyerCase fetches once per case).
   useEffect(() => { setPatched(null); }, [caseId]);
-  const viewCase = caseData ? { ...caseData, ...patched } : null;
+  const viewCase = useMemo(() => caseData ? { ...caseData, ...patched } : null, [caseData, patched]);
   const [searchParams, setSearchParams] = useSearchParams();
   // 4.34K: direct capability tabs. Backward compat: legacy ?tab=ai[&view=]
   // maps to the equivalent direct tab (4.34J deep links keep working).
@@ -160,7 +160,7 @@ function CaseDetailContent() {
       </div>
     );
   }
-  if (error || !caseData) {
+  if (error || !caseData || !viewCase) {
     return (
       <div className="mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Button variant="ghost" onClick={() => navigate('/lawyer/cases')}>
@@ -202,7 +202,7 @@ function CaseDetailContent() {
         <CaseEditDialog
           open={editOpen}
           onOpenChange={setEditOpen}
-          caseData={caseData}
+          caseData={viewCase}
           clients={clients}
           onSaved={(row) => setPatched(row)}
         />

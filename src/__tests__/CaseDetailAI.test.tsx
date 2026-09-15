@@ -242,3 +242,23 @@ describe('4.34T interaction parity micro-fixes',()=>{
   expect(screen.queryByText('Analizar')).not.toBeInTheDocument();
  });
 });
+
+it('reopening detail edit uses saved closed status instead of original paid status', async () => {
+ state.caseData!.status='paid';
+ state.update.mockImplementation(async (_id, patch) => ({...state.caseData,...patch}));
+ Element.prototype.scrollIntoView=vi.fn();
+ Element.prototype.hasPointerCapture=vi.fn(()=>false);
+ Element.prototype.setPointerCapture=vi.fn();Element.prototype.releasePointerCapture=vi.fn();
+ renderCase('overview');
+ fireEvent.click(screen.getByRole('button',{name:'Editar caso'}));
+ expect(screen.getAllByRole('combobox')[0]).toHaveTextContent('Pagado');
+ fireEvent.keyDown(screen.getAllByRole('combobox')[0],{key:'ArrowDown'});
+ fireEvent.click(await screen.findByRole('option',{name:'Cerrado'}));
+ fireEvent.click(screen.getByRole('button',{name:'Guardar'}));
+ await waitFor(()=>expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+ expect(state.update).toHaveBeenCalledWith('C1',expect.objectContaining({status:'closed'}));
+ // The original fetch intentionally remains paid: the page must use its saved row.
+ expect(state.caseData!.status).toBe('paid');
+ fireEvent.click(screen.getByRole('button',{name:'Editar caso'}));
+ expect(screen.getAllByRole('combobox')[0]).toHaveTextContent('Cerrado');
+});
