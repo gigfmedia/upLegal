@@ -100,6 +100,7 @@ const ArriendoLanding = () => {
             <Helmet>
                 <title>Abogado Arriendo Chile | Recupera Rentas y Propiedad | LegalUp</title>
                 <meta name="description" content="Abogado para arriendos en Chile: recupera rentas impagas y tu propiedad cuando el arrendatario no paga. Compara abogados verificados por el PJUD, precio por hora y agenda online." />
+                <link rel="canonical" href="https://legalup.cl/abogado-arriendo" />
             </Helmet>
 
             <Header onAuthClick={() => setShowAuthModal(true)} />

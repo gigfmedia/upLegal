@@ -161,6 +161,10 @@ const BlogArticle = () => {
               buttonText="Ver abogados de arriendos disponibles"
               priceNote="Consultas desde $35.000 — 60 minutos"
             />
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Si necesitas revisar tu situación particular, puedes <Link to="/abogado-arriendo" className="text-green-700 underline hover:text-green-500">consultar con un abogado de arriendos</Link> en minutos.
+            </p>
+
 
             <p className="text-lg text-gray-600 leading-relaxed mt-6">
               Pero la realidad es más compleja. El desalojo no es inmediato y no depende solo de cuántos meses debes: depende del contrato, del tribunal y de si el arrendador decide demandar.

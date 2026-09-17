@@ -174,6 +174,10 @@ const BlogArticle = () => {
           </div>
 
           <RelatedLawyers category="Derecho Civil" />
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Si necesitas revisar tu situación particular, puedes <Link to="/abogado-arriendo" className="text-green-700 underline hover:text-green-500">consultar con un abogado de arriendos</Link> en minutos.
+            </p>
+
 
 
           <div className="mb-12">
