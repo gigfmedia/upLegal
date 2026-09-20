@@ -18,6 +18,7 @@ vi.mock('@/hooks/use-toast', () => ({useToast:()=>({toast:vi.fn()})}));
 vi.mock('posthog-js',()=>({default:{capture:vi.fn()}}));
 vi.mock('sonner',()=>({toast:{success:vi.fn(),error:(...args:unknown[])=>state.toast(...args)}}));
 vi.mock('@/lib/supabaseClient',()=>({supabase:{
+  rpc:vi.fn(async()=>({data:{can_delete:true},error:null})),
   storage:{from:()=>({upload:state.upload})},
   from:(table:string)=>{
     let payload:Record<string,unknown>|undefined;
@@ -135,7 +136,7 @@ describe('4.34L case first-view hierarchy',()=>{
   renderCase('overview');
   fireEvent.click(screen.getByRole('button',{name:/editar caso/i}));
   await screen.findByRole('dialog');
-  fireEvent.click(screen.getByRole('button',{name:/eliminar caso/i}));
+  fireEvent.click(await screen.findByRole('button',{name:/eliminar caso vacío/i}));
   await waitFor(()=>expect(state.delete).toHaveBeenCalledWith('C1'));
  });
 });

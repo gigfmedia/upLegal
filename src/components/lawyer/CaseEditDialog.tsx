@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,7 @@ import {
 import { Loader2, Trash2 } from 'lucide-react';
 import { useLawyerCases, type CaseStatus, type LawyerCase } from '@/hooks/useLawyerCases';
 import { useToast } from '@/hooks/use-toast';
+import { useCaseDeleteEligibility, isCaseNotDeletable } from '@/hooks/useCaseDeleteEligibility';
 import posthog from 'posthog-js';
 
 const statuses: CaseStatus[] = ['new', 'quoted', 'paid', 'in_progress', 'delivered', 'closed', 'cancelled'];
@@ -37,10 +38,11 @@ type Props = {
   caseData: LawyerCase;
   clients: LawyerClientLike[];
   onSaved: (row: Partial<LawyerCase>) => void;
+  onDeleted?: () => void;
 };
 
 /** Edición administrativa del caso. Reutiliza updateCase/deleteCase existentes. */
-export function CaseEditDialog({ open, onOpenChange, caseData, clients, onSaved }: Props) {
+export function CaseEditDialog({ open, onOpenChange, caseData, clients, onSaved, onDeleted }: Props) {
   const { updateCase, deleteCase } = useLawyerCases();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -49,6 +51,9 @@ export function CaseEditDialog({ open, onOpenChange, caseData, clients, onSaved 
   const [status, setStatus] = useState<CaseStatus>('new');
   const [clientId, setClientId] = useState('none');
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const deletePending = useRef(false);
+  const { canDelete, loading: checkingDelete } = useCaseDeleteEligibility(caseData.id, open);
 
   // Populate current values on open; never carry stale edits between cases.
   useEffect(() => {
@@ -81,21 +86,24 @@ export function CaseEditDialog({ open, onOpenChange, caseData, clients, onSaved 
   };
 
   const handleDelete = async () => {
-    if (!caseData?.id) return;
-    // 4.36D — exceptional path only. Accurate copy: the case record is gone
-    // for good (linkage/history on the case), while workspace documents and
-    // AI history survive as workspace data. Close preserves everything.
-    if (!confirm('¿Eliminar permanentemente este caso? Se borrará el registro del caso y se perderá su historial vinculado. Tus documentos e historial de IA se conservan como datos del workspace. Para conservar el historial visible, prefiere Cerrar el caso.')) return;
+    if (!caseData?.id || !canDelete || saving || deletePending.current) return;
+    if (!confirm('¿Eliminar este caso vacío? Esta acción es permanente y no restituye el caso gratuito. Para conservarlo, cambia su estado a Cerrado.')) return;
+    deletePending.current = true;
+    setDeleting(true);
     try {
       await deleteCase(caseData.id);
       try {
         posthog.capture('case_deleted', { source: caseData.source || 'unknown' });
       } catch { /* analytics best-effort; never blocks UX */ }
       toast({ title: 'Caso eliminado' });
+      onDeleted?.();
       onOpenChange(false);
       navigate('/lawyer/cases');
     } catch (e) {
-      toast({ title: 'Error', description: e instanceof Error ? e.message : 'No se pudo eliminar', variant: 'destructive' });
+      toast({ title: 'No se pudo eliminar', description: isCaseNotDeletable(e) ? 'Este caso contiene actividad o vínculos que deben conservarse. Ciérralo para mantener su historial.' : 'No se pudo eliminar el caso. Intenta nuevamente.', variant: 'destructive' });
+    } finally {
+      deletePending.current = false;
+      setDeleting(false);
     }
   };
 
@@ -166,16 +174,16 @@ export function CaseEditDialog({ open, onOpenChange, caseData, clients, onSaved 
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Button onClick={handleSave} disabled={saving} className="bg-gray-900 hover:bg-green-900">
+            <Button onClick={handleSave} disabled={saving || deleting} className="bg-gray-900 hover:bg-green-900">
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null} Guardar
             </Button>
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button variant="outline" onClick={handleDelete} className="ml-auto text-red-600 border-red-200 hover:bg-red-50">
-              <Trash2 className="h-4 w-4 mr-1" /> Eliminar caso
-            </Button>
+            {canDelete && <Button disabled={deleting || saving} variant="outline" onClick={handleDelete} className="ml-auto text-red-600 border-red-200 hover:bg-red-50">
+              <Trash2 className="h-4 w-4 mr-1" /> {deleting ? 'Eliminando…' : 'Eliminar caso vacío'}
+            </Button>}
           </div>
           <p className="text-xs text-muted-foreground">
-            ¿Terminaste este caso? Cambia su estado a Cerrado para conservar el historial. Eliminar lo borra permanentemente.
+            {checkingDelete ? 'Comprobando si el caso puede eliminarse…' : 'Solo pueden eliminarse casos vacíos sin vínculos ni actividad. Si terminaste de trabajar, cambia su estado a Cerrado para conservar el historial.'}
           </p>
         </div>
       </DialogContent>

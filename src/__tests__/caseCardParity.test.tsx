@@ -89,12 +89,12 @@ describe('4.34R shared case card (legacy visual grammar)', () => {
     expect(pro).toContain('CaseEditDialog');
     expect(pro).toContain('onCloseCase');
     expect(pro).toContain('onReopenCase');
-    expect(pro).not.toContain('onDelete');
+    expect(pro).not.toMatch(/\bonDelete\s*=/);
     expect(pro).not.toContain('ConfirmDialog');
     expect(pro).not.toContain('deleteCase');
     const dialog = read('src/components/lawyer/CaseEditDialog.tsx');
     expect(dialog).toContain('deleteCase');
-    expect(dialog).toContain('Eliminar permanentemente');
+    expect(dialog).toContain('Eliminar caso vacío');
   });
 
   it('activity preview stays single-query (no N+1 per card)', () => {

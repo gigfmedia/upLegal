@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor, within, cleanup } from '@testing-li
 import { MemoryRouter } from 'react-router-dom';
 import CasesPage from '@/pages/lawyer/CasesPage';
 
-const state = vi.hoisted(() => ({ row: {} as Record<string, unknown>, fail: false, updates: vi.fn() }));
+const state = vi.hoisted(() => ({ row: {} as Record<string, unknown>, fail: false, deleted: false, updates: vi.fn() }));
 vi.mock('@/contexts/AuthContext/clean/useAuth', () => ({ useAuth: () => ({ user: { id: 'lawyer' } }) }));
 vi.mock('@/hooks/useLawyerClients', () => ({ useLawyerClients: () => ({ clients: [], loading: false }) }));
 vi.mock('@/hooks/useProSubscription', () => ({ useProSubscription: () => ({ hasProAccess: true }) }));
@@ -24,14 +24,17 @@ vi.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast: vi.fn() }) }));
 vi.mock('@/components/legalup-pro/ProPricingModal', () => ({ ProPricingModal: () => null }));
 vi.mock('@/lib/activationAnalytics', () => ({ trackFirstCaseIfNeeded: vi.fn() }));
 vi.mock('posthog-js', () => ({ default: { capture: vi.fn() } }));
-vi.mock('@/lib/supabaseClient', () => ({ supabase: { from: () => {
+vi.mock('@/lib/supabaseClient', () => ({ supabase: { rpc: async () => ({ data: { can_delete: true }, error: null }), from: () => {
+ let deleting = false;
  let patch: Record<string, unknown> | undefined;
  const q = {
   select: () => q, eq: () => q,
-  order: async () => ({ data: [{ ...state.row }], error: null }),
+  order: async () => ({ data: state.deleted ? [] : [{ ...state.row }], error: null }),
+  delete: () => { deleting = true; return q; },
   update: (value: Record<string, unknown>) => { patch = value; state.updates(value); return q; },
   single: async () => {
    if (state.fail) return { data: null, error: new Error('No se pudo guardar') };
+   if (deleting) { state.deleted = true; return { data: { id: state.row.id }, error: null }; }
    state.row = { ...state.row, ...patch };
    return { data: { ...state.row }, error: null };
   },
@@ -41,13 +44,13 @@ vi.mock('@/lib/supabaseClient', () => ({ supabase: { from: () => {
 
 beforeEach(() => {
  state.row = { id: 'case', lawyer_id: 'lawyer', title: 'Caso de prueba', status: 'new', source: 'LAWYER_DIRECT', created_at: '2026-09-01', updated_at: '2026-09-01', ai_workspace_id: null };
- state.fail = false; state.updates.mockClear();
+ state.fail = false; state.deleted = false; state.updates.mockClear();
  Element.prototype.scrollIntoView = vi.fn();
  Element.prototype.hasPointerCapture = vi.fn(() => false);
  Element.prototype.setPointerCapture = vi.fn();
  Element.prototype.releasePointerCapture = vi.fn();
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 async function openEdit() {
  fireEvent.click(await screen.findByRole('button', { name: 'Editar caso Caso de prueba' }));
  return screen.findByRole('dialog', { name: 'Editar caso' });
@@ -58,6 +61,14 @@ async function chooseStatus(label: string) {
  fireEvent.click(await screen.findByRole('option', { name: label }));
 }
 describe('case status editing with real page, modal and case hooks', () => {
+ it('removes a confirmed empty deletion from the current list without reloading', async () => {
+  vi.stubGlobal('confirm', vi.fn(() => true));
+  render(<MemoryRouter><CasesPage /></MemoryRouter>);
+  await openEdit();
+  fireEvent.click(await screen.findByRole('button', { name: 'Eliminar caso vacío' }));
+  await waitFor(() => expect(screen.queryByRole('button', { name: 'Editar caso Caso de prueba' })).not.toBeInTheDocument());
+  expect(state.deleted).toBe(true);
+ });
  it('persists status and reloads it when reopening, twice', async () => {
   state.row.status = 'paid';
   render(<MemoryRouter><CasesPage /></MemoryRouter>);

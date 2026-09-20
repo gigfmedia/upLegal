@@ -35,10 +35,15 @@ export async function loadDemoData(lawyerId: string) {
 }
 
 export async function clearDemoData(lawyerId: string) {
-  const { data: clients } = await supabase.from('lawyer_clients').select('id').eq('lawyer_id', lawyerId).ilike('email', '%@demo.legalup.cl');
+  const { data: clients, error: clientsError } = await supabase.from('lawyer_clients').select('id').eq('lawyer_id', lawyerId).ilike('email', '%@demo.legalup.cl');
+  if (clientsError) throw clientsError;
   const ids = (clients || []).map((c: any) => c.id);
   if (ids.length === 0) return;
-  await supabase.from('bookings').delete().in('client_id', ids);
-  await supabase.from('lawyer_cases').delete().in('client_id', ids);
-  await supabase.from('lawyer_clients').delete().in('id', ids);
+  // No demo bypass: worked cases use the same database deletion guard.
+  const { error: bookingError } = await supabase.from('bookings').delete().in('client_id', ids);
+  if (bookingError) throw bookingError;
+  const { error: caseError } = await supabase.from('lawyer_cases').delete().in('client_id', ids);
+  if (caseError) throw caseError;
+  const { error: clientError } = await supabase.from('lawyer_clients').delete().in('id', ids);
+  if (clientError) throw clientError;
 }

@@ -402,6 +402,11 @@ export default function CasesPage() {
           onOpenChange={(open) => { if (!open) setEditCaseId(null); }}
           caseData={cases.find((c) => c.id === editCaseId)!}
           clients={clients}
+          onDeleted={() => {
+            setEditCaseId(null);
+            void refetchCases();
+            void refetchEntitlement();
+          }}
           onSaved={() => {
             setEditCaseId(null);
             void refetchCases();

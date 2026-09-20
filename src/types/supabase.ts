@@ -3664,6 +3664,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_case_delete_eligibility: { Args: { p_case_id: string }; Returns: Json }
       ai_is_lawyer_on_trial: { Args: { p_lawyer_id: string }; Returns: boolean }
       calculate_lawyer_rating: { Args: { lawyer_id: string }; Returns: number }
       create_payment_secure: {

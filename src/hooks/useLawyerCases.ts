@@ -109,8 +109,9 @@ export function useLawyerCases() {
   }, []);
 
   const deleteCase = useCallback(async (id: string) => {
-    const { error } = await supabase.from('lawyer_cases').delete().eq('id', id);
+    const { data, error } = await supabase.from('lawyer_cases').delete().eq('id', id).select('id').single();
     if (error) throw error;
+    if (!data) throw new Error('No se pudo confirmar la eliminación del caso');
     setCases((prev) => prev.filter((c) => c.id !== id));
   }, []);
 
