@@ -115,6 +115,7 @@ export function SharedCaseCard({
           <AICaseTimelinePreview
             workspaceId={workspaceId}
             onOpen={onTimeline}
+            fallbackCreatedAt={createdAt}
           />
         ) : (
           <CaseCreatedPreview createdAt={createdAt} onOpen={onTimeline} />

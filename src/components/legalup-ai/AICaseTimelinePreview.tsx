@@ -4,11 +4,14 @@ import { Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EVENT_META } from './timelineMeta';
+import { CaseCreatedPreview } from './CaseCreatedPreview';
 import { useRecentAICaseTimeline } from '@/hooks/useAICaseTimeline';
 
 type AICaseTimelinePreviewProps = {
   workspaceId: string;
   onOpen: () => void;
+  /** Case creation date: fallback when the workspace has no events yet. */
+  fallbackCreatedAt?: string;
 };
 
 /**
@@ -16,7 +19,7 @@ type AICaseTimelinePreviewProps = {
  * más recientes del caso (ícono + título + hace cuánto) para que el abogado
  * sepa qué pasó sin entrar al detalle.
  */
-export function AICaseTimelinePreview({ workspaceId, onOpen }: AICaseTimelinePreviewProps) {
+export function AICaseTimelinePreview({ workspaceId, onOpen, fallbackCreatedAt }: AICaseTimelinePreviewProps) {
   // Query única de actividad reciente de todos los casos del abogado.
   const { data: recent = [] } = useRecentAICaseTimeline(50);
 
@@ -25,6 +28,11 @@ export function AICaseTimelinePreview({ workspaceId, onOpen }: AICaseTimelinePre
     .slice(0, 2);
 
   if (events.length === 0) {
+    // Workspace recién vinculado sin eventos sincronizados: mostrar el evento
+    // canónico de creación en vez de un callejón sin salida.
+    if (fallbackCreatedAt) {
+      return <CaseCreatedPreview createdAt={fallbackCreatedAt} onOpen={onOpen} />;
+    }
     return (
       <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <Clock className="h-3.5 w-3.5" aria-hidden="true" />
