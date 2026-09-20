@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useSearchParams, Link } from 'react-router-dom';
 import { useProSubscription } from '@/hooks/useProSubscription';
 import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
+import { isBookingDeniedError } from '@/lib/appointmentEntitlement';
 import posthog from 'posthog-js';
 
 type Appointment = {
@@ -54,7 +55,7 @@ export default function CitasPage() {
   const [selectedCaseId, setSelectedCaseId] = useState<string>('none');
   const [clients, setClients] = useState<any[]>([]);
   const [preselectedCaseClient, setPreselectedCaseClient] = useState<any>(null);
-  const { hasProAccess } = useProSubscription();
+  const { hasProAccess, refetch: refetchPro } = useProSubscription();
   const [proPaywallOpen, setProPaywallOpen] = useState(false);
 
   useEffect(() => {
@@ -184,6 +185,27 @@ export default function CitasPage() {
       setEditingAppointment(null);
     } catch (error) {
       console.error('Error creating appointment:', error);
+      // 4.37B — stale entitlement: DB rejected a Pro-looking attempt. Confirm
+      // with a fresh authority read before paywalling; unknown errors toast.
+      if (isBookingDeniedError(error)) {
+        try {
+          const result = await refetchPro();
+          const fresh = (result as { data?: unknown }).data as {
+            status?: string;
+            current_period_end?: string;
+          } | null | undefined;
+          const periodEndMs = fresh?.current_period_end ? Date.parse(fresh.current_period_end) : 0;
+          const stillPro =
+            !!fresh && (fresh.status === 'active' || fresh.status === 'cancelled') && periodEndMs > Date.now();
+          if (!stillPro) {
+            posthog.capture('pro_paywall_opened', { action: 'create_appointment', reason: 'entitlement_rejected' });
+            setProPaywallOpen(true);
+            return;
+          }
+        } catch {
+          // Fresh read unavailable — fall through to generic error.
+        }
+      }
       toast({ title: 'Error', description: 'No se pudo crear la cita.', variant: 'destructive' });
     }
   };

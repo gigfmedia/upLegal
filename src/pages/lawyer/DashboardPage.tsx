@@ -34,6 +34,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { AppointmentForm } from '@/components/appointments/AppointmentForm';
 import { useLawyerClients } from '@/hooks/useLawyerClients';
 import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
+import { isBookingDeniedError } from '@/lib/appointmentEntitlement';
 import posthog from 'posthog-js';
 
 export default function LawyerDashboardPage() {
@@ -64,6 +65,9 @@ export default function LawyerDashboardPage() {
   const { entitlement: caseEntitlement, loading: entitlementLoading } = useCaseEntitlement();
   const hasProAccessCheck = hasProAccess;
   const [proPaywallOpen, setProPaywallOpen] = useState(false);
+  // 4.37B — dedicated paywall for manual appointment creation
+  // (triggerAction must stay create_appointment, distinct from dashboard_get_started).
+  const [apptPaywallOpen, setApptPaywallOpen] = useState(false);
   const [proVerificationState, setProVerificationState] = useState<'idle' | 'verifying' | 'timeout'>('idle');
   const [proVerificationAttempts, setProVerificationAttempts] = useState(0);
 
@@ -438,7 +442,16 @@ export default function LawyerDashboardPage() {
                 <Calendar className="mx-auto h-8 w-8 text-gray-300" />
                 <p className="text-sm font-medium mt-2">No tienes citas próximas.</p>
                 <p className="text-xs text-gray-500">Cuando agendes una cita aparecerá aquí.</p>
-                <Button variant="outline" size="sm" className="mt-3" onClick={() => setShowNewAppointment(true)}>
+                <Button variant="outline" size="sm" className="mt-3" onClick={() => {
+                  // 4.37B — manual creation requires active Pro; never open a
+                  // dead form for non-Pro (RLS would reject with a generic error).
+                  if (!hasProAccess) {
+                    try { posthog.capture('pro_paywall_opened', { action: 'create_appointment' }); } catch { /* analytics best-effort; never blocks UX */ }
+                    setApptPaywallOpen(true);
+                    return;
+                  }
+                  setShowNewAppointment(true);
+                }}>
                   Crear una cita
                 </Button>
               </div>
@@ -576,12 +589,34 @@ export default function LawyerDashboardPage() {
                   requires_meeting: data.type === 'video',
                 } as any);
                 if (error) throw error;
-                try { if (user?.id) await trackBookingCreated(user.id, 'LAWYER_DIRECT', false); } catch {}
+                try { if (user?.id) await trackBookingCreated(user.id, 'LAWYER_DIRECT', false); } catch { /* analytics best-effort; never blocks UX */ }
                 toast({ title: 'Cita creada', description: 'La cita ha sido agendada correctamente.' });
                 setShowNewAppointment(false);
                 window.location.reload();
               } catch (e) {
                 console.error(e);
+                // 4.37B — stale entitlement: confirm with fresh authority read
+                // before paywalling; unknown errors keep the generic toast.
+                if (isBookingDeniedError(e)) {
+                  try {
+                    const result = await refetchPro();
+                    const fresh = (result as { data?: unknown }).data as {
+                      status?: string;
+                      current_period_end?: string;
+                    } | null | undefined;
+                    const periodEndMs = fresh?.current_period_end ? Date.parse(fresh.current_period_end) : 0;
+                    const stillPro =
+                      !!fresh && (fresh.status === 'active' || fresh.status === 'cancelled') && periodEndMs > Date.now();
+                    if (!stillPro) {
+                      try { posthog.capture('pro_paywall_opened', { action: 'create_appointment', reason: 'entitlement_rejected' }); } catch { /* analytics best-effort; never blocks UX */ }
+                      setShowNewAppointment(false);
+                      setApptPaywallOpen(true);
+                      return;
+                    }
+                  } catch {
+                    // Fresh read unavailable — fall through to generic error.
+                  }
+                }
                 toast({ title: 'Error', description: 'No se pudo crear la cita.', variant: 'destructive' });
               }
             }}
@@ -590,6 +625,7 @@ export default function LawyerDashboardPage() {
         </DialogContent>
       </Dialog>
       <ProPricingModal open={proPaywallOpen} onOpenChange={setProPaywallOpen} triggerAction="dashboard_get_started" />
+      <ProPricingModal open={apptPaywallOpen} onOpenChange={setApptPaywallOpen} triggerAction="create_appointment" />
     </div>
   );
 }

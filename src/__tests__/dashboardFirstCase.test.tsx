@@ -1,12 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
+const spy = vi.hoisted(() => ({ capture: vi.fn(), toast: vi.fn() }));
+
 const dbMocks = {
   directCases: 0,
   freeConsumed: false,
+  hasProAccess: false,
+  proSub: null as unknown,
+  bookingInsertError: null as unknown,
+  bookingInserted: [] as unknown[],
 };
 
 function chainResult(count: number, data: unknown[] = []) {
@@ -42,13 +48,18 @@ vi.mock('@/hooks/useProfile', () => ({
   useProfile: () => ({ profile: {}, services: [], completionPercentage: 80 }),
 }));
 vi.mock('@/hooks/use-toast', () => ({
-  useToast: () => ({ toast: vi.fn() }),
+  useToast: () => ({ toast: spy.toast }),
 }));
 vi.mock('@/hooks/useAISubscription', () => ({
   useAISubscription: () => ({ status: 'none', subscription: null }),
 }));
 vi.mock('@/hooks/useProSubscription', () => ({
-  useProSubscription: () => ({ hasProAccess: false, refetch: vi.fn(), isFetching: false, status: null }),
+  useProSubscription: () => ({
+    hasProAccess: dbMocks.hasProAccess,
+    refetch: () => Promise.resolve({ data: dbMocks.proSub }),
+    isFetching: false,
+    status: null,
+  }),
 }));
 // 4.36B — lifetime authority drives the dashboard CTA cards, not row counts.
 vi.mock('@/hooks/useCaseEntitlement', () => ({
@@ -72,13 +83,25 @@ vi.mock('@/hooks/useCaseEntitlement', () => ({
   isActiveCapacityError: () => false,
 }));
 vi.mock('@/hooks/useLawyerClients', () => ({
-  useLawyerClients: () => ({ findOrCreateClient: vi.fn() }),
+  useLawyerClients: () => ({
+    findOrCreateClient: () => Promise.resolve({ id: 'client-1' }),
+  }),
 }));
 vi.mock('@/lib/supabaseClient', () => ({
   supabase: {
-    auth: { getSession: () => Promise.resolve({ data: { session: null } }) },
+    auth: { getSession: () => Promise.resolve({ data: { session: { user: { id: 'lawyer-1' } } } }) },
     from: (_table: string) => ({
       select: (..._a: unknown[]) => chainResult(0, []),
+      insert: (row: unknown) => {
+        (dbMocks.bookingInserted as unknown[]).push(row);
+        const result = dbMocks.bookingInsertError
+          ? { data: null, error: dbMocks.bookingInsertError }
+          : { data: { id: 'b-new' }, error: null };
+        return {
+          select: (..._a: unknown[]) => ({ single: () => Promise.resolve(result) }),
+          then: (resolve: (v: unknown) => unknown) => Promise.resolve(result).then(resolve),
+        };
+      },
     }),
   },
 }));
@@ -103,9 +126,30 @@ vi.mock('@/components/dashboard/ProfileCompletion', () => ({
   ProfileCompletion: () => null,
 }));
 vi.mock('@/components/appointments/AppointmentForm', () => ({
-  AppointmentForm: () => null,
+  AppointmentForm: ({ onSubmit }: { onSubmit: (d: unknown) => void }) => (
+    <div>
+      <button
+        type="button"
+        onClick={() =>
+          onSubmit({
+            clientName: 'Cliente Test',
+            clientEmail: 'c@test.invalid',
+            clientPhone: null,
+            date: '2026-10-01',
+            time: '10:00',
+            duration: '60',
+            type: 'video',
+            service: 'Cita',
+            notes: '',
+          })
+        }
+      >
+        dash-fake-submit
+      </button>
+    </div>
+  ),
 }));
-vi.mock('posthog-js', () => ({ default: { capture: vi.fn() } }));
+vi.mock('posthog-js', () => ({ default: { capture: spy.capture } }));
 
 import DashboardPage from '@/pages/lawyer/DashboardPage';
 
@@ -146,5 +190,81 @@ describe('4.36D — dashboard active definition (delivered counts)', () => {
     const dash = readFileSync(resolve('src/pages/lawyer/DashboardPage.tsx'), 'utf-8');
     expect(dash).toContain(`.not('status', 'in', '("closed","cancelled")')`);
     expect(dash).not.toContain('delivered","closed","cancelled');
+  });
+});
+
+describe('4.37B — dashboard manual appointment gate', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    dbMocks.hasProAccess = false;
+    dbMocks.proSub = null;
+    dbMocks.bookingInsertError = null;
+    (dbMocks.bookingInserted as unknown[]).length = 0;
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+
+  function renderDash() {
+    render(
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>
+    );
+  }
+
+  it('non-Pro "Crear una cita" → paywall, dialog never opens', async () => {
+    dbMocks.hasProAccess = false;
+    renderDash();
+    fireEvent.click(await screen.findByRole('button', { name: /crear una cita/i }));
+    await waitFor(() =>
+      expect(spy.capture).toHaveBeenCalledWith(
+        'pro_paywall_opened',
+        expect.objectContaining({ action: 'create_appointment' })
+      )
+    );
+    expect(screen.queryByText('dash-fake-submit')).not.toBeInTheDocument();
+    expect(dbMocks.bookingInserted).toHaveLength(0);
+  });
+
+  it('active Pro → dialog opens and create succeeds', async () => {
+    dbMocks.hasProAccess = true;
+    renderDash();
+    fireEvent.click(await screen.findByRole('button', { name: /crear una cita/i }));
+    fireEvent.click(await screen.findByText('dash-fake-submit'));
+    await waitFor(() => expect(dbMocks.bookingInserted).toHaveLength(1));
+    const row = (dbMocks.bookingInserted as Record<string, unknown>[])[0];
+    expect(row).toMatchObject({ source: 'LAWYER_DIRECT', booking_type: 'appointment' });
+  });
+
+  it('stale denial confirmed expired → paywall', async () => {
+    dbMocks.hasProAccess = true;
+    dbMocks.bookingInsertError = {
+      code: '42501',
+      message: 'new row violates row-level security policy for table "bookings"',
+    };
+    dbMocks.proSub = { status: 'expired', current_period_end: new Date(Date.now() - 1000).toISOString() };
+    renderDash();
+    fireEvent.click(await screen.findByRole('button', { name: /crear una cita/i }));
+    fireEvent.click(await screen.findByText('dash-fake-submit'));
+    await waitFor(() =>
+      expect(spy.capture).toHaveBeenCalledWith(
+        'pro_paywall_opened',
+        expect.objectContaining({ action: 'create_appointment', reason: 'entitlement_rejected' })
+      )
+    );
+  });
+
+  it('unknown error → generic toast, no paywall', async () => {
+    dbMocks.hasProAccess = true;
+    dbMocks.bookingInsertError = new Error('boom');
+    renderDash();
+    fireEvent.click(await screen.findByRole('button', { name: /crear una cita/i }));
+    fireEvent.click(await screen.findByText('dash-fake-submit'));
+    await waitFor(() =>
+      expect(spy.toast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Error' }))
+    );
+    expect(spy.capture).not.toHaveBeenCalledWith(
+      'pro_paywall_opened',
+      expect.objectContaining({ reason: 'entitlement_rejected' })
+    );
   });
 });

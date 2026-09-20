@@ -1482,6 +1482,10 @@ app.post('/api/bookings/create', async (req, res) => {
       user_email,
       user_name,
       user_phone: user_phone || null,
+      // 4.37B — semantic origin is server-owned: marketplace bookings are
+      // always LEGALUP_MARKETPLACE. Client body cannot choose source
+      // (req.body.source is never read here on purpose).
+      source: 'LEGALUP_MARKETPLACE',
       scheduled_date: isServiceBooking ? null : scheduled_date,
       scheduled_time: isServiceBooking ? null : scheduled_time,
       duration: isServiceBooking ? null : resolvedDuration,
