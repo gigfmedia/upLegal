@@ -16,12 +16,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   useCaseEntitlement,
   isFreeCaseEntitlementError,
+  isActiveCapacityError,
 } from '@/hooks/useCaseEntitlement';
 import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
+import { ActiveCapacityModal } from '@/components/legalup-pro/ActiveCapacityModal';
 import { SharedCaseCard } from '@/components/legalup-ai/SharedCaseCard';
-import { CASE_STATUS_COLORS, CASE_STATUS_LABELS } from '@/lib/caseStatus';
+import { CASE_STATUS_COLORS, CASE_STATUS_LABELS, isActiveCaseStatus } from '@/lib/caseStatus';
 import { CaseEditDialog } from '@/components/lawyer/CaseEditDialog';
-import ConfirmDialog from '@/components/ui/confirm-dialog';
 import posthog from 'posthog-js';
 
 function CaseCardSkeleton() {
@@ -38,7 +39,7 @@ function isRowDeniedError(err: unknown): boolean {
 }
 
 export default function CasesPage() {
-  const { cases, loading, error, createCase, deleteCase, refetch: refetchCases } = useLawyerCases();
+  const { cases, loading, error, createCase, updateCase, refetch: refetchCases } = useLawyerCases();
   const { clients, loading: clientsLoading, error: clientsError, refetch: refetchClients } = useLawyerClients();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -57,40 +58,101 @@ export default function CasesPage() {
   } = useCaseEntitlement();
   const hasProAccess = entitlement.hasProAccess;
   const [proPaywallOpen, setProPaywallOpen] = useState(false);
+  const [capacityModalOpen, setCapacityModalOpen] = useState(false);
   const [editCaseId, setEditCaseId] = useState<string | null>(null);
   const [editDialogKey, setEditDialogKey] = useState(0);
-  const [caseToDelete, setCaseToDelete] = useState<(typeof cases)[number] | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const [actingCaseId, setActingCaseId] = useState<string | null>(null);
 
-  const confirmDeleteCase = async () => {
-    if (!caseToDelete) return;
-    setDeleting(true);
-    try {
-      await deleteCase(caseToDelete.id);
-      toast({ title: 'Caso eliminado' });
-      setCaseToDelete(null);
-      // 4.36B — deletion never restores the lifetime allowance; refresh anyway.
-      void refetchEntitlement();
-    } catch (err) {
-      toast({ title: 'Error', description: err instanceof Error ? err.message : 'No se pudo eliminar', variant: 'destructive' });
-    } finally {
-      setDeleting(false);
+  // 4.36D — capacity reached for an already-paying Pro lawyer (never the
+  // subscription paywall). Fail-closed: unknown limit never reports full.
+  const atActiveCapacity =
+    hasProAccess &&
+    entitlement.activeCaseLimit > 0 &&
+    entitlement.activeCaseCount >= entitlement.activeCaseLimit;
+
+  const refreshAll = () => {
+    void refetchCases();
+    void refetchEntitlement();
+  };
+
+  // 4.36D — route a blocked create/reopen attempt to the correct UX:
+  // free without allowance → subscription modal; Pro at limit → capacity UX.
+  const openBlockedGate = (action: 'create_case' | 'reopen_case') => {
+    if (hasProAccess && atActiveCapacity) {
+      try {
+        posthog.capture('case_capacity_reached', {
+          action,
+          active_case_count: entitlement.activeCaseCount,
+        });
+      } catch { /* analytics best-effort; never blocks UX */ }
+      setCapacityModalOpen(true);
+      return;
     }
+    posthog.capture('pro_paywall_opened', { action });
+    setProPaywallOpen(true);
   };
 
   const filtered = useMemo(
     () =>
       cases.filter((c) => {
         const matchesSearch = c.title.toLowerCase().includes(search.toLowerCase()) || (c.client?.name || '').toLowerCase().includes(search.toLowerCase());
-        const matchesStatus = statusFilter === 'all' || c.status === statusFilter;
+        // 4.36D — lifecycle filters use the canonical status sets.
+        const matchesStatus =
+          statusFilter === 'all' ? true
+          : statusFilter === 'active' ? isActiveCaseStatus(c.status)
+          : statusFilter === 'history' ? !isActiveCaseStatus(c.status)
+          : c.status === statusFilter;
         return matchesSearch && matchesStatus;
       }),
     [cases, search, statusFilter]
   );
 
-  // 4.36B — lifetime authority comes from the server (get_my_case_entitlement).
+  // 4.36D — lifetime authority comes from the server (get_my_case_entitlement).
   // Never infer consumption from visible rows: deleted cases stay consumed.
   const canCreateCase = canCreateDirectCase;
+
+  const handleCloseCase = async (id: string, previousStatus: string) => {
+    if (actingCaseId) return;
+    setActingCaseId(id);
+    try {
+      await updateCase(id, { status: 'closed' });
+      try {
+        posthog.capture('case_closed', { source: 'LAWYER_DIRECT', previous_status: previousStatus, new_status: 'closed' });
+      } catch { /* analytics best-effort; never blocks UX */ }
+      toast({ title: 'Caso cerrado', description: 'Se conserva con todo su historial y libera un cupo.' });
+      refreshAll();
+    } catch (err) {
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'No se pudo cerrar', variant: 'destructive' });
+    } finally {
+      setActingCaseId(null);
+    }
+  };
+
+  const handleReopenCase = async (id: string, previousStatus: string) => {
+    if (actingCaseId) return;
+    setActingCaseId(id);
+    try {
+      await updateCase(id, { status: 'in_progress' });
+      try {
+        posthog.capture('case_reopened', { source: 'LAWYER_DIRECT', previous_status: previousStatus, new_status: 'in_progress' });
+      } catch { /* analytics best-effort; never blocks UX */ }
+      toast({ title: 'Caso reabierto' });
+      refreshAll();
+    } catch (err) {
+      // 4.36D — stale reopen at full capacity lands on the capacity UX.
+      if (isActiveCapacityError(err)) {
+        try {
+          posthog.capture('case_capacity_reached', { action: 'reopen_case', active_case_count: entitlement.activeCaseCount });
+        } catch { /* analytics best-effort; never blocks UX */ }
+        setCapacityModalOpen(true);
+        void refetchEntitlement();
+      } else {
+        toast({ title: 'Error', description: err instanceof Error ? err.message : 'No se pudo reabrir', variant: 'destructive' });
+      }
+    } finally {
+      setActingCaseId(null);
+    }
+  };
 
   // 4.31C: always fetch fresh clients when opening the modal, so the
   // dropdown never depends on having visited ClientsPage first.
@@ -102,8 +164,7 @@ export default function CasesPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canCreateCase) {
-      posthog.capture('pro_paywall_opened', { action: 'create_case' });
-      setProPaywallOpen(true);
+      openBlockedGate('create_case');
       return;
     }
     posthog.capture('pro_paywall_action', { action: 'create_case' });
@@ -126,18 +187,29 @@ export default function CasesPage() {
       setOpen(false);
       void refetchEntitlement();
     } catch (err) {
-      // 4.36B — known commercial entitlement rejections (trigger token, or a
-      // stale-client attempt denied by RLS and now confirmed consumed) open
-      // the Pro modal; unknown errors keep the normal error toast.
+      // 4.36B/4.36D — known commercial rejections route to their own UX:
+      // free allowance → subscription modal; Pro capacity → capacity UX.
+      // Unknown errors keep the normal error toast.
       if (isFreeCaseEntitlementError(err)) {
         posthog.capture('pro_paywall_opened', { action: 'create_case', reason: 'entitlement_rejected' });
         setProPaywallOpen(true);
         void refetchEntitlement();
+      } else if (isActiveCapacityError(err)) {
+        try {
+          posthog.capture('case_capacity_reached', { action: 'create_case', active_case_count: entitlement.activeCaseCount });
+        } catch { /* analytics best-effort; never blocks UX */ }
+        setCapacityModalOpen(true);
+        void refetchEntitlement();
       } else if (isRowDeniedError(err)) {
         const latest = await refetchEntitlement();
-        if (latest.freeCaseConsumed && !latest.hasProAccess) {
+        if (!latest.hasProAccess && latest.freeCaseConsumed) {
           posthog.capture('pro_paywall_opened', { action: 'create_case', reason: 'entitlement_rejected' });
           setProPaywallOpen(true);
+        } else if (latest.hasProAccess && latest.activeCaseLimit > 0 && latest.activeCaseCount >= latest.activeCaseLimit) {
+          try {
+            posthog.capture('case_capacity_reached', { action: 'create_case', active_case_count: latest.activeCaseCount });
+          } catch { /* analytics best-effort; never blocks UX */ }
+          setCapacityModalOpen(true);
         } else {
           toast({ title: 'Error', description: err instanceof Error ? err.message : 'No se pudo crear', variant: 'destructive' });
         }
@@ -172,11 +244,15 @@ export default function CasesPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Casos</h1>
           <p className="text-muted-foreground">Expedientes del estudio — vinculados a cliente y reserva</p>
+          {hasProAccess && entitlement.activeCaseLimit > 0 ? (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {entitlement.activeCaseCount} de {entitlement.activeCaseLimit} casos activos
+            </p>
+          ) : null}
         </div>
         <Button onClick={() => {
           if (!canCreateCase) {
-            posthog.capture('pro_paywall_opened', { action: 'create_case' });
-            setProPaywallOpen(true);
+            openBlockedGate('create_case');
             return;
           }
           openDialog();
@@ -196,6 +272,8 @@ export default function CasesPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="active">Activos</SelectItem>
+            <SelectItem value="history">Cerrados / Historial</SelectItem>
             <SelectItem value="new">Nuevo</SelectItem>
             <SelectItem value="quoted">Cotizado</SelectItem>
             <SelectItem value="paid">Pagado</SelectItem>
@@ -227,7 +305,7 @@ export default function CasesPage() {
               <p className="max-w-sm text-xs text-muted-foreground">Crea tu primer caso sin suscripción. Podrás organizar al cliente y sus documentos; las funciones de IA están incluidas con LegalUp Pro.</p>
             ) : null}
             <Button onClick={() => {
-              if (!canCreateCase) { posthog.capture('pro_paywall_opened', { action: 'create_case' }); setProPaywallOpen(true); return; }
+              if (!canCreateCase) { openBlockedGate('create_case'); return; }
               openDialog();
             }} className="mt-2 bg-green-900 text-white hover:bg-green-800"><Plus className="h-4 w-4 mr-1" /> Crear mi primer caso</Button>
           </CardContent>
@@ -254,7 +332,8 @@ export default function CasesPage() {
                 setEditDialogKey((prev) => prev + 1);
                 setEditCaseId(c.id);
               }}
-              onDelete={() => setCaseToDelete(c)}
+              onCloseCase={isActiveCaseStatus(c.status) ? () => handleCloseCase(c.id, c.status) : undefined}
+              onReopenCase={!isActiveCaseStatus(c.status) ? () => handleReopenCase(c.id, c.status) : undefined}
             />
           ))}
         </div>
@@ -315,6 +394,7 @@ export default function CasesPage() {
         </DialogContent>
       </Dialog>
       <ProPricingModal open={proPaywallOpen} onOpenChange={setProPaywallOpen} triggerAction="create_case" />
+      <ActiveCapacityModal open={capacityModalOpen} onOpenChange={setCapacityModalOpen} limit={entitlement.activeCaseLimit} />
       {editCaseId && (
         <CaseEditDialog
           key={editDialogKey}
@@ -328,16 +408,6 @@ export default function CasesPage() {
           }}
         />
       )}
-      <ConfirmDialog
-        open={caseToDelete !== null}
-        onOpenChange={(open) => { if (!open) setCaseToDelete(null); }}
-        onConfirm={confirmDeleteCase}
-        title="Eliminar caso"
-        description={`¿Seguro que quieres eliminar "${caseToDelete?.title ?? ''}"? Esta acción no se puede deshacer.`}
-        confirmText="Eliminar"
-        cancelText="Cancelar"
-        isDeleting={deleting}
-      />
     </div>
   );
 }

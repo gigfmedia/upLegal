@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { CalendarDays, Clock, FolderOpen, Pencil, Trash2 } from 'lucide-react';
+import { Archive, CalendarDays, Clock, FolderOpen, Pencil, RotateCcw, Trash2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AICaseTimelinePreview } from '@/components/legalup-ai/AICaseTimelinePreview';
@@ -29,7 +29,19 @@ export type SharedCaseCardProps = {
   onOpen: () => void;
   onTimeline: () => void;
   onEdit: () => void;
-  onDelete: () => void;
+  /**
+   * 4.36D — exceptional delete only. Optional: Pro case cards no longer pass
+   * it (close/reopen below is the normal lifecycle); legacy AI history keeps
+   * its workspace delete. When omitted, no destructive icon renders.
+   */
+  onDelete?: () => void;
+  /**
+   * 4.36D — normal lifecycle actions (Pro cards). Presence drives rendering:
+   * pass onCloseCase for active cases, onReopenCase for historical ones.
+   * Surfaces that pass neither (legacy) render no lifecycle row.
+   */
+  onCloseCase?: () => void;
+  onReopenCase?: () => void;
 };
 
 /**
@@ -51,6 +63,8 @@ export function SharedCaseCard({
   onTimeline,
   onEdit,
   onDelete,
+  onCloseCase,
+  onReopenCase,
 }: SharedCaseCardProps) {
   return (
     <Card className="transition-shadow hover:shadow-md">
@@ -83,14 +97,16 @@ export function SharedCaseCard({
             >
               <Pencil className="h-4 w-4" aria-hidden="true" />
             </button>
-            <button
-              type="button"
-              onClick={onDelete}
-              className="rounded-md p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-              aria-label={`Eliminar caso ${title}`}
-            >
-              <Trash2 className="h-4 w-4" aria-hidden="true" />
-            </button>
+            {onDelete ? (
+              <button
+                type="button"
+                onClick={onDelete}
+                className="rounded-md p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                aria-label={`Eliminar caso ${title}`}
+              >
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
+              </button>
+            ) : null}
           </div>
         </div>
 
@@ -120,6 +136,31 @@ export function SharedCaseCard({
         ) : (
           <CaseCreatedPreview createdAt={createdAt} onOpen={onTimeline} />
         )}
+
+        {onCloseCase || onReopenCase ? (
+          <div className="flex items-center gap-3">
+            {onCloseCase ? (
+              <button
+                type="button"
+                onClick={onCloseCase}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 underline-offset-2 hover:text-green-800 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 rounded"
+              >
+                <Archive className="h-3.5 w-3.5" aria-hidden="true" />
+                Cerrar caso
+              </button>
+            ) : null}
+            {onReopenCase ? (
+              <button
+                type="button"
+                onClick={onReopenCase}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-green-700 underline-offset-2 hover:text-green-800 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 rounded"
+              >
+                <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+                Reabrir caso
+              </button>
+            ) : null}
+          </div>
+        ) : null}
 
         <Button
           type="button"

@@ -84,11 +84,17 @@ describe('4.34R shared case card (legacy visual grammar)', () => {
     expect(shared).toContain('statusBadge');
   });
 
-  it('pro edit/delete reuse safe canonical actions with confirmation', () => {
+  it('pro edit/close/reopen lifecycle without card delete (danger path lives in edit dialog)', () => {
     const pro = read('src/pages/lawyer/CasesPage.tsx');
     expect(pro).toContain('CaseEditDialog');
-    expect(pro).toContain('ConfirmDialog');
-    expect(pro).toContain('deleteCase');
+    expect(pro).toContain('onCloseCase');
+    expect(pro).toContain('onReopenCase');
+    expect(pro).not.toContain('onDelete');
+    expect(pro).not.toContain('ConfirmDialog');
+    expect(pro).not.toContain('deleteCase');
+    const dialog = read('src/components/lawyer/CaseEditDialog.tsx');
+    expect(dialog).toContain('deleteCase');
+    expect(dialog).toContain('Eliminar permanentemente');
   });
 
   it('activity preview stays single-query (no N+1 per card)', () => {

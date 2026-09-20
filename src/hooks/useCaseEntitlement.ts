@@ -6,9 +6,18 @@ import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 // (trg_claim_free_case_grant). Frontend maps it to the LegalUp Pro modal.
 export const FREE_CASE_ALLOWANCE_CONSUMED = 'FREE_CASE_ALLOWANCE_CONSUMED';
 
+// 4.36D — stable token raised when Pro active capacity is exhausted
+// (commit-time admission trigger). Frontend maps it to the capacity UX,
+// never to the subscription modal.
+export const ACTIVE_CASE_LIMIT_REACHED = 'ACTIVE_CASE_LIMIT_REACHED';
+
 export type CaseEntitlement = {
   hasProAccess: boolean;
   freeCaseConsumed: boolean;
+  /** 4.36D — live ACTIVE direct count (server authority; never count locally). */
+  activeCaseCount: number;
+  /** 4.36D — canonical Pro limit received from the server (no local literal). */
+  activeCaseLimit: number;
   canCreateDirectCase: boolean;
 };
 
@@ -16,10 +25,12 @@ export type CaseEntitlement = {
 const FAIL_CLOSED: CaseEntitlement = {
   hasProAccess: false,
   freeCaseConsumed: true,
+  activeCaseCount: 0,
+  activeCaseLimit: 0,
   canCreateDirectCase: false,
 };
 
-export function isFreeCaseEntitlementError(err: unknown): boolean {
+function tokenInMessage(err: unknown, token: string): boolean {
   if (!err) return false;
   let msg: string;
   if (err instanceof Error) msg = err.message;
@@ -31,7 +42,20 @@ export function isFreeCaseEntitlementError(err: unknown): boolean {
       return false;
     }
   }
-  return msg.includes(FREE_CASE_ALLOWANCE_CONSUMED);
+  return msg.includes(token);
+}
+
+export function isFreeCaseEntitlementError(err: unknown): boolean {
+  return tokenInMessage(err, FREE_CASE_ALLOWANCE_CONSUMED);
+}
+
+export function isActiveCapacityError(err: unknown): boolean {
+  return tokenInMessage(err, ACTIVE_CASE_LIMIT_REACHED);
+}
+
+function toCount(raw: unknown): number {
+  const n = typeof raw === 'number' ? raw : Number(raw);
+  return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
 }
 
 function normalize(raw: unknown): CaseEntitlement {
@@ -40,6 +64,8 @@ function normalize(raw: unknown): CaseEntitlement {
     hasProAccess: r.hasProAccess === true,
     // Fail-closed on malformed payloads.
     freeCaseConsumed: r.freeCaseConsumed !== false,
+    activeCaseCount: toCount(r.activeCaseCount),
+    activeCaseLimit: toCount(r.activeCaseLimit),
     canCreateDirectCase: r.canCreateDirectCase === true,
   };
 }

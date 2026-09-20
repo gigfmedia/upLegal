@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 
 const dbMocks = {
   directCases: 0,
@@ -55,14 +57,19 @@ vi.mock('@/hooks/useCaseEntitlement', () => ({
       hasProAccess: false,
       freeCaseConsumed: dbMocks.freeConsumed,
       canCreateDirectCase: !dbMocks.freeConsumed,
+      activeCaseCount: dbMocks.freeConsumed ? 1 : 0,
+      activeCaseLimit: 20,
     },
     loading: false,
     refetch: vi.fn(),
     canCreateDirectCase: !dbMocks.freeConsumed,
+    activeCaseCount: dbMocks.freeConsumed ? 1 : 0,
+    activeCaseLimit: 20,
     freeCaseConsumed: dbMocks.freeConsumed,
     hasProAccess: false,
   }),
   isFreeCaseEntitlementError: () => false,
+  isActiveCapacityError: () => false,
 }));
 vi.mock('@/hooks/useLawyerClients', () => ({
   useLawyerClients: () => ({ findOrCreateClient: vi.fn() }),
@@ -131,5 +138,13 @@ describe('4.32B — dashboard zero-data first-case CTA', () => {
     );
     await waitFor(() => expect(screen.getByText('Empieza a organizar tu práctica con LegalUp Pro')).toBeInTheDocument());
     expect(screen.queryByText(/Tu primer caso directo no requiere Pro/i)).not.toBeInTheDocument();
+  });
+});
+
+describe('4.36D — dashboard active definition (delivered counts)', () => {
+  it('active-cases KPI excludes only closed/cancelled (delivered is ACTIVE)', () => {
+    const dash = readFileSync(resolve('src/pages/lawyer/DashboardPage.tsx'), 'utf-8');
+    expect(dash).toContain(`.not('status', 'in', '("closed","cancelled")')`);
+    expect(dash).not.toContain('delivered","closed","cancelled');
   });
 });

@@ -23,6 +23,7 @@ vi.mock('@/hooks/useProSubscription', () => ({
 vi.mock('@/hooks/useCaseEntitlement', () => ({
   useCaseEntitlement: (...args: unknown[]) => hookMocks.entitlement(...args),
   isFreeCaseEntitlementError: () => false,
+  isActiveCapacityError: () => false,
 }));
 vi.mock('@/hooks/use-toast', () => ({
   useToast: () => ({ toast: vi.fn() }),
@@ -50,10 +51,14 @@ function setup(opts: { cases?: unknown[]; hasProAccess?: boolean; freeConsumed?:
       hasProAccess: opts.hasProAccess ?? false,
       freeCaseConsumed: consumed,
       canCreateDirectCase: (opts.hasProAccess ?? false) || !consumed,
+      activeCaseCount: consumed ? 1 : 0,
+      activeCaseLimit: 20,
     },
     loading: false,
     refetch: vi.fn(),
     canCreateDirectCase: (opts.hasProAccess ?? false) || !consumed,
+    activeCaseCount: consumed ? 1 : 0,
+    activeCaseLimit: 20,
     freeCaseConsumed: consumed,
     hasProAccess: opts.hasProAccess ?? false,
   });

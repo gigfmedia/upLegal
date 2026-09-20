@@ -19,6 +19,8 @@ const entState = vi.hoisted(() => ({
     hasProAccess: false,
     freeCaseConsumed: false,
     canCreateDirectCase: true,
+    activeCaseCount: 0,
+    activeCaseLimit: 20,
   },
   loading: false,
 }));
@@ -42,12 +44,18 @@ vi.mock('@/hooks/useCaseEntitlement', () => ({
     loading: entState.loading,
     refetch: mocks.refetchEnt,
     canCreateDirectCase: entState.entitlement.canCreateDirectCase,
+    activeCaseCount: entState.entitlement.activeCaseCount,
+    activeCaseLimit: entState.entitlement.activeCaseLimit,
     freeCaseConsumed: entState.entitlement.freeCaseConsumed,
     hasProAccess: entState.entitlement.hasProAccess,
   }),
   isFreeCaseEntitlementError: (err: unknown) => {
     const msg = err instanceof Error ? err.message : String(err);
     return msg.includes('FREE_CASE_ALLOWANCE_CONSUMED');
+  },
+  isActiveCapacityError: (err: unknown) => {
+    const msg = err instanceof Error ? err.message : String(err);
+    return msg.includes('ACTIVE_CASE_LIMIT_REACHED');
   },
 }));
 vi.mock('@/hooks/use-toast', () => ({
@@ -60,9 +68,9 @@ vi.mock('posthog-js', () => ({ default: { capture: mocks.capture } }));
 
 import CasesPage from '@/pages/lawyer/CasesPage';
 
-const UNUSED = { hasProAccess: false, freeCaseConsumed: false, canCreateDirectCase: true };
-const CONSUMED = { hasProAccess: false, freeCaseConsumed: true, canCreateDirectCase: false };
-const PRO = { hasProAccess: true, freeCaseConsumed: true, canCreateDirectCase: true };
+const UNUSED = { hasProAccess: false, freeCaseConsumed: false, canCreateDirectCase: true, activeCaseCount: 0, activeCaseLimit: 20 };
+const CONSUMED = { hasProAccess: false, freeCaseConsumed: true, canCreateDirectCase: false, activeCaseCount: 1, activeCaseLimit: 20 };
+const PRO = { hasProAccess: true, freeCaseConsumed: true, canCreateDirectCase: true, activeCaseCount: 1, activeCaseLimit: 20 };
 
 function renderPage() {
   render(

@@ -15,6 +15,7 @@ import {
 import { Loader2, Trash2 } from 'lucide-react';
 import { useLawyerCases, type CaseStatus, type LawyerCase } from '@/hooks/useLawyerCases';
 import { useToast } from '@/hooks/use-toast';
+import posthog from 'posthog-js';
 
 const statuses: CaseStatus[] = ['new', 'quoted', 'paid', 'in_progress', 'delivered', 'closed', 'cancelled'];
 
@@ -80,9 +81,16 @@ export function CaseEditDialog({ open, onOpenChange, caseData, clients, onSaved 
   };
 
   const handleDelete = async () => {
-    if (!caseData?.id || !confirm('¿Eliminar caso?')) return;
+    if (!caseData?.id) return;
+    // 4.36D — exceptional path only. Accurate copy: the case record is gone
+    // for good (linkage/history on the case), while workspace documents and
+    // AI history survive as workspace data. Close preserves everything.
+    if (!confirm('¿Eliminar permanentemente este caso? Se borrará el registro del caso y se perderá su historial vinculado. Tus documentos e historial de IA se conservan como datos del workspace. Para conservar el historial visible, prefiere Cerrar el caso.')) return;
     try {
       await deleteCase(caseData.id);
+      try {
+        posthog.capture('case_deleted', { source: caseData.source || 'unknown' });
+      } catch { /* analytics best-effort; never blocks UX */ }
       toast({ title: 'Caso eliminado' });
       onOpenChange(false);
       navigate('/lawyer/cases');
@@ -166,6 +174,9 @@ export function CaseEditDialog({ open, onOpenChange, caseData, clients, onSaved 
               <Trash2 className="h-4 w-4 mr-1" /> Eliminar caso
             </Button>
           </div>
+          <p className="text-xs text-muted-foreground">
+            ¿Terminaste este caso? Cambia su estado a Cerrado para conservar el historial. Eliminar lo borra permanentemente.
+          </p>
         </div>
       </DialogContent>
     </Dialog>

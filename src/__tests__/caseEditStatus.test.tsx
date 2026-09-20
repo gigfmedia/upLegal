@@ -18,6 +18,7 @@ vi.mock('@/hooks/useCaseEntitlement', () => ({
     hasProAccess: true,
   }),
   isFreeCaseEntitlementError: () => false,
+  isActiveCapacityError: () => false,
 }));
 vi.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast: vi.fn() }) }));
 vi.mock('@/components/legalup-pro/ProPricingModal', () => ({ ProPricingModal: () => null }));

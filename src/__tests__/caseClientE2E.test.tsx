@@ -60,6 +60,7 @@ vi.mock('@/hooks/useCaseEntitlement', () => ({
     hasProAccess: false,
   }),
   isFreeCaseEntitlementError: () => false,
+  isActiveCapacityError: () => false,
 }));
 vi.mock('@/hooks/use-toast', () => ({
   useToast: () => ({ toast: vi.fn() }),

@@ -18,3 +18,18 @@ export const CASE_STATUS_LABELS: Record<string, string> = {
   closed: 'Cerrado',
   cancelled: 'Cancelado',
 };
+
+/**
+ * 4.36D — canonical frontend status semantics (display/filter only; the DB
+ * trigger is independently authoritative). ACTIVE statuses consume Pro
+ * capacity; HISTORICAL (closed/cancelled) preserve history at zero capacity.
+ */
+export const ACTIVE_CASE_STATUSES = ['new', 'quoted', 'paid', 'in_progress', 'delivered'] as const;
+
+export const HISTORICAL_CASE_STATUSES = ['closed', 'cancelled'] as const;
+
+export type ActiveCaseStatus = (typeof ACTIVE_CASE_STATUSES)[number];
+
+export function isActiveCaseStatus(status: string | null | undefined): boolean {
+  return (ACTIVE_CASE_STATUSES as readonly string[]).includes(status ?? '');
+}
