@@ -64,7 +64,17 @@ export const RelatedLawyers = ({ category, title = "¿Necesitas resolver este pr
     }
   }, [inView, lawyers, category, articleId]);
 
-  const handleLawyerClick = (lawyerId: string, position: number) => {
+  const handleLawyerClick = (lawyerId: string, position: number, e?: React.SyntheticEvent) => {
+    // Booking button clicks are handled explicitly by RelatedLawyerCard.handleSchedule
+    // (related_lawyer_booking_clicked). Skip legacy profile click here to avoid double attribution.
+    // Note: onClickCapture on ancestor fires before button onClick bubble, so stopPropagation
+    // in the button does NOT prevent this — must guard via event target.
+    try {
+      const target = (e as any)?.target as HTMLElement | undefined;
+      if (target && typeof target.closest === 'function' && target.closest('[data-related-booking]')) {
+        return;
+      }
+    } catch {}
     sessionStorage.setItem('has_commercial_intent', 'true');
     if (typeof window !== 'undefined') {
       const pagePath = window.location.pathname;
@@ -207,8 +217,8 @@ export const RelatedLawyers = ({ category, title = "¿Necesitas resolver este pr
                 const articleSlugForCard = articleId || pagePath.split('/').pop() || '';
                 return (
                 <CarouselItem key={lawyer.id} className="pl-4 md:basis-1/2 lg:basis-1/2">
-                  <div className="h-full" onClickCapture={() => handleLawyerClick(lawyer.id, idx)}>
-                    <RelatedLawyerCard lawyer={lawyer} category={category} articleSlug={articleSlugForCard} />
+                  <div className="h-full" onClickCapture={(e) => handleLawyerClick(lawyer.id, idx, e)}>
+                    <RelatedLawyerCard lawyer={lawyer} category={category} articleSlug={articleSlugForCard} cardPosition={idx} />
                   </div>
                 </CarouselItem>
                 );
@@ -230,8 +240,8 @@ export const RelatedLawyers = ({ category, title = "¿Necesitas resolver este pr
                 const pagePathGrid = typeof window !== 'undefined' ? window.location.pathname : '';
                 const articleSlugForCardGrid = articleId || pagePathGrid.split('/').pop() || '';
                 return (
-              <div key={lawyer.id} className="h-full" onClickCapture={() => handleLawyerClick(lawyer.id, idx)}>
-                <RelatedLawyerCard lawyer={lawyer} category={category} articleSlug={articleSlugForCardGrid} />
+              <div key={lawyer.id} className="h-full" onClickCapture={(e) => handleLawyerClick(lawyer.id, idx, e)}>
+                <RelatedLawyerCard lawyer={lawyer} category={category} articleSlug={articleSlugForCardGrid} cardPosition={idx} />
               </div>
                 );
               })}

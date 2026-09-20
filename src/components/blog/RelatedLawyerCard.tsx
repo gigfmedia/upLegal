@@ -1,5 +1,6 @@
 import { bookingClientTotal } from '../../../shared/bookingPricing.mjs';
 import { useBookingPricing } from '@/hooks/useBookingPricing';
+import { trackEvent } from '@/lib/track';
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -25,9 +26,10 @@ interface RelatedLawyerCardProps {
   category?: string;
   onContact?: (lawyerId: string) => void;
   articleSlug?: string;
+  cardPosition?: number;
 }
 
-export const RelatedLawyerCard = ({ lawyer, category, onContact, articleSlug }: RelatedLawyerCardProps) => {
+export const RelatedLawyerCard = ({ lawyer, category, onContact, articleSlug, cardPosition }: RelatedLawyerCardProps) => {
   const navigate = useNavigate();
 
   // Format display name: shorten second last name to initial
@@ -77,9 +79,29 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact, articleSlug }: 
     }
   }
 
+  const buildBaseProps = () => {
+    const reviewCountForProps = reviewCount;
+    return {
+      lawyer_id: lawyer.id || (lawyer as any).user_id,
+      lawyer_slug: lawyer.id,
+      article_slug: articleSlug || '',
+      page_path: typeof window !== 'undefined' ? window.location.pathname : '',
+      specialty: category,
+      category,
+      has_reviews: Boolean(reviewCountForProps > 0),
+      review_count: reviewCountForProps,
+      price,
+      availability: true,
+      ...(typeof cardPosition === 'number' ? { card_position: cardPosition } : {}),
+    };
+  };
+
   const handleClick = () => {
     if (onContact) onContact(lawyer.id);
-    // gtag is handled by parent RelatedLawyers onClickCapture with position + page_path; avoid duplicate
+    // Explicit profile intent (parent RelatedLawyers onClickCapture still emits legacy related_lawyer_clicked; no duplicate navigation)
+    try {
+      trackEvent('related_lawyer_profile_clicked', { ...buildBaseProps(), destination: 'profile', source: 'related_lawyers' });
+    } catch {}
     const slug = createSlug(displayName);
     const articleParam = articleSlug ? `?article_slug=${encodeURIComponent(articleSlug)}` : '';
     // Fallback: also ensure sessionStorage has it for direct profile view
@@ -91,7 +113,12 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact, articleSlug }: 
 
   const handleSchedule = (e: React.MouseEvent) => {
     e.stopPropagation();
+    // Legacy booking-selection event (preserved)
     window.gtag?.('event', 'select_lawyer', { lawyer_id: lawyer.user_id || lawyer.id });
+    // Explicit direct-booking intent (PostHog + GA4 via shared helper; owner-filtered)
+    try {
+      trackEvent('related_lawyer_booking_clicked', { ...buildBaseProps(), destination: 'booking', source: 'related_lawyers' });
+    } catch {}
     const slug = createSlug(displayName);
     const articleParam = articleSlug ? `?article_slug=${encodeURIComponent(articleSlug)}` : '';
     try {
@@ -192,6 +219,7 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact, articleSlug }: 
 
           <Button
             size="lg"
+            data-related-booking="true"
             className="w-full bg-green-600 hover:bg-green-700 text-white text-base font-semibold py-6 rounded-xl transition-all active:scale-[0.99] shadow-sm"
             onClick={handleSchedule}
           >
