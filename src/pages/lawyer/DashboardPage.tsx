@@ -12,6 +12,7 @@ import { User, Calendar, Briefcase, FileText, Clock, Sparkles, ArrowRight, Loade
 import { ProfileCompletion } from '@/components/dashboard/ProfileCompletion';
 import { useAISubscription } from '@/hooks/useAISubscription';
 import { useProSubscription } from '@/hooks/useProSubscription';
+import { useCaseEntitlement } from '@/hooks/useCaseEntitlement';
 import { GoogleCalendarConnect } from '@/components/dashboard/GoogleCalendarConnect';
 
 const statusLabels: Record<string, string> = {
@@ -59,6 +60,8 @@ export default function LawyerDashboardPage() {
   }, [searchParams, toast, navigate]);
 
   const { hasProAccess, refetch: refetchPro, isFetching: isFetchingPro, status: proStatus } = useProSubscription();
+  // 4.36B — lifetime free-case authority (survives case deletion).
+  const { entitlement: caseEntitlement, loading: entitlementLoading } = useCaseEntitlement();
   const hasProAccessCheck = hasProAccess;
   const [proPaywallOpen, setProPaywallOpen] = useState(false);
   const [proVerificationState, setProVerificationState] = useState<'idle' | 'verifying' | 'timeout'>('idle');
@@ -219,7 +222,7 @@ export default function LawyerDashboardPage() {
 
       <OnboardingCard />
 
-      {!loading && stats.clients === 0 && stats.cases === 0 && !hasProAccess && kpis.directCases === 0 && (
+      {!loading && !entitlementLoading && stats.clients === 0 && stats.cases === 0 && !hasProAccess && !caseEntitlement.freeCaseConsumed && (
         <Card className="border-dashed">
           <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
@@ -237,7 +240,7 @@ export default function LawyerDashboardPage() {
         </Card>
       )}
 
-      {!loading && stats.clients === 0 && stats.cases === 0 && !hasProAccess && kpis.directCases > 0 && (
+      {!loading && !entitlementLoading && stats.clients === 0 && stats.cases === 0 && !hasProAccess && caseEntitlement.freeCaseConsumed && (
         <Card className="border-dashed">
           <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>

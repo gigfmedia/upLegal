@@ -8,6 +8,7 @@ const hookMocks = {
   cases: vi.fn(),
   clients: vi.fn(),
   pro: vi.fn(),
+  entitlement: vi.fn(),
 };
 
 vi.mock('@/hooks/useLawyerCases', () => ({
@@ -19,6 +20,10 @@ vi.mock('@/hooks/useLawyerClients', () => ({
 vi.mock('@/hooks/useProSubscription', () => ({
   useProSubscription: (...args: unknown[]) => hookMocks.pro(...args),
 }));
+vi.mock('@/hooks/useCaseEntitlement', () => ({
+  useCaseEntitlement: (...args: unknown[]) => hookMocks.entitlement(...args),
+  isFreeCaseEntitlementError: () => false,
+}));
 vi.mock('@/hooks/use-toast', () => ({
   useToast: () => ({ toast: vi.fn() }),
 }));
@@ -29,7 +34,7 @@ vi.mock('posthog-js', () => ({ default: { capture: vi.fn() } }));
 
 import CasesPage from '@/pages/lawyer/CasesPage';
 
-function setup(opts: { cases?: unknown[]; hasProAccess?: boolean }) {
+function setup(opts: { cases?: unknown[]; hasProAccess?: boolean; freeConsumed?: boolean }) {
   hookMocks.cases.mockReturnValue({
     cases: opts.cases ?? [],
     loading: false,
@@ -38,6 +43,20 @@ function setup(opts: { cases?: unknown[]; hasProAccess?: boolean }) {
   });
   hookMocks.clients.mockReturnValue({ clients: [], loading: false, error: null, refetch: vi.fn() });
   hookMocks.pro.mockReturnValue({ hasProAccess: opts.hasProAccess ?? false });
+  // 4.36B — lifetime authority drives the gate, not visible rows.
+  const consumed = opts.freeConsumed ?? (!opts.hasProAccess && (opts.cases ?? []).some((c) => (c as { source?: string }).source === 'LAWYER_DIRECT'));
+  hookMocks.entitlement.mockReturnValue({
+    entitlement: {
+      hasProAccess: opts.hasProAccess ?? false,
+      freeCaseConsumed: consumed,
+      canCreateDirectCase: (opts.hasProAccess ?? false) || !consumed,
+    },
+    loading: false,
+    refetch: vi.fn(),
+    canCreateDirectCase: (opts.hasProAccess ?? false) || !consumed,
+    freeCaseConsumed: consumed,
+    hasProAccess: opts.hasProAccess ?? false,
+  });
   render(
     <MemoryRouter>
       <CasesPage />

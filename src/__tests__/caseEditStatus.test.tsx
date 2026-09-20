@@ -7,6 +7,18 @@ const state = vi.hoisted(() => ({ row: {} as Record<string, unknown>, fail: fals
 vi.mock('@/contexts/AuthContext/clean/useAuth', () => ({ useAuth: () => ({ user: { id: 'lawyer' } }) }));
 vi.mock('@/hooks/useLawyerClients', () => ({ useLawyerClients: () => ({ clients: [], loading: false }) }));
 vi.mock('@/hooks/useProSubscription', () => ({ useProSubscription: () => ({ hasProAccess: true }) }));
+// 4.36B — lifetime authority: Pro may edit freely.
+vi.mock('@/hooks/useCaseEntitlement', () => ({
+  useCaseEntitlement: () => ({
+    entitlement: { hasProAccess: true, freeCaseConsumed: true, canCreateDirectCase: true },
+    loading: false,
+    refetch: vi.fn(),
+    canCreateDirectCase: true,
+    freeCaseConsumed: true,
+    hasProAccess: true,
+  }),
+  isFreeCaseEntitlementError: () => false,
+}));
 vi.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast: vi.fn() }) }));
 vi.mock('@/components/legalup-pro/ProPricingModal', () => ({ ProPricingModal: () => null }));
 vi.mock('@/lib/activationAnalytics', () => ({ trackFirstCaseIfNeeded: vi.fn() }));

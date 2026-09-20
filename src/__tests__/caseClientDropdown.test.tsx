@@ -6,6 +6,7 @@ const hookMocks = {
   cases: vi.fn(),
   clients: vi.fn(),
   pro: vi.fn(),
+  entitlement: vi.fn(),
   createCase: vi.fn(),
   refetchClients: vi.fn(),
   toast: vi.fn(),
@@ -19,6 +20,10 @@ vi.mock('@/hooks/useLawyerClients', () => ({
 }));
 vi.mock('@/hooks/useProSubscription', () => ({
   useProSubscription: (...args: unknown[]) => hookMocks.pro(...args),
+}));
+vi.mock('@/hooks/useCaseEntitlement', () => ({
+  useCaseEntitlement: (...args: unknown[]) => hookMocks.entitlement(...args),
+  isFreeCaseEntitlementError: () => false,
 }));
 vi.mock('@/hooks/use-toast', () => ({
   useToast: () => ({ toast: hookMocks.toast }),
@@ -54,6 +59,21 @@ function setup(opts: {
     refetch: hookMocks.refetchClients,
   });
   hookMocks.pro.mockReturnValue({ hasProAccess: opts.hasProAccess ?? false });
+  // 4.36B — lifetime authority drives the gate, not visible rows.
+  const consumed = (opts.cases ?? []).some((c) => (c as { source?: string }).source === 'LAWYER_DIRECT');
+  const canCreate = (opts.hasProAccess ?? false) || !consumed;
+  hookMocks.entitlement.mockReturnValue({
+    entitlement: {
+      hasProAccess: opts.hasProAccess ?? false,
+      freeCaseConsumed: consumed,
+      canCreateDirectCase: canCreate,
+    },
+    loading: false,
+    refetch: vi.fn(),
+    canCreateDirectCase: canCreate,
+    freeCaseConsumed: consumed,
+    hasProAccess: opts.hasProAccess ?? false,
+  });
   render(
     <MemoryRouter>
       <CasesPage />

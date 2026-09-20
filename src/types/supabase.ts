@@ -3734,6 +3734,7 @@ export type Database = {
               scheduled_time: string
             }[]
           }
+      get_my_case_entitlement: { Args: never; Returns: Json }
       increment_ai_usage_monthly:
         | {
             Args: {

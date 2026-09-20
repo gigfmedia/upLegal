@@ -49,6 +49,18 @@ vi.mock('@/hooks/useLawyerCases', () => ({
 vi.mock('@/hooks/useProSubscription', () => ({
   useProSubscription: () => ({ hasProAccess: false }),
 }));
+// 4.36B — lifetime authority: unused allowance for these creation-path tests.
+vi.mock('@/hooks/useCaseEntitlement', () => ({
+  useCaseEntitlement: () => ({
+    entitlement: { hasProAccess: false, freeCaseConsumed: false, canCreateDirectCase: true },
+    loading: false,
+    refetch: vi.fn(),
+    canCreateDirectCase: true,
+    freeCaseConsumed: false,
+    hasProAccess: false,
+  }),
+  isFreeCaseEntitlementError: () => false,
+}));
 vi.mock('@/hooks/use-toast', () => ({
   useToast: () => ({ toast: vi.fn() }),
 }));

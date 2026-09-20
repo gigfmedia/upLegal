@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 
 const dbMocks = {
   directCases: 0,
+  freeConsumed: false,
 };
 
 function chainResult(count: number, data: unknown[] = []) {
@@ -47,6 +48,22 @@ vi.mock('@/hooks/useAISubscription', () => ({
 vi.mock('@/hooks/useProSubscription', () => ({
   useProSubscription: () => ({ hasProAccess: false, refetch: vi.fn(), isFetching: false, status: null }),
 }));
+// 4.36B — lifetime authority drives the dashboard CTA cards, not row counts.
+vi.mock('@/hooks/useCaseEntitlement', () => ({
+  useCaseEntitlement: () => ({
+    entitlement: {
+      hasProAccess: false,
+      freeCaseConsumed: dbMocks.freeConsumed,
+      canCreateDirectCase: !dbMocks.freeConsumed,
+    },
+    loading: false,
+    refetch: vi.fn(),
+    canCreateDirectCase: !dbMocks.freeConsumed,
+    freeCaseConsumed: dbMocks.freeConsumed,
+    hasProAccess: false,
+  }),
+  isFreeCaseEntitlementError: () => false,
+}));
 vi.mock('@/hooks/useLawyerClients', () => ({
   useLawyerClients: () => ({ findOrCreateClient: vi.fn() }),
 }));
@@ -89,10 +106,12 @@ describe('4.32B — dashboard zero-data first-case CTA', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     dbMocks.directCases = 0;
+    dbMocks.freeConsumed = false;
   });
 
   it('zero-data lawyer with 0 direct cases sees first-case CTA, not Pro paywall', async () => {
     dbMocks.directCases = 0;
+    dbMocks.freeConsumed = false;
     render(
       <MemoryRouter>
         <DashboardPage />
@@ -104,6 +123,7 @@ describe('4.32B — dashboard zero-data first-case CTA', () => {
 
   it('lawyer with consumed direct case does not see misleading free-first-case CTA', async () => {
     dbMocks.directCases = 1;
+    dbMocks.freeConsumed = true;
     render(
       <MemoryRouter>
         <DashboardPage />

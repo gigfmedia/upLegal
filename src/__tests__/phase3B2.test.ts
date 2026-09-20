@@ -12,7 +12,11 @@ describe('FASE 3B-2 — Pro paywall gates', () => {
   });
   it('CasesPage has Pro gate', () => {
     const c = readFileSync(resolve('src/pages/lawyer/CasesPage.tsx'), 'utf-8');
-    expect(c).toContain('useProSubscription');
+    // 4.36B — gate reads the server lifetime authority, not row counts.
+    expect(c).toContain('useCaseEntitlement');
+    expect(c).toContain('canCreateDirectCase');
+    expect(c).toContain('ProPricingModal');
+    expect(c).toContain('pro_paywall_opened');
     expect(c).toContain('create_case');
   });
   it('RequestsPage has Pro gate', () => {

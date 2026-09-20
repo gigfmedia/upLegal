@@ -13,7 +13,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Search, Loader2, Plus, FolderOpen, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useProSubscription } from '@/hooks/useProSubscription';
+import {
+  useCaseEntitlement,
+  isFreeCaseEntitlementError,
+} from '@/hooks/useCaseEntitlement';
 import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
 import { SharedCaseCard } from '@/components/legalup-ai/SharedCaseCard';
 import { CASE_STATUS_COLORS, CASE_STATUS_LABELS } from '@/lib/caseStatus';
@@ -25,6 +28,13 @@ function CaseCardSkeleton() {
   return (
     <Card><CardContent className="p-5 space-y-3"><Skeleton className="h-5 w-2/3" /><Skeleton className="h-4 w-1/3" /><Skeleton className="h-4 w-full" /><Skeleton className="h-9 w-28" /></CardContent></Card>
   );
+}
+
+function isRowDeniedError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const code = (err as { code?: unknown }).code;
+  const msg = err instanceof Error ? err.message : '';
+  return code === '42501' || /row-level security/i.test(msg);
 }
 
 export default function CasesPage() {
@@ -39,7 +49,13 @@ export default function CasesPage() {
   const [description, setDescription] = useState('');
   const [clientId, setClientId] = useState<string>('none');
   const [saving, setSaving] = useState(false);
-  const { hasProAccess } = useProSubscription();
+  const {
+    entitlement,
+    loading: entitlementLoading,
+    refetch: refetchEntitlement,
+    canCreateDirectCase,
+  } = useCaseEntitlement();
+  const hasProAccess = entitlement.hasProAccess;
   const [proPaywallOpen, setProPaywallOpen] = useState(false);
   const [editCaseId, setEditCaseId] = useState<string | null>(null);
   const [editDialogKey, setEditDialogKey] = useState(0);
@@ -53,6 +69,8 @@ export default function CasesPage() {
       await deleteCase(caseToDelete.id);
       toast({ title: 'Caso eliminado' });
       setCaseToDelete(null);
+      // 4.36B — deletion never restores the lifetime allowance; refresh anyway.
+      void refetchEntitlement();
     } catch (err) {
       toast({ title: 'Error', description: err instanceof Error ? err.message : 'No se pudo eliminar', variant: 'destructive' });
     } finally {
@@ -70,8 +88,9 @@ export default function CasesPage() {
     [cases, search, statusFilter]
   );
 
-  const qualifyingDirectCases = useMemo(() => cases.filter((c) => c.source === 'LAWYER_DIRECT'), [cases]);
-  const canCreateCase = hasProAccess || qualifyingDirectCases.length === 0;
+  // 4.36B — lifetime authority comes from the server (get_my_case_entitlement).
+  // Never infer consumption from visible rows: deleted cases stay consumed.
+  const canCreateCase = canCreateDirectCase;
 
   // 4.31C: always fetch fresh clients when opening the modal, so the
   // dropdown never depends on having visited ClientsPage first.
@@ -105,14 +124,32 @@ export default function CasesPage() {
       setDescription('');
       setClientId('none');
       setOpen(false);
+      void refetchEntitlement();
     } catch (err) {
-      toast({ title: 'Error', description: err instanceof Error ? err.message : 'No se pudo crear', variant: 'destructive' });
+      // 4.36B — known commercial entitlement rejections (trigger token, or a
+      // stale-client attempt denied by RLS and now confirmed consumed) open
+      // the Pro modal; unknown errors keep the normal error toast.
+      if (isFreeCaseEntitlementError(err)) {
+        posthog.capture('pro_paywall_opened', { action: 'create_case', reason: 'entitlement_rejected' });
+        setProPaywallOpen(true);
+        void refetchEntitlement();
+      } else if (isRowDeniedError(err)) {
+        const latest = await refetchEntitlement();
+        if (latest.freeCaseConsumed && !latest.hasProAccess) {
+          posthog.capture('pro_paywall_opened', { action: 'create_case', reason: 'entitlement_rejected' });
+          setProPaywallOpen(true);
+        } else {
+          toast({ title: 'Error', description: err instanceof Error ? err.message : 'No se pudo crear', variant: 'destructive' });
+        }
+      } else {
+        toast({ title: 'Error', description: err instanceof Error ? err.message : 'No se pudo crear', variant: 'destructive' });
+      }
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) {
+  if (loading || entitlementLoading) {
     return (
       <div className="mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         <div className="flex flex-col sm:flex-row justify-between gap-4">
@@ -186,7 +223,7 @@ export default function CasesPage() {
             <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-green-50 text-green-700"><FolderOpen className="h-7 w-7" /></span>
             <p className="text-lg font-medium text-gray-900">No hay casos</p>
             <p className="max-w-sm text-sm text-muted-foreground">Crea tu primer caso o procesa una solicitud. Tus expedientes aparecerán aquí con el mismo formato que LegalUp AI.</p>
-            {canCreateCase && !hasProAccess && qualifyingDirectCases.length === 0 ? (
+            {canCreateCase && !hasProAccess && !entitlement.freeCaseConsumed ? (
               <p className="max-w-sm text-xs text-muted-foreground">Crea tu primer caso sin suscripción. Podrás organizar al cliente y sus documentos; las funciones de IA están incluidas con LegalUp Pro.</p>
             ) : null}
             <Button onClick={() => {
@@ -228,7 +265,7 @@ export default function CasesPage() {
           <DialogHeader>
             <DialogTitle>Nuevo caso</DialogTitle>
           </DialogHeader>
-          {canCreateCase && !hasProAccess && qualifyingDirectCases.length === 0 ? (
+          {canCreateCase && !hasProAccess && !entitlement.freeCaseConsumed ? (
             <p className="text-xs text-muted-foreground">Tu primer caso no requiere suscripción a Pro. Las funciones de IA requieren LegalUp Pro.</p>
           ) : null}
           <form onSubmit={handleCreate} className="space-y-4">
