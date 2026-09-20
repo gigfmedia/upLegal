@@ -50,11 +50,15 @@ describe('4.34R shared case card (legacy visual grammar)', () => {
     expect(onTimeline).toHaveBeenCalledTimes(1);
   });
 
-  it('missing area uses legacy neutral empty text; missing workspace omits preview', () => {
+  it('missing area uses legacy neutral empty text; missing workspace falls back to created-event preview', () => {
     const { container, rerender } = render(<SharedCaseCard {...base} practiceArea={null} />);
     expect(screen.getByText('Sin área jurídica')).toBeInTheDocument();
     rerender(<SharedCaseCard {...base} workspaceId={null} />);
-    expect(screen.queryByText('Actividad reciente')).not.toBeInTheDocument();
+    // Paridad con historial: la tarjeta siempre muestra Actividad reciente;
+    // sin workspace deriva "Caso creado" de los props (cero queries).
+    expect(screen.getByText('Actividad reciente')).toBeInTheDocument();
+    expect(screen.getByText('Caso creado')).toBeInTheDocument();
+    expect(screen.getByText('Ver timeline completo')).toBeInTheDocument();
     expect(container.textContent).not.toContain('Cliente:');
   });
 

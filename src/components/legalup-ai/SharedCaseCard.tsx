@@ -6,6 +6,7 @@ import { CalendarDays, Clock, FolderOpen, Pencil, Trash2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AICaseTimelinePreview } from '@/components/legalup-ai/AICaseTimelinePreview';
+import { CaseCreatedPreview } from '@/components/legalup-ai/CaseCreatedPreview';
 
 function formatDate(value: string): string {
   try {
@@ -21,7 +22,7 @@ export type SharedCaseCardProps = {
   description?: string | null;
   createdAt: string;
   updatedAt: string;
-  /** Workspace for the activity preview. Null/undefined omits it (§21). */
+  /** Workspace for the AI activity preview. Null/undefined falls back to the zero-query created-event preview. */
   workspaceId?: string | null;
   /** Optional discreet status slot (Pro only; legacy omits it). */
   statusBadge?: ReactNode;
@@ -35,7 +36,8 @@ export type SharedCaseCardProps = {
  * 4.34R — shared case card (legacy AI visual grammar).
  * Presentation shared by legacy AI history and canonical Pro cases.
  * Data/action adapters differ per surface; activity preview reuses the
- * single-query AICaseTimelinePreview (no N+1).
+ * single-query AICaseTimelinePreview when a workspace exists, and the
+ * zero-query CaseCreatedPreview otherwise (no N+1, works pre-provisioning).
  */
 export function SharedCaseCard({
   title,
@@ -114,7 +116,9 @@ export function SharedCaseCard({
             workspaceId={workspaceId}
             onOpen={onTimeline}
           />
-        ) : null}
+        ) : (
+          <CaseCreatedPreview createdAt={createdAt} onOpen={onTimeline} />
+        )}
 
         <Button
           type="button"
