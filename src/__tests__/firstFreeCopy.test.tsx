@@ -122,8 +122,11 @@ describe('4.31B F3 — no stale standalone-AI purchase copy in normal Pro flow',
   });
 
   it('ProPricingModal keeps certified pricing transition + Core AI benefit', () => {
-    expect(proModal).toContain('$19.990');
-    expect(proModal).toContain('$49.990');
+    // 4.37C — intro price renders dynamically (fmtPrice/previewPrice); the
+    // static copy states the simplified transition without repetition.
+    expect(proModal).toContain('por tus primeros 3 cobros');
+    expect(proModal).toContain('Desde el cuarto cobro, $49.990/mes');
+    expect(proModal).toContain('previewPrice');
     expect(proModal).not.toMatch(/jurisprudencia/i);
   });
 

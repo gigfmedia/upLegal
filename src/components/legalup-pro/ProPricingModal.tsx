@@ -17,11 +17,11 @@ import { es } from 'date-fns/locale';
 
 const PERKS = [
   'Clientes ilimitados',
-  'Casos ilimitados',
+  'Hasta 20 casos activos',
   'Solicitudes y agenda',
-  'Citas y pagos',
+  'Citas con tus clientes',
   'Gestión de tu operación',
-  'LegalUp AI limitado (1 caso, 3 documentos)',
+  'LegalUp AI integrado',
 ];
 
 function formatDate(value: string | null): string {
@@ -87,8 +87,8 @@ export function ProPricingModal({ open, onOpenChange, triggerAction }: ProPricin
             </p>
             {isFounderRate ? (
               <>
-                <p className="text-sm text-muted-foreground">por 3 cobros</p>
-                <p className="mt-1 text-xs text-muted-foreground">$19.990/mes durante tus primeros 3 cobros. Desde el cuarto cobro, $49.990/mes.</p>
+                <p className="text-sm text-muted-foreground">por tus primeros 3 cobros</p>
+                <p className="mt-1 text-xs text-muted-foreground">Desde el cuarto cobro, $49.990/mes.</p>
                 <p className="mt-2 text-xs text-green-700 font-medium">
                   {slotsRemaining != null && slotsRemaining > 0
                     ? `¡Quedan ${slotsRemaining} cupos Founder! Los primeros 15 abogados en contratar Pro obtienen el badge Founder permanente.`

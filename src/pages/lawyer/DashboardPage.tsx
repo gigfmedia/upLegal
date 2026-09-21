@@ -79,7 +79,7 @@ export default function LawyerDashboardPage() {
     if (hasProAccessCheck) {
       try { posthog.capture('pro_checkout_returned', { status: 'success' }); } catch {}
       try { posthog.capture('pro_access_confirmed', { attempts: 0, elapsed_ms: 0 }); } catch {}
-      toast({ title: '¡LegalUp Pro activado!', description: 'Ya puedes gestionar clientes, casos, solicitudes, citas y usar AI Limited.' });
+      toast({ title: '¡LegalUp Pro activado!', description: 'Ya puedes gestionar clientes, casos, solicitudes, citas y usar LegalUp AI en tus casos.' });
       const newParams = new URLSearchParams(searchParams);
       newParams.delete('pro_subscription_success');
       navigate(`/lawyer/dashboard${newParams.toString() ? `?${newParams.toString()}` : ''}`, { replace: true });
@@ -104,7 +104,7 @@ export default function LawyerDashboardPage() {
         if (isActiveNow) {
           if (cancelled) return;
           try { posthog.capture('pro_access_confirmed', { attempts: i + 1, elapsed_ms: Date.now() - start }); } catch {}
-          toast({ title: '¡LegalUp Pro activado!', description: 'Ya puedes gestionar clientes, casos, solicitudes, citas y usar AI Limited.' });
+          toast({ title: '¡LegalUp Pro activado!', description: 'Ya puedes gestionar clientes, casos, solicitudes, citas y usar LegalUp AI en tus casos.' });
           const newParams = new URLSearchParams(searchParams);
           newParams.delete('pro_subscription_success');
           navigate(`/lawyer/dashboard${newParams.toString() ? `?${newParams.toString()}` : ''}`, { replace: true });
@@ -329,7 +329,7 @@ export default function LawyerDashboardPage() {
                 const isActiveNow = sub && (sub.status === 'active' || sub.status === 'cancelled') && periodEndMs > Date.now();
                 if (isActiveNow) {
                   try { posthog.capture('pro_access_confirmed', { attempts: 1, elapsed_ms: 0 }); } catch {}
-                  toast({ title: '¡LegalUp Pro activado!', description: 'Ya puedes gestionar clientes, casos, solicitudes, citas y usar AI Limited.' });
+                  toast({ title: '¡LegalUp Pro activado!', description: 'Ya puedes gestionar clientes, casos, solicitudes, citas y usar LegalUp AI en tus casos.' });
                   const newParams = new URLSearchParams(searchParams);
                   newParams.delete('pro_subscription_success');
                   navigate(`/lawyer/dashboard${newParams.toString() ? `?${newParams.toString()}` : ''}`, { replace: true });

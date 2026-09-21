@@ -402,7 +402,7 @@ export default function LegalUpPro() {
               { icon: Briefcase, title: "Casos", desc: "Gestiona el seguimiento de cada asunto desde un mismo lugar." },
               { icon: Calendar, title: "Citas", desc: "Organiza consultas y reuniones sin herramientas separadas." },
               { icon: DollarSign, title: "Ingresos", desc: "Consulta los ingresos asociados a tu actividad en LegalUp." },
-              { icon: Sparkles, title: "LegalUp AI Limited", desc: "Analiza documentos y conversa sobre casos. 1 caso y hasta 3 documentos incluidos." },
+              { icon: Sparkles, title: "LegalUp AI integrado", desc: "Analiza documentos y conversa sobre tus casos, dentro de cada caso." },
             ].map((f) => (
               <Card key={f.title} className="bg-white">
                 <CardContent className="p-6">
@@ -471,20 +471,19 @@ export default function LegalUpPro() {
               </ul>
               <div className="mt-6 inline-flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
                 <Sparkles className="h-4 w-4 text-emerald-400" />
-                <span className="text-sm font-medium">Incluido en Pro: 1 caso + 3 documentos</span>
+                <span className="text-sm font-medium">LegalUp AI integrado en tus casos</span>
               </div>
-              <p className="mt-3 text-xs text-gray-400">Incluye LegalUp AI Limited: análisis de documentos y chat sobre tus casos.</p>
+              <p className="mt-3 text-xs text-gray-400">Incluye LegalUp AI integrado: análisis de documentos y chat sobre tus casos.</p>
             </div>
             <Card className="bg-white/[0.06] border-white/10 backdrop-blur-xl">
               <CardContent className="p-6">
                 <div className="flex items-center gap-2">
                   <Zap className="h-4 w-4 text-emerald-400" />
-                  <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">Qué incluye AI Limited</span>
+                  <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">Qué incluye la IA integrada</span>
                 </div>
                 <ul className="mt-4 space-y-2 text-sm text-gray-200">
-                  <li className="flex gap-2"><Check className="h-4 w-4 text-emerald-400 mt-0.5" /> 1 caso activo</li>
-                  <li className="flex gap-2"><Check className="h-4 w-4 text-emerald-400 mt-0.5" /> Hasta 3 documentos</li>
-                  <li className="flex gap-2"><Check className="h-4 w-4 text-emerald-400 mt-0.5" /> Análisis de documentos y chat sobre casos</li>
+                  <li className="flex gap-2"><Check className="h-4 w-4 text-emerald-400 mt-0.5" /> Análisis de documentos dentro de tus casos</li>
+                  <li className="flex gap-2"><Check className="h-4 w-4 text-emerald-400 mt-0.5" /> Chat sobre el contenido de cada caso</li>
                 </ul>
                 <p className="mt-4 text-xs leading-relaxed text-gray-400">Análisis de documentos y chat sobre tus casos. Funciones avanzadas como jurisprudencia aún no están incluidas.</p>
               </CardContent>
@@ -516,14 +515,14 @@ export default function LegalUpPro() {
                 <p className="mt-1 text-xs text-gray-500">Después de los 15 cupos Founder, Pro cuesta $49.990/mes. El badge Founder queda permanentemente en tu perfil.</p>
               </div>
               <ul className="mt-6 space-y-2 text-sm">
-                {["Solicitudes", "Clientes", "Casos", "Citas", "Servicios / gestión disponible", "Ingresos", "LegalUp AI Limited (1 caso, 3 documentos)", "Acceso a futuras mejoras de Pro"].map((perk) => (
+                {["Solicitudes", "Clientes", "Casos", "Citas", "Servicios / gestión disponible", "Ingresos", "LegalUp AI integrado", "Acceso a futuras mejoras de Pro"].map((perk) => (
                   <li key={perk} className="flex gap-2"><Check className="h-4 w-4 text-green-600 mt-0.5" /> {perk}</li>
                 ))}
               </ul>
               <Button onClick={() => handleCTAClick("pricing")} className="mt-6 w-full bg-gray-900 hover:bg-green-900 h-11 text-base">
                 Activar LegalUp Pro <ArrowRight className="h-4 w-4" />
               </Button>
-              <p className="mt-3 text-center text-xs text-gray-500">Incluye LegalUp AI Limited: análisis de documentos y chat sobre tus casos.</p>
+              <p className="mt-3 text-center text-xs text-gray-500">Incluye LegalUp AI integrado: análisis de documentos y chat sobre tus casos.</p>
             </div>
           </Card>
         </div>
@@ -536,7 +535,7 @@ export default function LegalUpPro() {
           <Accordion type="single" collapsible className="mt-8 bg-white rounded-xl border px-4">
             <AccordionItem value="q1">
               <AccordionTrigger>¿Qué es LegalUp Pro?</AccordionTrigger>
-              <AccordionContent className="text-gray-600">Es el SaaS para abogados dentro de LegalUp. Te permite gestionar tu actividad profesional — solicitudes, clientes, casos, citas e ingresos — desde un solo lugar, con IA integrada de forma limitada.</AccordionContent>
+              <AccordionContent className="text-gray-600">Es el SaaS para abogados dentro de LegalUp. Te permite gestionar tu actividad profesional — solicitudes, clientes, casos, citas e ingresos — desde un solo lugar, con IA integrada en tus casos.</AccordionContent>
             </AccordionItem>
             <AccordionItem value="q2">
               <AccordionTrigger>¿Cuánto cuesta?</AccordionTrigger>
@@ -548,7 +547,7 @@ export default function LegalUpPro() {
             </AccordionItem>
             <AccordionItem value="q4">
               <AccordionTrigger>¿LegalUp Pro incluye LegalUp AI?</AccordionTrigger>
-              <AccordionContent className="text-gray-600">Sí, incluye LegalUp AI Limited: 1 caso y hasta 3 documentos, con análisis de documentos y chat sobre casos.</AccordionContent>
+              <AccordionContent className="text-gray-600">Sí, LegalUp AI viene integrado en tus casos, con análisis de documentos y chat sobre casos.</AccordionContent>
             </AccordionItem>
             <AccordionItem value="q5">
               <AccordionTrigger>¿Puedo cancelar?</AccordionTrigger>
@@ -576,7 +575,7 @@ export default function LegalUpPro() {
               Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
-          <p className="mt-3 text-xs text-gray-500">Incluye LegalUp AI Limited: análisis de documentos y chat sobre tus casos.</p>
+          <p className="mt-3 text-xs text-gray-500">Incluye LegalUp AI integrado: análisis de documentos y chat sobre tus casos.</p>
           </div>
         </div>
       </section>

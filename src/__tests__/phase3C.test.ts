@@ -43,11 +43,12 @@ describe('FASE 3C — LegalUp Pro landing', () => {
     expect(c).not.toContain('por separado');
   });
 
-  it('Comunica AI Limited 1 caso / 3 documentos', () => {
+  it('Comunica LegalUp AI integrado (4.37C: sin framing de producto AI separado)', () => {
     const c = readFileSync(proPath, 'utf-8');
-    expect(c).toContain('1 caso');
-    expect(c).toContain('3 documentos');
-    expect(c).toContain('AI Limited');
+    expect(c).toContain('LegalUp AI integrado');
+    expect(c).not.toContain('AI Limited');
+    expect(c).not.toContain('1 caso + 3 documentos');
+    expect(c).not.toContain('1 caso y hasta 3 documentos');
   });
 
   it('CTA principal existe', () => {
