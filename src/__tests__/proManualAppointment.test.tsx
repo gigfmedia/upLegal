@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   bookingsInsert: vi.fn(),
   bookingsUpdate: vi.fn(),
   hasProAccess: true,
+  proLoading: false,
 }));
 
 const FAKE_DATA = {
@@ -45,7 +46,11 @@ function chainable(final: unknown): unknown {
 }
 
 vi.mock('@/hooks/useProSubscription', () => ({
-  useProSubscription: () => ({ hasProAccess: mocks.hasProAccess, refetch: mocks.proRefetch }),
+  useProSubscription: () => ({
+    hasProAccess: mocks.hasProAccess,
+    isLoading: mocks.proLoading,
+    refetch: mocks.proRefetch,
+  }),
 }));
 vi.mock('@/hooks/useLawyerClients', () => ({
   useLawyerClients: () => ({ findOrCreateClient: mocks.findOrCreateClient }),
@@ -122,6 +127,7 @@ describe('4.37B — CitasPage manual gate', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.hasProAccess = true;
+    mocks.proLoading = false;
     mocks.findOrCreateClient.mockResolvedValue({ id: 'client-1' });
     mocks.bookingsInsert.mockImplementation(() => ({}));
     mocks.proRefetch.mockResolvedValue({ data: null });
@@ -200,6 +206,53 @@ describe('4.37B — CitasPage manual gate', () => {
       'pro_paywall_opened',
       expect.objectContaining({ reason: 'entitlement_rejected' })
     );
+  });
+});
+
+describe('4.37D — CitasPage ?caseId= deep-link gate', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.proLoading = false;
+    mocks.bookingsInsert.mockImplementation(() => ({}));
+    mocks.proRefetch.mockResolvedValue({ data: null });
+    sbState.bookings = [];
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+
+  function renderCitasWithCase() {
+    render(
+      <MemoryRouter initialEntries={['/lawyer/citas?caseId=C1']}>
+        <CitasPage />
+      </MemoryRouter>
+    );
+  }
+
+  it('non-Pro deep link → paywall, form never opens (stale G)', async () => {
+    mocks.hasProAccess = false;
+    renderCitasWithCase();
+    await waitFor(() =>
+      expect(mocks.capture).toHaveBeenCalledWith(
+        'pro_paywall_opened',
+        expect.objectContaining({ action: 'create_appointment', reason: 'deep_link' })
+      )
+    );
+    expect(screen.queryByText('fake-submit')).not.toBeInTheDocument();
+  });
+
+  it('loading entitlement → neither form nor paywall (fail-closed wait)', async () => {
+    mocks.hasProAccess = false;
+    mocks.proLoading = true;
+    renderCitasWithCase();
+    await waitFor(() => expect(screen.getByText(/gestiona tus citas/i)).toBeInTheDocument());
+    expect(screen.queryByText('fake-submit')).not.toBeInTheDocument();
+    expect(mocks.capture).not.toHaveBeenCalledWith('pro_paywall_opened', expect.anything());
+  });
+
+  it('active Pro deep link → form opens with case context', async () => {
+    mocks.hasProAccess = true;
+    renderCitasWithCase();
+    expect(await screen.findByText('fake-submit')).toBeInTheDocument();
+    expect(mocks.capture).not.toHaveBeenCalledWith('pro_paywall_opened', expect.anything());
   });
 });
 

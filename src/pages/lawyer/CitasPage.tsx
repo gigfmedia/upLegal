@@ -55,22 +55,30 @@ export default function CitasPage() {
   const [selectedCaseId, setSelectedCaseId] = useState<string>('none');
   const [clients, setClients] = useState<any[]>([]);
   const [preselectedCaseClient, setPreselectedCaseClient] = useState<any>(null);
-  const { hasProAccess, refetch: refetchPro } = useProSubscription();
+  const { hasProAccess, isLoading: proLoading, refetch: refetchPro } = useProSubscription();
   const [proPaywallOpen, setProPaywallOpen] = useState(false);
 
   useEffect(() => {
-    if (preselectedCaseId) {
-      setSelectedCaseId(preselectedCaseId);
-      setEditingAppointment(null);
-      setShowNewAppointmentForm(true);
-      // Prefill client from case
-      supabase.from('lawyer_cases').select('client:lawyer_clients(name,email,phone)').eq('id', preselectedCaseId).single().then(({ data }) => {
-        if ((data as any)?.client) setPreselectedCaseClient((data as any).client);
-      });
-    } else {
+    if (!preselectedCaseId) {
       setPreselectedCaseClient(null);
+      return;
     }
-  }, [preselectedCaseId]);
+    // 4.37D — the ?caseId= deep link (Case Detail button, shared URLs) must
+    // not bypass the creation gate. Fail closed while entitlement resolves.
+    if (proLoading) return;
+    if (!hasProAccess) {
+      posthog.capture('pro_paywall_opened', { action: 'create_appointment', reason: 'deep_link' });
+      setProPaywallOpen(true);
+      return;
+    }
+    setSelectedCaseId(preselectedCaseId);
+    setEditingAppointment(null);
+    setShowNewAppointmentForm(true);
+    // Prefill client from case
+    supabase.from('lawyer_cases').select('client:lawyer_clients(name,email,phone)').eq('id', preselectedCaseId).single().then(({ data }) => {
+      if ((data as any)?.client) setPreselectedCaseClient((data as any).client);
+    });
+  }, [preselectedCaseId, hasProAccess, proLoading]);
 
   useEffect(() => {
     const fetchClientsAndCases = async () => {

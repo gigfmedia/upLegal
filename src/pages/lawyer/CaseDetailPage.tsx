@@ -21,6 +21,7 @@ import { AICaseChatDrawer } from '@/components/legalup-ai/AICaseChatDrawer';
 import { CaseActivity } from '@/components/lawyer/CaseActivity';
 import { useAIDocuments } from '@/hooks/useAIDocuments';
 import { useAIFeatureAccess } from '@/hooks/useAISubscription';
+import { useProSubscription } from '@/hooks/useProSubscription';
 import { useCaseDocumentWorkspace } from '@/hooks/useCaseDocumentWorkspace';
 import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
 import { CaseDocuments } from '@/components/lawyer/CaseDocuments';
@@ -87,6 +88,11 @@ function CaseDetailContent() {
   const { workspaceId: effectiveWorkspaceId, ensureWorkspace } = useCaseDocumentWorkspace(caseId, caseData?.id === caseId ? caseData.ai_workspace_id : null);
   const { canUse, isLoading: accessLoading } = useAIFeatureAccess();
   const [proOpen, setProOpen] = useState(false);
+  // 4.37D — manual appointment creation requires active Pro (same gate as
+  // /lawyer/citas). Dedicated modal instance: triggerAction must stay
+  // create_appointment, distinct from the case_ai instance below.
+  const { hasProAccess } = useProSubscription();
+  const [apptPaywallOpen, setApptPaywallOpen] = useState(false);
   // 4.34K: case-level chat (shared conversation, same as embedded IA drawer).
   const chatDocumentsQuery = useAIDocuments(effectiveWorkspaceId || undefined);
   const [chatOpen, setChatOpen] = useState(false);
@@ -146,6 +152,13 @@ function CaseDetailContent() {
   }, [caseId, user?.id]);
 
   const handleNewAppointmentForCase = () => {
+    // 4.37D — entitlement first: no form, no client lookup, no mutation
+    // before the paywall. Active Pro falls through to the case-scoped flow.
+    if (!hasProAccess) {
+      posthog.capture('pro_paywall_opened', { action: 'create_appointment' });
+      setApptPaywallOpen(true);
+      return;
+    }
     if (!caseData?.client_id) {
       toast({ title: 'Asocia un cliente', description: 'Este caso no tiene cliente. Asocia un cliente antes de crear una cita.', variant: 'destructive' });
       return;
@@ -366,6 +379,7 @@ function CaseDetailContent() {
         />
       )}
       <ProPricingModal open={proOpen} onOpenChange={setProOpen} triggerAction="case_ai" />
+      <ProPricingModal open={apptPaywallOpen} onOpenChange={setApptPaywallOpen} triggerAction="create_appointment" />
     </div>
   );
 }
