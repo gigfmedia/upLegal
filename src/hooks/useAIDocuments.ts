@@ -1,3 +1,4 @@
+import { aiOperationIdentity } from '@/lib/aiOperationIdentity';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import posthog from 'posthog-js';
@@ -290,12 +291,15 @@ export function useAnalyzeAIDocument() {
       const token = await getAccessToken();
       if (!token) throw new Error('Sesión no válida. Vuelve a iniciar sesión.');
 
+      const { data: { session } } = await supabase.auth.getSession();
+      const identity = await aiOperationIdentity(`${session?.user?.id}:analysis:${documentId}`, { model });
       const res = await fetch(`${getApiBaseUrl()}/api/ai/documents/${documentId}/analyze`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, 'X-AI-Operation-ID': identity.id },
         body: JSON.stringify({ model }),
       });
       const body = await res.json().catch(() => ({}));
+      identity.complete(body);
       if (!res.ok) throw new Error(body?.error || 'No se pudo analizar el documento.');
 
       return body?.analysis as AIDocumentAnalysis;

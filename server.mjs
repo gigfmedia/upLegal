@@ -1,3 +1,4 @@
+import { createAIMetering } from './server/ai/metering.mjs';
 import { hasCanonicalDocumentReference, resolveAnalysisModel, honestEvidenceLocation } from './server/ai/coreAuthority.mjs';
 import { consultationBase, bookingClientTotal, bookingPricingSnapshot } from './shared/bookingPricing.mjs';
 import { confirmCompanyCancellation } from './server/subscriptions/companyCancellation.mjs';
@@ -22,7 +23,7 @@ import {
   normalizeAIEmail,
 } from './server/ai/trialIdentity.mjs';
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';
-import { chatCompletion, isAIProviderConfigured, estimateAICostUsd, createLlmCallBudget } from './server/ai/provider.mjs';
+import { chatCompletion, isAIProviderConfigured, createLlmCallBudget } from './server/ai/provider.mjs';
 import { buildAnalysisSystemPrompt, buildAnalysisUserPrompt } from './server/ai/legalPrompt.mjs';
 import {
   buildChatSystemPrompt,
@@ -384,7 +385,7 @@ const corsOptions = {
     'https://uplegal.netlify.app'
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-AI-Operation-ID'],
   credentials: true
 };
 
@@ -505,7 +506,6 @@ const AI_CHAT_MAX_TOKENS = Number(process.env.AI_CHAT_MAX_TOKENS) || 2400;
 
 // ---- LegalUp AI — Fase 3.6: AI Usage & Cost Control ----
 // Unidad interna: 1 crédito = 1.000 tokens (credits_used = ceil(tokens/1000)).
-const AI_USAGE_CREDITS_PER_TOKEN = 1000;
 
 // Límites técnicos de protección (NO son límites comerciales visibles):
 // protegen contra abuso/costos inesperados mientras se recopilan datos reales
@@ -8075,49 +8075,6 @@ const getAIUsagePeriod = (now = new Date()) => {
   return { periodStart, periodEnd };
 };
 
-// Registra el consumo de una llamada IA: inserta en ai_usage y actualiza el
-// resumen mensual (ai_usage_monthly) de forma atómica vía RPC.
-const recordAIUsage = async ({ userId, workspaceId, documentId, conversationId, operation, usage }) => {
-  if (!usage || !userId) return;
-  const totalTokens = Number(usage.total_tokens) || 0;
-  const inputTokens = Number(usage.input_tokens) || 0;
-  const outputTokens = Number(usage.output_tokens) || 0;
-  const creditsUsed = Math.ceil(totalTokens / AI_USAGE_CREDITS_PER_TOKEN);
-  const estimatedCostUsd = Number(usage.estimated_cost_usd) || 0;
-  const { periodStart, periodEnd } = getAIUsagePeriod();
-
-  try {
-    await supabase.from('ai_usage').insert({
-      lawyer_id: userId,
-      workspace_id: workspaceId ?? null,
-      document_id: documentId ?? null,
-      conversation_id: conversationId ?? null,
-      operation,
-      provider: usage.provider ?? null,
-      model: usage.model ?? null,
-      input_tokens: inputTokens,
-      output_tokens: outputTokens,
-      total_tokens: totalTokens,
-      credits_used: creditsUsed,
-      estimated_cost_usd: estimatedCostUsd,
-    });
-
-    await supabase.rpc('increment_ai_usage_monthly', {
-      p_lawyer_id: userId,
-      p_period_start: periodStart.toISOString().slice(0, 10),
-      p_period_end: periodEnd.toISOString().slice(0, 10),
-      p_total_tokens: totalTokens,
-      p_total_credits: creditsUsed,
-      p_document_analysis_count: operation === 'document_analysis' ? 1 : 0,
-      p_chat_message_count: operation === 'case_chat' ? 1 : 0,
-      p_jurisprudence_research_count: operation === 'jurisprudence_research' ? 1 : 0,
-      p_estimated_cost_usd: estimatedCostUsd,
-    });
-  } catch (error) {
-    console.error('[LegalUpAI] usage recording error:', error.message);
-  }
-};
-
 // Rate limiter por minuto (memoria). Devuelve true si el abogado debe esperar.
 const isAIOverRateLimit = (userId) => {
   const now = Date.now();
@@ -8156,50 +8113,12 @@ const requireAIEntitlement = async (req, res, userId, { metered = true } = {}) =
       }),
     };
   }
-  const protectionError = await checkAIProtectionLimits(userId);
-  if (protectionError) {
-    return {
-      res: res.status(429).json({
-        error: protectionError,
-        code: 'AI_PROTECTION_LIMIT',
-      }),
-    };
-  }
 
   return { res: null };
 };
 
-// Límites técnicos de protección por consumo mensual (NO comerciales).
-// Retorna un mensaje si el abogado superó el techo mensual, o null si puede seguir.
-const checkAIProtectionLimits = async (userId) => {
-  const { periodStart } = getAIUsagePeriod();
-  const periodStartIso = periodStart.toISOString().slice(0, 10);
-
-  const { data, error } = await supabase
-    .from('ai_usage_monthly')
-    .select('total_tokens, document_analysis_count, chat_message_count, jurisprudence_research_count')
-    .eq('lawyer_id', userId)
-    .eq('period_start', periodStartIso)
-    .maybeSingle();
-
-  if (error) {
-    console.error('[LegalUpAI] protection check error:', error.message);
-    return null; // No bloquear si falla la consulta de uso.
-  }
-  if (!data) return null;
-
-  const requests =
-    (data.document_analysis_count || 0) +
-    (data.chat_message_count || 0) +
-    (data.jurisprudence_research_count || 0);
-  if ((data.total_tokens || 0) >= AI_PROTECT_MAX_MONTHLY_TOKENS) {
-    return 'Se alcanzó el límite de consumo de IA de protección de este mes. Contáctanos si necesitas más capacidad.';
-  }
-  if (requests >= AI_PROTECT_MAX_MONTHLY_REQUESTS) {
-    return 'Se alcanzó el límite de consultas de IA de protección de este mes. Contáctanos si necesitas más capacidad.';
-  }
-  return null;
-};
+// Monthly quota authority is ai_begin_operation / ai_begin_attempt (transactional,
+// fail-closed). Deterministic reads never reserve provider usage.
 
 // ---- LegalUp Pro — entitlement (Fase 3B-1, sin trial) ----
 const getProLawyerSubscription = async (userId) => {
@@ -8941,6 +8860,8 @@ app.post('/api/ai/documents/:id/process', async (req, res) => {
 // POST /api/ai/documents/:id/analyze — genera (o reemplaza) el análisis IA.
 app.post('/api/ai/documents/:id/analyze', async (req, res) => {
   let userId = null;
+  let ownsAnalysisLock = false;
+  const metering = createAIMetering({ supabase, tokenLimit: AI_PROTECT_MAX_MONTHLY_TOKENS, operationLimit: AI_PROTECT_MAX_MONTHLY_REQUESTS });
   try {
     userId = await requireAILawyer(req, res);
     if (!userId) return;
@@ -8961,6 +8882,8 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
         code: 'AI_NOT_CONFIGURED',
       });
     }
+
+    if (!await metering.begin(req, res, { lawyerId: userId, workspaceId: doc.workspace_id, capability: 'document_analysis', resourceId: doc.id, input: { model } })) return;
 
     // Asegura el texto extraído (procesa inline si hace falta).
     let text = doc.extracted_text;
@@ -9000,11 +8923,13 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
       }
     }
     if (!lockAcquired) {
-      return res.status(409).json({ error: 'El análisis ya está en curso. Intenta nuevamente en unos momentos.', code: 'AI_DOCUMENT_ANALYSIS_IN_PROGRESS' });
+      return await metering.respond(res, 409, { error: 'El análisis ya está en curso. Intenta nuevamente en unos momentos.', code: 'AI_DOCUMENT_ANALYSIS_IN_PROGRESS' });
     }
 
-    const { data: raw, raw: rawText, usage } = await chatCompletion({
+    ownsAnalysisLock = true;
+    const { data: raw } = await chatCompletion({
       model,
+      metering,
       system: buildAnalysisSystemPrompt(),
       user: buildAnalysisUserPrompt({ filename: doc.original_filename, extractedText: text }),
     });
@@ -9016,7 +8941,7 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
       }
       validated = AIDocumentAnalysisSchema.parse(raw);
     } catch (schemaError) {
-      console.error('[LegalUpAI] analyze invalid response:', rawText?.slice(0, 200));
+      console.error('[LegalUpAI] analyze invalid response');
       throw new Error('El modelo devolvió un análisis con formato inválido.');
     }
 
@@ -9053,15 +8978,6 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
       return kept.length > 0;
     }) : [];
     const allClaimsEvidence = [...partiesRes.claims, ...keyPointsRes.claims, ...obligationsRes.claims];
-    // Fase 3.6: registra el consumo real de esta operación (no bloquea el flujo).
-    await recordAIUsage({
-      userId: doc.lawyer_id,
-      workspaceId: doc.workspace_id,
-      documentId: doc.id,
-      operation: 'document_analysis',
-      usage,
-    });
-
     // Reanalizar reemplaza el análisis anterior SOLO si el nuevo persiste (4.34C):
     // el análisis bueno sigue disponible hasta que el reemplazo esté validado y guardado.
     const { data: saved, error: insertError } = await supabase
@@ -9119,22 +9035,16 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
       eventId: `ai_analysis:${doc.id}`,
     });
 
-    res.json({ success: true, analysis: saved, model });
+    await metering.respond(res, 200, { success: true, analysis: saved, model });
   } catch (err) {
-    console.error('[LegalUpAI] analyze error:', err, { detail: err?.detail?.slice?.(0,500), status: err?.status, code: err?.code, document_id: req.params.id, workspace_id: req.params.id ? undefined : undefined });
-    // Temporal metadata-only log for 400 diagnosis
-    try {
-      const docForLog = await supabase.from('ai_documents').select('id, workspace_id, original_filename, status, extracted_text').eq('id', req.params.id).eq('lawyer_id', userId).maybeSingle();
-      const meta = docForLog.data ? { docId: docForLog.data.id, ws: docForLog.data.workspace_id, filename: docForLog.data.original_filename, extractedLen: (docForLog.data.extracted_text||'').length, status: docForLog.data.status } : { docId: req.params.id };
-      console.warn('[LegalUpAI] analyze 400 meta', JSON.stringify({ ...meta, errStatus: err?.status, errCode: err?.code, detail: String(err?.detail||'').slice(0,300) }));
-    } catch {}
+    console.error('[LegalUpAI] analyze failed', { code: err?.code, status: err?.status });
     const message = err?.code === 'AI_NOT_CONFIGURED'
       ? err.message
       : (err.message || 'No se pudo analizar el documento.');
     try {
-      await supabase.from('ai_documents').update({ analysis_status: 'failed', analysis_error: message }).eq('id', req.params.id).eq('lawyer_id', userId);
+      if (ownsAnalysisLock) await supabase.from('ai_documents').update({ analysis_status: 'failed', analysis_error: message }).eq('id', req.params.id).eq('lawyer_id', userId);
     } catch { /* el documento pudo haber sido eliminado */ }
-    if (userId) {
+    if (userId && ownsAnalysisLock) {
       try {
         const doc = await getAIDocumentOwned(req.params.id, userId);
         await notificationsService.notifyUser({
@@ -9149,7 +9059,7 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
         });
       } catch { /* la notificación no debe romper la respuesta */ }
     }
-    res.status(500).json({ error: message });
+    await metering.respond(res, err?.status || 500, { error: message, code: err?.code || 'AI_ANALYSIS_FAILED' });
   }
 });
 
@@ -9416,6 +9326,7 @@ app.get('/api/ai/cases/:caseId/chat', async (req, res) => {
 // POST /api/ai/cases/:caseId/chat — responde una pregunta usando el contexto del caso.
 app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
   let userId = null;
+  const metering = createAIMetering({ supabase, tokenLimit: AI_PROTECT_MAX_MONTHLY_TOKENS, operationLimit: AI_PROTECT_MAX_MONTHLY_REQUESTS });
   try {
     userId = await requireAILawyer(req, res);
     if (!userId) return;
@@ -9454,6 +9365,8 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       });
     }
 
+    if (!await metering.begin(req, res, { lawyerId: userId, workspaceId: workspace.id, capability: document_id ? 'document_chat' : 'case_chat', resourceId: document_id || conversation.id, input: { conversation_id, message, document_id: document_id || null, model: AI_DEFAULT_MODEL } })) return;
+
     // Solo documentos listos del caso del abogado.
     const { data: readyDocs, error: docsError } = await supabase
       .from('ai_documents')
@@ -9483,7 +9396,7 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
         count > 0
           ? 'Tus documentos todavía se están procesando.'
           : 'Sube un documento para comenzar.';
-      return res.status(422).json({ error: messageText, code });
+      return await metering.respond(res, 422, { error: messageText, code });
     }
 
     // Análisis disponibles de los documentos listos.
@@ -9521,7 +9434,7 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       proCase,
     });
     if (tooLarge) {
-      return res.status(422).json({
+      return await metering.respond(res, 422, {
         error:
           'Este caso contiene demasiada información para procesarla completa en una sola consulta.',
         code: 'CONTEXT_TOO_LARGE',
@@ -9560,8 +9473,9 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       userMessage = insertedUser;
     }
 
-    const { data: raw, raw: rawText, usage } = await chatCompletion({
+    const { data: raw, raw: rawText } = await chatCompletion({
       model: AI_DEFAULT_MODEL,
+      metering,
       system: buildChatSystemPrompt(),
       messages: [
         {
@@ -9602,15 +9516,6 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       }
       validated = { answer: fallbackAnswer, sources: [] };
     }
-
-    // Fase 3.6: registra el consumo real de este mensaje (no bloquea el flujo).
-    await recordAIUsage({
-      userId,
-      workspaceId: workspace.id,
-      conversationId: conversation.id,
-      operation: 'case_chat',
-      usage,
-    });
 
     // Solo se aceptan fuentes que correspondan a documentos reales del contexto.
     // Fase 4.9: si la fuente trae fragment_id/evidence, se valida contra el documento y se conserva page_number.
@@ -9772,14 +9677,14 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       console.error('[LegalUpAI] ai_first_chat_message failed', posthogError);
     }
 
-    res.json({ user_message: userMessage, message: savedAssistant, sources });
+    await metering.respond(res, 200, { user_message: userMessage, message: savedAssistant, sources });
   } catch (error) {
     console.error('[LegalUpAI] chat error:', error);
     const code =
-      error?.code === 'AI_NOT_CONFIGURED' || error?.code === 'OUTPUT_TOKEN_LIMIT'
+      error?.code?.startsWith('AI_') || error?.code === 'OUTPUT_TOKEN_LIMIT'
         ? error.code
         : 'PROVIDER_ERROR';
-    res.status(error?.status && error.status >= 400 && error.status < 500 ? error.status : 500).json({
+    await metering.respond(res, error?.status || 500, {
       error: error.message || 'No se pudo generar la respuesta.',
       code,
     });
@@ -9827,6 +9732,7 @@ app.get('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
 // guarda la investigación con las fuentes que la sustentan.
 app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
   let userId = null;
+  const metering = createAIMetering({ supabase, tokenLimit: AI_PROTECT_MAX_MONTHLY_TOKENS, operationLimit: AI_PROTECT_MAX_MONTHLY_REQUESTS });
   try {
     userId = await requireAILawyer(req, res);
     if (!userId) return;
@@ -9872,6 +9778,8 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
       });
     }
 
+    if (!await metering.begin(req, res, { lawyerId: userId, workspaceId: workspace.id, capability: 'research', input: { query, model: AI_DEFAULT_MODEL } })) return;
+
     // Fase 4.2.6 (CASE INTELLIGENCE): carga los documentos READY del caso con
     // filtro server-side doble capa (workspace_id + lawyer_id) y detecta el modo
     // de la investigación: 'document' (solo documento del caso), 'mixed'
@@ -9900,7 +9808,7 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
         document_claims_kept: 0,
         document_claims_dropped: 0,
       });
-      return res.status(422).json({
+      return await metering.respond(res, 422, {
         error:
           'No hay evidencia documental disponible en el caso para responder esa pregunta.',
         code: 'NO_DOCUMENT_EVIDENCE',
@@ -9971,7 +9879,7 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
         implicitDocumentContext: documentModeResult.implicitContext,
       });
       if (!allowDocumentOnly) {
-        return res.status(422).json({
+        return await metering.respond(res, 422, {
           error:
             'No encontramos jurisprudencia ni normativa en las fuentes públicas consultadas. Prueba con otros términos.',
           code: 'NO_SOURCES_FOUND',
@@ -10041,7 +9949,7 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
       legal_weight: allocation.legalWeight,
     });
     if (tooLarge) {
-      return res.status(422).json({
+      return await metering.respond(res, 422, {
         error:
           'Hay demasiadas fuentes para procesarlas en una sola consulta. Acota la pregunta.',
         code: 'CONTEXT_TOO_LARGE',
@@ -10093,10 +10001,11 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
     // provider (dentro de chatCompletion) y el de schema (aquí): el total de
     // fetch por request queda acotado y determinista.
     const llmBudget = createLlmCallBudget();
-    const { outcome: outcomeResult, attempts, retryCount, usage } = await runJurisprudenceWithRetry({
+    const { outcome: outcomeResult, attempts, retryCount } = await runJurisprudenceWithRetry({
       llmCall: (retryInstruction) =>
         chatCompletion({
           model: AI_DEFAULT_MODEL,
+          metering,
           system: buildJurisprudenceSystemPrompt({ documentMode }),
           messages: [
             {
@@ -10161,7 +10070,7 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
         total_sources: sources.length,
         query_hash: queryHash,
       });
-      return res.status(502).json({
+      return await metering.respond(res, 502, {
         error:
           'El modelo de IA no devolvió una respuesta válida. Intenta nuevamente en unos minutos.',
         code: 'AI_PROVIDER_INVALID_RESPONSE',
@@ -10188,14 +10097,6 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
       document_fragments_selected: documentEvidence.stats.fragments_selected,
       document_claims_kept: allVerifiedClaims.filter((c) => c.category === 'document').length,
       document_claims_dropped: documentClaimsDropped,
-    });
-
-    // Registra el consumo real (no bloquea el flujo).
-    await recordAIUsage({
-      userId,
-      workspaceId: workspace.id,
-      operation: 'jurisprudence_research',
-      usage,
     });
 
     const { data: savedResearch, error: insertError } = await supabase
@@ -10229,7 +10130,7 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
       console.error('[LegalUpAI] ai_jurisprudence_researched failed', posthogError);
     }
 
-    res.json({
+    await metering.respond(res, 200, {
       research: savedResearch,
       sources: persistedSources,
       claims: allVerifiedClaims,
@@ -10273,7 +10174,7 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
 
     const status =
       error?.status && error.status >= 400 && error.status < 500 ? error.status : 500;
-    res.status(status).json({
+    await metering.respond(res, error?.status || status, {
       error:
         error.message || 'No se pudo completar la investigación. Intenta nuevamente en unos minutos.',
       code,

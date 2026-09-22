@@ -1,3 +1,5 @@
+import { createAIMetering } from './metering.mjs';
+import { randomUUID } from 'node:crypto';
 // @vitest-environment node
 import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -27,7 +29,7 @@ function harness({paid=true, linked=true, count=3}={}) {
  lawyer_subscriptions:paid?[{lawyer_id:user,status:'active',current_period_end:'2099-01-01'}]:[], ai_subscriptions:[],
  ai_documents:Array.from({length:count},(_,i)=>({id:id(10+i),lawyer_id:user,workspace_id:workspaceId,file_path:`${user}/${workspaceId}/${id(10+i)}/original.pdf`,original_filename:'fixture.pdf',status:'pending',analysis_status:'none',extracted_text:null})),
  ai_document_analyses:[],ai_conversations:[],ai_chat_messages:[],ai_usage:[],ai_usage_monthly:[]};
-  const rpc=vi.fn(async()=>({error:null}));
+  const rpc=vi.fn(async(name,args)=>({data:name==='ai_begin_operation'?{operation_id:args.p_key,created:true}:name==='ai_finish_operation'?{id:args.p_operation,status:args.p_status<300?'succeeded':'failed',terminal:true}:null,error:null}));
   const download=vi.fn(async()=>({data:{arrayBuffer:async()=>new ArrayBuffer(0)},error:null}));
   const remove=vi.fn(async()=>({data:[{name:'f'}],error:null}));
   const createSignedUrl=vi.fn(async()=>({data:{signedUrl:'https://signed.example/doc.pdf'},error:null}));
@@ -42,7 +44,7 @@ function harness({paid=true, linked=true, count=3}={}) {
  }};
  const provider=vi.fn(async()=>({data:{answer:'Respuesta documental.',sources:[],summary:'Resumen',document_type:'contrato',parties:[],key_points:[],obligations:[],deadlines:[],risks:[],recommendations:[]},usage:{total_tokens:100,input_tokens:80,output_tokens:20}}));
  const routes={}, quiet={log(){},warn(){},error(){}};
-  const ctx=vm.createContext({console:quiet,z,Buffer,supabase,hasCanonicalDocumentReference,resolveAnalysisModel,honestEvidenceLocation,buildChatContext,buildChatSystemPrompt,buildChatUserPrompt,CHAT_LIMITS,getProCaseHeader,formatProCaseBlock,verifyDocumentClaims,buildAnalysisSystemPrompt,buildAnalysisUserPrompt,
+  const ctx=vm.createContext({createAIMetering:options=>createAIMetering({...options,log:()=>{}}),AI_PROTECT_MAX_MONTHLY_TOKENS:20000000,AI_PROTECT_MAX_MONTHLY_REQUESTS:5000,console:quiet,z,Buffer,supabase,hasCanonicalDocumentReference,resolveAnalysisModel,honestEvidenceLocation,buildChatContext,buildChatSystemPrompt,buildChatUserPrompt,CHAT_LIMITS,getProCaseHeader,formatProCaseBlock,verifyDocumentClaims,buildAnalysisSystemPrompt,buildAnalysisUserPrompt,
   app:{get:(p,h)=>routes[`get ${p}`]=h,post:(p,h)=>routes[`post ${p}`]=h,delete:(p,h)=>routes[`delete ${p}`]=h},getUserIdFromToken:async()=>tokenUser,
  chatCompletion:provider,isAIProviderConfigured:()=>true,AI_DEFAULT_MODEL:'gpt-4o-mini',AI_CHAT_MAX_TOKENS:2400,AI_DOCUMENTS_BUCKET:'ai-documents',MAX_EXTRACTED_TEXT_CHARS:80000,
  pdfParse:async()=>({text:'Contrato documental de prueba con obligaciones entre partes.',numpages:1}),
@@ -53,7 +55,7 @@ function harness({paid=true, linked=true, count=3}={}) {
   if(ts.isFunctionDeclaration(n)&&names.includes(n.name?.text))vm.runInContext(n.getText(ast),ctx);
   if(ts.isExpressionStatement(n)&&ts.isCallExpression(n.expression)&&Object.values(paths).some(([,p])=>p===n.expression.arguments[0]?.text))vm.runInContext(n.getText(ast),ctx);
  }
- async function call(name,body={},params={}){const [method,path]=paths[name];const res={statusCode:200,status(n){this.statusCode=n;return this;},json(b){this.body=b;return this;}};await routes[`${method} ${path}`]({headers:{authorization:'Bearer fixture'},params:{caseId:name==='provision'?caseId:workspaceId,id:id(10),...params},body},res);return res;}
+ async function call(name,body={},params={}){const [method,path]=paths[name];const res={statusCode:200,status(n){this.statusCode=n;return this;},json(b){this.body=b;return this;}};await routes[`${method} ${path}`]({headers:{authorization:'Bearer fixture','x-ai-operation-id':randomUUID()},params:{caseId:name==='provision'?caseId:workspaceId,id:id(10),...params},body},res);return res;}
   return {rows,provider,download,remove,createSignedUrl,rpc,call,ctx,supabase,asForeign:()=>{tokenUser=foreign;}};
 }
 describe('4.34B actual Core handlers and real entitlement/metering helpers',()=>{
@@ -68,9 +70,8 @@ describe('4.34B actual Core handlers and real entitlement/metering helpers',()=>
   expect((await h.call('analyze')).statusCode).toBe(200);
   expect((await h.call('intelligence')).statusCode).toBe(200);
   expect(h.provider).toHaveBeenCalledTimes(4);
-  expect(h.rows.ai_usage.map(r=>r.operation)).toEqual(['document_analysis','case_chat','case_chat','document_analysis']);
-  expect(h.rpc).toHaveBeenCalledTimes(4);
-  expect(h.rpc.mock.calls.every(([name,args])=>name==='increment_ai_usage_monthly'&&args.p_lawyer_id===user&&args.p_total_tokens===100)).toBe(true);
+  expect(h.rpc.mock.calls.filter(([name])=>name==='ai_begin_operation').map(([,args])=>args.p_capability)).toEqual(['document_analysis','case_chat','case_chat','document_analysis']);
+  expect(h.rpc.mock.calls.filter(([name])=>name==='ai_finish_operation')).toHaveLength(4);
  });
  it('first canonical lazy provision without AI entitlement; workspace alone never grants analysis',async()=>{const h=harness({paid:false,linked:false,count:0});expect((await h.call('provision')).statusCode).toBe(200);expect(h.rows.lawyer_cases[0].ai_workspace_id).toBe(h.rows.ai_workspaces[0].id);expect(h.provider).not.toHaveBeenCalled();});
  it('free case with existing document cannot analyze',async()=>{const h=harness({paid:false});expect((await h.call('analyze')).statusCode).toBe(402);expect(h.provider).not.toHaveBeenCalled();});
@@ -81,7 +82,7 @@ describe('4.34B actual Core handlers and real entitlement/metering helpers',()=>
  it('existing selector model accepted',async()=>{const h=harness();expect((await h.call('analyze',{model:'openai/gpt-4o-mini'})).statusCode).toBe(200);expect(h.provider.mock.calls[0][0].model).toBe('openai/gpt-4o-mini');});
  it.each(['research'])('Pro advanced %s remains denied without provider',async route=>{const h=harness();expect((await h.call(route,{query:'Contrato y normativa aplicable'})).statusCode).toBe(403);expect(h.provider).not.toHaveBeenCalled();});
  // 4.34E: workflow/sync is deterministic Core for Pro (no gate, 0 provider); see workflowCore.test.mjs.
-  it('monthly provider quota blocks analysis but not deterministic intelligence',async()=>{const h=harness();h.rows.ai_usage_monthly.push({lawyer_id:user,period_start:new Date().toISOString().slice(0,7)+'-01',total_tokens:20000000});expect((await h.call('analyze')).statusCode).toBe(429);expect((await h.call('intelligence')).statusCode).toBe(200);expect(h.provider).not.toHaveBeenCalled();});
+  it('monthly provider quota blocks analysis but not deterministic intelligence',async()=>{const h=harness();h.rpc.mockResolvedValueOnce({error:{message:'AI_MONTHLY_LIMIT_REACHED'}});expect((await h.call('analyze')).statusCode).toBe(429);expect((await h.call('intelligence')).statusCode).toBe(200);expect(h.provider).not.toHaveBeenCalled();});
   it('workspace 1/1 → CREATE SECOND denied at handler with quota code and no orphan',async()=>{
    const h=harness();const secondCase=id(50);
    h.rows.lawyer_cases.push({id:secondCase,lawyer_id:user,title:'Segundo',ai_workspace_id:null});

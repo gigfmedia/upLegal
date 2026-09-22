@@ -33,7 +33,9 @@ async function selectModel(label: string) {
 }
 const payload = (i:number) => JSON.parse(fetchMock.mock.calls[i][1].body);
 async function retry() {
+ const before = fetchMock.mock.calls.length;
  fireEvent.click(screen.getByRole('button',{name:'Reintentar análisis'}));
+ await waitFor(()=>expect(fetchMock).toHaveBeenCalledTimes(before + 1));
  await waitFor(()=>expect(screen.getByRole('button',{name:'Reintentar análisis'})).not.toBeDisabled());
 }
 beforeEach(()=>{

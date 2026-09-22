@@ -604,7 +604,8 @@ function mergeUsage(usages = []) {
       input_tokens: acc.input_tokens + (u.input_tokens || 0),
       output_tokens: acc.output_tokens + (u.output_tokens || 0),
       total_tokens: acc.total_tokens + (u.total_tokens || 0),
-      estimated_cost_usd: acc.estimated_cost_usd + (u.estimated_cost_usd || 0),
+      estimated_cost_usd: acc.estimated_cost_usd == null || u.estimated_cost_usd == null
+        ? null : acc.estimated_cost_usd + u.estimated_cost_usd,
     }),
     {
       provider: '',
@@ -612,7 +613,7 @@ function mergeUsage(usages = []) {
       input_tokens: 0,
       output_tokens: 0,
       total_tokens: 0,
-      estimated_cost_usd: 0,
+      estimated_cost_usd: usages.length ? 0 : null,
     },
   );
 }

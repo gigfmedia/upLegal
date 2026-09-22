@@ -1,3 +1,5 @@
+import { createAIMetering } from './metering.mjs';
+import { randomUUID } from 'node:crypto';
 // @vitest-environment node
 // 4.34D — research/jurisprudence integrado al Caso Pro (mismo engine, con header vivo).
 // Search externo + LLM mockeados; pipeline, gates, persistencia y contexto, reales.
@@ -70,7 +72,7 @@ function harness({ plan = 'essential', docs = false, defaultModel } = {}) {
       extracted_text: 'Contrato con cláusula quinta sobre obligaciones de pago de la renta y plazos de entrega.' }] : [],
     ai_research_requests: [], ai_usage: [], ai_usage_monthly: [],
   };
-  const rpc = vi.fn(async () => ({ error: null }));
+  const rpc = vi.fn(async(name,args)=>({data:name==='ai_begin_operation'?{operation_id:args.p_key,created:true}:name==='ai_finish_operation'?{id:args.p_operation,status:args.p_status<300?'succeeded':'failed',terminal:true}:null,error:null}));
   const search = vi.fn(async () => ({ sources: [TC_SOURCE], warnings: [], intent: 'jurisprudencia',
     intentClass: '', queryHash: 'q', classification: null, strategy: null }));
   const provider = vi.fn(async () => JSON.parse(JSON.stringify(LLM_OK)));
@@ -106,7 +108,7 @@ function harness({ plan = 'essential', docs = false, defaultModel } = {}) {
   } };
   const routes = {};
   const quiet = { log() {}, warn() {}, error() {} };
-  const ctx = vm.createContext({ console: quiet, z, Buffer, process: { env: defaultModel ? { AI_DEFAULT_MODEL: defaultModel } : {} }, supabase,
+  const ctx = vm.createContext({createAIMetering:options=>createAIMetering({...options,log:()=>{}}),AI_PROTECT_MAX_MONTHLY_TOKENS:20000000,AI_PROTECT_MAX_MONTHLY_REQUESTS:5000, console: quiet, z, Buffer, process: { env: defaultModel ? { AI_DEFAULT_MODEL: defaultModel } : {} }, supabase,
     searchJurisprudence: search, chatCompletion: provider, isAIProviderConfigured: () => true,
     validateResearchQuery, classifyLegalQuery, detectDocumentMode, selectDocumentEvidence,
     shouldAllowDocumentOnlyFallback, buildJurisprudenceSystemPrompt, buildJurisprudenceUserPrompt,
@@ -127,7 +129,7 @@ function harness({ plan = 'essential', docs = false, defaultModel } = {}) {
   }
   async function call(method, body = {}) {
     const res = { statusCode: 200, status(n) { this.statusCode = n; return this; }, json(b) { this.body = b; return this; } };
-    await routes[`${method} /api/ai/cases/:caseId/jurisprudence`]({ headers: { authorization: 'Bearer f' }, params: { caseId: workspaceId }, body }, res);
+    await routes[`${method} /api/ai/cases/:caseId/jurisprudence`]({ headers: { authorization: 'Bearer f','x-ai-operation-id':randomUUID() }, params: { caseId: workspaceId }, body }, res);
     return res;
   }
   return { rows, provider, search, rpc, call, ctx, asForeign: () => { tokenUser = foreign; } };

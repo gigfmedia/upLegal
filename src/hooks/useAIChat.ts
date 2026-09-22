@@ -1,3 +1,4 @@
+import { aiOperationIdentity } from '@/lib/aiOperationIdentity';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -92,16 +93,20 @@ export function useSendChatMessage(workspaceId: string | undefined) {
       const payload: Record<string, unknown> = { conversation_id: conversationId, message };
       if (documentId) payload.document_id = documentId;
 
+      const { data: { session } } = await supabase.auth.getSession();
+      const identity = await aiOperationIdentity(`${session?.user?.id}:chat:${workspaceId}`, payload);
       const res = await fetch(`${getApiBaseUrl()}/api/ai/cases/${workspaceId}/chat`, {
         method: 'POST',
         signal,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
+          'X-AI-Operation-ID': identity.id,
         },
         body: JSON.stringify(payload),
       });
       const body = await res.json().catch(() => ({}));
+      identity.complete(body);
       if (!res.ok) {
         const err = new Error(body?.error || 'No se pudo generar la respuesta.') as AIChatError;
         err.code = body?.code;
