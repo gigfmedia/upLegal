@@ -72,6 +72,31 @@ describe.skipIf(!container)('PostgreSQL real atomic metering (isolated local)', 
   expect(await sql('SELECT provider_cost_actual IS NULL FROM ai_provider_attempts')).toBe('t');
   expect(await sql('SELECT provider_cost_actual IS NULL AND unknown_actual_cost_attempts=1 AND unknown_token_attempts=1 FROM ai_usage_monthly')).toBe('t');
  });
+ it.each(['case_chat','document_chat','document_analysis','research'])('production NOT NULL compatibility: %s unknown estimate settles once',async cap=>{
+  await sql('ALTER TABLE ai_usage ALTER COLUMN estimated_cost_usd SET DEFAULT 0; ALTER TABLE ai_usage ALTER COLUMN estimated_cost_usd SET NOT NULL');
+  const key=randomUUID();const op=JSON.parse(await sql(begin(key,5000,cap))).operation_id;
+  const id=await attempt(op);
+  await finishAttempt(id,{...data,provider_cost_estimated:null});
+  await expect(finish(op)).rejects.toThrow('null value in column "estimated_cost_usd"');
+  expect(await sql('SELECT status FROM ai_operations')).toBe('reserved');
+  expect(await sql('SELECT count(*) FROM ai_usage')).toBe('0');
+  await sql(readFileSync('supabase/migrations/20260929000000_ai_usage_unknown_estimated_cost.sql','utf8'));
+  await finish(op);await finish(op);
+  expect(await sql('SELECT estimated_cost_usd IS NULL FROM ai_usage')).toBe('t');
+  expect(await sql('SELECT provider_cost_actual=0.01 FROM ai_provider_attempts')).toBe('t');
+  expect(await sql('SELECT quota_units FROM ai_operations')).toBe('1');
+  expect(await sql('SELECT count(*) FROM ai_provider_attempts')).toBe('1');
+  expect(JSON.parse(await sql(begin(key,5000,cap))).created).toBe(false);
+  expect(await sql("SELECT count(*) FROM ai_metering_reconciliation WHERE token_delta<>0 OR chat_delta<>0 OR analysis_delta<>0 OR research_delta<>0 OR actual_cost_delta<>0 OR estimated_cost_delta<>0 OR reservation_delta<>0 OR reserved_token_delta<>0 OR pending_operations<>0")).toBe('0');
+ });
+ it('compatibility migration preserves numeric history and omitted legacy default',async()=>{
+  await sql(`ALTER TABLE ai_usage ALTER COLUMN estimated_cost_usd SET DEFAULT 0; ALTER TABLE ai_usage ALTER COLUMN estimated_cost_usd SET NOT NULL;
+   INSERT INTO ai_usage(lawyer_id,operation,estimated_cost_usd) VALUES('${lawyer}','case_chat',0.123);`);
+  await sql(readFileSync('supabase/migrations/20260929000000_ai_usage_unknown_estimated_cost.sql','utf8'));
+  expect(await sql('SELECT estimated_cost_usd FROM ai_usage')).toBe('0.123');
+  await sql(`INSERT INTO ai_usage(lawyer_id,operation) VALUES('${lawyer}','case_chat');`);
+  expect(await sql('SELECT count(*) FROM ai_usage WHERE estimated_cost_usd=0')).toBe('1');
+ });
  it('tokens reserved atomically across separate operations',async()=>{
   const a=await operation(),b=await operation();const results=await Promise.allSettled([attempt(a,15000000),attempt(b,15000000)]);expect(results.filter(r=>r.status==='fulfilled')).toHaveLength(1);
  });

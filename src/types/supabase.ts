@@ -590,7 +590,7 @@ export type Database = {
           created_at: string
           credits_used: number
           document_id: string | null
-          estimated_cost_usd: number
+          estimated_cost_usd: number | null
           id: string
           input_tokens: number
           lawyer_id: string
@@ -606,7 +606,7 @@ export type Database = {
           created_at?: string
           credits_used?: number
           document_id?: string | null
-          estimated_cost_usd?: number
+          estimated_cost_usd?: number | null
           id?: string
           input_tokens?: number
           lawyer_id: string
@@ -622,7 +622,7 @@ export type Database = {
           created_at?: string
           credits_used?: number
           document_id?: string | null
-          estimated_cost_usd?: number
+          estimated_cost_usd?: number | null
           id?: string
           input_tokens?: number
           lawyer_id?: string
