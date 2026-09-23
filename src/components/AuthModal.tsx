@@ -874,6 +874,11 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
                   AI
                 </span>
               )}
+              {proLanding && (
+                <span className={`rounded-[5px] border px-1.5 py-px text-[0.6rem] font-semibold tracking-[0.14em] ${L.badge}`}>
+                  PRO
+                </span>
+              )}
             </div>
             <DialogTitle className={`text-2xl ${L.title}`}>
               Recuperar contraseña

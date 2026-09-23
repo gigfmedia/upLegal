@@ -39,7 +39,7 @@ function DashboardPreview() {
       </div>
       <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4 sm:p-6 bg-cream-900">
         {[
-          { label: "Solicitudes pendientes", icon: Inbox, value: "3" },
+          { label: "Solicitudes", icon: Inbox, value: "3" },
           { label: "Citas hoy", icon: Calendar, value: "2" },
           { label: "Casos activos", icon: Briefcase, value: "6" },
           { label: "Ingresos del mes", icon: DollarSign, value: "$2.450.000" },
