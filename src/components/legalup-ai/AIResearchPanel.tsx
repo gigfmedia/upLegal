@@ -512,6 +512,8 @@ function errorToMessage(error: AIResearchError | null): string {
       return 'Alcanzaste las 10 investigaciones incluidas este mes. Se renovarán el próximo mes.';
     case 'AI_MONTHLY_LIMIT_REACHED':
       return 'Alcanzaste el uso de IA incluido este mes. Tu disponibilidad se renovará el próximo mes.';
+    case 'AI_OPERATION_IN_PROGRESS':
+      return 'La solicitud sigue en curso. Espera unos momentos y vuelve a intentarlo: tu consulta no se duplicará.';
     default:
       return error?.message || 'No pudimos completar la investigación. Intenta nuevamente.';
   }

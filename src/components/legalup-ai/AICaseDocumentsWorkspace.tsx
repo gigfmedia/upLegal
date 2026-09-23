@@ -290,10 +290,15 @@ export function AICaseDocumentsWorkspace({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {/* 4.38C: commercial limit banner (mutation-level, any analysis state). */}
+            {/* 4.38C: commercial limit / in-progress banner (mutation-level, any analysis state). */}
             {(analyzeMutation.error as Error & { code?: string } | null)?.code === 'AI_ANALYSIS_LIMIT_REACHED' && (
               <p className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
                 Alcanzaste los 40 análisis de documentos incluidos este mes. Se renovarán el próximo mes.
+              </p>
+            )}
+            {(analyzeMutation.error as Error & { code?: string } | null)?.code === 'AI_OPERATION_IN_PROGRESS' && (
+              <p className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                El análisis sigue en curso. Espera unos momentos y vuelve a intentarlo: no se duplicará.
               </p>
             )}
             {analysisColumn ?? (!selectedDoc ? (

@@ -1,4 +1,5 @@
 import { aiOperationIdentity } from '@/lib/aiOperationIdentity';
+import { pollTerminalResult } from '@/lib/aiInProgressPoll';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -171,20 +172,26 @@ export function useRunAIResearch(workspaceId: string | undefined) {
 
       const { data: { session } } = await supabase.auth.getSession();
       const identity = await aiOperationIdentity(`${session?.user?.id}:research:${workspaceId}`, { query });
-      const res = await fetch(
-        `${getApiBaseUrl()}/api/ai/cases/${workspaceId}/jurisprudence`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-            'X-AI-Operation-ID': identity.id,
-          },
-          body: JSON.stringify({ query }),
-        }
-      );
-      const body = await res.json().catch(() => ({}));
-      identity.complete(body);
+      // 4.38C-C: si la operación sigue en curso, se reintenta con la MISMA
+      // identidad (replay idempotente: nunca duplica la operación ni el
+      // proveedor) hasta el resultado terminal o el límite de rondas.
+      const { res, body } = await pollTerminalResult(async () => {
+        const res = await fetch(
+          `${getApiBaseUrl()}/api/ai/cases/${workspaceId}/jurisprudence`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+              'X-AI-Operation-ID': identity.id,
+            },
+            body: JSON.stringify({ query }),
+          }
+        );
+        const body = await res.json().catch(() => ({}));
+        identity.complete(body);
+        return { res, body };
+      });
       if (!res.ok) {
         const err = new Error(
           body?.error || 'No se pudo completar la investigación.'

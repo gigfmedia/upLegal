@@ -53,6 +53,8 @@ function errorToMessage(error: AIChatError | null): string {
       return 'Alcanzaste el uso de IA incluido este mes. Tu disponibilidad se renovará el próximo mes.';
     case 'AI_USAGE_UNAVAILABLE':
       return 'No pudimos confirmar la solicitud. Intenta nuevamente.';
+    case 'AI_OPERATION_IN_PROGRESS':
+      return 'La solicitud sigue en curso. Espera unos momentos y vuelve a intentarlo: tu consulta no se duplicará.';
     default:
       return error?.message || 'No pudimos generar una respuesta. Intenta nuevamente.';
   }
