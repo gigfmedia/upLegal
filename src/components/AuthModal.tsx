@@ -1081,7 +1081,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
                 <div className="flex justify-between items-center">
                   <Label htmlFor="rut">
                     RUT
-                    <small className="text-sm text-gray-500"> - Verificamos tu RUT en el Poder Judicial para asegurar confianza a los clientes.</small>
+                    <small className="text-sm text-gray-500"> - Te pediremos tu RUT únicamente para validar que eres abogado/a habilitado/a mediante el Poder Judicial y mantener LegalUp Pro como una plataforma profesional.</small>
                   </Label>
                 </div>
                 <div className="flex gap-2">
