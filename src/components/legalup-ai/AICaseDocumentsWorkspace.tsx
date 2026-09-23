@@ -114,7 +114,13 @@ export function AICaseDocumentsWorkspace({
       { documentId: selectedDoc.id, model },
       {
         onSuccess: () => posthog.capture('ai_document_analysis_completed', { model, source: analyticsSource }),
-        onError: () => posthog.capture('ai_document_analysis_failed', { model, source: analyticsSource }),
+        onError: (err: Error & { code?: string }) => {
+          posthog.capture('ai_document_analysis_failed', { model, source: analyticsSource, error_code: err?.code });
+          // 4.38C: commercial limit analytics (safe props only, never content).
+          if (err?.code === 'AI_ANALYSIS_LIMIT_REACHED') {
+            posthog.capture('ai_usage_limit_reached', { capability: 'analysis', code: err.code, source: analyticsSource });
+          }
+        },
         onSettled: () => {
           busy.current = false;
         },
@@ -284,6 +290,12 @@ export function AICaseDocumentsWorkspace({
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {/* 4.38C: commercial limit banner (mutation-level, any analysis state). */}
+            {(analyzeMutation.error as Error & { code?: string } | null)?.code === 'AI_ANALYSIS_LIMIT_REACHED' && (
+              <p className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                Alcanzaste los 40 análisis de documentos incluidos este mes. Se renovarán el próximo mes.
+              </p>
+            )}
             {analysisColumn ?? (!selectedDoc ? (
               <div className="flex flex-col items-center gap-2 py-10 text-center">
                 <p className="text-sm text-muted-foreground">

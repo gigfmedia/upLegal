@@ -24,13 +24,17 @@ export function createAIMetering({ supabase, tokenLimit, operationLimit, log = c
     if (result?.error) {
       const message = String(result.error.message || '');
       if (message.includes('AI_MONTHLY_LIMIT_REACHED')) throw usageError('AI_MONTHLY_LIMIT_REACHED', 429);
+      // 4.38C commercial quotas: typed per-pool limit, blocked before provider.
+      if (message.includes('AI_CHAT_LIMIT_REACHED')) throw usageError('AI_CHAT_LIMIT_REACHED', 429);
+      if (message.includes('AI_ANALYSIS_LIMIT_REACHED')) throw usageError('AI_ANALYSIS_LIMIT_REACHED', 429);
+      if (message.includes('AI_RESEARCH_LIMIT_REACHED')) throw usageError('AI_RESEARCH_LIMIT_REACHED', 429);
       if (message.includes('AI_IDEMPOTENCY_CONFLICT')) throw usageError('AI_IDEMPOTENCY_CONFLICT', 409);
       throw usageError();
     }
     return result?.data;
   };
   return {
-    async begin(req, res, { lawyerId, workspaceId, capability, resourceId = null, input }) {
+    async begin(req, res, { lawyerId, workspaceId, capability, resourceId = null, input, commercialLimits = null }) {
       const key = req.headers?.['x-ai-operation-id'];
       if (typeof key !== 'string' || !UUID.test(key)) {
         res.status(400).json({ error: 'Actualiza la página e intenta nuevamente.', code: 'AI_OPERATION_ID_REQUIRED' });
@@ -40,6 +44,10 @@ export function createAIMetering({ supabase, tokenLimit, operationLimit, log = c
         p_lawyer: lawyerId, p_workspace: workspaceId, p_capability: capability, p_resource: resourceId,
         p_key: key, p_hash: operationHash({ workspaceId, capability, resourceId, input }),
         p_token_limit: tokenLimit, p_operation_limit: operationLimit, p_conversation: input?.conversation_id || null,
+        // 4.38C commercial quotas (null disables a pool check; legacy behavior preserved).
+        p_chat_limit: commercialLimits?.chat ?? null,
+        p_analysis_limit: commercialLimits?.analysis ?? null,
+        p_research_limit: commercialLimits?.research ?? null,
       });
       if (!data?.operation_id) throw usageError();
       if (!data.created) {

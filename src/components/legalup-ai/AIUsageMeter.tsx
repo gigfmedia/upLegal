@@ -1,44 +1,52 @@
-import { useAIUsage, formatTokens } from '@/hooks/useAIUsage';
+import { useAIUsage, type AIAllowancePool } from '@/hooks/useAIUsage';
+
+function PoolRow({ label, pool }: { label: string; pool: AIAllowancePool }) {
+  const pct =
+    pool.limit && pool.limit > 0
+      ? Math.min(100, Math.round((pool.used / pool.limit) * 100))
+      : 0;
+  return (
+    <div className="flex items-center gap-2">
+      <span className="w-28 shrink-0 text-xs font-medium text-gray-500">{label}</span>
+      <span className="text-xs font-semibold text-gray-900">
+        {pool.used}
+        {pool.limit != null ? ` / ${pool.limit}` : ''}
+      </span>
+      {pool.limit != null && (
+        <div className="h-1.5 w-20 overflow-hidden rounded-full bg-gray-100">
+          <div
+            className={`h-full rounded-full ${pct >= 90 ? 'bg-red-400' : 'bg-emerald-400'}`}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
 
 /**
- * Medidor sutil de consumo de IA del mes en curso (Fase 3.6).
- * Muestra el uso real (tokens/créditos) sin anunciar límites comerciales, ya
- * que aún no hay créditos definidos: solo sirve para visibilidad y cost tracking.
+ * Uso de IA del plan Pro (4.38C). Muestra cuotas comerciales mensuales
+ * (consultas, análisis, investigaciones) y documentos almacenados.
+ * La autoridad es server/DB; este componente solo visualiza.
+ * Sin allowance resuelto, no renderiza nada.
  */
 export function AIUsageMeter() {
   const { data, isLoading } = useAIUsage();
 
-  if (isLoading || !data) return null;
+  if (isLoading || !data?.allowance) return null;
 
-  const { total_tokens: tokens, total_credits: credits } = data.usage;
-
-  const pctOfProtection =
-    data.protection_limits.monthly_tokens > 0
-      ? Math.min(100, Math.round((tokens / data.protection_limits.monthly_tokens) * 100))
-      : 0;
+  const { allowance } = data;
 
   return (
     <div
-      className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
-      title="Consumo de IA del mes en curso"
+      className="flex flex-col gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+      title="Uso de IA incluido en tu plan este mes"
     >
       <span className="text-xs font-medium text-gray-500">Uso de IA este mes</span>
-      <span className="font-semibold text-gray-900">{formatTokens(tokens)} tokens</span>
-      {credits > 0 && (
-        <span className="text-xs text-gray-500">
-          ≈ {new Intl.NumberFormat('es-CL').format(credits)} créditos
-        </span>
-      )}
-      {pctOfProtection > 0 && (
-        <div className="h-1.5 w-20 overflow-hidden rounded-full bg-gray-100">
-          <div
-            className={`h-full rounded-full ${
-              pctOfProtection >= 90 ? 'bg-red-400' : 'bg-emerald-400'
-            }`}
-            style={{ width: `${pctOfProtection}%` }}
-          />
-        </div>
-      )}
+      <PoolRow label="Consultas IA" pool={allowance.chat} />
+      <PoolRow label="Análisis" pool={allowance.analysis} />
+      <PoolRow label="Investigaciones" pool={allowance.research} />
+      <PoolRow label="Documentos" pool={allowance.documents} />
     </div>
   );
 }

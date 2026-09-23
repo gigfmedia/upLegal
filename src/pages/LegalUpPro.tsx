@@ -484,8 +484,9 @@ export default function LegalUpPro() {
                 <ul className="mt-4 space-y-2 text-sm text-gray-200">
                   <li className="flex gap-2"><Check className="h-4 w-4 text-emerald-400 mt-0.5" /> Análisis de documentos dentro de tus casos</li>
                   <li className="flex gap-2"><Check className="h-4 w-4 text-emerald-400 mt-0.5" /> Chat sobre el contenido de cada caso</li>
+                  <li className="flex gap-2"><Check className="h-4 w-4 text-emerald-400 mt-0.5" /> Investigación de jurisprudencia y normativa</li>
                 </ul>
-                <p className="mt-4 text-xs leading-relaxed text-gray-400">Análisis de documentos y chat sobre tus casos. Funciones avanzadas como jurisprudencia aún no están incluidas.</p>
+                <p className="mt-4 text-xs leading-relaxed text-gray-400">300 consultas IA, 40 análisis de documentos y 10 investigaciones al mes, hasta 50 documentos almacenados. IA disponible en todos tus casos activos.</p>
               </CardContent>
             </Card>
           </div>
@@ -547,7 +548,7 @@ export default function LegalUpPro() {
             </AccordionItem>
             <AccordionItem value="q4">
               <AccordionTrigger>¿LegalUp Pro incluye LegalUp AI?</AccordionTrigger>
-              <AccordionContent className="text-gray-600">Sí, LegalUp AI viene integrado en tus casos, con análisis de documentos y chat sobre casos.</AccordionContent>
+              <AccordionContent className="text-gray-600">Sí, LegalUp AI viene integrado en tus casos: análisis de documentos, chat sobre casos e investigación de jurisprudencia, con uso mensual incluido.</AccordionContent>
             </AccordionItem>
             <AccordionItem value="q5">
               <AccordionTrigger>¿Puedo cancelar?</AccordionTrigger>

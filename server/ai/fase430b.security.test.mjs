@@ -1,4 +1,5 @@
 import { createAIMetering } from './metering.mjs';
+import { commercialQuotaForPlan } from './proAllowance.mjs';
 import { randomUUID } from 'node:crypto';
 // @vitest-environment node
 import { describe, it, expect, vi } from 'vitest';
@@ -8,7 +9,7 @@ import ts from 'typescript';
 import { hasCanonicalDocumentReference, resolveAnalysisModel } from './coreAuthority.mjs';
 const src=readFileSync(new URL('../../server.mjs',import.meta.url),'utf8');
 const ast=ts.createSourceFile('server.mjs',src,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
-const names=['getLawyerCaseOwned','getAIWorkspaceOwned','getAIDocumentOwned','requireAIEntitlement','AI_FEATURES_ALL','PLAN_FEATURES_SERVER','serverCanUseAIFeature','getPlanForAccess'];
+const names=['getLawyerCaseOwned','getAIWorkspaceOwned','getAIDocumentOwned','requireAIEntitlement','AI_FEATURES_ALL','PLAN_FEATURES_SERVER','serverCanUseAIFeature','getPlanForAccess','commercialQuotaForPlan'];
 const paths=['/api/lawyer/cases/:caseId/ai-workspace','/api/ai/documents/:id/analyze','/api/ai/cases/:caseId/jurisprudence','/api/ai/cases/:caseId/workflow/sync'];
 function harness({access={isProLimited:true},user='L1'}={}){
  const rows={lawyer_cases:[{id:'C1',lawyer_id:'L1',title:'Case',ai_workspace_id:null}],ai_workspaces:[],ai_documents:[{id:'D1',lawyer_id:'L1',workspace_id:'W1',file_path:'L1/W1/D1/original.pdf',status:'ready',analysis_status:'pending',extracted_text:'This is a sufficiently long legal document for the test.'}],ai_document_analyses:[]};
@@ -21,7 +22,7 @@ function harness({access={isProLimited:true},user='L1'}={}){
   if(action==='delete')rows[table]=list.filter(r=>!selected.includes(r));
   return {data:selected[0]?{...selected[0]}:null,error:null,count:list.length};
  };const q={select:()=>q,eq:(k,v)=>{filters.push([k,v]);return q;},is:(k,v)=>{filters.push([k,v]);return q;},neq:(k,v)=>{filters.push([k,v,'neq']);return q;},insert:p=>{action='insert';payload=p;return q;},update:p=>{action='update';payload=p;return q;},delete:()=>{action='delete';return q;},single:async()=>run(),maybeSingle:async()=>run(),then:(a,b)=>Promise.resolve(run()).then(a,b)};return q;}};
- const ctx=vm.createContext({createAIMetering:options=>createAIMetering({...options,log:()=>{}}),AI_PROTECT_MAX_MONTHLY_TOKENS:20000000,AI_PROTECT_MAX_MONTHLY_REQUESTS:5000,hasCanonicalDocumentReference,resolveAnalysisModel,supabase,console:{log(){},error(){},warn(){}},app:{post:(p,h)=>routes[p]=h,get(){}},
+  const ctx=vm.createContext({createAIMetering:options=>createAIMetering({...options,log:()=>{}}),commercialQuotaForPlan,AI_PROTECT_MAX_MONTHLY_TOKENS:20000000,AI_PROTECT_MAX_MONTHLY_REQUESTS:5000,hasCanonicalDocumentReference,resolveAnalysisModel,supabase,console:{log(){},error(){},warn(){}},app:{post:(p,h)=>routes[p]=h,get(){}},
   requireAILawyer:async(_req,res)=>{if(!user){res.status(401).json({error:'unauthorized'});return null;}return user;},requireAIAccess:async()=>access,
   checkAILimits:async()=>null,isAIOverRateLimit:()=>false,checkAIProtectionLimits:async()=>null,
   getAILawyerAccess:async()=>access,isAIProviderConfigured:()=>true,chatCompletion:provider,AI_DEFAULT_MODEL:'existing',
@@ -48,10 +49,10 @@ describe('4.30B actual server routes, unchanged authorities',()=>{
  it('4.29E simultaneous same-document analysis returns busy and one provider call',async()=>{const h=harness();let finish;h.provider.mockImplementation(()=>new Promise(r=>{finish=r;}));const first=h.call(analyze);await vi.waitFor(()=>expect(h.provider).toHaveBeenCalledTimes(1));const second=await h.call(analyze);expect(second.statusCode).toBe(409);expect(second.body.code).toBe('AI_DOCUMENT_ANALYSIS_IN_PROGRESS');finish({data:{summary:'ok'}});expect((await first).statusCode).toBe(200);expect(h.provider).toHaveBeenCalledTimes(1);});
  it('4.29E stale processing recovers',async()=>{const h=harness();Object.assign(h.rows.ai_documents[0],{analysis_status:'processing',updated_at:new Date(Date.now()-360000).toISOString()});expect((await h.call(analyze)).statusCode).toBe(200);expect(h.provider).toHaveBeenCalledTimes(1);});
  it('4.29E provider failure preserves previous analysis and permits retry',async()=>{const h=harness();h.rows.ai_document_analyses.push({document_id:'D1',summary:'previous'});h.provider.mockRejectedValueOnce(new Error('provider unavailable'));expect((await h.call(analyze)).statusCode).toBe(500);expect(h.rows.ai_document_analyses[0].summary).toBe('previous');expect(h.rows.ai_documents[0].analysis_status).toBe('failed');expect((await h.call(analyze)).statusCode).toBe(200);});
- it('4.29D Pro core allowed; advanced features remain denied',()=>{const h=harness();for(const feature of ['document_analysis','case_chat','case_analysis'])expect(vm.runInContext(`serverCanUseAIFeature('${feature}', 'pro_limited')`,h.ctx)).toBe(true);for(const feature of ['jurisprudence','research','workflow_generation','document_drafting'])expect(vm.runInContext(`serverCanUseAIFeature('${feature}', 'pro_limited')`,h.ctx)).toBe(false);});
+ it('4.29D Pro core allowed incl. jurisprudence; other advanced remain denied',()=>{const h=harness();for(const feature of ['document_analysis','case_chat','case_analysis','jurisprudence'])expect(vm.runInContext(`serverCanUseAIFeature('${feature}', 'pro_limited')`,h.ctx)).toBe(true);for(const feature of ['research','workflow_generation','document_drafting'])expect(vm.runInContext(`serverCanUseAIFeature('${feature}', 'pro_limited')`,h.ctx)).toBe(false);});
 });
 
 describe('4.29D actual advanced routes',()=>{
  // 4.34E: workflow/sync is deterministic Core (no gate); covered in workflowCore.test.mjs.
- it.each(paths.slice(2,3))('%s denies Pro before provider',async path=>{const h=harness();h.rows.ai_workspaces.push({id:'C1',lawyer_id:'L1'});const res=await h.call(path);expect(res.statusCode).toBe(403);expect(res.body.code).toBe('AI_FEATURE_NOT_AVAILABLE');expect(h.provider).not.toHaveBeenCalled();});
+ it.each(paths.slice(2,3))('%s denies plan without jurisprudence before provider',async path=>{const h=harness({access:{}});h.rows.ai_workspaces.push({id:'C1',lawyer_id:'L1'});const res=await h.call(path);expect(res.statusCode).toBe(403);expect(res.body.code).toBe('AI_FEATURE_NOT_AVAILABLE');expect(h.provider).not.toHaveBeenCalled();});
 });

@@ -2,6 +2,7 @@ import * as SheetPrimitive from '@radix-ui/react-dialog';
 import { X, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AIChat } from './AIChat';
+import { AIUsageMeter } from './AIUsageMeter';
 import type { AIDocumentListItem } from '@/hooks/useAIDocuments';
 
 type Props = {
@@ -89,6 +90,13 @@ export function AICaseChatDrawer({
               />
             )}
           </div>
+
+          {/* 4.38C: commercial allowance visibility (server authority, display only) */}
+          {open && (
+            <div className="shrink-0 border-t px-6 py-3">
+              <AIUsageMeter />
+            </div>
+          )}
         </SheetPrimitive.Content>
       </SheetPrimitive.Portal>
     </SheetPrimitive.Root>

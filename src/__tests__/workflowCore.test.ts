@@ -24,10 +24,10 @@ describe('4.34E — deterministic workflow Core contract', () => {
     expect(block).not.toContain('AI_FEATURE_NOT_AVAILABLE');
   });
 
-  it('feature key preserved for future generative use; pro map unchanged', () => {
+  it('feature key preserved for future generative use; pro map includes 4.38C research', () => {
     const c = server();
     expect(c).toContain("'document_analysis','case_chat','jurisprudence','document_drafting','case_analysis','workflow_generation'");
-    expect(c).toContain("pro_limited: ['document_analysis','case_chat','case_analysis']");
+    expect(c).toContain("pro_limited: ['document_analysis','case_chat','case_analysis','jurisprudence']");
   });
 
   it('GET/PATCH use existing-resource semantics (no creation quota)', () => {

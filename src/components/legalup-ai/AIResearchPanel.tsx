@@ -508,6 +508,10 @@ function errorToMessage(error: AIResearchError | null): string {
       return 'El proveedor de IA presentó un error temporal. Intenta nuevamente en unos minutos.';
     case 'AI_PROVIDER_AUTH':
       return 'No se pudo autenticar con el proveedor de IA. Contacta al equipo de LegalUp.';
+    case 'AI_RESEARCH_LIMIT_REACHED':
+      return 'Alcanzaste las 10 investigaciones incluidas este mes. Se renovarán el próximo mes.';
+    case 'AI_MONTHLY_LIMIT_REACHED':
+      return 'Alcanzaste el uso de IA incluido este mes. Tu disponibilidad se renovará el próximo mes.';
     default:
       return error?.message || 'No pudimos completar la investigación. Intenta nuevamente.';
   }
@@ -586,6 +590,14 @@ export function AIResearchPanel({ workspaceId, locked = false, analyticsSurface,
             error_code: err.code || 'provider_error',
             ...surfaceMeta,
           });
+          // 4.38C: commercial limit analytics (safe props only, never content).
+          if (err.code === 'AI_RESEARCH_LIMIT_REACHED') {
+            posthog.capture('ai_usage_limit_reached', {
+              capability: 'research',
+              code: err.code,
+              ...surfaceMeta,
+            });
+          }
         },
       }
     );

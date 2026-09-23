@@ -8,7 +8,23 @@ export type AIUsageSummary = {
   total_credits: number;
   document_analysis_count: number;
   chat_message_count: number;
+  jurisprudence_research_count?: number;
   estimated_cost_usd: number;
+};
+
+export type AIAllowancePool = {
+  used: number;
+  /** Monthly/standing limit, or null when no commercial limit applies to the plan. */
+  limit: number | null;
+};
+
+/** 4.38C commercial allowance. Authority is server/DB; UI only displays. */
+export type AIAllowance = {
+  plan: string;
+  chat: AIAllowancePool;
+  analysis: AIAllowancePool;
+  research: AIAllowancePool;
+  documents: AIAllowancePool;
 };
 
 export type AIUsageResponse = {
@@ -16,6 +32,8 @@ export type AIUsageResponse = {
   period_start: string;
   period_end: string;
   usage: AIUsageSummary;
+  /** Null when the backend could not resolve it; usage/protection remain valid. */
+  allowance: AIAllowance | null;
   protection_limits: {
     monthly_tokens: number;
     monthly_requests: number;

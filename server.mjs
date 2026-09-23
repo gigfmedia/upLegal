@@ -1,4 +1,5 @@
 import { createAIMetering } from './server/ai/metering.mjs';
+import { PRO_AI_ALLOWANCE, commercialQuotaForPlan } from './server/ai/proAllowance.mjs';
 import { hasCanonicalDocumentReference, resolveAnalysisModel, honestEvidenceLocation } from './server/ai/coreAuthority.mjs';
 import { consultationBase, bookingClientTotal, bookingPricingSnapshot } from './shared/bookingPricing.mjs';
 import { confirmCompanyCancellation } from './server/subscriptions/companyCancellation.mjs';
@@ -480,7 +481,8 @@ const AI_FEATURES_ALL = ['document_analysis','case_chat','jurisprudence','docume
 const PLAN_FEATURES_SERVER = {
   free: [],
   essential: [...AI_FEATURES_ALL],
-  pro_limited: ['document_analysis','case_chat','case_analysis'],
+  // 4.38C: current Pro includes Research/Jurisprudence (10/month commercial quota).
+  pro_limited: ['document_analysis','case_chat','case_analysis','jurisprudence'],
 };
 function serverCanUseAIFeature(feature, plan = 'free') {
   const allowed = PLAN_FEATURES_SERVER[plan] ?? PLAN_FEATURES_SERVER.free;
@@ -495,8 +497,8 @@ function getPlanForAccess(access) {
   return 'free';
 }
 
-// Límites de uso (Bloque 22). Solo aplican durante el trial; el plan Essential activo no limita.
-// Coinciden con la política del trigger en la BD (3 casos / 10 documentos).
+// Límites de uso (Bloque 22). Trial: 3 casos / 10 documentos (trigger DB).
+// Pro: sin límite comercial de workspaces; 50 documentos (trigger DB, 4.38C).
 const AI_MAX_DOCUMENT_SIZE_MB = 20;
 
 // Presupuesto de tokens para respuestas del chat. El proveedor (p. ej.
@@ -8089,7 +8091,9 @@ const isAIOverRateLimit = (userId) => {
 };
 
 // Valida acceso + límites del trial en un endpoint de IA.
-// Devuelve `{ res: null }` si todo bien, o `{ res }` con la respuesta 402/403/429 ya enviada.
+// Devuelve `{ res: null, plan, access }` si todo bien, o `{ res }` con la
+// respuesta 402/403/429 ya enviada. `plan` evita reconsultar el acceso para
+// decidir cuotas comerciales (4.38C).
 const requireAIEntitlement = async (req, res, userId, { metered = true } = {}) => {
   const access = await requireAIAccess(userId);
   if (!access) {
@@ -8100,9 +8104,10 @@ const requireAIEntitlement = async (req, res, userId, { metered = true } = {}) =
       }),
     };
   }
+  const plan = getPlanForAccess(access);
   // Resource creation quotas are enforced by ai_enforce_trial_limits on INSERT.
   // Using existing resources never consumes another workspace/document slot.
-  if (!metered) return { res: null };
+  if (!metered) return { res: null, plan, access };
 
   // Límites técnicos de protección (Fase 3.6): rate limit y consumo mensual.
   if (isAIOverRateLimit(userId)) {
@@ -8114,7 +8119,7 @@ const requireAIEntitlement = async (req, res, userId, { metered = true } = {}) =
     };
   }
 
-  return { res: null };
+  return { res: null, plan, access };
 };
 
 // Monthly quota authority is ai_begin_operation / ai_begin_attempt (transactional,
@@ -8883,7 +8888,7 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
       });
     }
 
-    if (!await metering.begin(req, res, { lawyerId: userId, workspaceId: doc.workspace_id, capability: 'document_analysis', resourceId: doc.id, input: { model } })) return;
+    if (!await metering.begin(req, res, { lawyerId: userId, workspaceId: doc.workspace_id, capability: 'document_analysis', resourceId: doc.id, input: { model }, commercialLimits: commercialQuotaForPlan(entitlement.plan) })) return;
 
     // Asegura el texto extraído (procesa inline si hace falta).
     let text = doc.extracted_text;
@@ -9182,6 +9187,7 @@ app.post('/api/lawyer/cases/:caseId/ai-workspace', async (req, res) => {
     if (insertError || !candidate) {
       console.error('[LegalUpAI] ai-workspace create failed', insertError);
       const msg = String(insertError?.message || '');
+      // 4.38C: P0001 here only fires for trial (Pro has no workspace cap).
       if (insertError?.code === 'P0001' || /l[ií]mit|trial|quota/i.test(msg)) {
         return res.status(403).json({ error: insertError.message, code: 'AI_LIMIT_REACHED' });
       }
@@ -9365,7 +9371,7 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       });
     }
 
-    if (!await metering.begin(req, res, { lawyerId: userId, workspaceId: workspace.id, capability: document_id ? 'document_chat' : 'case_chat', resourceId: document_id || conversation.id, input: { conversation_id, message, document_id: document_id || null, model: AI_DEFAULT_MODEL } })) return;
+    if (!await metering.begin(req, res, { lawyerId: userId, workspaceId: workspace.id, capability: document_id ? 'document_chat' : 'case_chat', resourceId: document_id || conversation.id, input: { conversation_id, message, document_id: document_id || null, model: AI_DEFAULT_MODEL }, commercialLimits: commercialQuotaForPlan(entitlement.plan) })) return;
 
     // Solo documentos listos del caso del abogado.
     const { data: readyDocs, error: docsError } = await supabase
@@ -9761,10 +9767,11 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
     const entitlement = await requireAIEntitlement(req, res, userId);
     if (entitlement.res) return entitlement.res;
 
-    // 4.29D: advanced feature — Pro limited cannot call jurisprudence
+    // 4.29D: advanced feature — 4.38C: current Pro includes jurisprudence
+    // (10/month commercial quota enforced atomically in ai_begin_operation).
+    // The guard below still blocks free/trial-without-access plans.
     {
-      const _access = await getAILawyerAccess(userId);
-      const _plan = getPlanForAccess(_access);
+      const _plan = entitlement.plan ?? getPlanForAccess(await getAILawyerAccess(userId));
       if (!serverCanUseAIFeature('jurisprudence', _plan)) {
         return res.status(403).json({ error: 'Función no incluida en tu plan.', code: 'AI_FEATURE_NOT_AVAILABLE', feature: 'jurisprudence' });
       }
@@ -9778,7 +9785,7 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
       });
     }
 
-    if (!await metering.begin(req, res, { lawyerId: userId, workspaceId: workspace.id, capability: 'research', input: { query, model: AI_DEFAULT_MODEL } })) return;
+    if (!await metering.begin(req, res, { lawyerId: userId, workspaceId: workspace.id, capability: 'research', input: { query, model: AI_DEFAULT_MODEL }, commercialLimits: commercialQuotaForPlan(entitlement.plan) })) return;
 
     // Fase 4.2.6 (CASE INTELLIGENCE): carga los documentos READY del caso con
     // filtro server-side doble capa (workspace_id + lawyer_id) y detecta el modo
@@ -10580,7 +10587,7 @@ app.get('/api/ai/usage', async (req, res) => {
 
     const { data, error } = await supabase
       .from('ai_usage_monthly')
-      .select('total_tokens, total_credits, document_analysis_count, chat_message_count, estimated_cost_usd')
+      .select('total_tokens, total_credits, document_analysis_count, chat_message_count, jurisprudence_research_count, estimated_cost_usd')
       .eq('lawyer_id', userId)
       .eq('period_start', periodStartIso)
       .maybeSingle();
@@ -10592,10 +10599,35 @@ app.get('/api/ai/usage', async (req, res) => {
       total_credits: 0,
       document_analysis_count: 0,
       chat_message_count: 0,
+      jurisprudence_research_count: 0,
       estimated_cost_usd: 0,
     };
 
     const requests = (usage.document_analysis_count || 0) + (usage.chat_message_count || 0);
+
+    // 4.38C: commercial allowance (authority is server/DB; frontend only displays).
+    // Limits apply to pro_limited; other plans get used counts with null limits.
+    // Never exposes provider cost, tokens detail beyond totals, or other lawyers.
+    let allowance = null;
+    try {
+      const access = await getAILawyerAccess(userId);
+      const plan = getPlanForAccess(access);
+      const quota = commercialQuotaForPlan(plan);
+      const { count: storedDocuments } = await supabase
+        .from('ai_documents')
+        .select('id', { count: 'exact', head: true })
+        .eq('lawyer_id', userId);
+      const withLimit = (used, limit) => ({ used: used || 0, limit: limit ?? null });
+      allowance = {
+        plan,
+        chat: withLimit(usage.chat_message_count, quota?.chat),
+        analysis: withLimit(usage.document_analysis_count, quota?.analysis),
+        research: withLimit(usage.jurisprudence_research_count, quota?.research),
+        documents: withLimit(storedDocuments, plan === 'pro_limited' ? PRO_AI_ALLOWANCE.storedDocuments : null),
+      };
+    } catch (allowanceError) {
+      console.error('[LegalUpAI] allowance error:', allowanceError?.message || allowanceError);
+    }
 
     res.json({
       success: true,
@@ -10606,8 +10638,10 @@ app.get('/api/ai/usage', async (req, res) => {
         total_credits: usage.total_credits || 0,
         document_analysis_count: usage.document_analysis_count || 0,
         chat_message_count: usage.chat_message_count || 0,
+        jurisprudence_research_count: usage.jurisprudence_research_count || 0,
         estimated_cost_usd: Number(usage.estimated_cost_usd) || 0,
       },
+      allowance,
       protection_limits: {
         monthly_tokens: AI_PROTECT_MAX_MONTHLY_TOKENS,
         monthly_requests: AI_PROTECT_MAX_MONTHLY_REQUESTS,

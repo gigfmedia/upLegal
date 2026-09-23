@@ -1,4 +1,5 @@
 import { createAIMetering } from './metering.mjs';
+import { commercialQuotaForPlan } from './proAllowance.mjs';
 import { randomUUID } from 'node:crypto';
 // @vitest-environment node
 // 4.34D — research/jurisprudence integrado al Caso Pro (mismo engine, con header vivo).
@@ -49,10 +50,10 @@ const LLM_OK = { data: {
 }, usage: { total_tokens: 500, input_tokens: 400, output_tokens: 100 } };
 
 const names = ['getAIWorkspaceOwned','requireAIEntitlement','requireAIAccess','getAILawyerAccess','getAILawyerSubscription',
- 'getProLawyerSubscription','getProLawyerAccess','getPlanForAccess','serverCanUseAIFeature','isAIOverRateLimit','checkAIProtectionLimits',
- 'getAIUsagePeriod','recordAIUsage','AIResearchRequestSchema','AI_DEFAULT_MODEL','AI_CHAT_MAX_TOKENS','AI_FEATURES_ALL','PLAN_FEATURES_SERVER',
- 'AI_PROTECT_MAX_MONTHLY_TOKENS','AI_PROTECT_MAX_MONTHLY_REQUESTS','AI_USAGE_CREDITS_PER_TOKEN','aiRateLimiter','AI_RATE_WINDOW_MS',
- 'AI_PROTECT_RATE_LIMIT_PER_MINUTE','logDiagnostic'];
+  'getProLawyerSubscription','getProLawyerAccess','getPlanForAccess','serverCanUseAIFeature','isAIOverRateLimit','checkAIProtectionLimits',
+  'getAIUsagePeriod','recordAIUsage','AIResearchRequestSchema','AI_DEFAULT_MODEL','AI_CHAT_MAX_TOKENS','AI_FEATURES_ALL','PLAN_FEATURES_SERVER',
+  'AI_PROTECT_MAX_MONTHLY_TOKENS','AI_PROTECT_MAX_MONTHLY_REQUESTS','AI_USAGE_CREDITS_PER_TOKEN','aiRateLimiter','AI_RATE_WINDOW_MS',
+  'AI_PROTECT_RATE_LIMIT_PER_MINUTE','logDiagnostic','commercialQuotaForPlan'];
 
 function harness({ plan = 'essential', docs = false, defaultModel } = {}) {
   let tokenUser = user;
@@ -108,7 +109,7 @@ function harness({ plan = 'essential', docs = false, defaultModel } = {}) {
   } };
   const routes = {};
   const quiet = { log() {}, warn() {}, error() {} };
-  const ctx = vm.createContext({createAIMetering:options=>createAIMetering({...options,log:()=>{}}),AI_PROTECT_MAX_MONTHLY_TOKENS:20000000,AI_PROTECT_MAX_MONTHLY_REQUESTS:5000, console: quiet, z, Buffer, process: { env: defaultModel ? { AI_DEFAULT_MODEL: defaultModel } : {} }, supabase,
+  const ctx = vm.createContext({createAIMetering:options=>createAIMetering({...options,log:()=>{}}),commercialQuotaForPlan,AI_PROTECT_MAX_MONTHLY_TOKENS:20000000,AI_PROTECT_MAX_MONTHLY_REQUESTS:5000, console: quiet, z, Buffer, process: { env: defaultModel ? { AI_DEFAULT_MODEL: defaultModel } : {} }, supabase,
     searchJurisprudence: search, chatCompletion: provider, isAIProviderConfigured: () => true,
     validateResearchQuery, classifyLegalQuery, detectDocumentMode, selectDocumentEvidence,
     shouldAllowDocumentOnlyFallback, buildJurisprudenceSystemPrompt, buildJurisprudenceUserPrompt,
@@ -136,16 +137,26 @@ function harness({ plan = 'essential', docs = false, defaultModel } = {}) {
 }
 
 describe('4.34D research integrado al Caso Pro', () => {
-  it('Pro base: CREATE denegado con 0 llamadas search/LLM/usage', async () => {
+  it('4.38C Pro base: CREATE permitido con llamadas search/LLM/usage', async () => {
     const h = harness({ plan: 'pro' });
     const res = await h.call('post', { query: '¿Qué dice la jurisprudencia sobre protección de datos?' });
-    expect(res.statusCode).toBe(403);
-    expect(h.search).not.toHaveBeenCalled();
-    expect(h.provider).not.toHaveBeenCalled();
-    expect(h.rpc).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(200);
+    expect(res.body.research_type).toBe('jurisprudence');
+    expect(h.search).toHaveBeenCalledTimes(1);
+    expect(h.provider).toHaveBeenCalled();
+    expect(h.rpc).toHaveBeenCalled();
+    expect(h.rows.ai_research_requests).toHaveLength(1);
   });
 
-  it('Pro base: historial legible (0 provider) aunque crear esté bloqueado', async () => {
+  it('4.38C Pro base: commercial research quota llega a ai_begin_operation', async () => {
+    const h = harness({ plan: 'pro' });
+    await h.call('post', { query: '¿Qué dice la jurisprudencia sobre protección de datos?' });
+    const begins = h.rpc.mock.calls.filter(([name]) => name === 'ai_begin_operation').map(([, args]) => args);
+    expect(begins).toHaveLength(1);
+    expect(begins[0].p_research_limit).toBe(10);
+  });
+
+  it('Pro base: historial legible (0 provider)', async () => {
     const h = harness({ plan: 'pro' });
     h.rows.ai_research_requests.push({ id: id(50), workspace_id: workspaceId, lawyer_id: user,
       query: 'previa', answer: 'r', sources: [], model: 'm', created_at: '2026-01-01' });

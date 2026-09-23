@@ -15,9 +15,9 @@ describe('Case UX uses existing combined entitlement',()=>{
   state.ai={status,plan:'essential',current_period_end:'2099-01-01',trial_ends_at:'2099-01-01'};
   const {result}=renderHook(useAIFeatureAccess);expect(result.current.hasAccess).toBe(true);expect(result.current.canUse('document_analysis')).toBe(true);expect(result.current.canUse('case_analysis')).toBe(true);
  });
- it('Pro limited grants core and denies advanced features',()=>{
+it('4.38C Pro limited grants core incl. jurisprudence; other advanced stay denied',()=>{
   state.pro={status:'active',current_period_end:'2099-01-01'};const {result}=renderHook(useAIFeatureAccess);
-  for(const feature of ['document_analysis','case_chat','case_analysis'] as const)expect(result.current.canUse(feature)).toBe(true);
-  for(const feature of ['jurisprudence','workflow_generation','document_drafting'] as const)expect(result.current.canUse(feature)).toBe(false);
- });
+  for(const feature of ['document_analysis','case_chat','case_analysis','jurisprudence'] as const)expect(result.current.canUse(feature)).toBe(true);
+  for(const feature of ['workflow_generation','document_drafting'] as const)expect(result.current.canUse(feature)).toBe(false);
+});
 });

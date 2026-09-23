@@ -1,4 +1,5 @@
 import { createAIMetering } from './metering.mjs';
+import { commercialQuotaForPlan, PRO_AI_ALLOWANCE } from './proAllowance.mjs';
 import { randomUUID } from 'node:crypto';
 // @vitest-environment node
 import { describe, it, expect, vi } from 'vitest';
@@ -15,7 +16,7 @@ const src = readFileSync(new URL('../../server.mjs', import.meta.url), 'utf8');
 const ast = ts.createSourceFile('server.mjs', src, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const user = id(1), foreign = id(2), caseId = id(3), workspaceId = id(4), conversationId = id(5);
-const names = ['requireAILawyer','getAIDocumentOwned','getAIWorkspaceOwned','getLawyerCaseOwned','requireAIEntitlement','getAIConversationOwned','getOrCreateAIConversation','AIChatRequestSchema','AIChatResponseSchema','AIDocumentAnalysisSchema','getAIUsagePeriod','recordAIUsage','isAIOverRateLimit','checkAIProtectionLimits','getAILawyerSubscription','getAILawyerAccess','getProLawyerSubscription','getProLawyerAccess','requireAIAccess','AI_FEATURES_ALL','PLAN_FEATURES_SERVER','getPlanForAccess','serverCanUseAIFeature','extractTextFromStoredPdf'];
+const names = ['requireAILawyer','getAIDocumentOwned','getAIWorkspaceOwned','getLawyerCaseOwned','requireAIEntitlement','getAIConversationOwned','getOrCreateAIConversation','AIChatRequestSchema','AIChatResponseSchema','AIDocumentAnalysisSchema','getAIUsagePeriod','recordAIUsage','isAIOverRateLimit','checkAIProtectionLimits','getAILawyerSubscription','getAILawyerAccess','getProLawyerSubscription','getProLawyerAccess','requireAIAccess','AI_FEATURES_ALL','PLAN_FEATURES_SERVER','getPlanForAccess','serverCanUseAIFeature','extractTextFromStoredPdf','commercialQuotaForPlan'];
 const paths = {
  provision:['post','/api/lawyer/cases/:caseId/ai-workspace'], process:['post','/api/ai/documents/:id/process'], analyze:['post','/api/ai/documents/:id/analyze'],
  del:['delete','/api/ai/documents/:id'], open:['get','/api/ai/documents/:id/open'],
@@ -44,7 +45,7 @@ function harness({paid=true, linked=true, count=3}={}) {
  }};
  const provider=vi.fn(async()=>({data:{answer:'Respuesta documental.',sources:[],summary:'Resumen',document_type:'contrato',parties:[],key_points:[],obligations:[],deadlines:[],risks:[],recommendations:[]},usage:{total_tokens:100,input_tokens:80,output_tokens:20}}));
  const routes={}, quiet={log(){},warn(){},error(){}};
-  const ctx=vm.createContext({createAIMetering:options=>createAIMetering({...options,log:()=>{}}),AI_PROTECT_MAX_MONTHLY_TOKENS:20000000,AI_PROTECT_MAX_MONTHLY_REQUESTS:5000,console:quiet,z,Buffer,supabase,hasCanonicalDocumentReference,resolveAnalysisModel,honestEvidenceLocation,buildChatContext,buildChatSystemPrompt,buildChatUserPrompt,CHAT_LIMITS,getProCaseHeader,formatProCaseBlock,verifyDocumentClaims,buildAnalysisSystemPrompt,buildAnalysisUserPrompt,
+  const ctx=vm.createContext({createAIMetering:options=>createAIMetering({...options,log:()=>{}}),commercialQuotaForPlan,PRO_AI_ALLOWANCE,AI_PROTECT_MAX_MONTHLY_TOKENS:20000000,AI_PROTECT_MAX_MONTHLY_REQUESTS:5000,console:quiet,z,Buffer,supabase,hasCanonicalDocumentReference,resolveAnalysisModel,honestEvidenceLocation,buildChatContext,buildChatSystemPrompt,buildChatUserPrompt,CHAT_LIMITS,getProCaseHeader,formatProCaseBlock,verifyDocumentClaims,buildAnalysisSystemPrompt,buildAnalysisUserPrompt,
   app:{get:(p,h)=>routes[`get ${p}`]=h,post:(p,h)=>routes[`post ${p}`]=h,delete:(p,h)=>routes[`delete ${p}`]=h},getUserIdFromToken:async()=>tokenUser,
  chatCompletion:provider,isAIProviderConfigured:()=>true,AI_DEFAULT_MODEL:'gpt-4o-mini',AI_CHAT_MAX_TOKENS:2400,AI_DOCUMENTS_BUCKET:'ai-documents',MAX_EXTRACTED_TEXT_CHARS:80000,
  pdfParse:async()=>({text:'Contrato documental de prueba con obligaciones entre partes.',numpages:1}),
@@ -80,18 +81,25 @@ describe('4.34B actual Core handlers and real entitlement/metering helpers',()=>
  it.each(['provision','process','analyze','intelligence'])('cross-tenant %s denied',async route=>{const h=harness();h.asForeign();expect((await h.call(route)).statusCode).toBe(404);expect(h.download).not.toHaveBeenCalled();expect(h.provider).not.toHaveBeenCalled();});
  it('unknown model never reaches provider',async()=>{const h=harness();expect((await h.call('analyze',{model:'attacker/expensive-model'})).statusCode).toBe(400);expect(h.provider).not.toHaveBeenCalled();});
  it('existing selector model accepted',async()=>{const h=harness();expect((await h.call('analyze',{model:'openai/gpt-4o-mini'})).statusCode).toBe(200);expect(h.provider.mock.calls[0][0].model).toBe('openai/gpt-4o-mini');});
- it.each(['research'])('Pro advanced %s remains denied without provider',async route=>{const h=harness();expect((await h.call(route,{query:'Contrato y normativa aplicable'})).statusCode).toBe(403);expect(h.provider).not.toHaveBeenCalled();});
+  it.each(['research'])('4.38C Pro %s passes the entitlement gate (pipeline runs past 403)',async route=>{const h=harness();const res=await h.call(route,{query:'Contrato y normativa aplicable'});expect(res.statusCode).not.toBe(403);expect(res.body?.code).not.toBe('AI_FEATURE_NOT_AVAILABLE');});
+  it('4.38C pro_limited includes jurisprudence; research/workflow/drafting stay gated',()=>{const h=harness();expect(vm.runInContext(`serverCanUseAIFeature('jurisprudence', 'pro_limited')`,h.ctx)).toBe(true);for(const feature of ['research','workflow_generation','document_drafting'])expect(vm.runInContext(`serverCanUseAIFeature('${feature}', 'pro_limited')`,h.ctx)).toBe(false);});
+  it('4.38C pro routes pass commercial quotas to ai_begin_operation',async()=>{const h=harness();await h.call('analyze');h.rows.ai_documents.forEach(d=>{d.status='ready';d.extracted_text='Contrato con obligaciones y plazos suficientes para el test.';});const conversation=await h.call('chatGet');await h.call('chat',{conversation_id:conversation.body.conversation.id,message:'Pregunta sobre el contrato'});const begins=h.rpc.mock.calls.filter(([name])=>name==='ai_begin_operation').map(([,args])=>args);expect(begins).toHaveLength(2);expect(begins[0].p_analysis_limit).toBe(40);expect(begins[1].p_chat_limit).toBe(300);expect(begins[0].p_chat_limit).toBe(300);});
  // 4.34E: workflow/sync is deterministic Core for Pro (no gate, 0 provider); see workflowCore.test.mjs.
   it('monthly provider quota blocks analysis but not deterministic intelligence',async()=>{const h=harness();h.rpc.mockResolvedValueOnce({error:{message:'AI_MONTHLY_LIMIT_REACHED'}});expect((await h.call('analyze')).statusCode).toBe(429);expect((await h.call('intelligence')).statusCode).toBe(200);expect(h.provider).not.toHaveBeenCalled();});
-  it('workspace 1/1 → CREATE SECOND denied at handler with quota code and no orphan',async()=>{
+  it('4.38C commercial chat limit maps to 429 with typed code before provider',async()=>{const h=harness();h.rows.ai_documents.forEach(d=>{d.status='ready';d.extracted_text='Contrato con obligaciones y plazos suficientes para el test.';});const conversation=await h.call('chatGet');h.rpc.mockResolvedValueOnce({error:{message:'AI_CHAT_LIMIT_REACHED'}});const res=await h.call('chat',{conversation_id:conversation.body.conversation.id,message:'Pregunta sobre el contrato'});expect(res.statusCode).toBe(429);expect(res.body.code).toBe('AI_CHAT_LIMIT_REACHED');expect(h.provider).not.toHaveBeenCalled();});
+  it('4.38C pro provisions a second workspace (no commercial workspace cap), trial P0001 still 403',async()=>{
    const h=harness();const secondCase=id(50);
    h.rows.lawyer_cases.push({id:secondCase,lawyer_id:user,title:'Segundo',ai_workspace_id:null});
-   const origFrom=h.supabase.from.bind(h.supabase);
-   h.supabase.from=(table)=>{const q=origFrom(table);if(table!=='ai_workspaces')return q;
-    q.insert=()=>({select:()=>({single:async()=>({data:null,error:{code:'P0001',message:'Alcanzaste el límite de 1 caso(s) de tu plan.'}})})});return q;};
    const res=await h.call('provision',{},{caseId:secondCase});
-   expect(res.statusCode).toBe(403);expect(res.body.code).toBe('AI_LIMIT_REACHED');
-   expect(h.rows.ai_workspaces.filter(w=>w.lawyer_id===user)).toHaveLength(1);
+   expect(res.statusCode).toBe(200);expect(res.body.created).toBe(true);
+   expect(h.rows.ai_workspaces.filter(w=>w.lawyer_id===user)).toHaveLength(2);
+   const h2=harness();const secondCase2=id(50);
+   h2.rows.lawyer_cases.push({id:secondCase2,lawyer_id:user,title:'Segundo',ai_workspace_id:null});
+   const origFrom=h2.supabase.from.bind(h2.supabase);
+   h2.supabase.from=(table)=>{const q=origFrom(table);if(table!=='ai_workspaces')return q;
+    q.insert=()=>({select:()=>({single:async()=>({data:null,error:{code:'P0001',message:'Alcanzaste el límite de 3 caso(s) de tu plan.'}})})});return q;};
+   const res2=await h2.call('provision',{},{caseId:secondCase2});
+   expect(res2.statusCode).toBe(403);expect(res2.body.code).toBe('AI_LIMIT_REACHED');
   });
   it('workspace 1/1 → USE EXISTING chat post passes at document limit',async()=>{
    const h=harness();

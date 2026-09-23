@@ -42,15 +42,30 @@ export const AI_LIMITS = {
 };
 
 export const AI_PRO_LIMITS = {
-  maxCases: 1,
-  maxDocuments: 3,
+  /** 4.38C: workspace is internal architecture, not a commercial quota. */
+  maxCases: null as number | null,
+  /** Total current stored AI documents per lawyer (deleting frees a slot). */
+  maxDocuments: 50,
 };
+
+/** 4.38C canonical Pro monthly allowance (mirrors server/ai/proAllowance.mjs). */
+export const AI_PRO_ALLOWANCE = {
+  /** Successful AI questions/month, shared case_chat + document_chat pool. */
+  chatPerMonth: 300,
+  /** Successful document analyses/month. */
+  analysisPerMonth: 40,
+  /** Successful research/jurisprudence operations/month. */
+  researchPerMonth: 10,
+  /** Total current stored AI documents per lawyer. */
+  storedDocuments: 50,
+} as const;
 
 /** Features disponibles según el plan de la suscripción AI. */
 const PLAN_FEATURES: Record<string, AIFeatureKey[]> = {
   free: [],
   essential: AI_FEATURES.map(f => f.key),
-  pro_limited: ['document_analysis', 'case_chat', 'case_analysis'],
+  // 4.38C: current Pro includes Research/Jurisprudence.
+  pro_limited: ['document_analysis', 'case_chat', 'case_analysis', 'jurisprudence'],
 };
 
 /**

@@ -24,13 +24,18 @@ describe.skipIf(!container)('PostgreSQL real atomic metering (isolated local)', 
  CREATE TABLE public.ai_workspaces(id uuid PRIMARY KEY,lawyer_id uuid);
  CREATE TABLE public.lawyer_cases(id uuid PRIMARY KEY,lawyer_id uuid,ai_workspace_id uuid);
  CREATE TABLE public.ai_documents(id uuid PRIMARY KEY,lawyer_id uuid,workspace_id uuid);
- CREATE TABLE public.ai_conversations(id uuid PRIMARY KEY,lawyer_id uuid,workspace_id uuid);`);
+  CREATE TABLE public.ai_conversations(id uuid PRIMARY KEY,lawyer_id uuid,workspace_id uuid);
+  CREATE TABLE public.ai_subscriptions(lawyer_id uuid,status text,trial_ends_at timestamptz,current_period_end timestamptz);
+  CREATE FUNCTION public.ai_is_lawyer_on_trial(uuid) RETURNS boolean LANGUAGE sql IMMUTABLE AS $$ SELECT false $$;
+  CREATE FUNCTION public.has_pro_access(uuid) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT true $$;`);
  await sql(readFileSync('supabase/migrations/20260804000000_ai_usage_cost_tracking.sql','utf8').replaceAll('auth.uid()',"null::uuid"));
  await sql(`ALTER TABLE public.ai_usage DROP CONSTRAINT ai_usage_operation_check; ALTER TABLE public.ai_usage ADD CONSTRAINT ai_usage_operation_check CHECK(operation IN ('case_chat','document_analysis','jurisprudence_research')); ALTER TABLE public.ai_usage_monthly ADD COLUMN jurisprudence_research_count integer NOT NULL DEFAULT 0;`);
- await sql(readFileSync('supabase/migrations/20260928000000_ai_operation_metering.sql','utf8'));
- // Reapplication cannot fabricate historical records or replace the baseline.
- await sql(readFileSync('supabase/migrations/20260928000000_ai_operation_metering.sql','utf8'));
- },30000);
+  await sql(readFileSync('supabase/migrations/20260928000000_ai_operation_metering.sql','utf8'));
+  // Reapplication cannot fabricate historical records or replace the baseline.
+  await sql(readFileSync('supabase/migrations/20260928000000_ai_operation_metering.sql','utf8'));
+  // Current production shape: 4.38C commercial allowance (trigger + quota params).
+  await sql(readFileSync('supabase/migrations/20260930000000_pro_ai_allowance.sql','utf8'));
+  },30000);
  beforeEach(async()=>{
  await sql(`TRUNCATE ai_usage,ai_provider_attempts,ai_operations,ai_usage_monthly,ai_documents,ai_conversations,lawyer_cases,ai_workspaces,profiles CASCADE;
  INSERT INTO profiles VALUES('${lawyer}');INSERT INTO ai_workspaces VALUES('${workspace}','${lawyer}');INSERT INTO lawyer_cases VALUES('${caseId}','${lawyer}','${workspace}');INSERT INTO ai_documents VALUES('${doc}','${lawyer}','${workspace}');INSERT INTO ai_conversations VALUES('${doc}','${lawyer}','${workspace}');`);

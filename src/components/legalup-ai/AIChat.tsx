@@ -47,6 +47,12 @@ function errorToMessage(error: AIChatError | null): string {
       return 'El servicio de IA no está configurado. Contacta al equipo de LegalUp.';
     case 'OUTPUT_TOKEN_LIMIT':
       return 'La respuesta superó el presupuesto de tokens. Intenta de nuevo con una pregunta más acotada.';
+    case 'AI_CHAT_LIMIT_REACHED':
+      return 'Alcanzaste las 300 consultas IA incluidas este mes. Tu disponibilidad se renovará el próximo mes.';
+    case 'AI_MONTHLY_LIMIT_REACHED':
+      return 'Alcanzaste el uso de IA incluido este mes. Tu disponibilidad se renovará el próximo mes.';
+    case 'AI_USAGE_UNAVAILABLE':
+      return 'No pudimos confirmar la solicitud. Intenta nuevamente.';
     default:
       return error?.message || 'No pudimos generar una respuesta. Intenta nuevamente.';
   }
@@ -246,6 +252,13 @@ function AIChatSession({ workspaceId, documents, documentId, onUploadClick, exte
           captureChatEvent('ai_chat_response_failed', {
             error_code: err.code || 'provider_error',
           });
+          // 4.38C: commercial limit analytics (safe props only, never content).
+          if (err.code === 'AI_CHAT_LIMIT_REACHED') {
+            captureChatEvent('ai_usage_limit_reached', {
+              capability: 'chat',
+              code: err.code,
+            });
+          }
         },
       }
     );

@@ -7,6 +7,8 @@ import type { Database } from '@/types/supabase';
 import {
   MAX_DOCUMENT_SIZE_BYTES,
   isDocumentOverMaxSize,
+  isDocumentCapacityLimitError,
+  documentCapacityLimitMessage,
   toFriendlyUploadError,
 } from '@/lib/aiDocumentLimits';
 
@@ -191,6 +193,17 @@ export function useUploadAIDocument(workspace: string | undefined | (() => Promi
 
       if (insertError) {
         console.error('[LegalUpAI] Error creando documento:', insertError);
+        // 4.38C: stored-document capacity is enforced by DB trigger (authority).
+        if (isDocumentCapacityLimitError({ code: insertError.code, message: insertError.message })) {
+          try {
+            posthog.capture('ai_usage_limit_reached', {
+              capability: 'documents',
+              code: 'AI_DOCUMENT_CAPACITY_REACHED',
+              workspace_id: workspaceId,
+            });
+          } catch { /* Telemetry must not interrupt upload. */ }
+          throw new Error(documentCapacityLimitMessage());
+        }
         throw new Error('No se pudo registrar el documento. Inténtalo de nuevo.');
       }
 
@@ -300,7 +313,12 @@ export function useAnalyzeAIDocument() {
       });
       const body = await res.json().catch(() => ({}));
       identity.complete(body);
-      if (!res.ok) throw new Error(body?.error || 'No se pudo analizar el documento.');
+      if (!res.ok) {
+        // 4.38C: preserve backend code so the UI can show commercial limit copy.
+        const err = new Error(body?.error || 'No se pudo analizar el documento.') as Error & { code?: string };
+        if (body?.code) err.code = body.code;
+        throw err;
+      }
 
       return body?.analysis as AIDocumentAnalysis;
     },
