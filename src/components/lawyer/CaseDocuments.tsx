@@ -36,8 +36,10 @@ export function CaseDocuments({ workspaceId, ensureWorkspace, canAnalyze, canCha
         upgradeCtaLabel="Ver LegalUp Pro"
         onUpgrade={onUpgrade}
         onAskDocument={(documentId) => {
+          // 4.40A: abrir el chat es solo navegación/estado. No se envía
+          // ninguna pregunta por defecto; el usuario escribe la suya.
           setChatDocumentId(documentId);
-          setChatQuestion('¿Qué aspectos relevantes debería revisar en este documento?');
+          setChatQuestion(null);
           setChatOpen(true);
         }}
         analyticsSource="case_documents"

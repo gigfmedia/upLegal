@@ -271,9 +271,11 @@ export default function AICaseDetail() {
                   upgradeCtaLabel="Ver planes"
                   onUpgrade={() => setPricingOpen(true)}
                   onAskDocument={(documentId) => {
+                    // 4.40A: abrir el chat es solo navegación/estado, sin
+                    // pregunta por defecto (el usuario escribe la suya).
                     setChatOrigin('document');
                     setChatDocumentId(documentId);
-                    setChatQuestion('¿Qué aspectos relevantes debería revisar en este documento?');
+                    setChatQuestion(null);
                     setChatPanelOpen(true);
                     posthog.capture('ai_document_chat_clicked', { source: 'case_workspace' });
                   }}

@@ -1,13 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { AIChat } from '@/components/legalup-ai/AIChat';
 import type { AIDocumentListItem } from '@/hooks/useAIDocuments';
 import posthog from 'posthog-js';
 
 vi.mock('@/lib/supabaseClient', () => ({ supabase: { auth: { getSession: async () => ({ data: { session: { access_token: 'test' } } }) } } }));
 vi.mock('posthog-js', () => ({ default: { capture: vi.fn() } }));
-vi.mock('@/components/legalup-ai/AIChatSuggestions', () => ({ AIChatSuggestions: () => null }));
+vi.mock('@/components/legalup-ai/AIChatSuggestions', () => ({
+  AIChatSuggestions: ({ onSelect }: { onSelect: (text: string) => void }) => (
+    <button type="button" onClick={() => onSelect('Sugerencia de prueba')}>Sugerencia de prueba</button>
+  ),
+}));
 vi.mock('@/components/legalup-ai/AIChatMessage', () => ({ AIChatMessage: ({ message }: { message: { content: string } }) => <p>{message.content}</p> }));
 const documents = [{ id: 'doc-a', status: 'ready' }] as AIDocumentListItem[];
 const thinking = () => screen.queryByRole('status', { name: 'LegalUp AI está analizando la pregunta' });
@@ -44,6 +50,32 @@ beforeEach(() => {
   }));
 });
 afterEach(() => { cleanup(); client?.clear(); vi.unstubAllGlobals(); });
+
+describe('4.40A document chat entry points (static wiring)', () => {
+  const read = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf8');
+  it.each([
+    'src/components/lawyer/CaseDocuments.tsx',
+    'src/pages/lawyer/AICaseDetail.tsx',
+  ])('%s opens document chat without a default question', (p) => {
+    const c = read(p);
+    expect(c).toContain('onAskDocument');
+    expect(c).toContain('setChatQuestion(null)');
+    expect(c).not.toContain("setChatQuestion('¿Qué aspectos relevantes");
+  });
+  it('explicit question flows still inject the user-clicked question', () => {
+    // Command-center / workflow / intelligence clicks pass their own q
+    // (or the openCaseChat question param); document open passes null.
+    for (const p of [
+      'src/components/legalup-ai/AICaseWorkspaceContent.tsx',
+      'src/pages/lawyer/AICaseDetail.tsx',
+    ]) {
+      expect(read(p)).toMatch(/setChatQuestion\(q\)/);
+    }
+    expect(read('src/pages/lawyer/CaseDetailPage.tsx')).toMatch(/setChatQuestion\(question\)/);
+    // The auto-send effect itself is preserved for those explicit questions.
+    expect(read('src/components/legalup-ai/AIChat.tsx')).toContain('runMutation(q)');
+  });
+});
 
 describe('shared chat request lifecycle', () => {
   it.each([undefined, 'doc-a'])('settles two messages, without waiting for history refetch (document %s)', async (doc) => {
@@ -106,5 +138,34 @@ describe('shared chat request lifecycle', () => {
     await screen.findByText('Respuesta 1');
     await waitFor(() => expect(thinking()).not.toBeInTheDocument());
     expect(input()).not.toBeDisabled();
+  });
+  it('4.40A opening document chat sends nothing and keeps input enabled', async () => {
+    mount('doc-a');
+    await waitFor(() => expect(input()).not.toBeDisabled());
+    expect(input()).toHaveValue('');
+    expect(requests.filter((r) => r.init.method === 'POST')).toHaveLength(0);
+    expect(thinking()).not.toBeInTheDocument();
+    expect(posthog.capture).not.toHaveBeenCalledWith('ai_chat_message_sent', expect.anything());
+  });
+  it('4.40A suggestion click sends exactly once (explicit user action)', async () => {
+    mount('doc-a');
+    await waitFor(() => expect(input()).not.toBeDisabled());
+    fireEvent.click(screen.getByRole('button', { name: 'Sugerencia de prueba' }));
+    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(JSON.parse(requests[0].init.body as string).document_id).toBe('doc-a');
+    await act(async () => requests[0].resolve(response()));
+    await waitFor(() => expect(thinking()).not.toBeInTheDocument());
+    expect(requests).toHaveLength(1);
+    expect(input()).not.toBeDisabled();
+  });
+  it('4.40A close/reopen and document switch never auto-send', async () => {
+    const mounted = mount('doc-a');
+    await waitFor(() => expect(input()).not.toBeDisabled());
+    mounted.unmount();
+    const reopened = mount('doc-a');
+    await waitFor(() => expect(input()).not.toBeDisabled());
+    reopened.rerender(reopened.view('ws-a', 'doc-b'));
+    await waitFor(() => expect(input()).not.toBeDisabled());
+    expect(requests.filter((r) => r.init.method === 'POST')).toHaveLength(0);
   });
 });
