@@ -87,6 +87,43 @@ describe('4.34B actual Core handlers and real entitlement/metering helpers',()=>
  // 4.34E: workflow/sync is deterministic Core for Pro (no gate, 0 provider); see workflowCore.test.mjs.
   it('monthly provider quota blocks analysis but not deterministic intelligence',async()=>{const h=harness();h.rpc.mockResolvedValueOnce({error:{message:'AI_MONTHLY_LIMIT_REACHED'}});expect((await h.call('analyze')).statusCode).toBe(429);expect((await h.call('intelligence')).statusCode).toBe(200);expect(h.provider).not.toHaveBeenCalled();});
   it('4.38C commercial chat limit maps to 429 with typed code before provider',async()=>{const h=harness();h.rows.ai_documents.forEach(d=>{d.status='ready';d.extracted_text='Contrato con obligaciones y plazos suficientes para el test.';});const conversation=await h.call('chatGet');h.rpc.mockResolvedValueOnce({error:{message:'AI_CHAT_LIMIT_REACHED'}});const res=await h.call('chat',{conversation_id:conversation.body.conversation.id,message:'Pregunta sobre el contrato'});expect(res.statusCode).toBe(429);expect(res.body.code).toBe('AI_CHAT_LIMIT_REACHED');expect(h.provider).not.toHaveBeenCalled();});
+  it('4.39B document chat on processing doc fails typed with 0 provider/quota',async()=>{
+   const h=harness();
+   const conversation=await h.call('chatGet');expect(conversation.statusCode).toBe(200);
+   const docId=h.rows.ai_documents[0].id;
+   const res=await h.call('chat',{conversation_id:conversation.body.conversation.id,message:'¿De qué trata este documento?',document_id:docId});
+   expect(res.statusCode).toBe(422);expect(res.body.code).toBe('AI_DOCUMENT_NOT_READY');
+   expect(h.provider).not.toHaveBeenCalled();
+  });
+  it('4.39B document chat on ready-but-empty doc fails typed without provider',async()=>{
+   const h=harness();
+   h.rows.ai_documents.forEach(d=>{d.status='ready';d.extracted_text='  ';});
+   const conversation=await h.call('chatGet');expect(conversation.statusCode).toBe(200);
+   const res=await h.call('chat',{conversation_id:conversation.body.conversation.id,message:'¿De qué trata este documento?',document_id:h.rows.ai_documents[0].id});
+   expect(res.statusCode).toBe(422);expect(res.body.code).toBe('AI_DOCUMENT_NOT_READY');
+   expect(h.provider).not.toHaveBeenCalled();
+  });
+  it('4.39B document chat excludes shared history and carries selected authority; case chat keeps both',async()=>{
+   const h=harness();
+   h.rows.ai_documents.forEach(d=>{d.status='ready';d.extracted_text='Contrato con obligaciones y plazos suficientes para el test.';});
+   const conversation=await h.call('chatGet');expect(conversation.statusCode).toBe(200);
+   const cid=conversation.body.conversation.id;
+   h.rows.ai_chat_messages.push({id:id(70),conversation_id:cid,workspace_id:workspaceId,lawyer_id:user,role:'user',content:'Pregunta previa sobre otro documento'},
+    {id:id(71),conversation_id:cid,workspace_id:workspaceId,lawyer_id:user,role:'assistant',content:'Respuesta previa sobre otro documento'});
+   const docRes=await h.call('chat',{conversation_id:cid,message:'¿De qué trata este documento?',document_id:h.rows.ai_documents[0].id});
+   expect(docRes.statusCode).toBe(200);
+   const docPrompt=h.provider.mock.calls[0][0].messages[0].content;
+   expect(docPrompt).toContain('DOCUMENTO SELECCIONADO');
+   expect(docPrompt).not.toContain('HISTORIAL RECIENTE');
+   expect(docPrompt).not.toContain('Pregunta previa sobre otro documento');
+   expect(h.provider.mock.calls[0][0].system).toContain('autoridad primaria');
+   const caseRes=await h.call('chat',{conversation_id:cid,message:'Resume el caso'});
+   expect(caseRes.statusCode).toBe(200);
+   const casePrompt=h.provider.mock.calls[1][0].messages[0].content;
+   expect(casePrompt).toContain('HISTORIAL RECIENTE');
+   expect(casePrompt).not.toContain('DOCUMENTO SELECCIONADO');
+   expect(h.provider.mock.calls[1][0].system).not.toContain('autoridad primaria');
+  });
   it('4.38C pro provisions a second workspace (no commercial workspace cap), trial P0001 still 403',async()=>{
    const h=harness();const secondCase=id(50);
    h.rows.lawyer_cases.push({id:secondCase,lawyer_id:user,title:'Segundo',ai_workspace_id:null});

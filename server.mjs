@@ -9390,6 +9390,18 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       }
     }
 
+    // 4.39B: el documento seleccionado debe estar listo y con texto usable.
+    // Sin fallback silencioso a otro documento: error tipado, 0 provider, 0 quota.
+    if (prioritizedDocumentId) {
+      const selectedReady = (readyDocs || []).find((d) => d.id === prioritizedDocumentId);
+      if (!selectedReady || (selectedReady.extracted_text || '').trim().length < 20) {
+        return await metering.respond(res, 422, {
+          error: 'Este documento todavía se está procesando. Espera a que termine antes de hacer preguntas sobre él.',
+          code: 'AI_DOCUMENT_NOT_READY',
+        });
+      }
+    }
+
     if (!readyDocs || readyDocs.length === 0) {
       const { count, error: countError } = await supabase
         .from('ai_documents')
@@ -9432,12 +9444,15 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
 
     // Construye el contexto. Si el conjunto supera el límite, no truncar ni
     // descartar documentos: informar al usuario.
+    // 4.39B: Document Chat declara el documento seleccionado como autoridad
+    // primaria (presupuesto reservado); Case Chat mantiene contexto amplio.
     const { context, tooLarge } = buildChatContext({
       workspace,
       documents: readyDocs,
       analyses,
       question: message,
       proCase,
+      selectedDocumentId: prioritizedDocumentId || null,
     });
     if (tooLarge) {
       return await metering.respond(res, 422, {
@@ -9448,13 +9463,18 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
     }
 
     // Historial reciente (últimos N) para dar continuidad a la conversación.
-    const { data: historyRows, error: historyError } = await supabase
-      .from('ai_chat_messages')
-      .select('role, content')
-      .eq('conversation_id', conversation.id)
-      .eq('lawyer_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(CHAT_LIMITS.MAX_CHAT_HISTORY_MESSAGES);
+    // 4.39B: Document Chat excluye el historial workspace-wide (no atribuible
+    // por documento sin schema; la corrección del seleccionado prima sobre la
+    // continuidad entre documentos). Case Chat lo conserva intacto.
+    const { data: historyRows, error: historyError } = prioritizedDocumentId
+      ? { data: [], error: null }
+      : await supabase
+        .from('ai_chat_messages')
+        .select('role, content')
+        .eq('conversation_id', conversation.id)
+        .eq('lawyer_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(CHAT_LIMITS.MAX_CHAT_HISTORY_MESSAGES);
     if (historyError) throw historyError;
     const history = (historyRows || []).reverse().map((m) => ({ role: m.role, content: m.content }));
 
@@ -9482,7 +9502,7 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
     const { data: raw, raw: rawText } = await chatCompletion({
       model: AI_DEFAULT_MODEL,
       metering,
-      system: buildChatSystemPrompt(),
+      system: buildChatSystemPrompt({ mode: prioritizedDocumentId ? 'document' : 'case' }),
       messages: [
         {
           role: 'user',

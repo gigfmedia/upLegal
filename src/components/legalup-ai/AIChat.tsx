@@ -55,6 +55,8 @@ function errorToMessage(error: AIChatError | null): string {
       return 'No pudimos confirmar la solicitud. Intenta nuevamente.';
     case 'AI_OPERATION_IN_PROGRESS':
       return 'La solicitud sigue en curso. Espera unos momentos y vuelve a intentarlo: tu consulta no se duplicará.';
+    case 'AI_DOCUMENT_NOT_READY':
+      return 'Este documento todavía se está procesando. Espera a que termine antes de hacer preguntas sobre él.';
     default:
       return error?.message || 'No pudimos generar una respuesta. Intenta nuevamente.';
   }

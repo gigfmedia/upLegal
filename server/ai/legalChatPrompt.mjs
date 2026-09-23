@@ -104,8 +104,8 @@ export function selectRelevantChunks(text, questionTokens, budgetChars) {
   return selected.map((idx) => chunks[idx]).join('\n\n[...]\n\n').slice(0, budget);
 }
 
-export function buildChatSystemPrompt() {
-  return `Eres un asistente de análisis jurídico para profesionales del derecho en Chile. Trabajas dentro de un caso concreto de LegalUp AI y tu única fuente de información son los documentos privados y los análisis de ese caso.
+export function buildChatSystemPrompt({ mode } = {}) {
+  const base = `Eres un asistente de análisis jurídico para profesionales del derecho en Chile. Trabajas dentro de un caso concreto de LegalUp AI y tu única fuente de información son los documentos privados y los análisis de ese caso.
 
 Reglas:
 1. Utiliza únicamente la información proporcionada en el contexto del caso.
@@ -166,6 +166,17 @@ Donde:
 - answer: tu respuesta, en Markdown básico (listas, negrita, encabezados pequeños).
 - sources: los documentos que sustentan tu respuesta. Usa EXCLUSIVAMENTE los document_id y file_name que aparecen en el contexto del caso. Si dispones del fragmento exacto que respalda tu respuesta (ver CONTENIDO del documento), incluye también "fragment_id" (el ID del fragmento, ej. "document::xyz::0") y "evidence" (el texto literal del fragmento, copiado exactamente). Si ninguna afirmación se basa en un documento, devuelve un arreglo vacío.
 - No agregues texto, comentarios ni bloques markdown fuera del JSON.`;
+  // 4.39B: autoridad del documento seleccionado (solo Document Chat). El modo
+  // caso (default) queda byte-idéntico para no alterar Case Chat.
+  if (mode === 'document') {
+    return `${base}
+
+DOCUMENTO SELECCIONADO (autoridad primaria):
+21. El contexto marca un bloque DOCUMENTO SELECCIONADO: es la autoridad primaria de la respuesta. Basa tu respuesta principalmente en él.
+22. No sustituyas información de OTROS DOCUMENTOS DEL CASO (contexto secundario). Si la respuesta no está en el documento seleccionado, dilo claramente en lugar de responder con otro documento.
+23. Usa los otros documentos solo como contexto secundario o cuando el usuario pida explícitamente una comparación.`;
+  }
+  return base;
 }
 
 /** Formatea un análisis IA a texto breve para el contexto. */
@@ -199,18 +210,22 @@ function formatAnalysis(analysis) {
 
 /**
  * Construye el contexto privado del caso.
- * @param {{ workspace: object, documents: Array<{id, original_filename, extracted_text}>, analyses: Record<string, object>, question?: string, proCase?: object|null }} params
+ * @param {{ workspace: object, documents: Array<{id, original_filename, extracted_text}>, analyses: Record<string, object>, question?: string, proCase?: object|null, selectedDocumentId?: string|null }} params
  *  - question: texto de la pregunta del abogado. Si se provee, en documentos
  *    extensos se recupera el tramo más relevante (chunking) en lugar de cortar
  *    el inicio; si no, se usa el inicio del documento.
  *  - proCase: header normalizado en vivo del caso Pro (getProCaseHeader). Cuando
  *    está presente sus valores ganan a la copia de provisioning del workspace.
+ *  - selectedDocumentId: 4.39B autoridad del documento seleccionado (Document
+ *    Chat). El documento seleccionado va PRIMERO con presupuesto reservado y
+ *    etiqueta explícita; los demás son contexto secundario y se truncan antes.
+ *    Sin seleccionado (Case Chat) el comportamiento es el histórico.
  * @returns {{ context: string, tooLarge: boolean }}
  *  - context: texto separado por documento (CASO / DOCUMENTO N / CONTENIDO / ANÁLISIS),
  *    acotado a MAX_CHAT_CONTEXT_CHARS mediante recuperación por relevancia.
  *  - tooLarge: siempre false (el chunking garantiza contexto que cabe en la consulta).
  */
-export function buildChatContext({ workspace, documents = [], analyses = {}, question = '', proCase = null }) {
+export function buildChatContext({ workspace, documents = [], analyses = {}, question = '', proCase = null, selectedDocumentId = null }) {
   // FASE 4.33B: datos en vivo del caso Pro ganan a la copia de provisioning.
   const live = proCase && typeof proCase === 'object' ? proCase : null;
   const caseLines = [`Nombre: ${(live && live.title) || workspace.name || 'Sin nombre'}`];
@@ -224,9 +239,24 @@ export function buildChatContext({ workspace, documents = [], analyses = {}, que
 
   const questionTokens = tokenize(question);
 
-  const blocks = [caseBlock];
+  // 4.39B: partición seleccionado/secundarios. Sin seleccionado el flujo es el
+  // histórico (mismo orden de entrada, mismos encabezados, mismo reparto).
+  const selected =
+    selectedDocumentId ? documents.find((d) => d.id === selectedDocumentId) || null : null;
+  const secondary = selected ? documents.filter((d) => d.id !== selectedDocumentId) : documents;
 
-  for (const doc of documents) {
+  // Presupuesto: el seleccionado reserva primero (60% del resto tras el caso);
+  // los secundarios comparten el 40% y se truncan/descartan antes.
+  const remaining = CHAT_LIMITS.MAX_CHAT_CONTEXT_CHARS - caseBlock.length;
+  const selectedBudget = selected ? Math.max(2000, Math.floor(remaining * 0.6)) : 0;
+  const secondaryTotal = selected
+    ? Math.max(0, remaining - selectedBudget)
+    : remaining;
+  const secondaryBudget = secondary.length
+    ? Math.max(1000, Math.floor(secondaryTotal / secondary.length))
+    : 0;
+
+  const buildDocBlock = (doc, budget, { selectedBlock }) => {
     const rawText = doc.extracted_text || '';
     const analysisText = formatAnalysis(analyses[doc.id] || null).slice(
       0,
@@ -236,29 +266,51 @@ export function buildChatContext({ workspace, documents = [], analyses = {}, que
     // Encabezados del bloque (DOCUMENTO / CONTENIDO / ANÁLISIS) y separadores.
     const headerChars = 90 + doc.original_filename.length + analysisText.length;
 
-    // Presupuesto de ESTE bloque = reparto proporcional del límite global menos
-    // lo usado por el bloque del caso. Cubre contenido + análisis + encabezados,
-    // de modo que el bloque nunca rebase el límite y no se dispare CONTEXT_TOO_LARGE.
-    const budget = Math.max(
-      2000,
-      Math.floor(
-        (CHAT_LIMITS.MAX_CHAT_CONTEXT_CHARS - caseBlock.length) / documents.length
-      ) - headerChars
-    );
+    // Presupuesto de ESTE bloque = reparto del límite global menos
+    // lo usado por el bloque del caso (o la partición 60/40 en modo documento).
+    // Cubre contenido + análisis + encabezados.
+    const blockBudget = Math.max(2000, budget - headerChars);
 
     // Recuperación relevante si hay pregunta y el documento es extenso.
     const docText =
       questionTokens.length > 0
-        ? selectRelevantChunks(rawText, questionTokens, budget)
-        : rawText.slice(0, budget);
+        ? selectRelevantChunks(rawText, questionTokens, blockBudget)
+        : rawText.slice(0, blockBudget);
 
-    const docBlock = [
-      `DOCUMENTO: ${doc.original_filename}`,
+    if (selectedBlock) {
+      return [
+        `DOCUMENTO SELECCIONADO: ${doc.original_filename}`,
+        `INSTRUCCIÓN: El usuario pregunta sobre este documento seleccionado. Responde basándote principalmente en él. No sustituyas información de otros documentos del caso. Si la respuesta no está en este documento, dilo claramente.`,
+        `CONTENIDO:\n${docText}`,
+        analysisText ? `ANÁLISIS:\n${analysisText}` : '',
+      ].join('\n\n');
+    }
+    const label = selected
+      ? `OTRO DOCUMENTO DEL CASO (contexto secundario): ${doc.original_filename}`
+      : `DOCUMENTO: ${doc.original_filename}`;
+    return [
+      label,
       `CONTENIDO:\n${docText}`,
       analysisText ? `ANÁLISIS:\n${analysisText}` : '',
     ].join('\n\n');
+  };
 
-    blocks.push(docBlock);
+  const blocks = [caseBlock];
+  if (selected) blocks.push(buildDocBlock(selected, selectedBudget, { selectedBlock: true }));
+  for (const doc of secondary) {
+    blocks.push(
+      buildDocBlock(
+        doc,
+        // Modo caso: reparto histórico exacto por documento.
+        selected ? secondaryBudget : Math.max(
+          2000,
+          Math.floor(
+            (CHAT_LIMITS.MAX_CHAT_CONTEXT_CHARS - caseBlock.length) / documents.length
+          )
+        ),
+        { selectedBlock: false }
+      )
+    );
   }
 
   let context = blocks.join('\n\n');
