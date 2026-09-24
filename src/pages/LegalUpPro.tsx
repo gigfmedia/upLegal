@@ -278,11 +278,11 @@ function HeroComposition() {
           </span>
         </div>
       </motion.div>
-      {/* Fragmentos asomando detrás del panel: profundidad sin tapar contenido */}
-      <div className="pointer-events-none absolute -top-10 left-4 z-0 hidden w-52 -rotate-3 sm:w-56 lg:block" aria-hidden="true">
+      {/* Fragmentos secundarios detrás del browser (~45% visible: título + contenido) */}
+      <div className="pointer-events-none absolute -top-24 left-0 z-0 hidden w-52 -rotate-3 sm:w-56 lg:block" aria-hidden="true">
         <Float amount={10} duration={7}><AgendaFragment /></Float>
       </div>
-      <div className="pointer-events-none absolute -top-14 right-4 z-0 hidden w-56 rotate-2 sm:w-60 lg:block" aria-hidden="true">
+      <div className="pointer-events-none absolute -top-28 right-0 z-0 hidden w-56 rotate-2 sm:w-60 lg:block" aria-hidden="true">
         <Float amount={8} duration={6} delay={1}><AIChatFragment /></Float>
       </div>
     </div>
@@ -855,46 +855,35 @@ export default function LegalUpPro() {
         </div>
       </section>
 
-      {/* PRECIO — momento de conversión mayor */}
+      {/* PRECIO — un solo momento de conversión (el hero ya anticipa la oferta) */}
       <section id="pricing" className="border-b border-gray-100 bg-white">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-2 lg:gap-16">
-          <Reveal>
-            <Eyebrow>Precio</Eyebrow>
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24">
+          <Reveal className="mx-auto max-w-3xl text-center">
+            <Eyebrow>Plan Founder</Eyebrow>
             <h2 className="mt-4 text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl">
-              Un precio simple para empezar hoy.
+              Empieza con LegalUp Pro.
             </h2>
-            <div className="mt-6 flex items-end gap-2">
-              <span className="text-7xl font-bold tracking-tight text-gray-900 sm:text-8xl">$19.990</span>
-              <span className="pb-2 text-lg font-medium text-gray-500">/mes</span>
-            </div>
-            <p className="mt-3 font-medium text-green-700">Durante tus primeros 3 cobros · Badge Founder a los primeros 15</p>
-            <p className="mt-2 max-w-md text-sm leading-relaxed text-gray-500">
-              Desde el cuarto cobro, $49.990/mes. Después de los 15 cupos Founder, Pro cuesta $49.990/mes. El badge Founder queda permanentemente en tu perfil.
+            <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-gray-600">
+              Accede a LegalUp Pro con el precio Founder durante tus primeros 3 meses.
             </p>
-            <ul className="mt-6 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
-              {["Solicitudes", "Clientes", "Casos", "Citas", "Servicios", "Ingresos", "LegalUp AI integrado"].map((perk) => (
-                <li key={perk} className="flex gap-2 text-gray-700"><Check className="mt-0.5 h-4 w-4 shrink-0 text-green-700" />{perk}</li>
-              ))}
-            </ul>
           </Reveal>
-          <Reveal delay={0.12}>
+          <Reveal delay={0.1} className="mx-auto mt-10 max-w-xl">
             <Card className="overflow-hidden border-green-200 shadow-xl">
-              <div className="bg-gradient-to-br from-green-50 to-white p-6 sm:p-8">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-lg font-bold">LegalUp Pro</h3>
-                    <p className="text-sm text-gray-500">Para abogados y estudios jurídicos</p>
-                  </div>
+              <div className="bg-gradient-to-br from-green-50 to-white p-6 text-center sm:p-8">
+                <div className="flex items-center justify-center gap-3">
+                  <span className="text-3xl font-bold tracking-tight text-gray-900">$19.990<span className="text-base font-medium text-gray-500">/mes</span></span>
                   <Badge className="border-green-200 bg-green-100 text-green-800">Founder</Badge>
                 </div>
-                <div className="mt-6">
-                  <div className="text-4xl font-bold">$19.990<span className="text-base font-medium text-gray-500">/mes</span></div>
-                  <div className="text-sm font-medium text-green-700">durante tus primeros 3 cobros</div>
-                </div>
+                <p className="mt-2 text-sm text-gray-600">durante tus primeros 3 cobros</p>
                 <Button onClick={() => handleCTAClick("pricing")} className="mt-6 h-12 w-full bg-gray-900 text-base hover:bg-green-900">
-                  Activar LegalUp Pro <ArrowRight className="h-4 w-4" />
+                  Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
                 </Button>
-                <p className="mt-3 text-center text-xs text-gray-500">Sin compromiso anual. Cancela cuando quieras según condiciones vigentes.</p>
+                <ul className="mx-auto mt-6 max-w-sm space-y-1.5 text-left text-xs leading-relaxed text-gray-500">
+                  <li>Desde el cuarto cobro, $49.990/mes.</li>
+                  <li>Después de los 15 cupos Founder, Pro cuesta $49.990/mes. El badge Founder queda permanentemente en tu perfil.</li>
+                  <li>Solicitudes, Clientes, Casos, Citas, Servicios, Ingresos y LegalUp AI integrado.</li>
+                  <li>Sin compromiso anual. Cancela cuando quieras según condiciones vigentes.</li>
+                </ul>
               </div>
             </Card>
           </Reveal>
