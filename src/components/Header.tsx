@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Scale, User, LogOut, Eye, ChevronDown, Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
 import { cn } from "@/lib/utils";
+import { track } from "@/lib/track";
 
 const AuthModal = lazy(() => import("./AuthModal").then(m => ({ default: m.AuthModal })));
 const NotificationDropdown = lazy(() => import("./NotificationDropdown").then(m => ({ default: m.NotificationDropdown })));
@@ -120,14 +121,17 @@ export default function Header({
 
   return (
     <div className={`${fixed ? 'fixed' : 'absolute'} top-0 left-0 right-0 z-50 h-16 transition-transform duration-300 ${visible ? 'translate-y-0' : '-translate-y-[80px]'}`}>
-      {/* Top Bar */}
+      {/* Top Bar — LegalUp Pro para abogados (FASE 5.12) */}
       {!hideTopBar && (
         <div
           className="h-10 bg-[#111827] flex items-center justify-center px-4 cursor-pointer hover:bg-black transition-colors border-b border-gray-800"
-          onClick={() => handleNavigation('/cae')}
+          onClick={() => {
+            track.commercialCTAClicked({ source: 'header_pro_banner', destination: '/pro' });
+            handleNavigation('/pro');
+          }}
         >
           <p className="text-white text-[13px] sm:text-sm font-medium text-center">
-            ¿Tienes deuda CAE? Revísalo antes de pagar <span className="ml-1">→</span>
+            ¿Eres abogado? Gestiona tu práctica con LegalUp Pro <span className="ml-1">→</span>
           </p>
         </div>
       )}

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
+import { track } from "@/lib/track";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -1068,21 +1069,30 @@ const Index = () => {
         </div>
       </section>
 
-      {/* CAE High Conversion Section */}
+      {/* LegalUp Pro para abogados (FASE 5.12) */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-green-900 border-y border-gray-800 text-white">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold font-serif text-green-600 mb-4">
-            ¿Tienes deuda CAE y no sabes qué hacer?
+          <p className="text-sm font-semibold uppercase tracking-widest text-green-400 mb-3">
+            LegalUp Pro para abogados
+          </p>
+          <h2 className="text-3xl font-bold font-serif text-white mb-4">
+            Gestiona tu práctica en un solo lugar
           </h2>
           <p className="text-xl mb-8 text-white">
-            Revisa tu caso antes de pagar o que el proceso avance.
+            Organiza clientes, casos, solicitudes y citas, con herramientas de IA integradas para apoyar tu trabajo diario.
           </p>
           <button 
-              onClick={() => navigate('/cae')}
+              onClick={() => {
+                track.commercialCTAClicked({ source: 'home_pro_cta', destination: '/pro' });
+                navigate('/pro');
+              }}
               className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-11 rounded-md px-8 bg-white text-gray-900 hover:bg-gray-100"
             >
-              Revisar mi caso →
+              Conocer LegalUp Pro →
             </button>
+          <p className="mt-4 text-xs text-green-300">
+            Plan Founder desde $19.990/mes
+          </p>
         </div>
       </section>
 
