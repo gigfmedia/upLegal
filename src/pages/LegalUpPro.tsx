@@ -700,14 +700,14 @@ export default function LegalUpPro() {
       {/* WORKSPACE — momento visual mayor con conector animado */}
       <section className="bg-white">
         <div className="px-3 py-3 sm:px-6 sm:py-6">
-          <div id="producto" className="overflow-hidden rounded-[28px] bg-gray-950 text-white sm:rounded-[40px]">
+          <div id="producto" className="overflow-hidden rounded-[28px] bg-cream-900 text-gray-900 sm:rounded-[40px]">
             <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24">
           <Reveal className="max-w-3xl">
-            <Eyebrow dark>El workspace</Eyebrow>
-            <h2 className="mt-4 text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl">
+            <Eyebrow>El workspace</Eyebrow>
+            <h2 className="mt-4 text-4xl font-bold leading-[1.05] tracking-tight text-gray-900 sm:text-5xl">
               Un flujo conectado, no cinco herramientas.
             </h2>
-            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-gray-400">
+            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-gray-600">
               Todo parte de las solicitudes y avanza hasta los ingresos. Cada etapa alimenta a la siguiente.
             </p>
           </Reveal>
@@ -717,7 +717,7 @@ export default function LegalUpPro() {
               whileInView={{ scaleX: 1 }}
               viewport={{ once: true, margin: "-80px" }}
               transition={{ duration: 1.4, ease: EASE }}
-              className="absolute left-0 right-0 top-7 hidden h-0.5 origin-left bg-gradient-to-r from-emerald-500/60 via-emerald-500/30 to-transparent lg:block"
+              className="absolute left-0 right-0 top-7 hidden h-1 origin-left rounded-full bg-gradient-to-r from-green-600 via-green-500/60 to-transparent lg:block"
               aria-hidden="true"
             />
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5 lg:gap-4">
@@ -729,22 +729,24 @@ export default function LegalUpPro() {
                 { n: "05", icon: DollarSign, title: "Ingresos", desc: "La actividad de tu práctica, a la vista." },
               ].map((s, i) => (
                 <Reveal key={s.n} delay={i * 0.1}>
-                  <div className="relative rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur">
+                  <div className="relative rounded-2xl border border-green-600/20 bg-white p-5 shadow-md">
                     <div className="flex items-center justify-between">
-                      <span className="font-mono text-xs font-bold text-emerald-400">{s.n}</span>
-                      <s.icon className="h-5 w-5 text-emerald-400" />
+                      <span className="rounded-lg bg-green-600 px-2 py-0.5 font-mono text-xs font-bold text-white">{s.n}</span>
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100">
+                        <s.icon className="h-5 w-5 text-green-800" />
+                      </span>
                     </div>
-                    <h3 className="mt-3 text-lg font-semibold">{s.title}</h3>
-                    <p className="mt-1 text-sm leading-relaxed text-gray-400">{s.desc}</p>
+                    <h3 className="mt-3 text-lg font-semibold text-gray-900">{s.title}</h3>
+                    <p className="mt-1 text-sm leading-relaxed text-gray-600">{s.desc}</p>
                   </div>
                 </Reveal>
               ))}
             </div>
           </div>
-          <Reveal className="mt-10 flex flex-col items-center justify-between gap-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.07] px-6 py-5 sm:flex-row" delay={0.15}>
+          <Reveal className="mt-10 flex flex-col items-center justify-between gap-4 rounded-2xl bg-green-700 px-6 py-5 shadow-lg sm:flex-row" delay={0.15}>
             <div className="flex items-center gap-3">
-              <Sparkles className="h-5 w-5 shrink-0 text-emerald-400" />
-              <p className="text-sm text-gray-200 sm:text-base"><span className="font-semibold text-white">IA como capa transversal:</span> disponible en tus casos a lo largo de todo el flujo, no aislada.</p>
+              <Sparkles className="h-5 w-5 shrink-0 text-emerald-100" />
+              <p className="text-sm text-emerald-50 sm:text-base"><span className="font-semibold text-white">IA como capa transversal:</span> disponible en tus casos a lo largo de todo el flujo, no aislada.</p>
             </div>
             <Button onClick={() => handleCTAClick("overview")} className="rounded-full shrink-0 bg-white text-gray-900 hover:bg-gray-100">
               Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
