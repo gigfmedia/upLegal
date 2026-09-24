@@ -10,6 +10,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
 import { useProSubscription } from "@/hooks/useProSubscription";
 import { ProPricingModal } from "@/components/legalup-pro/ProPricingModal";
+import { TestimonialsSection } from "@/components/pro/TestimonialsSection";
 import { AuthModal } from "@/components/AuthModal";
 import posthog from "posthog-js";
 import { persistUTMsFromURL } from "@/lib/bookingAttribution";
@@ -697,8 +698,10 @@ export default function LegalUpPro() {
       </section>
 
       {/* WORKSPACE — momento visual mayor con conector animado */}
-      <section id="producto" className="overflow-hidden border-b border-gray-100 bg-gray-950 text-white">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24">
+      <section className="bg-white">
+        <div className="px-3 py-3 sm:px-6 sm:py-6">
+          <div id="producto" className="overflow-hidden rounded-[28px] bg-gray-950 text-white sm:rounded-[40px]">
+            <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24">
           <Reveal className="max-w-3xl">
             <Eyebrow dark>El workspace</Eyebrow>
             <h2 className="mt-4 text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl">
@@ -747,6 +750,8 @@ export default function LegalUpPro() {
               Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
             </Button>
           </Reveal>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -797,7 +802,9 @@ export default function LegalUpPro() {
       </section>
 
       {/* IA — interrupción visual inmersiva */}
-      <section id="ia" className="relative overflow-hidden border-b border-gray-800 bg-gray-950 text-white">
+      <section className="bg-white">
+        <div className="px-3 py-3 sm:px-6 sm:py-6">
+          <div id="ia" className="relative overflow-hidden rounded-[28px] bg-gray-950 text-white sm:rounded-[40px]">
         <div className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[42rem] max-w-none -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl" aria-hidden="true" />
         <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24">
           <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
@@ -863,6 +870,8 @@ export default function LegalUpPro() {
             </Reveal>
           </div>
         </div>
+          </div>
+        </div>
       </section>
 
       {/* BENEFICIOS — declaraciones editoriales, sin cards */}
@@ -889,8 +898,10 @@ export default function LegalUpPro() {
       </section>
 
       {/* CÓMO EMPEZAR — timeline vertical */}
-      <section className="border-b border-gray-100 bg-cream-900">
-        <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 sm:py-24">
+      <section className="bg-white">
+        <div className="px-3 py-3 sm:px-6 sm:py-6">
+          <div className="overflow-hidden rounded-[28px] bg-cream-900 sm:rounded-[40px]">
+            <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 sm:py-24">
           <Reveal className="text-center sm:text-left">
             <Eyebrow>Cómo empezar</Eyebrow>
             <h2 className="mt-4 text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl">
@@ -921,12 +932,17 @@ export default function LegalUpPro() {
             </div>
           </div>
           <Reveal className="mt-12 text-center sm:text-left">
-            <Button size="lg" onClick={() => handleCTAClick("how")} className="h-12 bg-gray-900 px-8 text-base hover:bg-green-900">
+            <Button size="lg" onClick={() => handleCTAClick("how")} className="bg-gray-900 hover:bg-green-900 h-12 px-8 text-base">
               Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
             </Button>
           </Reveal>
+            </div>
+          </div>
         </div>
       </section>
+
+      {/* TESTIMONIOS — entre cómo empezar y pricing */}
+      <TestimonialsSection />
 
       {/* PRECIO — comparativa Free / Pro (una sola sección canónica) */}
       <section id="pricing" className="border-b border-gray-100 bg-white">
@@ -1017,8 +1033,10 @@ export default function LegalUpPro() {
       </section>
 
       {/* FAQ — contenida */}
-      <section id="faq" className="border-b border-gray-100 bg-gray-50">
-        <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20">
+      <section className="bg-white">
+        <div className="px-3 py-3 sm:px-6 sm:py-6">
+          <div id="faq" className="overflow-hidden rounded-[28px] bg-gray-50 sm:rounded-[40px]">
+            <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20">
           <Reveal className="text-center">
             <Eyebrow>FAQ</Eyebrow>
             <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Preguntas frecuentes</h2>
@@ -1033,11 +1051,15 @@ export default function LegalUpPro() {
               ))}
             </Accordion>
           </Reveal>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* CTA FINAL — verde profundo memorable */}
-      <section className="relative overflow-hidden bg-green-950 text-white">
+      <section className="bg-white">
+        <div className="px-3 pb-3 sm:px-6 sm:pb-6">
+          <div className="relative overflow-hidden rounded-[28px] bg-green-950 text-white sm:rounded-[40px]">
         <div className="pointer-events-none absolute -bottom-48 left-1/2 h-96 w-[52rem] max-w-none -translate-x-1/2 rounded-full bg-emerald-500/15 blur-3xl" aria-hidden="true" />
         <div className="relative mx-auto max-w-5xl px-4 py-20 text-center sm:px-6 sm:py-28">
           <Reveal>
@@ -1050,8 +1072,10 @@ export default function LegalUpPro() {
                 Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
-            <p className="mt-5 text-sm text-emerald-200/70">$19.990/mes × 3 cobros · Sin compromiso anual</p>
+            <p className="mt-5 text-sm text-emerald-400">$19.990/mes × 3 cobros · Sin compromiso anual</p>
           </Reveal>
+            </div>
+          </div>
         </div>
       </section>
 
