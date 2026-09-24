@@ -729,9 +729,9 @@ export default function LegalUpPro() {
                 { n: "05", icon: DollarSign, title: "Ingresos", desc: "La actividad de tu práctica, a la vista." },
               ].map((s, i) => (
                 <Reveal key={s.n} delay={i * 0.1}>
-                  <div className="relative rounded-2xl border border-green-600/20 bg-white p-5 shadow-md">
+                  <div className="relative rounded-2xl border border-green-600/20 bg-white p-5 shadow-xl">
                     <div className="flex items-center justify-between">
-                      <span className="rounded-lg bg-green-600 px-2 py-0.5 font-mono text-xs font-bold text-white">{s.n}</span>
+                      <span className="rounded-lg bg-green-300 px-2 py-0.5 font-mono text-xs font-bold text-green-950">{s.n}</span>
                       <span className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100">
                         <s.icon className="h-5 w-5 text-green-800" />
                       </span>
