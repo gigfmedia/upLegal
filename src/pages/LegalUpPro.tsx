@@ -712,14 +712,6 @@ export default function LegalUpPro() {
             </p>
           </Reveal>
           <div className="relative mt-12">
-            <motion.div
-              initial={{ scaleX: 0 }}
-              whileInView={{ scaleX: 1 }}
-              viewport={{ once: true, margin: "-80px" }}
-              transition={{ duration: 1.4, ease: EASE }}
-              className="absolute left-0 right-0 top-7 hidden h-1 origin-left rounded-full bg-gradient-to-r from-green-600 via-green-500/60 to-transparent lg:block"
-              aria-hidden="true"
-            />
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5 lg:gap-4">
               {[
                 { n: "01", icon: Inbox, title: "Solicitudes", desc: "Inbox centralizado que no deja escapar oportunidades." },
