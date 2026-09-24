@@ -1,7 +1,8 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, type ReactNode } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
-import { Scale, ArrowRight, Check, Inbox, Users, Briefcase, Calendar, DollarSign, Sparkles, Shield, ChevronDown, Menu, X, Zap } from "lucide-react";
+import { motion } from "framer-motion";
+import { Scale, ArrowRight, Check, Inbox, Users, Briefcase, Calendar, DollarSign, Sparkles, Shield, ChevronDown, Menu, X, Zap, Search, Clock, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,8 +28,42 @@ function getUTMs() {
   }
 }
 
-// Mock dashboard preview using real UI structure, no fake metrics
-function DashboardPreview() {
+// Scroll-reveal adaptado del sistema de animación de LegalUp AI:
+// entrada suave una sola vez, sin loops decorativos pesados.
+const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
+function Reveal({ children, delay = 0, className }: { children: ReactNode; delay?: number; className?: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-80px" }}
+      transition={{ duration: 0.7, delay, ease: EASE }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function Eyebrow({ children, dark = false }: { children: ReactNode; dark?: boolean }) {
+  return (
+    <p className={`text-xs font-semibold uppercase tracking-[0.18em] ${dark ? "text-emerald-400" : "text-green-700"}`}>
+      {children}
+    </p>
+  );
+}
+
+// Mock del workspace Pro con estructura real de la UI (sin métricas falsas):
+// flujo Solicitudes → Clientes → Casos → Agenda → Ingresos + tarjeta IA.
+const FLOW_STEPS = [
+  { label: "Solicitudes", icon: Inbox, detail: "Bandeja centralizada" },
+  { label: "Clientes", icon: Users, detail: "Historial por cliente" },
+  { label: "Casos", icon: Briefcase, detail: "Trabajo asociado" },
+  { label: "Agenda", icon: Calendar, detail: "Citas conectadas" },
+  { label: "Ingresos", icon: DollarSign, detail: "Actividad en la plataforma" },
+];
+
+function ProWorkspacePreview() {
   return (
     <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
       <div className="flex items-center gap-2 border-b border-gray-100 bg-gray-50 px-4 py-3">
@@ -36,48 +71,116 @@ function DashboardPreview() {
         <div className="h-2.5 w-2.5 rounded-full bg-gray-300" />
         <div className="h-2.5 w-2.5 rounded-full bg-green-600" />
         <span className="ml-2 text-xs font-mono text-gray-400">legalup.cl/lawyer/dashboard</span>
+        <span className="ml-auto hidden items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[0.65rem] font-medium text-emerald-700 sm:inline-flex">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-600" />
+          </span>
+          Espacio Pro activo
+        </span>
       </div>
-      <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4 sm:p-6 bg-cream-900">
-        {[
-          { label: "Solicitudes", icon: Inbox, value: "3" },
-          { label: "Citas hoy", icon: Calendar, value: "2" },
-          { label: "Casos activos", icon: Briefcase, value: "6" },
-          { label: "Ingresos del mes", icon: DollarSign, value: "$2.450.000" },
-        ].map((kpi) => (
-          <div key={kpi.label} className="rounded-xl border border-gray-100 bg-white p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-gray-500">{kpi.label}</span>
-              <kpi.icon className="h-4 w-4 text-gray-400" />
-            </div>
-            <div className="mt-2 text-lg font-bold text-gray-900">{kpi.value}</div>
-            <div className="mt-1 h-2 w-16 rounded bg-gray-200" />
-          </div>
-        ))}
-      </div>
-      <div className="border-t border-gray-100 px-4 py-4 sm:px-6">
-        <div className="mb-3 flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">Próximas citas</span>
-          <span className="text-xs text-green-700">Ver agenda →</span>
-        </div>
-        <div className="space-y-2">
-          {[
-            { time: "10:00", name: "Cliente Maria F.", service: "Consulta" },
-            { time: "15:30", name: "Cliente Felipe P.", service: "Reunión" },
-          ].map((a, i) => (
-            <div key={i} className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2.5">
-              <div>
-                <div className="text-sm font-medium text-gray-900">{a.time} · {a.name}</div>
-                <div className="text-xs text-gray-500">{a.service}</div>
-              </div>
-              <div className="h-2 w-12 rounded bg-gray-100" />
+      {/* Flujo conectado del workspace */}
+      <div className="border-b border-gray-100 bg-cream-900 px-4 py-4 sm:px-6">
+        <div className="flex items-center gap-1 overflow-x-auto sm:gap-2">
+          {FLOW_STEPS.map((step, i) => (
+            <div key={step.label} className="flex min-w-0 flex-1 items-center gap-1 sm:gap-2">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1, ease: EASE }}
+                className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-gray-100 bg-white px-2.5 py-2 sm:px-3"
+              >
+                <step.icon className="h-4 w-4 shrink-0 text-green-700" />
+                <div className="min-w-0">
+                  <div className="truncate text-xs font-semibold text-gray-900">{step.label}</div>
+                  <div className="hidden truncate text-[0.65rem] text-gray-500 sm:block">{step.detail}</div>
+                </div>
+              </motion.div>
+              {i < FLOW_STEPS.length - 1 && (
+                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-gray-300" />
+              )}
             </div>
           ))}
+        </div>
+      </div>
+      <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-6">
+        <div className="rounded-xl border border-gray-100 p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-gray-500">Próximas citas</span>
+            <span className="text-xs text-green-700">Ver agenda →</span>
+          </div>
+          <div className="mt-3 space-y-2">
+            {[
+              { time: "10:00", name: "Reunión de seguimiento", tag: "Caso activo" },
+              { time: "15:30", name: "Primera consulta", tag: "Solicitud" },
+            ].map((a, i) => (
+              <div key={i} className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2.5">
+                <div>
+                  <div className="text-sm font-medium text-gray-900">{a.time} · {a.name}</div>
+                  <div className="text-xs text-gray-500">{a.tag}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] p-4">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-emerald-600" />
+            <span className="text-xs font-semibold text-gray-900">IA dentro del caso</span>
+          </div>
+          <div className="mt-3 space-y-2 text-xs">
+            <div className="ml-auto w-fit max-w-[90%] rounded-lg rounded-br-sm bg-gray-900 px-3 py-2 text-white">
+              ¿Qué plazos debo revisar en este documento?
+            </div>
+            <div className="w-fit max-w-[95%] rounded-lg rounded-bl-sm border border-gray-100 bg-white px-3 py-2 text-gray-700">
+              Encontré 3 plazos con sus fechas y obligaciones asociadas…
+            </div>
+          </div>
+          <p className="mt-2 text-[0.65rem] text-gray-400">Ejemplo ilustrativo de la interfaz</p>
         </div>
       </div>
       <div className="absolute inset-0 pointer-events-none rounded-2xl ring-1 ring-black/5" />
     </div>
   );
 }
+
+const MODULES = [
+  { icon: Users, title: "Clientes", desc: "Centraliza la información de tus clientes y accede a su historial desde un mismo lugar.", route: "Clientes" },
+  { icon: Briefcase, title: "Casos", desc: "Organiza asuntos y mantén el trabajo asociado a cada cliente.", route: "Casos" },
+  { icon: Inbox, title: "Solicitudes", desc: "Recibe y gestiona nuevas solicitudes desde un inbox centralizado.", route: "Solicitudes" },
+  { icon: Calendar, title: "Agenda", desc: "Visualiza citas y organiza tu agenda desde un solo lugar.", route: "Agenda" },
+  { icon: Zap, title: "Servicios", desc: "Administra los servicios que ofreces desde LegalUp.", route: "Servicios" },
+  { icon: DollarSign, title: "Ingresos", desc: "Consulta los ingresos asociados a tu actividad en la plataforma.", route: "Ingresos" },
+];
+
+const AI_CAPABILITIES = [
+  { icon: FileText, title: "Análisis de documentos", desc: "Estructura, puntos clave y riesgos de tus documentos dentro del caso." },
+  { icon: MessageSquare, title: "Chat del caso", desc: "Pregunta sobre el contenido de tus casos y documentos." },
+  { icon: Search, title: "Investigación", desc: "Jurisprudencia y normativa chilena con fuentes verificables." },
+  { icon: Clock, title: "Uso mensual incluido", desc: "Consultas, análisis e investigaciones con renovación mensual." },
+];
+
+const COMPARISON_ROWS = [
+  { label: "Clientes e historial", pro: "Centralizados por cliente", other: "Repartidos en chats y archivos" },
+  { label: "Casos", pro: "Organizados con su trabajo asociado", other: "Carpetas sueltas sin seguimiento" },
+  { label: "Solicitudes", pro: "Inbox centralizado", other: "Se pierden entre mensajes" },
+  { label: "Agenda", pro: "Conectada a tus casos", other: "Calendarios separados" },
+  { label: "IA integrada", pro: "Dentro del flujo del caso", other: "Herramientas sueltas o inexistentes" },
+  { label: "Tus datos", pro: "Separados por abogado", other: "Mezclados o sin control claro" },
+];
+
+const FAQS = [
+  { q: "¿Qué es LegalUp Pro?", a: "Es el SaaS para abogados dentro de LegalUp. Te permite gestionar tu actividad profesional — solicitudes, clientes, casos, citas e ingresos — desde un solo lugar, con IA integrada en tus casos." },
+  { q: "¿Para quién es?", a: "Para abogados independientes y estudios boutique que quieren centralizar su gestión sin depender de planillas, mensajes y herramientas separadas." },
+  { q: "¿Qué puedo gestionar?", a: "Clientes con su historial, casos con su trabajo asociado, solicitudes desde un inbox centralizado, agenda de citas, los servicios que ofreces y los ingresos de tu actividad en la plataforma." },
+  { q: "¿LegalUp Pro incluye LegalUp AI?", a: "Sí, LegalUp AI viene integrado en tus casos: análisis de documentos, chat sobre casos e investigación de jurisprudencia, con uso mensual incluido." },
+  { q: "¿Necesito usar el marketplace?", a: "No es obligatorio. Pro organiza tu práctica actual y además centraliza las solicitudes que recibas desde LegalUp." },
+  { q: "¿Mis datos están separados de otros abogados?", a: "Sí. Cada abogado solo accede a su propia información: clientes, casos, documentos e ingresos están separados por cuenta." },
+  { q: "¿Cuánto cuesta?", a: "$19.990/mes durante tus primeros 3 cobros. Desde el cuarto cobro, $49.990/mes." },
+  { q: "¿Qué pasa después de los 3 meses?", a: "Los primeros 3 cobros son de $19.990/mes. Desde el cuarto cobro, el precio es $49.990/mes. Si cancelas y vuelves, tus cobros anteriores se mantienen y el conteo no se reinicia." },
+  { q: "¿Puedo cancelar?", a: "Sí. Puedes cancelar tu suscripción en cualquier momento desde el dashboard. El acceso se mantiene hasta el fin del período ya pagado. Si necesitas ayuda, escríbenos a través de los canales de soporte de LegalUp." },
+];
 
 export default function LegalUpPro() {
   const navigate = useNavigate();
@@ -208,6 +311,7 @@ export default function LegalUpPro() {
           </button>
           <nav className="hidden items-center gap-6 md:flex">
             <button onClick={() => scrollToId("como-funciona")} className="text-sm text-gray-600 hover:text-gray-900">Cómo funciona</button>
+            <button onClick={() => scrollToId("funcionalidades")} className="text-sm text-gray-600 hover:text-gray-900">Funcionalidades</button>
             <button onClick={() => scrollToId("pricing")} className="text-sm text-gray-600 hover:text-gray-900">Precio</button>
             <button onClick={() => scrollToId("faq")} className="text-sm text-gray-600 hover:text-gray-900">Preguntas</button>
           </nav>
@@ -241,6 +345,7 @@ export default function LegalUpPro() {
           <div className="border-t border-gray-200 bg-white px-4 py-4 md:hidden">
             <div className="flex flex-col gap-3">
               <button onClick={() => scrollToId("como-funciona")} className="text-left text-sm text-gray-700 py-2">Cómo funciona</button>
+              <button onClick={() => scrollToId("funcionalidades")} className="text-left text-sm text-gray-700 py-2">Funcionalidades</button>
               <button onClick={() => scrollToId("pricing")} className="text-left text-sm text-gray-700 py-2">Precio</button>
               <button onClick={() => scrollToId("faq")} className="text-left text-sm text-gray-700 py-2">Preguntas</button>
               <div className="pt-2 flex flex-col gap-2">
@@ -273,342 +378,440 @@ export default function LegalUpPro() {
         </section>
       )}
 
-      {/* HERO */}
-      <section className="bg-cream-900 border-b border-gray-100">
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:py-20">
-        <div className="grid gap-10 lg:grid-cols-12 lg:items-center">
-          <div className="lg:col-span-5">
-            <Badge className="mb-4 bg-green-50 text-green-800 border-green-200 hover:bg-green-50">Founder — primeros 15 en contratar Pro</Badge>
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 leading-[1.05]">
-              Tu práctica legal, organizada en un solo lugar.
-            </h1>
-            <p className="mt-4 text-lg leading-relaxed text-gray-600">
-              Gestiona clientes, casos, solicitudes y citas desde LegalUp Pro, sin depender de planillas, mensajes y herramientas separadas.
-            </p>
-            <div className="mt-6 flex flex-wrap items-center gap-3">
-              <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3">
-                <div className="text-2xl font-bold text-gray-900">$19.990<span className="text-sm font-medium text-gray-500">/mes</span></div>
-                <div className="text-xs text-green-700 font-medium">$19.990/mes durante tus primeros 3 cobros · Badge Founder a los primeros 15 en contratar</div>
-              </div>
-            </div>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <Button size="lg" onClick={() => handleCTAClick("hero")} className="bg-gray-900 hover:bg-green-900 h-12 px-8 text-base">
+      {/* SECTION 1 — HERO */}
+      <section className="border-b border-gray-100 bg-cream-900">
+        <div className="mx-auto max-w-7xl px-4 pb-12 pt-10 sm:px-6 sm:pb-16 sm:pt-14 lg:pt-20">
+          <div className="mx-auto max-w-3xl text-center">
+            <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE }}>
+              <Badge className="mb-4 bg-green-50 text-green-800 border-green-200 hover:bg-green-50">LegalUp Pro para abogados</Badge>
+            </motion.div>
+            <motion.h1
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.1, ease: EASE }}
+              className="text-4xl font-bold tracking-tight text-gray-900 leading-[1.05] sm:text-6xl"
+            >
+              Gestiona tu práctica legal en un solo lugar.
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2, ease: EASE }}
+              className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-gray-600"
+            >
+              Clientes, casos, solicitudes y citas organizados en un workspace conectado, con IA integrada cuando el caso lo requiere.
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3, ease: EASE }}
+              className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row"
+            >
+              <Button size="lg" onClick={() => handleCTAClick("hero")} className="h-12 w-full px-8 text-base bg-gray-900 hover:bg-green-900 sm:w-auto">
                 Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
               </Button>
-              <Button size="lg" variant="outline" onClick={() => scrollToId("como-funciona")} className="h-12 px-8 text-base">
+              <Button size="lg" variant="outline" onClick={() => scrollToId("como-funciona")} className="h-12 w-full px-8 text-base sm:w-auto">
                 Ver cómo funciona
               </Button>
-            </div>
-            <p className="mt-3 text-xs text-gray-500">Sin compromiso anual. Cancela cuando quieras según condiciones vigentes.</p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.45 }}
+              className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-gray-500"
+            >
+              <span className="rounded-full border border-green-200 bg-green-50 px-3 py-1 font-medium text-green-800">Founder $19.990/mes × 3 cobros</span>
+              <span>Sin compromiso anual · Cancela cuando quieras</span>
+            </motion.div>
           </div>
-          <div className="relative lg:col-span-7 lg:pl-4">
-            <DashboardPreview />
-            <p className="mt-3 text-center text-xs text-gray-400">Vista del dashboard real de LegalUp Pro (datos ilustrativos anonimizados).</p>
-          </div>
-        </div>
+          <motion.div
+            initial={{ opacity: 0, y: 42, scale: 0.985 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 1.1, delay: 0.35, ease: EASE }}
+            className="mx-auto mt-10 max-w-5xl sm:mt-14"
+          >
+            <ProWorkspacePreview />
+            <p className="mt-3 text-center text-xs text-gray-400">Vista de la estructura real del workspace Pro (datos ilustrativos anonimizados).</p>
+          </motion.div>
         </div>
       </section>
 
-      {/* PROBLEMA */}
-      <section className="border-y border-gray-100">
-        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16">
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Menos tiempo administrando. Más tiempo ejerciendo.</h2>
-            <p className="mt-4 text-gray-600">Si hoy tu práctica depende de WhatsApp, calendarios separados y planillas, este es el cambio.</p>
-          </div>
-          <div className="mx-auto mt-10 grid max-w-4xl gap-4 sm:grid-cols-2">
+      {/* SECTION 2 — PROBLEM */}
+      <section className="border-b border-gray-100">
+        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20">
+          <Reveal className="mx-auto max-w-3xl text-center">
+            <Eyebrow>El problema</Eyebrow>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Tu práctica repartida en demasiados lugares.</h2>
+            <p className="mt-4 text-gray-600">Cada herramienta suelta suma fricción: la información vive en un lado, las citas en otro y el seguimiento en ninguno.</p>
+          </Reveal>
+          <div className="mx-auto mt-10 grid max-w-5xl gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
               { title: "Clientes en WhatsApp", desc: "Conversaciones dispersas y sin trazabilidad." },
               { title: "Citas en calendarios separados", desc: "Doble agenda y choques de horario." },
-              { title: "Casos sin seguimiento centralizado", desc: "Información repartida en archivos y mensajes." },
-              { title: "Solicitudes difíciles de ordenar", desc: "Oportunidades que se pierden sin un flujo claro." },
-            ].map((item) => (
-              <Card key={item.title} className="bg-white">
-                <CardContent className="p-6">
-                  <h3 className="font-semibold">{item.title}</h3>
-                  <p className="mt-1 text-sm text-gray-600">{item.desc}</p>
-                </CardContent>
-              </Card>
+              { title: "Casos sin centro", desc: "Archivos, mensajes e historial repartidos." },
+              { title: "Solicitudes sin flujo", desc: "Oportunidades que se pierden sin un inbox claro." },
+            ].map((item, i) => (
+              <Reveal key={item.title} delay={(i % 4) * 0.08}>
+                <Card className="h-full bg-white">
+                  <CardContent className="p-6">
+                    <h3 className="font-semibold">{item.title}</h3>
+                    <p className="mt-1 text-sm text-gray-600">{item.desc}</p>
+                  </CardContent>
+                </Card>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
-      {/* PRODUCTO - flujo */}
-      <section id="como-funciona" className="bg-cream-900 border-y border-gray-100">
+      {/* SECTION 3 — PRODUCT OVERVIEW */}
+      <section id="como-funciona" className="border-b border-gray-100 bg-cream-900">
         <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20">
-          <div className="mx-auto max-w-3xl text-center">
-          <p className="text-xs font-semibold uppercase tracking-widest text-green-700">Producto</p>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">De la solicitud al ingreso, en un mismo flujo.</h2>
-          <p className="mt-4 text-gray-600">LegalUp Pro conecta cada etapa para que no pierdas el hilo entre la oportunidad y la gestión.</p>
-        </div>
-
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-2 text-sm font-medium">
-          {["Solicitudes", "Clientes", "Casos", "Citas", "Ingresos"].map((step, i, arr) => (
-            <div key={step} className="flex items-center gap-2">
-              <span className="rounded-full border border-gray-200 bg-white px-4 py-2">{step}</span>
-              {i < arr.length - 1 && <ArrowRight className="h-4 w-4 text-gray-400" />}
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-12 grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardContent className="p-6">
-              <Inbox className="h-5 w-5 text-green-700" />
-              <h3 className="mt-3 font-semibold">Solicitudes → Clientes</h3>
-              <p className="mt-1 text-sm text-gray-600">Centraliza nuevas solicitudes y conviértelas en clientes sin re-escribir información.</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <Briefcase className="h-5 w-5 text-green-700" />
-              <h3 className="mt-3 font-semibold">Clientes → Casos</h3>
-              <p className="mt-1 text-sm text-gray-600">Crea y da seguimiento a cada asunto con información organizada por cliente y caso.</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <Calendar className="h-5 w-5 text-green-700" />
-              <h3 className="mt-3 font-semibold">Citas organizadas</h3>
-              <p className="mt-1 text-sm text-gray-600">Organiza consultas y reuniones con calendario integrado y confirmaciones.</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <DollarSign className="h-5 w-5 text-green-700" />
-              <h3 className="mt-3 font-semibold">Ingresos visibles</h3>
-              <p className="mt-1 text-sm text-gray-600">Consulta los ingresos asociados a tu actividad en LegalUp sin planillas externas.</p>
-            </CardContent>
-          </Card>
-        </div>
-        <div className="mt-8 text-center">
-          <Button onClick={() => handleCTAClick("product")} className="bg-gray-900 hover:bg-green-900">Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" /></Button>
-        </div>
-        </div>
-      </section>
-
-      {/* FEATURES */}
-      <section className="border-y border-gray-100">
-        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16">
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight">Todo lo esencial, sin complejidad</h2>
-            <p className="mt-3 text-gray-600">Herramientas pensadas para la operación diaria del abogado.</p>
-          </div>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              { icon: Inbox, title: "Solicitudes", desc: "Centraliza nuevas solicitudes y conviértelas en clientes/casos." },
-              { icon: Users, title: "Clientes", desc: "Mantén la información de tus clientes organizada y accesible." },
-              { icon: Briefcase, title: "Casos", desc: "Gestiona el seguimiento de cada asunto desde un mismo lugar." },
-              { icon: Calendar, title: "Citas", desc: "Organiza consultas y reuniones sin herramientas separadas." },
-              { icon: DollarSign, title: "Ingresos", desc: "Consulta los ingresos asociados a tu actividad en LegalUp." },
-              { icon: Sparkles, title: "LegalUp AI integrado", desc: "Analiza documentos y conversa sobre tus casos, dentro de cada caso." },
-            ].map((f) => (
-              <Card key={f.title} className="bg-white">
-                <CardContent className="p-6">
-                  <f.icon className="h-5 w-5 text-green-700" />
-                  <h3 className="mt-3 font-semibold">{f.title}</h3>
-                  <p className="mt-1 text-sm text-gray-600">{f.desc}</p>
-                </CardContent>
-              </Card>
+          <Reveal className="mx-auto max-w-3xl text-center">
+            <Eyebrow>Cómo funciona</Eyebrow>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Un workspace conectado, no cinco herramientas.</h2>
+            <p className="mt-4 text-gray-600">Todo parte de las solicitudes y fluye hasta los ingresos, con la IA disponible a lo largo del recorrido.</p>
+          </Reveal>
+          <div className="mx-auto mt-10 flex max-w-5xl flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+            {["Solicitudes", "Clientes", "Casos", "Agenda", "Ingresos"].map((step, i, arr) => (
+              <div key={step} className="flex flex-1 flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+                <Reveal delay={i * 0.09} className="flex-1">
+                  <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-center shadow-sm">
+                    <div className="text-xs font-bold text-green-800">{String(i + 1).padStart(2, "0")}</div>
+                    <div className="mt-0.5 text-sm font-semibold text-gray-900">{step}</div>
+                  </div>
+                </Reveal>
+                {i < arr.length - 1 && (
+                  <ArrowRight className="mx-auto h-4 w-4 shrink-0 rotate-90 text-gray-300 sm:rotate-0" />
+                )}
+              </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* DIFERENCIACION */}
-      <section className="bg-cream-900 border-y border-gray-100">
-        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16">
-          <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-green-700">Diferenciación</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight">Más que organizar tu práctica.</h2>
-            <p className="mt-4 text-gray-600">
-              La mayoría de las herramientas de gestión empiezan cuando el abogado ya consiguió al cliente. LegalUp está construyendo un ecosistema donde la captación y la gestión conviven.
-            </p>
-            <div className="mt-6 rounded-xl border border-gray-200 bg-gray-50 p-4">
-              <div className="flex flex-wrap items-center gap-2 text-xs font-medium">
-                {["Marketplace", "Solicitud", "Cliente", "Caso", "Cita", "Gestión"].map((s, i, arr) => (
-                  <span key={s} className="flex items-center gap-2">
-                    <span className="rounded-md bg-white border px-2.5 py-1">{s}</span>
-                    {i < arr.length - 1 && <span className="text-gray-400">→</span>}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <p className="mt-4 text-sm text-gray-600">
-              Las solicitudes provenientes de LegalUp pueden integrarse directamente en tu flujo de trabajo. Sin prometer volumen, pero con un flujo que sí aprovecha cada oportunidad.
-            </p>
-          </div>
-          <Card className="bg-white">
-            <CardContent className="p-6">
-              <Shield className="h-5 w-5 text-green-700" />
-              <h3 className="mt-3 font-semibold">Un ecosistema, no solo un CRM</h3>
-              <ul className="mt-3 space-y-2 text-sm text-gray-600">
-                <li className="flex gap-2"><Check className="h-4 w-4 text-green-600 mt-0.5" /> Captación vía Marketplace de LegalUp</li>
-                <li className="flex gap-2"><Check className="h-4 w-4 text-green-600 mt-0.5" /> Gestión integral en LegalUp Pro</li>
-                <li className="flex gap-2"><Check className="h-4 w-4 text-green-600 mt-0.5" /> IA integrada a tu flujo</li>
-              </ul>
-              <p className="mt-4 text-xs text-gray-500">LegalUp conecta usuarios con abogados a través de su Marketplace, sin garantizar un número de solicitudes o clientes.</p>
-            </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* LEGALUP AI */}
-      <section className="border-y border-gray-100 bg-gray-950 text-white">
-        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16">
-          <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
-            <div>
-              <Badge className="border border-emerald-500/30 bg-emerald-500/10 text-emerald-40">IA integrada</Badge>
-              <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">IA integrada a tu flujo de trabajo.</h2>
-              <p className="mt-4 text-gray-300">LegalUp Pro incluye acceso inicial a LegalUp AI para trabajar con información de casos sin salir de tu gestión.</p>
-              <ul className="mt-6 space-y-2 text-sm text-gray-300">
-                <li className="flex gap-2"><Check className="h-4 w-4 text-emerald-400 mt-0.5" /> Analizar documentos</li>
-                <li className="flex gap-2"><Check className="h-4 w-4 text-emerald-400 mt-0.5" /> Trabajar con información de casos</li>
-                <li className="flex gap-2"><Check className="h-4 w-4 text-emerald-400 mt-0.5" /> Conversar sobre el contenido asociado al caso</li>
-              </ul>
-              <div className="mt-6 inline-flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
-                <Sparkles className="h-4 w-4 text-emerald-400" />
-                <span className="text-sm font-medium">LegalUp AI integrado en tus casos</span>
-              </div>
-              <p className="mt-3 text-xs text-gray-400">Incluye LegalUp AI integrado: análisis de documentos y chat sobre tus casos.</p>
-            </div>
-            <Card className="bg-white/[0.06] border-white/10 backdrop-blur-xl">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-emerald-400" />
-                  <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">Qué incluye la IA integrada</span>
-                </div>
-                <ul className="mt-4 space-y-2 text-sm text-gray-200">
-                  <li className="flex gap-2"><Check className="h-4 w-4 text-emerald-400 mt-0.5" /> Análisis de documentos dentro de tus casos</li>
-                  <li className="flex gap-2"><Check className="h-4 w-4 text-emerald-400 mt-0.5" /> Chat sobre el contenido de cada caso</li>
-                  <li className="flex gap-2"><Check className="h-4 w-4 text-emerald-400 mt-0.5" /> Investigación de jurisprudencia y normativa</li>
-                </ul>
-                <p className="mt-4 text-xs leading-relaxed text-gray-400">300 consultas IA, 40 análisis de documentos y 10 investigaciones al mes, hasta 50 documentos almacenados. IA disponible en todos tus casos activos.</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* PRICING */}
-      <section id="pricing" className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20">
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight">Un precio simple</h2>
-          <p className="mt-3 text-gray-600">Empieza con LegalUp Pro y accede a las mejoras que sigamos sumando.</p>
-        </div>
-        <div className="mx-auto mt-10 max-w-md">
-          <Card className="overflow-hidden border-green-200 shadow-lg">
-            <div className="bg-gradient-to-br from-green-50 to-white p-6 sm:p-8">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="text-lg font-bold">LegalUp Pro</h3>
-                  <p className="text-sm text-gray-500">Para abogados independientes y estudios boutique</p>
-                </div>
-                <Badge className="bg-green-100 text-green-800 border-green-200">Founder</Badge>
-              </div>
-              <div className="mt-6">
-                <div className="text-4xl font-bold">$19.990<span className="text-base font-medium text-gray-500">/mes</span></div>
-                <div className="text-sm font-medium text-green-700">durante tus primeros 3 cobros</div>
-                <p className="mt-2 text-xs text-gray-500">$19.990/mes durante tus primeros 3 cobros. Desde el cuarto cobro, $49.990/mes.</p>
-                <p className="mt-1 text-xs text-gray-500">Después de los 15 cupos Founder, Pro cuesta $49.990/mes. El badge Founder queda permanentemente en tu perfil.</p>
-              </div>
-              <ul className="mt-6 space-y-2 text-sm">
-                {["Solicitudes", "Clientes", "Casos", "Citas", "Servicios / gestión disponible", "Ingresos", "LegalUp AI integrado", "Acceso a futuras mejoras de Pro"].map((perk) => (
-                  <li key={perk} className="flex gap-2"><Check className="h-4 w-4 text-green-600 mt-0.5" /> {perk}</li>
-                ))}
-              </ul>
-              <Button onClick={() => handleCTAClick("pricing")} className="mt-6 w-full bg-gray-900 hover:bg-green-900 h-11 text-base">
-                Activar LegalUp Pro <ArrowRight className="h-4 w-4" />
-              </Button>
-              <p className="mt-3 text-center text-xs text-gray-500">Incluye LegalUp AI integrado: análisis de documentos y chat sobre tus casos.</p>
-            </div>
-          </Card>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section id="faq" className="border-y border-gray-100 bg-gray-50">
-        <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-16">
-          <h2 className="text-3xl font-bold tracking-tight text-center">Preguntas frecuentes</h2>
-          <Accordion type="single" collapsible className="mt-8 bg-white rounded-xl border px-4">
-            <AccordionItem value="q1">
-              <AccordionTrigger>¿Qué es LegalUp Pro?</AccordionTrigger>
-              <AccordionContent className="text-gray-600">Es el SaaS para abogados dentro de LegalUp. Te permite gestionar tu actividad profesional — solicitudes, clientes, casos, citas e ingresos — desde un solo lugar, con IA integrada en tus casos.</AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="q2">
-              <AccordionTrigger>¿Cuánto cuesta?</AccordionTrigger>
-              <AccordionContent className="text-gray-600">$19.990/mes durante tus primeros 3 cobros. Desde el cuarto cobro, $49.990/mes.</AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="q3">
-              <AccordionTrigger>¿Qué pasa después de los 3 meses?</AccordionTrigger>
-              <AccordionContent className="text-gray-600">Los primeros 3 cobros son de $19.990/mes. Desde el cuarto cobro, el precio es $49.990/mes. Si cancelas y vuelves, tus cobros anteriores se mantienen y el conteo no se reinicia.</AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="q4">
-              <AccordionTrigger>¿LegalUp Pro incluye LegalUp AI?</AccordionTrigger>
-              <AccordionContent className="text-gray-600">Sí, LegalUp AI viene integrado en tus casos: análisis de documentos, chat sobre casos e investigación de jurisprudencia, con uso mensual incluido.</AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="q5">
-              <AccordionTrigger>¿Puedo cancelar?</AccordionTrigger>
-              <AccordionContent className="text-gray-600">Sí. Puedes cancelar tu suscripción en cualquier momento desde el dashboard. El acceso se mantiene hasta el fin del período ya pagado. Si necesitas ayuda, escríbenos a través de los canales de soporte de LegalUp.</AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="q6">
-              <AccordionTrigger>¿LegalUp me garantiza clientes?</AccordionTrigger>
-              <AccordionContent className="text-gray-600">No. LegalUp conecta usuarios con abogados a través de su Marketplace y las solicitudes que generes pueden integrarse directamente en tu flujo de LegalUp Pro, pero no garantizamos una cantidad específica de solicitudes o clientes.</AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </div>
-      </section>
-
-      {/* FINAL CTA */}
-      <section className="bg-cream-900 border-y border-gray-100">
-        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20">
-          <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Organiza tu práctica con LegalUp Pro.</h2>
-          <p className="mt-4 text-gray-600">Únete a los primeros abogados que están probando una nueva forma de gestionar su trabajo en LegalUp.</p>
-          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-4 py-2 text-sm font-medium text-green-800">
-            $19.990/mes durante tus primeros 3 cobros · Badge Founder a los primeros 15 en contratar
-          </div>
-          <div className="mt-6 flex justify-center">
-            <Button size="lg" onClick={() => handleCTAClick("final")} className="bg-gray-900 hover:bg-green-900 h-12 px-8 text-base">
+          <Reveal className="mx-auto mt-6 flex max-w-3xl items-center justify-center gap-2 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] px-4 py-3 text-center" delay={0.2}>
+            <Sparkles className="h-4 w-4 shrink-0 text-emerald-600" />
+            <p className="text-sm text-gray-700"><span className="font-semibold">IA integrada</span> disponible en tus casos, a lo largo de todo el flujo.</p>
+          </Reveal>
+          <Reveal className="mt-8 text-center">
+            <Button size="lg" onClick={() => handleCTAClick("overview")} className="bg-gray-900 hover:bg-green-900 h-12 px-8 text-base">
               Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
             </Button>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* SECTION 4 — FEATURE SYSTEM */}
+      <section id="funcionalidades" className="border-b border-gray-100">
+        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20">
+          <Reveal className="mx-auto max-w-3xl text-center">
+            <Eyebrow>Funcionalidades</Eyebrow>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Todo lo esencial de tu práctica.</h2>
+            <p className="mt-4 text-gray-600">Seis módulos conectados que ya funcionan en producción.</p>
+          </Reveal>
+          <div className="mx-auto mt-10 grid max-w-6xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {MODULES.map((m, i) => (
+              <Reveal key={m.title} delay={(i % 3) * 0.08}>
+                <Card className="h-full transition-all hover:-translate-y-0.5 hover:shadow-md">
+                  <CardContent className="p-6 sm:p-7">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-50 text-green-700">
+                      <m.icon className="h-5 w-5" />
+                    </div>
+                    <h3 className="mt-4 text-lg font-semibold">{m.title}</h3>
+                    <p className="mt-1 text-sm leading-relaxed text-gray-600">{m.desc}</p>
+                    <p className="mt-3 text-xs font-medium uppercase tracking-widest text-gray-400">Módulo {m.route}</p>
+                  </CardContent>
+                </Card>
+              </Reveal>
+            ))}
           </div>
-          <p className="mt-3 text-xs text-gray-500">Incluye LegalUp AI integrado: análisis de documentos y chat sobre tus casos.</p>
+        </div>
+      </section>
+
+      {/* SECTION 5 — AI SHOWCASE (dark band) */}
+      <section className="border-b border-gray-800 bg-gray-950 text-white">
+        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20">
+          <div className="grid items-center gap-10 lg:grid-cols-2">
+            <Reveal>
+              <Eyebrow dark>IA integrada</Eyebrow>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">IA integrada cuando la necesitas.</h2>
+              <p className="mt-4 leading-relaxed text-gray-300">
+                Gestiona el caso en LegalUp Pro y usa herramientas de IA dentro del mismo flujo: analiza documentos, conversa sobre tus casos e investiga normativa, sin salir de tu gestión.
+              </p>
+              <ul className="mt-6 space-y-3">
+                {AI_CAPABILITIES.map((c) => (
+                  <li key={c.title} className="flex gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.06]">
+                      <c.icon className="h-4 w-4 text-emerald-400" />
+                    </span>
+                    <span>
+                      <span className="block text-sm font-semibold">{c.title}</span>
+                      <span className="block text-sm text-gray-400">{c.desc}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-5 text-xs leading-relaxed text-gray-500">Uso mensual incluido: 300 consultas IA, 40 análisis y 10 investigaciones. IA disponible en todos tus casos activos.</p>
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <Button size="lg" onClick={() => handleCTAClick("ai")} className="bg-white text-gray-900 hover:bg-gray-100 h-12 px-8 text-base">
+                  Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
+                </Button>
+                <Button size="lg" variant="outline" onClick={() => navigate("/ai")} className="h-12 px-8 text-base border-white/20 text-white hover:bg-white/10 hover:text-white">
+                  Conocer LegalUp AI
+                </Button>
+              </div>
+            </Reveal>
+            <Reveal delay={0.15}>
+              <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl">
+                <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
+                  <div className="h-2.5 w-2.5 rounded-full bg-white/20" />
+                  <div className="h-2.5 w-2.5 rounded-full bg-white/20" />
+                  <div className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                  <span className="ml-2 font-mono text-xs text-gray-500">caso · chat IA</span>
+                </div>
+                <div className="space-y-3 p-4 sm:p-6">
+                  <div className="ml-auto w-fit max-w-[90%] rounded-xl rounded-br-sm bg-emerald-500/15 px-4 py-2.5 text-sm text-white">
+                    ¿Qué plazos debo revisar en este contrato?
+                  </div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.3, ease: EASE }}
+                    className="w-fit max-w-[95%] rounded-xl rounded-bl-sm border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-gray-200"
+                  >
+                    <p className="font-medium text-white">Encontré 3 plazos relevantes:</p>
+                    <ul className="mt-2 space-y-1.5 text-gray-300">
+                      {["Renovación — 30 días de aviso", "Entrega — fecha y condiciones", "Garantía — devolución en 30 días"].map((t) => (
+                        <li key={t} className="flex gap-2">
+                          <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                          <span>{t}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="mt-2 font-mono text-[0.65rem] text-gray-500">Fuente: contrato.pdf · análisis del caso</p>
+                  </motion.div>
+                  <p className="text-[0.65rem] text-gray-600">Ejemplo ilustrativo de la interfaz</p>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 6 — BENEFITS */}
+      <section className="border-b border-gray-100">
+        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20">
+          <Reveal className="mx-auto max-w-3xl text-center">
+            <Eyebrow>Beneficios</Eyebrow>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Menos herramientas sueltas, más contexto.</h2>
+          </Reveal>
+          <div className="mx-auto mt-10 grid max-w-5xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { title: "Un solo lugar de trabajo", desc: "Clientes, casos, citas e ingresos conectados en vez de cinco apps." },
+              { title: "Seguimiento ordenado", desc: "Cada solicitud y caso conserva su historial y estado." },
+              { title: "Agenda conectada", desc: "Tus citas viven junto a los casos que las originan." },
+              { title: "Contexto siempre a mano", desc: "La información del cliente y del caso, accesible sin buscar." },
+              { title: "IA dentro del flujo", desc: "Análisis y respuestas donde ya trabajas, no en otra pestaña." },
+              { title: "Datos separados", desc: "Tu información es solo tuya: separada por abogado y por cuenta." },
+            ].map((b, i) => (
+              <Reveal key={b.title} delay={(i % 3) * 0.08}>
+                <div className="flex h-full gap-3 rounded-2xl border border-gray-200 bg-white p-5">
+                  <Check className="mt-0.5 h-5 w-5 shrink-0 text-green-700" />
+                  <div>
+                    <h3 className="text-sm font-semibold">{b.title}</h3>
+                    <p className="mt-1 text-sm text-gray-600">{b.desc}</p>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 7 — COMPARISON */}
+      <section className="border-b border-gray-100 bg-cream-900">
+        <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 sm:py-20">
+          <Reveal className="mx-auto max-w-3xl text-center">
+            <Eyebrow>Comparativa</Eyebrow>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Pro frente a la gestión dispersa.</h2>
+          </Reveal>
+          {/* Desktop table */}
+          <Reveal className="mt-10 hidden overflow-hidden rounded-2xl border border-gray-200 bg-white md:block">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 text-xs uppercase tracking-widest text-gray-400">
+                  <th scope="col" className="px-6 py-4 font-semibold"><span className="sr-only">Aspecto</span></th>
+                  <th scope="col" className="px-6 py-4 font-semibold text-green-800">LegalUp Pro</th>
+                  <th scope="col" className="px-6 py-4 font-semibold">Gestión dispersa</th>
+                </tr>
+              </thead>
+              <tbody>
+                {COMPARISON_ROWS.map((r) => (
+                  <tr key={r.label} className="border-b border-gray-50 last:border-0">
+                    <th scope="row" className="px-6 py-4 font-semibold text-gray-900">{r.label}</th>
+                    <td className="px-6 py-4 text-gray-700">
+                      <span className="inline-flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-green-700" />{r.pro}</span>
+                    </td>
+                    <td className="px-6 py-4 text-gray-500">{r.other}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Reveal>
+          {/* Mobile cards */}
+          <div className="mt-8 grid gap-3 md:hidden">
+            {COMPARISON_ROWS.map((r, i) => (
+              <Reveal key={r.label} delay={i * 0.05}>
+                <div className="rounded-2xl border border-gray-200 bg-white p-5">
+                  <h3 className="text-sm font-semibold text-gray-900">{r.label}</h3>
+                  <p className="mt-2 flex items-start gap-2 text-sm text-gray-700">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-700" />
+                    <span><span className="font-medium text-green-800">Pro:</span> {r.pro}</span>
+                  </p>
+                  <p className="mt-1 pl-6 text-sm text-gray-500">{r.other}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 8 — HOW IT WORKS */}
+      <section className="border-b border-gray-100">
+        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20">
+          <Reveal className="mx-auto max-w-3xl text-center">
+            <Eyebrow>Cómo empezar</Eyebrow>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Empieza en cuatro pasos.</h2>
+          </Reveal>
+          <div className="mx-auto mt-10 grid max-w-5xl gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { n: "01", title: "Crea tu cuenta", desc: "Regístrate como abogado y configura tu perfil profesional." },
+              { n: "02", title: "Organiza tu práctica", desc: "Centraliza clientes, casos y solicitudes en tu workspace." },
+              { n: "03", title: "Gestiona el día a día", desc: "Agenda, servicios e ingresos desde un solo lugar." },
+              { n: "04", title: "Usa IA en tus casos", desc: "Analiza documentos y conversa sobre cada caso cuando lo necesites." },
+            ].map((s, i) => (
+              <Reveal key={s.n} delay={i * 0.09}>
+                <div className="h-full rounded-2xl border border-gray-200 bg-white p-6">
+                  <div className="text-sm font-bold text-green-700">{s.n}</div>
+                  <h3 className="mt-2 font-semibold">{s.title}</h3>
+                  <p className="mt-1 text-sm text-gray-600">{s.desc}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+          <Reveal className="mt-8 text-center">
+            <Button size="lg" onClick={() => handleCTAClick("how")} className="bg-gray-900 hover:bg-green-900 h-12 px-8 text-base">
+              Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* SECTION 9 — PRICING / FOUNDER */}
+      <section id="pricing" className="border-b border-gray-100 bg-cream-900">
+        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20">
+          <Reveal className="mx-auto max-w-3xl text-center">
+            <Eyebrow>Precio</Eyebrow>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Un precio simple.</h2>
+            <p className="mt-4 text-gray-600">Empieza con LegalUp Pro y accede a las mejoras que sigamos sumando.</p>
+          </Reveal>
+          <Reveal className="mx-auto mt-10 max-w-md">
+            <Card className="overflow-hidden border-green-200 shadow-lg">
+              <div className="bg-gradient-to-br from-green-50 to-white p-6 sm:p-8">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold">LegalUp Pro</h3>
+                    <p className="text-sm text-gray-500">Para abogados independientes y estudios boutique</p>
+                  </div>
+                  <Badge className="bg-green-100 text-green-800 border-green-200">Founder</Badge>
+                </div>
+                <div className="mt-6">
+                  <div className="text-4xl font-bold">$19.990<span className="text-base font-medium text-gray-500">/mes</span></div>
+                  <div className="text-sm font-medium text-green-700">durante tus primeros 3 cobros</div>
+                  <p className="mt-2 text-xs text-gray-500">$19.990/mes durante tus primeros 3 cobros. Desde el cuarto cobro, $49.990/mes.</p>
+                  <p className="mt-1 text-xs text-gray-500">Después de los 15 cupos Founder, Pro cuesta $49.990/mes. El badge Founder queda permanentemente en tu perfil.</p>
+                </div>
+                <ul className="mt-6 space-y-2 text-sm">
+                  {["Solicitudes", "Clientes", "Casos", "Citas", "Servicios", "Ingresos", "LegalUp AI integrado", "Acceso a futuras mejoras de Pro"].map((perk) => (
+                    <li key={perk} className="flex gap-2"><Check className="h-4 w-4 text-green-600 mt-0.5" /> {perk}</li>
+                  ))}
+                </ul>
+                <Button onClick={() => handleCTAClick("pricing")} className="mt-6 w-full bg-gray-900 hover:bg-green-900 h-11 text-base">
+                  Activar LegalUp Pro <ArrowRight className="h-4 w-4" />
+                </Button>
+                <p className="mt-3 text-center text-xs text-gray-500">Incluye LegalUp AI integrado: análisis de documentos y chat sobre tus casos.</p>
+              </div>
+            </Card>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* SECTION 10 — FAQ */}
+      <section id="faq" className="border-b border-gray-100 bg-gray-50">
+        <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-16">
+          <Reveal className="text-center">
+            <Eyebrow>Preguntas frecuentes</Eyebrow>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight">Preguntas frecuentes</h2>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <Accordion type="single" collapsible className="mt-8 bg-white rounded-xl border px-4">
+              {FAQS.map((f, i) => (
+                <AccordionItem key={f.q} value={`q${i + 1}`}>
+                  <AccordionTrigger>{f.q}</AccordionTrigger>
+                  <AccordionContent className="text-gray-600">{f.a}</AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* SECTION 11 — FINAL CTA */}
+      <section className="border-b border-gray-100 bg-cream-900">
+        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20">
+          <div className="mx-auto max-w-3xl text-center">
+            <Reveal>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Centraliza tu práctica con LegalUp Pro.</h2>
+              <p className="mt-4 text-gray-600">Únete a los primeros abogados que están organizando su trabajo de una nueva forma.</p>
+              <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-4 py-2 text-sm font-medium text-green-800">
+                $19.990/mes durante tus primeros 3 cobros · Badge Founder a los primeros 15 en contratar
+              </div>
+              <div className="mt-6 flex justify-center">
+                <Button size="lg" onClick={() => handleCTAClick("final")} className="bg-gray-900 hover:bg-green-900 h-12 px-8 text-base">
+                  Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="mt-3 text-xs text-gray-500">Incluye LegalUp AI integrado: análisis de documentos y chat sobre tus casos.</p>
+            </Reveal>
           </div>
         </div>
       </section>
 
       {/* Minimal footer */}
       <footer className="border-t border-gray-200 bg-gray-50">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              © 2026 LegalUp. Todos los derechos reservados.
-            </div>
-            <div className="flex items-center gap-6 text-sm">
-              <a href="/terminos" className="text-gray-500 hover:text-gray-900">Términos</a>
-              <a href="/privacidad" className="text-gray-500 hover:text-gray-900">Privacidad</a>
-              <a href="/contacto" className="text-gray-500 hover:text-gray-900">Contacto</a>
-            </div>
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <Scale className="h-5 w-5 text-green-900" />
+            <span className="font-bold text-green-900">LegalUp Pro</span>
+          </div>
+          <div className="flex items-center gap-4 text-sm text-gray-500">
+            <button onClick={() => scrollToId("como-funciona")} className="hover:text-gray-900">Cómo funciona</button>
+            <button onClick={() => scrollToId("pricing")} className="hover:text-gray-900">Precio</button>
+            <button onClick={() => navigate("/contacto")} className="hover:text-gray-900">Contacto</button>
           </div>
         </div>
       </footer>
 
-      {/* Auth modal - force lawyer signup for /pro */}
-      {authOpen && (
-        <AuthModal
-          isOpen={authOpen}
-          onClose={() => setAuthOpen(false)}
-          mode={authMode}
-          onModeChange={setAuthMode}
-          proLanding
-        />
-      )}
-      {/* We intercept signup lawyer flow: after AuthModal closes, if now authenticated as lawyer without Pro, open pricing */}
-      <ProPricingModal open={pricingOpen} onOpenChange={setPricingOpen} triggerAction="pro_landing" />
+      <AuthModal
+        open={authOpen}
+        onOpenChange={setAuthOpen}
+        initialMode={authMode}
+        source="proLanding"
+      />
+      <ProPricingModal
+        open={pricingOpen}
+        onOpenChange={setPricingOpen}
+        triggerAction="pro_landing"
+      />
     </div>
   );
 }
