@@ -554,7 +554,7 @@ export default function LegalUpPro() {
                 <Button size="lg" onClick={() => handleCTAClick("ai")} className="bg-white text-gray-900 hover:bg-gray-100 h-12 px-8 text-base">
                   Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
                 </Button>
-                <Button size="lg" variant="outline" onClick={() => navigate("/ai")} className="h-12 px-8 text-base border-white/20 text-white hover:bg-white/10 hover:text-white">
+                <Button size="lg" variant="outline" onClick={() => navigate("/ai")} className="h-12 px-8 text-base bg-transparent border-white/20 text-white hover:bg-white/10 hover:text-white">
                   Conocer LegalUp AI
                 </Button>
               </div>
