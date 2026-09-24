@@ -743,12 +743,12 @@ export default function LegalUpPro() {
               ))}
             </div>
           </div>
-          <Reveal className="mt-10 flex flex-col items-center justify-between gap-4 rounded-2xl bg-green-700 px-6 py-5 shadow-lg sm:flex-row" delay={0.15}>
+          <Reveal className="mt-10 flex flex-col items-center justify-between gap-4 rounded-2xl bg-gradient-to-r from-green-800 via-green-700 to-green-300 px-6 py-5 shadow-lg sm:flex-row" delay={0.15}>
             <div className="flex items-center gap-3">
               <Sparkles className="h-5 w-5 shrink-0 text-emerald-100" />
-              <p className="text-sm text-emerald-50 sm:text-base"><span className="font-semibold text-white">IA como capa transversal:</span> disponible en tus casos a lo largo de todo el flujo, no aislada.</p>
+              <p className="max-w-2xl text-sm text-white sm:text-base"><span className="font-semibold">IA como capa transversal:</span> disponible en tus casos a lo largo de todo el flujo, no aislada.</p>
             </div>
-            <Button onClick={() => handleCTAClick("overview")} className="rounded-full shrink-0 bg-white text-gray-900 hover:bg-gray-100">
+            <Button onClick={() => handleCTAClick("overview")} className="rounded-full shrink-0 bg-gray-900 text-white hover:bg-black">
               Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
             </Button>
           </Reveal>
