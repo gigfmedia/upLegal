@@ -1077,8 +1077,9 @@ export default function LegalUpPro() {
       <footer className="border-t border-gray-200 bg-gray-50">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-8 sm:flex-row sm:px-6">
           <div className="flex items-center gap-2">
-            <Scale className="h-5 w-5 text-green-900" />
-            <span className="font-bold text-green-900">LegalUp Pro</span>
+            <Scale className="h-7 w-7 text-green-900" />
+            <span className="text-lg font-bold text-green-900">LegalUp</span>
+            <span className="rounded-[5px] border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-px text-[0.6rem] font-semibold tracking-[0.14em] text-emerald-700">PRO</span>
           </div>
           <div className="flex items-center gap-4 text-sm text-gray-500">
             <button onClick={() => scrollToId("producto")} className="hover:text-gray-900">Producto</button>
