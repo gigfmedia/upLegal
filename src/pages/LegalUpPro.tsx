@@ -89,7 +89,7 @@ function BrowserChrome({ url, dark = false, right }: { url: string; dark?: boole
 
 function AgendaFragment() {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-xl">
+    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-lg">
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">Agenda de hoy</span>
         <Calendar className="h-4 w-4 text-green-700" />
@@ -133,7 +133,7 @@ function CaseFragment() {
 
 function AIChatFragment() {
   return (
-    <div className="rounded-2xl border border-emerald-500/25 bg-white p-4 shadow-xl">
+    <div className="rounded-2xl border border-emerald-500/25 bg-white p-4 shadow-lg">
       <div className="flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-emerald-600" />
         <span className="text-xs font-semibold text-gray-900">IA dentro del caso</span>
@@ -206,12 +206,12 @@ function HeroComposition() {
             </span>
           }
         />
-        <div className="grid gap-3 bg-cream-900 p-4 sm:grid-cols-4 sm:p-6">
+        <div className="grid grid-cols-2 gap-3 bg-cream-900 p-4 sm:grid-cols-4 sm:p-6">
           {[
-            { label: "Solicitudes", icon: Inbox, value: "3" },
-            { label: "Casos activos", icon: Briefcase, value: "6" },
-            { label: "Citas hoy", icon: Calendar, value: "2" },
-            { label: "Ingresos del mes", icon: DollarSign, value: "$2.450.000" },
+            { label: "Solicitudes", sub: "Por procesar", icon: Inbox, value: "3" },
+            { label: "Casos activos", sub: "En gestión", icon: Briefcase, value: "6" },
+            { label: "Citas hoy", sub: "En tu agenda", icon: Calendar, value: "2" },
+            { label: "Ingresos del mes", sub: "Este mes", icon: DollarSign, value: "$2.450.000" },
           ].map((kpi) => (
             <div key={kpi.label} className="rounded-xl border border-gray-100 bg-white p-4">
               <div className="flex items-center justify-between">
@@ -219,12 +219,56 @@ function HeroComposition() {
                 <kpi.icon className="h-4 w-4 text-gray-400" />
               </div>
               <div className="mt-2 text-lg font-bold text-gray-900">{kpi.value}</div>
+              <div className="mt-0.5 text-[0.65rem] text-gray-400">{kpi.sub}</div>
             </div>
           ))}
         </div>
-        <div className="hidden items-center gap-1 overflow-x-auto border-t border-gray-100 px-4 py-3 sm:flex sm:px-6">
+        {/* Fila 2: espeja el dashboard real (Próximas citas + Solicitudes pendientes) */}
+        <div className="grid gap-3 border-t border-gray-100 bg-white p-4 sm:p-6 lg:grid-cols-[1.6fr_1fr]">
+          <div className="rounded-xl border border-gray-100 p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">Próximas citas</span>
+              <span className="text-xs font-medium text-green-700">Ver agenda →</span>
+            </div>
+            <div className="divide-y divide-gray-50">
+              {[
+                { time: "10:00", name: "Reunión de seguimiento", meta: "Consulta · Confirmada", date: "hoy" },
+                { time: "15:30", name: "Primera consulta", meta: "Reunión · Pendiente", date: "hoy" },
+                { time: "09:00", name: "Revisión de caso", meta: "Seguimiento · Confirmada", date: "mañana" },
+              ].map((a, i) => (
+                <div key={a.time} className={`flex items-center justify-between py-2.5 ${i === 2 ? "hidden sm:flex" : ""}`}>
+                  <div>
+                    <div className="text-sm font-medium text-gray-900">{a.time} · {a.name}</div>
+                    <div className="text-xs text-gray-500">{a.meta}</div>
+                  </div>
+                  <div className="text-xs text-gray-400">{a.date}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-xl border border-gray-100 p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">Solicitudes</span>
+              <span className="rounded-full bg-green-100 px-2 py-0.5 text-[0.65rem] font-bold text-green-800">3 nuevas</span>
+            </div>
+            <div className="space-y-2">
+              {[
+                { title: "Consulta · arriendo", tag: "Sin revisar" },
+                { title: "Defensa · causa civil", tag: "En revisión" },
+              ].map((s) => (
+                <div key={s.title} className="rounded-lg border border-gray-100 px-3 py-2">
+                  <div className="text-xs font-medium text-gray-800">{s.title}</div>
+                  <div className="text-[0.65rem] text-gray-400">{s.tag}</div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-2 text-xs font-medium text-green-700">Ver solicitudes →</div>
+          </div>
+        </div>
+        {/* Mapa sutil del producto (pie del dashboard, no contenido principal) */}
+        <div className="hidden items-center gap-1 overflow-x-auto border-t border-gray-50 bg-gray-50/60 px-4 py-2.5 sm:flex sm:px-6">
           {["Solicitudes", "Clientes", "Casos", "Agenda", "Ingresos"].map((s, i, arr) => (
-            <span key={s} className="flex items-center gap-1 text-xs font-medium text-gray-500">
+            <span key={s} className="flex items-center gap-1 text-[0.7rem] font-medium text-gray-400">
               {s}
               {i < arr.length - 1 && <ArrowRight className="h-3 w-3 text-gray-300" />}
             </span>
