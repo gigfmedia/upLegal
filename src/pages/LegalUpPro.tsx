@@ -130,7 +130,7 @@ function CaseFragment() {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-xl">
       <div className="flex items-center gap-2">
-        <Briefcase className="h-4 w-4 text-green-700" />
+        <Briefcase className="h-4 w-4 text-green-900" />
         <span className="text-sm font-semibold text-gray-900">Caso · <span className="font-normal text-gray-500">expediente al día</span></span>
       </div>
       <div className="mt-3 space-y-1.5">
@@ -142,7 +142,7 @@ function CaseFragment() {
         ))}
       </div>
       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-gray-100">
-        <div className="h-full w-3/4 rounded-full bg-green-600" />
+        <div className="h-full w-3/4 rounded-full bg-green-300" />
       </div>
     </div>
   );
@@ -171,7 +171,7 @@ function InboxFragment() {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-xl">
       <div className="flex items-center gap-2">
-        <Inbox className="h-4 w-4 text-green-700" />
+        <Inbox className="h-4 w-4 text-green-900" />
         <span className="text-sm font-semibold text-gray-900">Solicitudes</span>
         <span className="ml-auto rounded-full bg-green-100 px-2 py-0.5 text-[0.65rem] font-bold text-green-800">3 nuevas</span>
       </div>
@@ -189,7 +189,7 @@ function EarningsFragment() {
     <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-xl">
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">Ingresos del mes</span>
-        <DollarSign className="h-4 w-4 text-green-700" />
+        <DollarSign className="h-4 w-4 text-green-900" />
       </div>
       <div className="mt-2 text-2xl font-bold text-gray-900">$2.450.000</div>
       <div className="mt-2 flex h-10 items-end gap-1.5">
@@ -730,14 +730,15 @@ export default function LegalUpPro() {
               ].map((s, i) => (
                 <Reveal key={s.n} delay={i * 0.1}>
                   <div className="relative rounded-2xl border border-green-600/20 bg-white p-5 shadow-xl">
-                    <div className="flex items-center justify-between">
+                    <div className="absolute -inset-3 rounded-3xl bg-green-50/60" aria-hidden="true" />
+                    <div className="relative flex items-center justify-between">
                       <span className="rounded-lg bg-green-300 px-2 py-0.5 font-mono text-xs font-bold text-green-950">{s.n}</span>
                       <span className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100">
                         <s.icon className="h-5 w-5 text-green-900" />
                       </span>
                     </div>
-                    <h3 className="mt-3 text-lg font-semibold text-gray-900">{s.title}</h3>
-                    <p className="mt-1 text-sm leading-relaxed text-gray-600">{s.desc}</p>
+                    <h3 className="relative mt-3 text-lg font-semibold text-gray-900">{s.title}</h3>
+                    <p className="relative mt-1 text-sm leading-relaxed text-gray-600">{s.desc}</p>
                   </div>
                 </Reveal>
               ))}
