@@ -1069,16 +1069,18 @@ const Index = () => {
         </div>
       </section>
 
-      {/* LegalUp Pro para abogados (FASE 5.12) */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-green-900 border-y border-gray-800 text-white">
-        <div className="max-w-5xl mx-auto text-center">
-          <p className="text-sm font-semibold uppercase tracking-widest text-green-400 mb-3">
+      {/* LegalUp Pro para abogados (FASE 5.12) — espejo del CTA final de /pro */}
+      <section className="bg-white">
+        <div className="px-3 py-3 sm:px-6 sm:py-6">
+          <div className="overflow-hidden rounded-[28px] bg-gradient-to-b from-green-300 via-green-200 to-[#edf7f0] sm:rounded-[40px]">
+        <div className="max-w-5xl mx-auto text-center px-5 py-14 sm:px-12 sm:py-20">
+          <p className="text-sm font-semibold uppercase tracking-widest text-green-800 mb-3">
             LegalUp Pro para abogados
           </p>
-          <h2 className="text-3xl font-bold font-serif text-white mb-4">
+          <h2 className="text-3xl font-bold tracking-tight text-gray-900 mb-4 sm:text-4xl">
             Gestiona tu práctica en un solo lugar
           </h2>
-          <p className="text-xl mb-8 text-white">
+          <p className="text-xl mb-8 text-gray-700">
             Organiza clientes, casos, solicitudes y citas, con herramientas de IA integradas para apoyar tu trabajo diario.
           </p>
           <button 
@@ -1086,13 +1088,15 @@ const Index = () => {
                 track.commercialCTAClicked({ source: 'home_pro_cta', destination: '/pro' });
                 navigate('/pro');
               }}
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-11 rounded-full px-8 bg-gradient-to-b from-green-300 to-green-200 text-gray-900 hover:from-green-200 hover:to-green-100"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-11 rounded-full px-8 bg-gray-900 text-white hover:bg-green-900"
             >
               Conocer LegalUp Pro →
             </button>
-          <p className="mt-4 text-xs text-green-300">
+          <p className="mt-4 text-xs font-medium text-green-900">
             Plan Free disponible · Pro desde $19.990/mes
           </p>
+        </div>
+          </div>
         </div>
       </section>
 
