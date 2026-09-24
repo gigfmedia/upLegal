@@ -604,7 +604,8 @@ export default function LegalUpPro() {
 
       {/* HERO — contenedor verde: showcase de producto contenido */}
       <section className="bg-white">
-        <div className="mx-auto max-w-[1600px] px-3 pt-3 sm:px-6 sm:pt-6">
+        {/* Sin max-w: el objeto verde respira con el mismo margen en todos los bordes */}
+        <div className="px-3 pt-3 sm:px-6 sm:pt-6">
           <div className="rounded-[28px] bg-gradient-to-b from-green-300 via-green-200 to-[#edf7f0] px-5 pb-10 pt-12 sm:rounded-[40px] sm:px-12 sm:pt-16">
           <div className="mx-auto max-w-4xl text-center">
             <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE }}>
