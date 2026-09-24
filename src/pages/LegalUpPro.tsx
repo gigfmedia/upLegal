@@ -543,21 +543,21 @@ export default function LegalUpPro() {
           <div className="hidden items-center gap-3 md:flex">
             {!user ? (
               <>
-                <Button variant="ghost" onClick={() => { setAuthMode("login"); setAuthOpen(true); }} className="text-gray-600">
+                <Button variant="ghost" onClick={() => { setAuthMode("login"); setAuthOpen(true); }} className="rounded-full text-gray-600">
                   Iniciar sesión
                 </Button>
-                <Button onClick={() => handleCTAClick("header")} className="bg-gray-900 shadow-sm hover:bg-green-900">
+                <Button onClick={() => handleCTAClick("header")} className="rounded-full bg-gray-900 shadow-sm hover:bg-green-900">
                   Comenzar con LegalUp Pro
                 </Button>
               </>
             ) : userRole === "client" ? (
-              <Button onClick={() => handleCTAClick("header")} className="bg-gray-900 shadow-sm hover:bg-green-900">
+              <Button onClick={() => handleCTAClick("header")} className="rounded-full bg-gray-900 shadow-sm hover:bg-green-900">
                 Buscar abogado
               </Button>
             ) : pro.hasProAccess ? (
-              <Button onClick={() => navigate("/lawyer/dashboard")} className="bg-gray-900 shadow-sm hover:bg-green-900">Ir al dashboard</Button>
+              <Button onClick={() => navigate("/lawyer/dashboard")} className="rounded-full bg-gray-900 shadow-sm hover:bg-green-900">Ir al dashboard</Button>
             ) : userRole === "lawyer" ? (
-              <Button onClick={() => setPricingOpen(true)} className="bg-gray-900 shadow-sm hover:bg-green-900">Activar Pro</Button>
+              <Button onClick={() => setPricingOpen(true)} className="rounded-full bg-gray-900 shadow-sm hover:bg-green-900">Activar Pro</Button>
             ) : (
               <Button onClick={() => navigate("/")} variant="outline">Volver a LegalUp</Button>
             )}
@@ -577,14 +577,14 @@ export default function LegalUpPro() {
                 {!user ? (
                   <>
                     <Button variant="outline" onClick={() => { setAuthMode("login"); setAuthOpen(true); setMobileMenuOpen(false); }}>Iniciar sesión</Button>
-                    <Button onClick={() => handleCTAClick("header_mobile")} className="bg-gray-900 hover:bg-green-900">Comenzar con LegalUp Pro</Button>
+                    <Button onClick={() => handleCTAClick("header_mobile")} className="rounded-full bg-gray-900 hover:bg-green-900">Comenzar con LegalUp Pro</Button>
                   </>
                 ) : userRole === "client" ? (
-                  <Button onClick={() => handleCTAClick("header_mobile")} className="bg-gray-900 hover:bg-green-900">Buscar abogado</Button>
+                  <Button onClick={() => handleCTAClick("header_mobile")} className="rounded-full bg-gray-900 hover:bg-green-900">Buscar abogado</Button>
                 ) : pro.hasProAccess ? (
-                  <Button onClick={() => { setMobileMenuOpen(false); navigate("/lawyer/dashboard"); }} className="bg-gray-900 hover:bg-green-900">Ir al dashboard</Button>
+                  <Button onClick={() => { setMobileMenuOpen(false); navigate("/lawyer/dashboard"); }} className="rounded-full bg-gray-900 hover:bg-green-900">Ir al dashboard</Button>
                 ) : userRole === "lawyer" ? (
-                  <Button onClick={() => { setMobileMenuOpen(false); setPricingOpen(true); }} className="bg-gray-900 hover:bg-green-900">Activar Pro</Button>
+                  <Button onClick={() => { setMobileMenuOpen(false); setPricingOpen(true); }} className="rounded-full bg-gray-900 hover:bg-green-900">Activar Pro</Button>
                 ) : (
                   <Button onClick={() => { setMobileMenuOpen(false); navigate("/"); }} variant="outline">Volver a LegalUp</Button>
                 )}
@@ -634,10 +634,10 @@ export default function LegalUpPro() {
               transition={{ duration: 0.8, delay: 0.3, ease: EASE }}
               className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"
             >
-              <Button size="lg" onClick={() => handleCTAClick("hero")} className="h-12 w-full bg-gray-900 px-8 text-base shadow-lg hover:bg-green-900 sm:w-auto sm:px-10 sm:text-lg">
+              <Button size="lg" onClick={() => handleCTAClick("hero")} className="rounded-full h-12 w-full bg-gray-900 px-8 text-base shadow-lg hover:bg-green-900 sm:w-auto sm:px-10 sm:text-lg">
                 Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
               </Button>
-              <Button size="lg" variant="outline" onClick={() => scrollToId("producto")} className="h-12 w-full border-green-900/20 bg-white px-8 text-base text-gray-900 hover:bg-gray-50 sm:w-auto">
+              <Button size="lg" variant="outline" onClick={() => scrollToId("producto")} className="rounded-full h-12 w-full border-green-900/20 bg-white px-8 text-base text-gray-900 hover:bg-gray-50 sm:w-auto">
                 Ver el producto
               </Button>
             </motion.div>
@@ -746,7 +746,7 @@ export default function LegalUpPro() {
               <Sparkles className="h-5 w-5 shrink-0 text-emerald-400" />
               <p className="text-sm text-gray-200 sm:text-base"><span className="font-semibold text-white">IA como capa transversal:</span> disponible en tus casos a lo largo de todo el flujo, no aislada.</p>
             </div>
-            <Button onClick={() => handleCTAClick("overview")} className="shrink-0 bg-white text-gray-900 hover:bg-gray-100">
+            <Button onClick={() => handleCTAClick("overview")} className="rounded-full shrink-0 bg-white text-gray-900 hover:bg-gray-100">
               Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
             </Button>
           </Reveal>
@@ -827,10 +827,10 @@ export default function LegalUpPro() {
               </ul>
               <p className="mt-5 font-mono text-xs tracking-wide text-gray-500">LegalUp AI integrado · 300 CONSULTAS · 40 ANÁLISIS · 10 INVESTIGACIONES / MES</p>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <Button size="lg" onClick={() => handleCTAClick("ai")} className="h-12 bg-white px-8 text-base text-gray-900 hover:bg-gray-100">
+                <Button size="lg" onClick={() => handleCTAClick("ai")} className="rounded-full h-12 bg-white px-8 text-base text-gray-900 hover:bg-gray-100">
                   Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
                 </Button>
-                <Button size="lg" variant="outline" onClick={() => navigate("/ai")} className="h-12 border-white/20 bg-transparent px-8 text-base text-white hover:bg-white/10 hover:text-white">
+                <Button size="lg" variant="outline" onClick={() => navigate("/ai")} className="rounded-full h-12 border-white/20 bg-transparent px-8 text-base text-white hover:bg-white/10 hover:text-white">
                   Conocer LegalUp AI
                 </Button>
               </div>
@@ -932,7 +932,7 @@ export default function LegalUpPro() {
             </div>
           </div>
           <Reveal className="mt-12 text-center sm:text-left">
-            <Button size="lg" onClick={() => handleCTAClick("how")} className="bg-gray-900 hover:bg-green-900 h-12 px-8 text-base">
+            <Button size="lg" onClick={() => handleCTAClick("how")} className="rounded-full bg-gray-900 hover:bg-green-900 h-12 px-8 text-base">
               Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
             </Button>
           </Reveal>
@@ -959,7 +959,7 @@ export default function LegalUpPro() {
           <div className="mx-auto mt-12 grid max-w-4xl gap-5 md:grid-cols-2">
             {/* FREE — realidad actual sin suscripción: lectura + 1er caso + servicios */}
             <Reveal>
-              <Card className="flex h-full flex-col border-gray-200">
+              <Card className="flex h-full flex-col rounded-3xl border-gray-200">
                 <CardContent className="flex flex-1 flex-col p-6 sm:p-8">
                   <h3 className="text-lg font-bold">Free</h3>
                   <div className="mt-3 flex items-end gap-1">
@@ -969,7 +969,7 @@ export default function LegalUpPro() {
                   <Button
                     variant="outline"
                     onClick={() => handleFreeCTA("pricing_free")}
-                    className="mt-6 h-12 w-full text-base"
+                    className="mt-6 h-12 w-full rounded-full text-base"
                   >
                     {!user ? "Comenzar gratis" : "Ir a mi panel"}
                   </Button>
@@ -992,7 +992,7 @@ export default function LegalUpPro() {
             </Reveal>
             {/* PRO — capacidades verificadas con Pro activo */}
             <Reveal delay={0.1}>
-              <Card className="flex h-full flex-col border-green-600 shadow-xl ring-1 ring-green-600/20">
+              <Card className="flex h-full flex-col rounded-3xl border-green-300 shadow-xl">
                 <CardContent className="flex flex-1 flex-col p-6 sm:p-8">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-bold">Pro</h3>
@@ -1005,7 +1005,7 @@ export default function LegalUpPro() {
                   <p className="mt-2 text-sm text-gray-600">Precio Founder durante tus primeros 3 cobros. Desde el cuarto cobro, $49.990/mes.</p>
                   <Button
                     onClick={() => handleProCTA("pricing_pro")}
-                    className="mt-6 h-12 w-full bg-gray-900 text-base hover:bg-green-900"
+                    className="mt-6 h-12 w-full rounded-full bg-gray-900 text-base hover:bg-green-900"
                   >
                     {!user ? "Comenzar con Pro" : pro.hasProAccess ? "Ir a LegalUp Pro" : pro.status === "pending" ? "Continuar suscripción" : "Pasar a Pro"} <ArrowRight className="h-4 w-4" />
                   </Button>
@@ -1042,9 +1042,9 @@ export default function LegalUpPro() {
             <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Preguntas frecuentes</h2>
           </Reveal>
           <Reveal delay={0.1}>
-            <Accordion type="single" collapsible className="mt-8 rounded-xl border bg-white px-4">
+            <Accordion type="single" collapsible className="mt-8 rounded-3xl border bg-white px-4 py-2">
               {FAQS.map((f, i) => (
-                <AccordionItem key={f.q} value={`q${i + 1}`} className="border-gray-100 data-[state=open]:bg-green-50/40">
+                <AccordionItem key={f.q} value={`q${i + 1}`} className="border-gray-100 px-3 data-[state=open]:rounded-xl data-[state=open]:border-transparent data-[state=open]:bg-green-50">
                   <AccordionTrigger className="text-left">{f.q}</AccordionTrigger>
                   <AccordionContent className="text-gray-600">{f.a}</AccordionContent>
                 </AccordionItem>
@@ -1056,23 +1056,23 @@ export default function LegalUpPro() {
         </div>
       </section>
 
-      {/* CTA FINAL — verde profundo memorable */}
+      {/* CTA FINAL — mismo verde con degrade del hero */}
       <section className="bg-white">
         <div className="px-3 pb-3 sm:px-6 sm:pb-6">
-          <div className="relative overflow-hidden rounded-[28px] bg-green-950 text-white sm:rounded-[40px]">
-        <div className="pointer-events-none absolute -bottom-48 left-1/2 h-96 w-[52rem] max-w-none -translate-x-1/2 rounded-full bg-emerald-500/15 blur-3xl" aria-hidden="true" />
+          <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-b from-green-300 via-green-200 to-[#edf7f0] sm:rounded-[40px]">
+        <div className="pointer-events-none absolute -bottom-48 left-1/2 h-96 w-[52rem] max-w-none -translate-x-1/2 rounded-full bg-green-600/10 blur-3xl" aria-hidden="true" />
         <div className="relative mx-auto max-w-5xl px-4 py-20 text-center sm:px-6 sm:py-28">
           <Reveal>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-400">LegalUp Pro</p>
-            <h2 className="mx-auto mt-5 max-w-3xl text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-green-800">LegalUp Pro</p>
+            <h2 className="mx-auto mt-5 max-w-3xl text-4xl font-bold leading-[1.05] tracking-tight text-gray-900 sm:text-6xl">
               Tu práctica. Tus clientes. Tus casos. Un solo lugar.
             </h2>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Button size="lg" onClick={() => handleCTAClick("final")} className="h-12 w-full bg-white px-10 text-base text-gray-900 shadow-xl hover:bg-gray-100 sm:w-auto sm:text-lg">
+              <Button size="lg" onClick={() => handleCTAClick("final")} className="h-12 w-full rounded-full bg-gray-900 px-10 text-base text-white shadow-xl hover:bg-green-900 sm:w-auto sm:text-lg">
                 Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
-            <p className="mt-5 text-sm text-emerald-400">$19.990/mes × 3 cobros · Sin compromiso anual</p>
+            <p className="mt-5 text-sm font-medium text-green-900">$19.990/mes × 3 cobros · Sin compromiso anual</p>
           </Reveal>
             </div>
           </div>
