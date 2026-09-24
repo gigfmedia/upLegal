@@ -1080,8 +1080,8 @@ const Index = () => {
           <h2 className="text-3xl font-bold tracking-tight text-gray-900 mb-4 sm:text-4xl">
             Gestiona tu práctica en un solo lugar
           </h2>
-          <p className="text-xl mb-8 text-gray-700">
-            Organiza clientes, casos, solicitudes y citas, con herramientas de IA integradas para apoyar tu trabajo diario.
+          <p className="mb-8 text-xl text-gray-700 lg:whitespace-nowrap">
+            Organiza clientes, casos, solicitudes y citas, con IA integrada para tu trabajo diario.
           </p>
           <button 
               onClick={() => {
