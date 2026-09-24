@@ -733,7 +733,7 @@ export default function LegalUpPro() {
                     <div className="flex items-center justify-between">
                       <span className="rounded-lg bg-green-300 px-2 py-0.5 font-mono text-xs font-bold text-green-950">{s.n}</span>
                       <span className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100">
-                        <s.icon className="h-5 w-5 text-green-800" />
+                        <s.icon className="h-5 w-5 text-green-900" />
                       </span>
                     </div>
                     <h3 className="mt-3 text-lg font-semibold text-gray-900">{s.title}</h3>
