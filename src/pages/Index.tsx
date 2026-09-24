@@ -1086,7 +1086,7 @@ const Index = () => {
                 track.commercialCTAClicked({ source: 'home_pro_cta', destination: '/pro' });
                 navigate('/pro');
               }}
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-11 rounded-full px-8 bg-gray-900 text-white hover:bg-black"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-11 rounded-full px-8 bg-gradient-to-b from-green-300 to-green-200 text-gray-900 hover:from-green-200 hover:to-green-100"
             >
               Conocer LegalUp Pro →
             </button>
