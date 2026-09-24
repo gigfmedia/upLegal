@@ -25,7 +25,7 @@ const MARIA_QUOTE =
   "Antes tenía información repartida entre WhatsApp, correo y calendario. Con LegalUp Pro puedo tener clientes, casos y citas en un mismo lugar y saber rápidamente qué tengo pendiente.";
 
 const ANGEL_QUOTE =
-  "Lo que más valoro es poder ver cada asunto con su cliente, sus citas y el trabajo pendiente sin tener que reconstruir todo buscando entre distintas herramientas.";
+  "Lo que más valoro es poder ver cada asunto con su cliente, sus citas y el trabajo pendiente sin tener que reconstruir todo buscando entre distintas herramientas. Tener todo conectado en un mismo lugar me ahorra tiempo todos los días.";
 
 export function TestimonialsSection() {
   const firedRef = useRef(false);
