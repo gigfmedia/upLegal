@@ -722,7 +722,6 @@ export default function LegalUpPro() {
               ].map((s, i) => (
                 <Reveal key={s.n} delay={i * 0.1}>
                   <div className="relative rounded-2xl border border-green-600/20 bg-white p-5 shadow-xl">
-                    <div className="absolute -inset-3 rounded-3xl bg-green-50/60" aria-hidden="true" />
                     <div className="relative flex items-center justify-between">
                       <span className="rounded-lg bg-green-300 px-2 py-0.5 font-mono text-xs font-bold text-green-950">{s.n}</span>
                       <span className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100">
