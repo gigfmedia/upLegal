@@ -208,7 +208,7 @@ function HeroComposition() {
         initial={{ opacity: 0, y: 48 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1.1, delay: 0.3, ease: EASE }}
-        className="relative z-10 mx-auto max-w-5xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
+        className="relative z-30 mx-auto max-w-5xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
       >
         <BrowserChrome
           url="legalup.cl/lawyer/dashboard"
@@ -294,11 +294,11 @@ function HeroComposition() {
           </span>
         </div>
       </motion.div>
-      {/* Fragmentos secundarios detrás del browser (~45% visible: título + contenido) */}
-      <div className="pointer-events-none absolute -top-24 left-0 z-0 hidden w-52 -rotate-3 sm:w-56 lg:block" aria-hidden="true">
+      {/* Fragmentos secundarios: nacen ARRIBA del browser, ~65% visible */}
+      <div className="pointer-events-none absolute -top-36 left-0 z-20 hidden w-52 -rotate-3 sm:w-56 lg:block" aria-hidden="true">
         <Float amount={10} duration={7}><AgendaFragment /></Float>
       </div>
-      <div className="pointer-events-none absolute -top-28 right-0 z-0 hidden w-56 rotate-2 sm:w-60 lg:block" aria-hidden="true">
+      <div className="pointer-events-none absolute -top-40 right-0 z-20 hidden w-56 rotate-2 sm:w-60 lg:block" aria-hidden="true">
         <Float amount={8} duration={6} delay={1}><AIChatFragment /></Float>
       </div>
     </div>
@@ -602,12 +602,13 @@ export default function LegalUpPro() {
         </section>
       )}
 
-      {/* HERO — el producto es el protagonista */}
-      <section className="relative overflow-hidden border-b border-gray-100 bg-gradient-to-b from-green-50/70 via-white to-white">
-        <div className="mx-auto max-w-7xl px-4 pb-16 pt-12 sm:px-6 sm:pb-24 sm:pt-16 lg:pt-20">
+      {/* HERO — contenedor verde: showcase de producto contenido */}
+      <section className="bg-white">
+        <div className="mx-auto max-w-[1600px] px-3 pt-3 sm:px-6 sm:pt-6">
+          <div className="rounded-[28px] bg-gradient-to-b from-green-300 via-green-200 to-[#edf7f0] px-5 pb-10 pt-12 sm:rounded-[40px] sm:px-12 sm:pt-16">
           <div className="mx-auto max-w-4xl text-center">
             <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE }}>
-              <Badge className="mb-5 border-green-200 bg-green-50 text-green-800 hover:bg-green-50">LegalUp Pro · para abogados y equipos legales</Badge>
+              <Badge className="mb-5 border-white/70 bg-white/80 text-green-900 hover:bg-white">LegalUp Pro · para abogados y equipos legales</Badge>
             </motion.div>
             <motion.h1
               initial={{ opacity: 0, y: 22 }}
@@ -634,7 +635,7 @@ export default function LegalUpPro() {
               <Button size="lg" onClick={() => handleCTAClick("hero")} className="h-12 w-full bg-gray-900 px-8 text-base shadow-lg hover:bg-green-900 sm:w-auto sm:px-10 sm:text-lg">
                 Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
               </Button>
-              <Button size="lg" variant="outline" onClick={() => scrollToId("producto")} className="h-12 w-full px-8 text-base sm:w-auto">
+              <Button size="lg" variant="outline" onClick={() => scrollToId("producto")} className="h-12 w-full border-green-900/20 bg-white/60 px-8 text-base text-gray-900 hover:bg-white sm:w-auto">
                 Ver el producto
               </Button>
             </motion.div>
@@ -642,15 +643,16 @@ export default function LegalUpPro() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.45 }}
-              className="mt-4 text-xs text-gray-500"
+              className="mt-4 text-xs text-gray-700"
             >
-              <button onClick={() => scrollToId("pricing")} className="underline decoration-gray-300 underline-offset-2 hover:text-gray-800">
+              <button onClick={() => scrollToId("pricing")} className="underline decoration-green-800/30 underline-offset-2 hover:text-gray-900">
                 Plan Free disponible · Plan Pro con acceso Founder
               </button>
             </motion.p>
           </div>
           <HeroComposition />
-          <p className="mt-8 text-center text-xs text-gray-400">Vista de la estructura real del workspace Pro (datos ilustrativos anonimizados).</p>
+          <p className="mt-8 text-center text-xs text-gray-600">Vista de la estructura real del workspace Pro (datos ilustrativos anonimizados).</p>
+          </div>
         </div>
       </section>
 
