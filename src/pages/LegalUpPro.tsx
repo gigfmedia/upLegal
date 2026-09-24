@@ -636,7 +636,7 @@ export default function LegalUpPro() {
               <Button size="lg" onClick={() => handleCTAClick("hero")} className="h-12 w-full bg-gray-900 px-8 text-base shadow-lg hover:bg-green-900 sm:w-auto sm:px-10 sm:text-lg">
                 Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
               </Button>
-              <Button size="lg" variant="outline" onClick={() => scrollToId("producto")} className="h-12 w-full border-green-900/20 bg-white/60 px-8 text-base text-gray-900 hover:bg-white sm:w-auto">
+              <Button size="lg" variant="outline" onClick={() => scrollToId("producto")} className="h-12 w-full border-green-900/20 bg-white px-8 text-base text-gray-900 hover:bg-gray-50 sm:w-auto">
                 Ver el producto
               </Button>
             </motion.div>
