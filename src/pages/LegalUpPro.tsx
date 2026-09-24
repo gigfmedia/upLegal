@@ -921,7 +921,7 @@ export default function LegalUpPro() {
               ].map((s, i) => (
                 <Reveal key={s.n} delay={i * 0.07}>
                   <div className="relative flex gap-5 sm:gap-8">
-                    <div className="relative z-10 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-gray-200 bg-white font-mono text-sm font-bold text-green-800 shadow-sm sm:h-[72px] sm:w-[72px] sm:text-base">
+                    <div className="relative z-10 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-green-300 bg-green-300 font-mono text-sm font-bold text-green-950 shadow-sm sm:h-[72px] sm:w-[72px] sm:text-base">
                       {s.n}
                     </div>
                     <div className="pt-1 sm:pt-2">
