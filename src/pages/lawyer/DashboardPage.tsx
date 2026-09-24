@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,7 @@ const statusLabels: Record<string, string> = {
 };
 import { OnboardingCard } from '@/components/lawyer/OnboardingCard';
 import { loadDemoData } from '@/lib/demoData';
+import { takeProPendingAction } from '@/lib/proPurchaseIntent';
 import { trackOnboardingViewed, trackBookingCreated } from '@/lib/activationAnalytics';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AppointmentForm } from '@/components/appointments/AppointmentForm';
@@ -72,6 +73,17 @@ export default function LawyerDashboardPage() {
   const [proVerificationAttempts, setProVerificationAttempts] = useState(0);
 
   const isProReturn = searchParams.get('pro_subscription_success') === 'true';
+
+  // PRO.2.3: retomar intención de checkout pendiente tras signup/onboarding
+  // (el modal reconcilia preapprovals existentes, no duplica suscripciones).
+  // Solo abogados autenticados sin Pro; un solo consumo por intención.
+  const proIntentResumedRef = useRef(false);
+  useEffect(() => {
+    if (!user || hasProAccessCheck || proIntentResumedRef.current) return;
+    proIntentResumedRef.current = true;
+    if (takeProPendingAction() === 'checkout') setProPaywallOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, hasProAccessCheck]);
 
   useEffect(() => {
     if (!isProReturn) return;

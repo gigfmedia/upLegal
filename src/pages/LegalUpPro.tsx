@@ -13,6 +13,8 @@ import { ProPricingModal } from "@/components/legalup-pro/ProPricingModal";
 import { AuthModal } from "@/components/AuthModal";
 import posthog from "posthog-js";
 import { persistUTMsFromURL } from "@/lib/bookingAttribution";
+import { setProPendingAction, takeProPendingAction } from "@/lib/proPurchaseIntent";
+import { resolveFreeCTA, resolveProCTA } from "@/lib/proPlanCTA";
 
 function getUTMs() {
   try {
@@ -67,6 +69,20 @@ function Eyebrow({ children, dark = false }: { children: ReactNode; dark?: boole
     <p className={`text-xs font-semibold uppercase tracking-[0.18em] ${dark ? "text-emerald-400" : "text-green-700"}`}>
       {children}
     </p>
+  );
+}
+
+// Fila de matriz Free/Pro: ✓ capacidad incluida, — no incluida en ese plan.
+function PlanRow({ included = false, label }: { included?: boolean; label: string }) {
+  return (
+    <li className={`flex items-start gap-2.5 ${included ? "text-gray-800" : "text-gray-400"}`}>
+      {included ? (
+        <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-700" />
+      ) : (
+        <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center text-gray-300" aria-hidden="true">—</span>
+      )}
+      <span>{label}</span>
+    </li>
   );
 }
 
@@ -438,6 +454,58 @@ export default function LegalUpPro() {
     navigate("/");
   };
 
+  // PRO.2.3: si el usuario vuelve autenticado con intención de checkout
+  // pendiente (ej. login sin redirect), retomar directo al modal de compra.
+  useEffect(() => {
+    if (!user || authLoading) return;
+    if (takeProPendingAction() !== "checkout") return;
+    if (pro.hasProAccess) return;
+    setPricingOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authLoading]);
+
+  const trackPlanCTA = (plan: "free" | "pro", source: string) => {
+    const utms = getUTMs();
+    try {
+      posthog.capture(plan === "free" ? "pro_free_cta_clicked" : "pro_paid_cta_clicked", {
+        source,
+        placement: "pricing",
+        plan,
+        authenticated: !!user,
+        has_pro_access: !!pro.hasProAccess,
+        utm_source: utms.source,
+        utm_medium: utms.medium,
+        utm_campaign: utms.campaign,
+      });
+    } catch {}
+  };
+
+  // PRO.2.3 Free: sin auth → signup (el acceso Free es el dashboard actual);
+  // con auth → dashboard. Nunca Mercado Pago.
+  const handleFreeCTA = (source: string) => {
+    trackPlanCTA("free", source);
+    const action = resolveFreeCTA(!!user);
+    if (action.type === "dashboard") navigate("/lawyer/dashboard");
+    else {
+      setAuthMode("signup");
+      setAuthOpen(true);
+    }
+  };
+
+  // PRO.2.3 Pro: sin auth → signup preservando intención de checkout;
+  // con Pro → dashboard; pendiente/sin Pro → modal (el endpoint reconcilia).
+  const handleProCTA = (source: string) => {
+    trackPlanCTA("pro", source);
+    const action = resolveProCTA({ authenticated: !!user, hasProAccess: !!pro.hasProAccess });
+    if (action.type === "dashboard") navigate("/lawyer/dashboard");
+    else if (action.type === "checkout") setPricingOpen(true);
+    else {
+      setProPendingAction("checkout");
+      setAuthMode("signup");
+      setAuthOpen(true);
+    }
+  };
+
   return (
     <div className="min-h-screen overflow-x-clip bg-white text-gray-900 antialiased">
       <Helmet>
@@ -576,7 +644,9 @@ export default function LegalUpPro() {
               transition={{ duration: 0.8, delay: 0.45 }}
               className="mt-4 text-xs text-gray-500"
             >
-              Founder $19.990/mes × 3 cobros · Sin compromiso anual
+              <button onClick={() => scrollToId("pricing")} className="underline decoration-gray-300 underline-offset-2 hover:text-gray-800">
+                Plan Free disponible · Plan Pro con acceso Founder
+              </button>
             </motion.p>
           </div>
           <HeroComposition />
@@ -729,7 +799,7 @@ export default function LegalUpPro() {
         <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24">
           <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
             <Reveal>
-              <Eyebrow dark>IA integrada</Eyebrow>
+              <Eyebrow dark>IA</Eyebrow>
               <h2 className="mt-4 text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl">
                 IA integrada cuando la necesitas.
               </h2>
@@ -745,7 +815,7 @@ export default function LegalUpPro() {
                   </li>
                 ))}
               </ul>
-              <p className="mt-5 font-mono text-xs tracking-wide text-gray-500">300 CONSULTAS · 40 ANÁLISIS · 10 INVESTIGACIONES / MES</p>
+              <p className="mt-5 font-mono text-xs tracking-wide text-gray-500">LegalUp AI integrado · 300 CONSULTAS · 40 ANÁLISIS · 10 INVESTIGACIONES / MES</p>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <Button size="lg" onClick={() => handleCTAClick("ai")} className="h-12 bg-white px-8 text-base text-gray-900 hover:bg-gray-100">
                   Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
@@ -855,38 +925,91 @@ export default function LegalUpPro() {
         </div>
       </section>
 
-      {/* PRECIO — un solo momento de conversión (el hero ya anticipa la oferta) */}
+      {/* PRECIO — comparativa Free / Pro (una sola sección canónica) */}
       <section id="pricing" className="border-b border-gray-100 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
           <Reveal className="mx-auto max-w-3xl text-center">
-            <Eyebrow>Plan Founder</Eyebrow>
+            <Eyebrow>Planes</Eyebrow>
             <h2 className="mt-4 text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl">
-              Empieza con LegalUp Pro.
+              Empieza gratis. Crece con Pro.
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-gray-600">
-              Accede a LegalUp Pro con el precio Founder durante tus primeros 3 meses.
+              Explora LegalUp Pro sin costo y activa el plan pago cuando tu práctica lo necesite.
             </p>
           </Reveal>
-          <Reveal delay={0.1} className="mx-auto mt-10 max-w-xl">
-            <Card className="overflow-hidden border-green-200 shadow-xl">
-              <div className="bg-gradient-to-br from-green-50 to-white p-6 text-center sm:p-8">
-                <div className="flex items-center justify-center gap-3">
-                  <span className="text-3xl font-bold tracking-tight text-gray-900">$19.990<span className="text-base font-medium text-gray-500">/mes</span></span>
-                  <Badge className="border-green-200 bg-green-100 text-green-800">Founder</Badge>
-                </div>
-                <p className="mt-2 text-sm text-gray-600">durante tus primeros 3 cobros</p>
-                <Button onClick={() => handleCTAClick("pricing")} className="mt-6 h-12 w-full bg-gray-900 text-base hover:bg-green-900">
-                  Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
-                </Button>
-                <ul className="mx-auto mt-6 max-w-sm space-y-1.5 text-left text-xs leading-relaxed text-gray-500">
-                  <li>Desde el cuarto cobro, $49.990/mes.</li>
-                  <li>Después de los 15 cupos Founder, Pro cuesta $49.990/mes. El badge Founder queda permanentemente en tu perfil.</li>
-                  <li>Solicitudes, Clientes, Casos, Citas, Servicios, Ingresos y LegalUp AI integrado.</li>
-                  <li>Sin compromiso anual. Cancela cuando quieras según condiciones vigentes.</li>
-                </ul>
-              </div>
-            </Card>
-          </Reveal>
+          <div className="mx-auto mt-12 grid max-w-4xl gap-5 md:grid-cols-2">
+            {/* FREE — realidad actual sin suscripción: lectura + 1er caso + servicios */}
+            <Reveal>
+              <Card className="flex h-full flex-col border-gray-200">
+                <CardContent className="flex flex-1 flex-col p-6 sm:p-8">
+                  <h3 className="text-lg font-bold">Free</h3>
+                  <div className="mt-3 flex items-end gap-1">
+                    <span className="text-5xl font-bold tracking-tight">$0</span>
+                  </div>
+                  <p className="mt-2 text-sm text-gray-600">Para comenzar a organizar tu práctica con LegalUp.</p>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleFreeCTA("pricing_free")}
+                    className="mt-6 h-12 w-full text-base"
+                  >
+                    {!user ? "Comenzar gratis" : "Ir a mi panel"}
+                  </Button>
+                  <div className="mt-6 rounded-xl bg-gray-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Elige Free si quieres</p>
+                    <p className="mt-1 text-sm text-gray-600">Empezar a centralizar tu práctica y probar el flujo de LegalUp Pro.</p>
+                  </div>
+                  <ul className="mt-6 space-y-2.5 text-sm">
+                    <PlanRow included label="Panel y vista general" />
+                    <PlanRow included label="Tu primer caso" />
+                    <PlanRow included label="Servicios e ingresos" />
+                    <PlanRow label="Crear clientes" />
+                    <PlanRow label="Casos adicionales" />
+                    <PlanRow label="Procesar solicitudes" />
+                    <PlanRow label="Crear citas" />
+                    <PlanRow label="IA integrada" />
+                  </ul>
+                </CardContent>
+              </Card>
+            </Reveal>
+            {/* PRO — capacidades verificadas con Pro activo */}
+            <Reveal delay={0.1}>
+              <Card className="flex h-full flex-col border-green-600 shadow-xl ring-1 ring-green-600/20">
+                <CardContent className="flex flex-1 flex-col p-6 sm:p-8">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-bold">Pro</h3>
+                    <Badge className="border-green-200 bg-green-100 text-green-800">Founder</Badge>
+                  </div>
+                  <div className="mt-3 flex items-end gap-1">
+                    <span className="text-5xl font-bold tracking-tight">$19.990</span>
+                    <span className="pb-1 text-sm font-medium text-gray-500">/mes</span>
+                  </div>
+                  <p className="mt-2 text-sm text-gray-600">Precio Founder durante tus primeros 3 cobros. Desde el cuarto cobro, $49.990/mes.</p>
+                  <Button
+                    onClick={() => handleProCTA("pricing_pro")}
+                    className="mt-6 h-12 w-full bg-gray-900 text-base hover:bg-green-900"
+                  >
+                    {!user ? "Comenzar con Pro" : pro.hasProAccess ? "Ir a LegalUp Pro" : pro.status === "pending" ? "Continuar suscripción" : "Pasar a Pro"} <ArrowRight className="h-4 w-4" />
+                  </Button>
+                  <div className="mt-6 rounded-xl bg-green-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-green-700">Elige Pro si quieres</p>
+                    <p className="mt-1 text-sm text-gray-600">Gestión completa: clientes, casos, solicitudes, agenda e IA integrada.</p>
+                  </div>
+                  <ul className="mt-6 space-y-2.5 text-sm">
+                    <PlanRow included label="Panel y vista general" />
+                    <PlanRow included label="Hasta 20 casos activos" />
+                    <PlanRow included label="Crear clientes" />
+                    <PlanRow included label="Procesar solicitudes" />
+                    <PlanRow included label="Crear citas" />
+                    <PlanRow included label="Servicios e ingresos" />
+                    <PlanRow included label="IA integrada: análisis, chat e investigación" />
+                  </ul>
+                  <p className="mt-6 text-xs leading-relaxed text-gray-500">
+                    Después de los 15 cupos Founder, Pro cuesta $49.990/mes. El badge Founder queda permanentemente en tu perfil. Sin compromiso anual.
+                  </p>
+                </CardContent>
+              </Card>
+            </Reveal>
+          </div>
         </div>
       </section>
 
@@ -894,7 +1017,7 @@ export default function LegalUpPro() {
       <section id="faq" className="border-b border-gray-100 bg-gray-50">
         <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20">
           <Reveal className="text-center">
-            <Eyebrow>Preguntas frecuentes</Eyebrow>
+            <Eyebrow>FAQ</Eyebrow>
             <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Preguntas frecuentes</h2>
           </Reveal>
           <Reveal delay={0.1}>
@@ -945,10 +1068,11 @@ export default function LegalUpPro() {
       </footer>
 
       <AuthModal
-        open={authOpen}
-        onOpenChange={setAuthOpen}
-        initialMode={authMode}
-        source="proLanding"
+        isOpen={authOpen}
+        onClose={() => setAuthOpen(false)}
+        mode={authMode}
+        onModeChange={setAuthMode}
+        proLanding
       />
       <ProPricingModal
         open={pricingOpen}
