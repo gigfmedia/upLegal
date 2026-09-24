@@ -1071,7 +1071,7 @@ const Index = () => {
 
       {/* LegalUp Pro para abogados (FASE 5.12) */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-green-900 border-y border-gray-800 text-white">
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="max-w-5xl mx-auto text-center">
           <p className="text-sm font-semibold uppercase tracking-widest text-green-400 mb-3">
             LegalUp Pro para abogados
           </p>
@@ -1091,7 +1091,7 @@ const Index = () => {
               Conocer LegalUp Pro →
             </button>
           <p className="mt-4 text-xs text-green-300">
-            Plan Founder desde $19.990/mes
+            Plan Free disponible · Pro desde $19.990/mes
           </p>
         </div>
       </section>
