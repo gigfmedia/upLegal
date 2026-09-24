@@ -65,15 +65,15 @@ export function TestimonialsSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.7, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-            className="rounded-3xl bg-green-300 px-4 py-7 sm:px-6 sm:py-10 lg:col-span-3"
+            className="flex h-full flex-col rounded-3xl bg-green-300 px-4 pb-8 pt-7 sm:px-6 sm:pb-8 sm:pt-10 lg:col-span-3"
           >
             <span aria-hidden="true" className="text-5xl font-bold leading-none text-green-800">
               &ldquo;
             </span>
-            <blockquote className="mt-1 text-xl font-medium leading-snug text-gray-900 sm:text-2xl">
+            <blockquote className="mt-1 flex-1 text-xl font-medium leading-snug text-gray-900 sm:text-2xl">
               {MARIA_QUOTE}
             </blockquote>
-            <figcaption className="mt-6 flex items-center gap-3">
+            <figcaption className="mt-auto flex items-center gap-3 pt-6">
               <img
                 src={MARIA_PHOTO_URL}
                 alt="Fotografía de María Fernanda Gómez"
@@ -93,12 +93,12 @@ export function TestimonialsSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.7, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
-            className="rounded-3xl border border-green-300 bg-white px-4 py-6 sm:px-6 sm:py-8 lg:col-span-2"
+            className="flex h-full flex-col rounded-3xl border border-green-300 bg-white px-4 pb-8 pt-6 sm:px-6 sm:pb-8 sm:pt-8 lg:col-span-2"
           >
-            <blockquote className="text-base font-medium leading-snug text-gray-900 sm:text-lg">
+            <blockquote className="flex-1 text-base font-medium leading-snug text-gray-900 sm:text-lg">
               &ldquo;{ANGEL_QUOTE}&rdquo;
             </blockquote>
-            <figcaption className="mt-5 flex items-center gap-3">
+            <figcaption className="mt-auto flex items-center gap-3 pt-5">
               <img
                 src={ANGEL_PHOTO_URL}
                 alt="Fotografía de Ángel Labra"
