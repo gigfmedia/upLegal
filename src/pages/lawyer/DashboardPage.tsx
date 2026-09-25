@@ -10,7 +10,6 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { User, Calendar, Briefcase, FileText, Clock, Sparkles, ArrowRight, Loader2, Inbox, DollarSign, Users } from 'lucide-react';
 import { ProfileCompletion } from '@/components/dashboard/ProfileCompletion';
-import { useAISubscription } from '@/hooks/useAISubscription';
 import { useProSubscription } from '@/hooks/useProSubscription';
 import { useCaseEntitlement } from '@/hooks/useCaseEntitlement';
 import { GoogleCalendarConnect } from '@/components/dashboard/GoogleCalendarConnect';
@@ -44,7 +43,6 @@ export default function LawyerDashboardPage() {
   const { profile, services, completionPercentage } = useProfile(user?.id);
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  const aiSub = useAISubscription();
 
   const [loading, setLoading] = useState(true);
   const [kpis, setKpis] = useState({ pendingRequests: 0, todayCount: 0, activeCases: 0, revenueMonth: 0, directCases: 0 });
@@ -194,19 +192,10 @@ export default function LawyerDashboardPage() {
   // Cases, where AI works contextually inside each case.
   // 4.31B F3: one paid product. Users without legacy AI history never see
   // standalone AI purchase; AI is presented as a Pro capability in Cases.
-  const hasLegacyAI = !!aiSub.subscription;
-  // 4.41A: el bloque promo de trial presenta Pro (no AI como producto
-  // separado) y abre el flujo comercial existente de Pro, sin precio en tarjeta.
-  const isTrialPromo = hasLegacyAI && (aiSub as { isTrialing?: unknown }).isTrialing === true;
+  // 4.41A (rev): LegalUp Pro NO tiene trial. La tarjeta es promo estática de
+  // Pro para no-Pro; Pro activo conserva navegación a sus casos. Sin copy de
+  // prueba/expiración, sin precio en tarjeta.
   const handleLegalUpAIClick = () => {
-    if (isTrialPromo) {
-      setProPaywallOpen(true);
-      return;
-    }
-    if (hasLegacyAI) {
-      navigate('/lawyer/ai');
-      return;
-    }
     if (hasProAccess) {
       navigate('/lawyer/cases');
       return;
@@ -214,29 +203,17 @@ export default function LawyerDashboardPage() {
     setProPaywallOpen(true);
   };
 
-  let aiBadgeText = 'IA diseñada para abogados. Analiza documentos, resume causas y redacta más rápido.';
-  let aiCtaText = 'Conocer más';
-  let aiTrialText: string | null = null;
+  let aiBadgeText: string;
+  let aiCtaText: string;
   let aiSecondaryText: string | null = null;
-  if (!hasLegacyAI) {
-    aiBadgeText = hasProAccess
-      ? 'La IA trabaja dentro de tus casos: analiza documentos, detecta riesgos y conversa con el contexto de cada caso.'
-      : 'La IA trabaja dentro de tus casos con LegalUp Pro.';
-    aiCtaText = hasProAccess ? 'Ir a mis casos' : 'Conocer LegalUp Pro';
-  } else if (aiSub.status === 'none') {
-    aiBadgeText = 'Prueba LegalUp AI gratis durante 5 días. Sin tarjeta.';
-    aiCtaText = 'Empezar prueba gratis';
-  } else if (isTrialPromo) {
+  if (hasProAccess) {
+    aiBadgeText =
+      'La IA trabaja dentro de tus casos: analiza documentos, detecta riesgos y conversa con el contexto de cada caso.';
+    aiCtaText = 'Ir a mis casos';
+  } else {
     aiBadgeText = 'Gestiona clientes, casos, citas y documentos con LegalUp AI integrado.';
-    aiTrialText = 'Tu acceso de prueba termina pronto. Activa Pro para seguir usando todas las funciones.';
     aiSecondaryText = 'Incluye consultas IA, análisis de documentos e investigación jurídica.';
     aiCtaText = 'Ver LegalUp Pro';
-  } else if ((aiSub as any).isActive) {
-    aiBadgeText = 'Tu plan LegalUp AI está activo. Sigue trabajando tus casos con IA.';
-    aiCtaText = 'Ir a LegalUp AI';
-  } else if (aiSub.status === 'expired' || (aiSub as any).status === 'past_due' || aiSub.status === 'cancelled') {
-    aiBadgeText = 'Reanuda tu acceso a LegalUp AI para seguir usando tus herramientas.';
-    aiCtaText = 'Reanudar suscripción';
   }
 
   return (
@@ -556,21 +533,9 @@ export default function LawyerDashboardPage() {
               </div>
               <div>
                 <h3 className="text-xl font-bold text-gray-900">
-                  {isTrialPromo ? (
-                    'LegalUp Pro'
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5">
-                      LegalUp
-                      <span className="inline-flex h-[18.4px] items-center rounded-[5px] border border-emerald-400/40 bg-emerald-50 px-1.5 py-px text-[0.6rem] font-semibold leading-none tracking-[0.14em] text-emerald-700 transition-colors group-hover:bg-emerald-100">
-                        AI
-                      </span>
-                    </span>
-                  )}
+                  LegalUp Pro
                 </h3>
                 <p className="text-gray-600 text-sm">{aiBadgeText}</p>
-                {aiTrialText && (
-                  <p className="text-gray-600 text-sm mt-1">{aiTrialText}</p>
-                )}
                 {aiSecondaryText && (
                   <p className="text-gray-500 text-xs mt-1">{aiSecondaryText}</p>
                 )}

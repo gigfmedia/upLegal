@@ -119,7 +119,10 @@ describe('FASE 3C.2C — Demo en LegalUp Pro dashboard', () => {
   it('No AI changes en esta fase', () => {
     const c = readFileSync(dashboardPath, 'utf-8');
     // Should not have changed AI entitlement logic
-    expect(c).toContain('useAISubscription');
+    // 4.41A (rev): la tarjeta promo ya no ramifica por estado AI (Pro no tiene
+    // trial); solo distingue hasProAccess. Sin límites AI nuevos.
+    expect(c).not.toContain('useAISubscription');
+    expect(c).not.toContain('hasLegacyAI');
     // Should not contain new AI limits
     expect(c).not.toContain('AI_PRO_LIMITS');
   });
