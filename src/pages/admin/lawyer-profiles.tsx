@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -47,6 +48,12 @@ export default function LawyerProfilesPage() {
   const [showAIInviteDialog, setShowAIInviteDialog] = useState(false);
   const [sendingAIInvite, setSendingAIInvite] = useState(false);
   const [aiInviteResult, setAiInviteResult] = useState<null | { sent: number; skipped: number; failed: number }>(null);
+  // FASE 4.42A — invitar abogado NUEVO con magic link (sin Pro/trial).
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteName, setInviteName] = useState('');
+  const [sendingInvite, setSendingInvite] = useState(false);
+  const [inviteResult, setInviteResult] = useState<null | { ok: boolean; message: string }>(null);
   const { toast } = useToast();
 
 
@@ -265,6 +272,40 @@ export default function LawyerProfilesPage() {
     }
   };
 
+  // FASE 4.42A — invitar abogado NUEVO (solo emails sin cuenta).
+  const sendLawyerInvite = async () => {
+    const email = inviteEmail.trim();
+    if (!email) {
+      toast({ title: 'Ingresa el email del abogado', variant: 'destructive' });
+      return;
+    }
+    try {
+      setSendingInvite(true);
+      setInviteResult(null);
+      const { data: { session } } = await (await import('@/lib/supabaseClient')).supabase.auth.getSession();
+      const res = await fetch('/api/admin/invite-lawyer-magic-link', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token || ''}`,
+        },
+        body: JSON.stringify({ email, name: inviteName.trim() || undefined }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body?.message || 'No se pudo enviar la invitación');
+      setInviteResult({ ok: true, message: body.resent ? `Acceso reenviado a ${body.email}` : `Acceso enviado a ${body.email}` });
+      setInviteEmail('');
+      setInviteName('');
+      toast({ title: body.resent ? 'Acceso reenviado' : 'Acceso enviado', description: body.email });
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'No se pudo enviar la invitación';
+      setInviteResult({ ok: false, message: msg });
+      toast({ title: 'Error', description: msg, variant: 'destructive' });
+    } finally {
+      setSendingInvite(false);
+    }
+  };
+
   useEffect(() => {
     if (!user) {
       navigate('/admin');
@@ -439,6 +480,34 @@ export default function LawyerProfilesPage() {
                 <p className="text-xs text-gray-500 mt-3">5 días gratis · luego $49.900 CLP/mes · Sin permanencia · Flujo real: /ai → trial</p>
               </CardContent>
             </Card>
+            {/* FASE 4.42A — invitar abogado NUEVO con magic link (sin Pro/trial) */}
+            <Card className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-gray-900">
+                  <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-gray-700">
+                    <User className="h-4 w-4" />
+                  </div>
+                  Invitar abogado nuevo
+                </CardTitle>
+                <CardDescription className="text-gray-600">
+                  Envía acceso con magic link a un email sin cuenta. No otorga Pro ni trial.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-3 items-center">
+                  <Button onClick={() => { setInviteResult(null); setShowInviteDialog(true); }} className="bg-gray-900 hover:bg-green-900 text-white flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    Invitar abogado
+                  </Button>
+                  {inviteResult && (
+                    <span className={`text-sm ${inviteResult.ok ? 'text-emerald-700' : 'text-red-600'}`}>
+                      {inviteResult.message}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-3">Solo emails nuevos · entra a /lawyer/dashboard sin contraseña</p>
+              </CardContent>
+            </Card>
         </div>
 
         {/* Lista de Abogados */}
@@ -591,6 +660,57 @@ export default function LawyerProfilesPage() {
               </Button>
               <Button onClick={sendAIInvite} disabled={selectedAIIds.size === 0 || sendingAIInvite} className="bg-gray-900 hover:bg-green-900 text-white">
                 {sendingAIInvite ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Enviando...</> : `Enviar email (${selectedAIIds.size})`}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* FASE 4.42A — dialog invitar abogado nuevo (email + nombre opcional) */}
+        <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Invitar abogado nuevo</DialogTitle>
+              <DialogDescription>
+                Recibirá un acceso con magic link. No otorga Pro ni trial.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 py-2">
+              <div>
+                <label htmlFor="invite-email" className="text-sm font-medium">Email *</label>
+                <Input
+                  id="invite-email"
+                  type="email"
+                  placeholder="abogado@example.com"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  disabled={sendingInvite}
+                  autoComplete="off"
+                />
+              </div>
+              <div>
+                <label htmlFor="invite-name" className="text-sm font-medium">Nombre (opcional)</label>
+                <Input
+                  id="invite-name"
+                  type="text"
+                  placeholder="Nombre Apellido"
+                  value={inviteName}
+                  onChange={(e) => setInviteName(e.target.value)}
+                  disabled={sendingInvite}
+                  autoComplete="off"
+                />
+              </div>
+              {inviteResult && (
+                <p className={`text-sm ${inviteResult.ok ? 'text-emerald-700' : 'text-red-600'}`}>
+                  {inviteResult.message}
+                </p>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowInviteDialog(false)} disabled={sendingInvite}>
+                Cancelar
+              </Button>
+              <Button onClick={sendLawyerInvite} disabled={!inviteEmail.trim() || sendingInvite} className="bg-gray-900 hover:bg-green-900 text-white">
+                {sendingInvite ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Enviando...</> : 'Enviar acceso'}
               </Button>
             </DialogFooter>
           </DialogContent>

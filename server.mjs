@@ -1,5 +1,16 @@
 import { createAIMetering } from './server/ai/metering.mjs';
 import { PRO_AI_ALLOWANCE, commercialQuotaForPlan } from './server/ai/proAllowance.mjs';
+import {
+  CONFLICT_CODE,
+  normalizeEmail,
+  isValidEmail,
+  splitName,
+  decideInvitePath,
+  buildInviteMarker,
+  buildInviteEmail,
+  buildInviteAudit,
+  checkRouteCooldown,
+} from './server/admin/lawyerInvite.mjs';
 import { hasCanonicalDocumentReference, resolveAnalysisModel, honestEvidenceLocation } from './server/ai/coreAuthority.mjs';
 import { consultationBase, bookingClientTotal, bookingPricingSnapshot } from './shared/bookingPricing.mjs';
 import { confirmCompanyCancellation } from './server/subscriptions/companyCancellation.mjs';
@@ -4461,6 +4472,171 @@ app.post('/api/admin/ai/send-lawyer-invite', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('[LegalUpAI Invite] unexpected error', error);
     return res.status(500).json({ success: false, message: 'Error al enviar invitaciones', error: error.message });
+  }
+});
+
+// ============================================
+// FASE 4.42A — admin lawyer magic-link onboarding (solo nuevos emails).
+// Sin Pro/Founder/trial: solo identidad lawyer + acceso default.
+// action_link vive solo en memoria del servidor (nunca en respuesta ni logs).
+// ============================================
+app.post('/api/admin/invite-lawyer-magic-link', requireAdmin, async (req, res) => {
+  const reqStart = Date.now();
+  try {
+    const { email: rawEmail, name: rawName } = req.body || {};
+    if (rawName !== undefined && rawName !== null && typeof rawName !== 'string') {
+      return res.status(400).json({ success: false, code: 'INVALID_NAME', message: 'Nombre inválido.' });
+    }
+    const email = normalizeEmail(rawEmail);
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ success: false, code: 'INVALID_EMAIL', message: 'Email inválido.' });
+    }
+    const { displayName, firstName, lastName } = splitName(rawName);
+    if (rawName && !displayName) {
+      return res.status(400).json({ success: false, code: 'INVALID_NAME', message: 'Nombre inválido.' });
+    }
+    if (!resend) {
+      return res.status(500).json({ success: false, code: 'EMAIL_NOT_CONFIGURED', message: 'Servicio de email no configurado (RESEND_API_KEY).' });
+    }
+    const templateId = process.env.RESEND_LAWYER_INVITE_TEMPLATE_ID || '';
+    if (!templateId) {
+      return res.status(500).json({ success: false, code: 'INVITE_TEMPLATE_NOT_CONFIGURED', message: 'Template de invitación no configurado.' });
+    }
+
+    // 1) Existencia: profiles (identidad app) + auth.users (scan paginado).
+    // Cualquier identidad canónica existente detiene la invitación.
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('id, email')
+      .ilike('email', email)
+      .maybeSingle();
+    let existingAuthUser = null;
+    let page = 1;
+    for (;;) {
+      const { data: listed, error: listError } = await supabase.auth.admin.listUsers({ page, perPage: 200 });
+      if (listError) throw listError;
+      const users = listed?.users || [];
+      const hit = users.find((u) => normalizeEmail(u.email) === email);
+      if (hit) { existingAuthUser = hit; break; }
+      if (users.length < 200 || page >= 50) break;
+      page += 1;
+    }
+
+    const invitePath = decideInvitePath({ authUser: existingAuthUser, profile: existingProfile || null });
+    if (invitePath === 'conflict') {
+      return res.status(409).json({ success: false, code: CONFLICT_CODE, message: 'Este correo ya tiene una cuenta en LegalUp.' });
+    }
+
+    // 2) Cooldown anti-doble-click (solo paths con side effects).
+    if (!checkRouteCooldown(email)) {
+      return res.status(429).json({ success: false, code: 'INVITE_RATE_LIMITED', message: 'Espera un momento antes de reintentar.' });
+    }
+
+    const adminId = req.adminUser?.id || null;
+    let userId;
+    let createdHere = false;
+
+    if (invitePath === 'create') {
+      // 3) Generar magic link (crea la identidad si no existe; nunca duplica).
+      const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+        type: 'magiclink',
+        email,
+        options: { redirectTo: `${appUrl}/auth/callback` },
+      });
+      const actionLink = linkData?.properties?.action_link;
+      userId = linkData?.user?.id;
+      if (linkError || !actionLink || !userId) {
+        console.error('[LawyerInvite] generateLink failed', linkError?.message);
+        return res.status(500).json({ success: false, code: 'INVITE_LINK_FAILED', message: 'No se pudo generar el acceso.' });
+      }
+      const createdAt = linkData?.user?.created_at ? new Date(linkData.user.created_at).getTime() : 0;
+      createdHere = createdAt >= reqStart - 60000;
+
+      // 4) Confirmar email + rol lawyer + marcador (todo server-side).
+      const { error: updateError } = await supabase.auth.admin.updateUserById(userId, {
+        email_confirm: true,
+        user_metadata: {
+          role: 'lawyer',
+          first_name: firstName,
+          last_name: lastName,
+          ...buildInviteMarker(adminId),
+        },
+      });
+      if (updateError) {
+        console.error('[LawyerInvite] updateUser failed', updateError?.message);
+        // Rollback acotado: solo si verificamos que la identidad nació en
+        // este request (evita tocar cuentas ajenas en carreras).
+        if (createdHere) {
+          try { await supabase.auth.admin.deleteUser(userId); } catch {}
+        }
+        return res.status(500).json({ success: false, code: 'INVITE_PROVISION_FAILED', message: 'No se pudo provisionar el acceso.', rolled_back: createdHere });
+      }
+
+      // 5) Perfil lawyer canónico (upsert por id; sin Pro/trial/AI).
+      const { error: profileError } = await supabase.from('profiles').upsert({
+        id: userId,
+        email,
+        first_name: firstName,
+        last_name: lastName,
+        display_name: displayName || null,
+        role: 'lawyer',
+      }, { onConflict: 'id' });
+      if (profileError) {
+        console.error('[LawyerInvite] profile upsert failed', profileError?.message);
+        if (createdHere) {
+          try { await supabase.auth.admin.deleteUser(userId); } catch {}
+        }
+        return res.status(500).json({ success: false, code: 'INVITE_PROVISION_FAILED', message: 'No se pudo provisionar el acceso.', rolled_back: createdHere });
+      }
+
+      // 6) Enviar por Resend (template del owner; idempotente por evento).
+      const emailPayload = buildInviteEmail({ templateId, magicLink: actionLink, lawyerName: displayName });
+      emailPayload.to = email;
+      try {
+        const sendResult = await sendEmailIdempotent({
+          supabase,
+          businessEventId: `admin-lawyer-invite:${email}`,
+          type: 'lawyer_magic_link_invite',
+          recipient: email,
+          sendFn: () => resend.emails.send(emailPayload, { idempotencyKey: `admin-lawyer-invite:${email}` }),
+        });
+        if (sendResult?.skipped) {
+          return res.json({ success: true, invited: true, email, resent: false, email_sent: false, deduped: true });
+        }
+      } catch (mailError) {
+        console.error('[LawyerInvite] resend failed', mailError?.message);
+        return res.status(502).json({ success: false, code: 'INVITE_EMAIL_FAILED', message: 'Acceso creado pero el email no pudo enviarse. Reintenta para reenviar.', invited: true, email_sent: false, retryable: true });
+      }
+
+      console.info('[LawyerInvite]', JSON.stringify(buildInviteAudit({ adminUserId: adminId, email, status: 'sent', resent: false })));
+      return res.json({ success: true, invited: true, email, resent: false, email_sent: true });
+    }
+
+    // 7) Resend path: identidad con nuestro marcador → link fresco, sin duplicar.
+    const { data: relinkData, error: relinkError } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
+      email,
+      options: { redirectTo: `${appUrl}/auth/callback` },
+    });
+    const reActionLink = relinkData?.properties?.action_link;
+    if (relinkError || !reActionLink) {
+      console.error('[LawyerInvite] relink failed', relinkError?.message);
+      return res.status(500).json({ success: false, code: 'INVITE_LINK_FAILED', message: 'No se pudo generar el acceso.' });
+    }
+    userId = (relinkData?.user?.id) || existingAuthUser?.id || null;
+    const rePayload = buildInviteEmail({ templateId, magicLink: reActionLink, lawyerName: displayName });
+    rePayload.to = email;
+    try {
+      await resend.emails.send(rePayload, { idempotencyKey: `admin-lawyer-invite-resend:${email}:${Date.now()}` });
+    } catch (mailError) {
+      console.error('[LawyerInvite] resend failed', mailError?.message);
+      return res.status(502).json({ success: false, code: 'INVITE_EMAIL_FAILED', message: 'No se pudo enviar el email.', invited: true, email_sent: false, retryable: true });
+    }
+    console.info('[LawyerInvite]', JSON.stringify(buildInviteAudit({ adminUserId: adminId, email, status: 'resent', resent: true })));
+    return res.json({ success: true, invited: true, email, resent: true, email_sent: true });
+  } catch (error) {
+    console.error('[LawyerInvite] unexpected error', error?.message);
+    return res.status(500).json({ success: false, message: 'Error al invitar abogado.', error: error?.message });
   }
 });
 
