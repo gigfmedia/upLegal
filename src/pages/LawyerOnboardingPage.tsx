@@ -124,13 +124,6 @@ export default function LawyerOnboardingPage() {
     <div className="min-h-screen bg-cream-900">
       <Header />
       <div className="py-10 px-4 pt-32">
-        {cameFromInvite && (
-          <div className="mx-auto mb-4 max-w-3xl text-right">
-            <Button variant="ghost" onClick={handleSkip} disabled={skipping} className="text-sm text-gray-500 hover:text-gray-900">
-              {skipping ? 'Omitiendo…' : 'Omitir por ahora'}
-            </Button>
-          </div>
-        )}
         <Suspense
           fallback={
             <div className="flex items-center justify-center py-20">
@@ -138,7 +131,7 @@ export default function LawyerOnboardingPage() {
             </div>
           }
         >
-          <LawyerOnboardingWizard />
+          <LawyerOnboardingWizard allowSkip={cameFromInvite} onSkip={handleSkip} skipping={skipping} />
         </Suspense>
       </div>
     </div>

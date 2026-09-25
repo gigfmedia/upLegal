@@ -20,7 +20,11 @@ const STEPS: WizardStep[] = [
   { id: 3, name: 'Disponibilidad', description: 'Horarios de atención semanales' },
 ];
 
-export default function LawyerOnboardingWizard() {
+export default function LawyerOnboardingWizard({ allowSkip = false, onSkip, skipping = false }: {
+  allowSkip?: boolean;
+  onSkip?: () => void;
+  skipping?: boolean;
+} = {}) {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -325,16 +329,21 @@ export default function LawyerOnboardingWizard() {
 
     {/* Action buttons */}
     <div className="flex justify-between pt-6 pb-10">
-      {currentStep > 1 ? (
-        <Button
-          variant="ghost"
-          onClick={() => setCurrentStep((s) => Math.max(1, s - 1))}
-        >
-          Atrás
-        </Button>
-      ) : (
-        <div />
-      )}
+      <div className="flex items-center gap-2">
+        {currentStep > 1 && (
+          <Button
+            variant="ghost"
+            onClick={() => setCurrentStep((s) => Math.max(1, s - 1))}
+          >
+            Atrás
+          </Button>
+        )}
+        {allowSkip && (
+          <Button variant="ghost" onClick={onSkip} disabled={skipping} className="text-gray-500 hover:text-gray-900">
+            {skipping ? 'Omitiendo…' : 'Omitir por ahora'}
+          </Button>
+        )}
+      </div>
 
       <div className="flex gap-3 items-center">
         {currentStep === 1 && (
