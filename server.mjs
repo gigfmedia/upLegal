@@ -4585,6 +4585,7 @@ app.post('/api/admin/invite-lawyer-magic-link', requireAdmin, async (req, res) =
       // 5) Perfil lawyer canónico (upsert por id; sin Pro/trial/AI).
       const { error: profileError } = await supabase.from('profiles').upsert({
         id: userId,
+        user_id: userId,
         email,
         first_name: firstName,
         last_name: lastName,
@@ -4621,6 +4622,21 @@ app.post('/api/admin/invite-lawyer-magic-link', requireAdmin, async (req, res) =
     }
 
     // 7) Resend path: identidad con nuestro marcador → link fresco, sin duplicar.
+    // Si el perfil no existe (falla parcial previa), se crea mínimo para no
+    // dejar huérfano B (nunca se sobrescribe uno existente).
+    const { data: resendProfile } = await supabase.from('profiles').select('id').eq('id', existingAuthUser?.id || '').maybeSingle();
+    if (!resendProfile && existingAuthUser?.id) {
+      const { error: backfillError } = await supabase.from('profiles').upsert({
+        id: existingAuthUser.id,
+        user_id: existingAuthUser.id,
+        email,
+        role: 'lawyer',
+      }, { onConflict: 'id' });
+      if (backfillError) {
+        console.error('[LawyerInvite] profile backfill failed', backfillError?.message);
+        return res.status(500).json({ success: false, code: 'INVITE_PROVISION_FAILED', message: 'No se pudo provisionar el acceso.' });
+      }
+    }
     const { data: relinkData, error: relinkError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
       email,
