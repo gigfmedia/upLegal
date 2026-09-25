@@ -10,6 +10,7 @@ import {
   buildInviteEmail,
   buildInviteAudit,
   checkRouteCooldown,
+  ownsInviteIdentity,
 } from './server/admin/lawyerInvite.mjs';
 import { hasCanonicalDocumentReference, resolveAnalysisModel, honestEvidenceLocation } from './server/ai/coreAuthority.mjs';
 import { consultationBase, bookingClientTotal, bookingPricingSnapshot } from './shared/bookingPricing.mjs';
@@ -4534,7 +4535,22 @@ app.post('/api/admin/invite-lawyer-magic-link', requireAdmin, async (req, res) =
 
     const adminId = req.adminUser?.id || null;
     let userId;
-    let createdHere = false;
+
+    // Rollback ownership (§19): solo si el id capturado de ESTE generateLink
+    // se re-verifica (mismo id + mismo email + creado en ventana + sin perfil).
+    const rollbackIfOwned = async () => {
+      try {
+        const { data: freshWrap } = await supabase.auth.admin.getUserById(userId);
+        const { data: existingProfile } = await supabase.from('profiles').select('id').eq('id', userId).maybeSingle();
+        if (ownsInviteIdentity({ userId, freshUser: freshWrap?.user, email, profile: existingProfile, reqStart })) {
+          await supabase.auth.admin.deleteUser(userId);
+          return true;
+        }
+        return false;
+      } catch {
+        return false;
+      }
+    };
 
     if (invitePath === 'create') {
       // 3) Generar magic link (crea la identidad si no existe; nunca duplica).
@@ -4549,8 +4565,6 @@ app.post('/api/admin/invite-lawyer-magic-link', requireAdmin, async (req, res) =
         console.error('[LawyerInvite] generateLink failed', linkError?.message);
         return res.status(500).json({ success: false, code: 'INVITE_LINK_FAILED', message: 'No se pudo generar el acceso.' });
       }
-      const createdAt = linkData?.user?.created_at ? new Date(linkData.user.created_at).getTime() : 0;
-      createdHere = createdAt >= reqStart - 60000;
 
       // 4) Confirmar email + rol lawyer + marcador (todo server-side).
       const { error: updateError } = await supabase.auth.admin.updateUserById(userId, {
@@ -4564,12 +4578,8 @@ app.post('/api/admin/invite-lawyer-magic-link', requireAdmin, async (req, res) =
       });
       if (updateError) {
         console.error('[LawyerInvite] updateUser failed', updateError?.message);
-        // Rollback acotado: solo si verificamos que la identidad nació en
-        // este request (evita tocar cuentas ajenas en carreras).
-        if (createdHere) {
-          try { await supabase.auth.admin.deleteUser(userId); } catch {}
-        }
-        return res.status(500).json({ success: false, code: 'INVITE_PROVISION_FAILED', message: 'No se pudo provisionar el acceso.', rolled_back: createdHere });
+        const rolledBack = await rollbackIfOwned();
+        return res.status(500).json({ success: false, code: 'INVITE_PROVISION_FAILED', message: 'No se pudo provisionar el acceso.', rolled_back: rolledBack });
       }
 
       // 5) Perfil lawyer canónico (upsert por id; sin Pro/trial/AI).
@@ -4583,10 +4593,8 @@ app.post('/api/admin/invite-lawyer-magic-link', requireAdmin, async (req, res) =
       }, { onConflict: 'id' });
       if (profileError) {
         console.error('[LawyerInvite] profile upsert failed', profileError?.message);
-        if (createdHere) {
-          try { await supabase.auth.admin.deleteUser(userId); } catch {}
-        }
-        return res.status(500).json({ success: false, code: 'INVITE_PROVISION_FAILED', message: 'No se pudo provisionar el acceso.', rolled_back: createdHere });
+        const rolledBack = await rollbackIfOwned();
+        return res.status(500).json({ success: false, code: 'INVITE_PROVISION_FAILED', message: 'No se pudo provisionar el acceso.', rolled_back: rolledBack });
       }
 
       // 6) Enviar por Resend (template del owner; idempotente por evento).

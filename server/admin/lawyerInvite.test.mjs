@@ -13,6 +13,7 @@ import {
   buildInviteAudit,
   createCooldownStore,
   checkInviteCooldown,
+  ownsInviteIdentity,
   __resetRouteCooldowns,
   INVITE_MARKER,
   INVITE_VERSION,
@@ -78,6 +79,18 @@ describe('lawyerInvite helpers (pure)', () => {
     expect(JSON.stringify(payload)).not.toContain('ConfirmationURL');
     expect(payload.html).toBeUndefined();
     expect(payload.react).toBeUndefined();
+  });
+
+  it('ownsInviteIdentity exige 4 pruebas (id + email + ventana + sin perfil)', () => {
+    const reqStart = 1_000_000;
+    const fresh = { id: 'u1', email: 'a@x.cl', created_at: new Date(reqStart + 1000).toISOString() };
+    const ok = { userId: 'u1', freshUser: fresh, email: 'a@x.cl', profile: null, reqStart };
+    expect(ownsInviteIdentity(ok)).toBe(true);
+    expect(ownsInviteIdentity({ ...ok, userId: 'u2' })).toBe(false);
+    expect(ownsInviteIdentity({ ...ok, email: 'b@x.cl' })).toBe(false);
+    expect(ownsInviteIdentity({ ...ok, freshUser: { ...fresh, created_at: new Date(reqStart - 999_999).toISOString() } })).toBe(false);
+    expect(ownsInviteIdentity({ ...ok, profile: { id: 'u1' } })).toBe(false);
+    expect(ownsInviteIdentity({ ...ok, freshUser: null })).toBe(false);
   });
 
   it('buildInviteAudit nunca incluye link ni token', () => {
@@ -183,6 +196,10 @@ function makeSupabaseMock(state) {
           }
           return { data: { user: u }, error: null };
         },
+        getUserById: async (id) => {
+          const u = state.authUsers.find((x) => x.id === id);
+          return { data: { user: u ? { ...u } : null }, error: null };
+        },
         deleteUser: async (id) => {
           state.deleteCalls.push(id);
           state.authUsers = state.authUsers.filter((u) => u.id !== id);
@@ -260,6 +277,7 @@ describe('POST /api/admin/invite-lawyer-magic-link (harness vm)', () => {
       buildInviteEmail: mod.buildInviteEmail,
       buildInviteAudit: mod.buildInviteAudit,
       checkRouteCooldown: mod.checkRouteCooldown,
+      ownsInviteIdentity: mod.ownsInviteIdentity,
       CONFLICT_CODE: mod.CONFLICT_CODE,
     });
     await load(h.ctx);
@@ -307,6 +325,21 @@ describe('POST /api/admin/invite-lawyer-magic-link (harness vm)', () => {
     expect(h.state.tables.profiles).toHaveLength(0);
   });
 
+  it('§19 rollback solo con ownership verificada (update falla → borra lo propio)', async () => {
+    const h = harness();
+    h.supabase.auth.admin.updateUserById = async (id, attrs) => {
+      h.state.updateCalls.push({ id, attrs });
+      return { data: null, error: { message: 'update failed' } };
+    };
+    // Rebuild ctx supabase reference is live (same object) — call directly.
+    const res = await call(h, { email: 'rollback@example.cl' });
+    expect(res.statusCode).toBe(500);
+    expect(res.statusCode).toBe(500);
+    expect(res.body.code).toBe('INVITE_PROVISION_FAILED');
+    expect(res.body.rolled_back).toBe(true);
+    expect(h.state.deleteCalls).toHaveLength(1);
+    expect(h.state.authUsers.filter((u) => u.email === 'rollback@example.cl')).toHaveLength(0);
+  });
   it('§33 case-insensitive + perfil huérfano también bloquea', async () => {
     const h = harness({ seed: { profiles: [{ id: 'u8', email: 'ABOGADO@EXAMPLE.COM' }] } });
     const res = await call(h, { email: 'abogado@example.com' });

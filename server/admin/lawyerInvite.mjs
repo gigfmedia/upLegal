@@ -84,6 +84,23 @@ export function checkInviteCooldown(store, email, now = Date.now()) {
   return true;
 }
 
+/**
+ * Rollback ownership proof (§19): deleteUser is allowed ONLY when ALL hold:
+ * 1. userId is the exact id captured from THIS request's generateLink response.
+ * 2. re-read user (getUserById) has the same id AND the same normalized email.
+ * 3. created_at falls inside this request window (race guard).
+ * 4. no profile row exists for the id (nothing else adopted the identity).
+ * Timestamp alone is never sufficient.
+ */
+export function ownsInviteIdentity({ userId, freshUser, email, profile, reqStart, windowMs = 120000 }) {
+  if (!userId || !freshUser || freshUser.id !== userId) return false;
+  if (normalizeEmail(freshUser.email) !== email) return false;
+  const createdAt = freshUser.created_at ? new Date(freshUser.created_at).getTime() : 0;
+  if (!createdAt || createdAt < reqStart - windowMs) return false;
+  if (profile) return false;
+  return true;
+}
+
 /** Process-wide store for the route (single instance). Reset only in tests. */
 const routeCooldowns = createCooldownStore();
 
