@@ -195,7 +195,14 @@ export default function LawyerDashboardPage() {
   // 4.31B F3: one paid product. Users without legacy AI history never see
   // standalone AI purchase; AI is presented as a Pro capability in Cases.
   const hasLegacyAI = !!aiSub.subscription;
+  // 4.41A: el bloque promo de trial presenta Pro (no AI como producto
+  // separado) y abre el flujo comercial existente de Pro, sin precio en tarjeta.
+  const isTrialPromo = hasLegacyAI && (aiSub as { isTrialing?: unknown }).isTrialing === true;
   const handleLegalUpAIClick = () => {
+    if (isTrialPromo) {
+      setProPaywallOpen(true);
+      return;
+    }
     if (hasLegacyAI) {
       navigate('/lawyer/ai');
       return;
@@ -209,6 +216,8 @@ export default function LawyerDashboardPage() {
 
   let aiBadgeText = 'IA diseñada para abogados. Analiza documentos, resume causas y redacta más rápido.';
   let aiCtaText = 'Conocer más';
+  let aiTrialText: string | null = null;
+  let aiSecondaryText: string | null = null;
   if (!hasLegacyAI) {
     aiBadgeText = hasProAccess
       ? 'La IA trabaja dentro de tus casos: analiza documentos, detecta riesgos y conversa con el contexto de cada caso.'
@@ -217,9 +226,11 @@ export default function LawyerDashboardPage() {
   } else if (aiSub.status === 'none') {
     aiBadgeText = 'Prueba LegalUp AI gratis durante 5 días. Sin tarjeta.';
     aiCtaText = 'Empezar prueba gratis';
-  } else if ((aiSub as any).isTrialing) {
-    aiBadgeText = `Tu prueba de LegalUp AI termina pronto. Suscríbete por $49.900/mes para no perder el acceso.`;
-    aiCtaText = 'Suscribirme';
+  } else if (isTrialPromo) {
+    aiBadgeText = 'Gestiona clientes, casos, citas y documentos con LegalUp AI integrado.';
+    aiTrialText = 'Tu acceso de prueba termina pronto. Activa Pro para seguir usando todas las funciones.';
+    aiSecondaryText = 'Incluye consultas IA, análisis de documentos e investigación jurídica.';
+    aiCtaText = 'Ver LegalUp Pro';
   } else if ((aiSub as any).isActive) {
     aiBadgeText = 'Tu plan LegalUp AI está activo. Sigue trabajando tus casos con IA.';
     aiCtaText = 'Ir a LegalUp AI';
@@ -544,18 +555,25 @@ export default function LawyerDashboardPage() {
                 <Sparkles className="h-5 w-5" />
               </div>
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Nuevo</span>
-                </div>
                 <h3 className="text-xl font-bold text-gray-900">
-                  <span className="inline-flex items-center gap-1.5">
-                    LegalUp
-                    <span className="inline-flex h-[18.4px] items-center rounded-[5px] border border-emerald-400/40 bg-emerald-50 px-1.5 py-px text-[0.6rem] font-semibold leading-none tracking-[0.14em] text-emerald-700 transition-colors group-hover:bg-emerald-100">
-                      AI
+                  {isTrialPromo ? (
+                    'LegalUp Pro'
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5">
+                      LegalUp
+                      <span className="inline-flex h-[18.4px] items-center rounded-[5px] border border-emerald-400/40 bg-emerald-50 px-1.5 py-px text-[0.6rem] font-semibold leading-none tracking-[0.14em] text-emerald-700 transition-colors group-hover:bg-emerald-100">
+                        AI
+                      </span>
                     </span>
-                  </span>
+                  )}
                 </h3>
                 <p className="text-gray-600 text-sm">{aiBadgeText}</p>
+                {aiTrialText && (
+                  <p className="text-gray-600 text-sm mt-1">{aiTrialText}</p>
+                )}
+                {aiSecondaryText && (
+                  <p className="text-gray-500 text-xs mt-1">{aiSecondaryText}</p>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2 bg-gray-900 rounded-lg px-4 py-2 text-white group-hover:bg-green-900 transition-colors">
