@@ -20,6 +20,8 @@ export const CONFLICT_CODE = 'LAWYER_EMAIL_ALREADY_EXISTS';
 /** Sender must stay the verified production sender (see module docs). */
 export const INVITE_FROM = 'LegalUp <hola@mg.legalup.cl>';
 export const INVITE_REPLY_TO = 'hola@mg.legalup.cl';
+/** Required by Resend template API; mirrors the template title (no promises). */
+export const INVITE_SUBJECT = 'Tu acceso a LegalUp Pro está listo';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const MAX_NAME_LENGTH = 120;
@@ -116,10 +118,11 @@ export function __resetRouteCooldowns() {
  * Resend payload for the owner-managed template. Variables only — the
  * template owns subject/design. Never Supabase `{{ .ConfirmationURL }}`.
  */
-export function buildInviteEmail({ templateId, magicLink, lawyerName }) {
+export function buildInviteEmail({ templateId, magicLink, lawyerName, subject = INVITE_SUBJECT }) {
   return {
     from: INVITE_FROM,
     to: undefined, // set by caller (recipient)
+    subject,
     reply_to: INVITE_REPLY_TO,
     template: {
       id: templateId,

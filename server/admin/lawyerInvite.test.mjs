@@ -309,6 +309,7 @@ describe('POST /api/admin/invite-lawyer-magic-link (harness vm)', () => {
     expect(payload.template.id).toBe('tmpl_1');
     expect(payload.template.variables.MAGIC_LINK).toContain('https://auth.test/verify');
     expect(payload.template.variables.LAWYER_NAME).toBe('Ana María');
+    expect(payload.subject).toBe('Tu acceso a LegalUp Pro está listo');
     expect(JSON.stringify(payload)).not.toContain('ConfirmationURL');
     expect(h.state.forbiddenReads).toHaveLength(0);
     const deliveries = h.state.tables.notification_deliveries;
