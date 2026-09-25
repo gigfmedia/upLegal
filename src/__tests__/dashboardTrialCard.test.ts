@@ -63,6 +63,13 @@ describe('4.41A dashboard card: Pro has no trial (rev)', () => {
     expect(c).not.toContain('(aiSub as');
   });
 
+  it('lockup como header landing: Scale + LegalUp + pill PRO, sin Sparkles', () => {
+    const c = cardBlock();
+    expect(c).not.toContain('Sparkles');
+    expect(c).toContain('Scale');
+    expect(c).toContain('>PRO<');
+    expect(c).toContain('border-emerald-500/30');
+  });
   it('sin lógica legacy-AI en este bloque (hook removido si quedó sin uso)', () => {
     const c = dashboard();
     expect(c).not.toContain('hasLegacyAI');

@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { User, Calendar, Briefcase, FileText, Clock, Sparkles, ArrowRight, Loader2, Inbox, DollarSign, Users } from 'lucide-react';
+import { User, Calendar, Briefcase, FileText, Clock, ArrowRight, Loader2, Inbox, DollarSign, Users, Scale } from 'lucide-react';
 import { ProfileCompletion } from '@/components/dashboard/ProfileCompletion';
 import { useProSubscription } from '@/hooks/useProSubscription';
 import { useCaseEntitlement } from '@/hooks/useCaseEntitlement';
@@ -527,13 +527,12 @@ export default function LawyerDashboardPage() {
           className="rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-white to-white p-6 cursor-pointer hover:shadow-lg hover:shadow-green-500/20 transition-all duration-300 group h-full flex flex-col justify-center"
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
-                <Sparkles className="h-5 w-5" />
-              </div>
+            <div className="flex items-center gap-3">
               <div>
-                <h3 className="text-xl font-bold text-gray-900">
-                  LegalUp Pro
+                <h3 className="flex items-center gap-2 text-xl font-bold text-gray-900">
+                  <Scale className="h-6 w-6 text-green-900" />
+                  <span>LegalUp</span>
+                  <span className="rounded-[5px] border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-px text-[0.6rem] font-semibold tracking-[0.14em] text-emerald-700">PRO</span>
                 </h3>
                 <p className="text-gray-600 text-sm">{aiBadgeText}</p>
                 {aiSecondaryText && (
