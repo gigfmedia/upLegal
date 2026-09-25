@@ -524,25 +524,26 @@ export default function LawyerDashboardPage() {
       <div className="grid gap-6 md:grid-cols-2 items-stretch">
         <div
           onClick={handleLegalUpAIClick}
-          className="rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-white to-white p-6 cursor-pointer hover:shadow-lg hover:shadow-green-500/20 transition-all duration-300 group h-full flex flex-col justify-center"
+          className="rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-white to-white p-6 cursor-pointer hover:shadow-lg hover:shadow-green-500/20 transition-all duration-300 group h-full flex flex-col"
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div>
-                <h3 className="flex items-center gap-2 text-xl font-bold text-gray-900">
-                  <Scale className="h-5 w-5 text-green-900" />
-                  <span>LegalUp</span>
-                  <span className="inline-flex h-[18.4px] items-center rounded-[5px] border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-px text-[0.6rem] font-semibold leading-none tracking-[0.14em] text-emerald-700">PRO</span>
-                </h3>
-                <p className="text-gray-600 text-sm">{aiBadgeText}</p>
-                {aiSecondaryText && (
-                  <p className="text-gray-500 text-xs mt-1">{aiSecondaryText}</p>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-2 bg-gray-900 rounded-lg px-4 py-2 text-white group-hover:bg-green-900 transition-colors">
+          <div>
+            <h3 className="flex items-center gap-2 text-xl font-bold text-gray-900">
+              <Scale className="h-5 w-5 text-green-900" />
+              <span>LegalUp</span>
+              <span className="inline-flex h-[18.4px] items-center rounded-[5px] border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-px text-[0.6rem] font-semibold leading-none tracking-[0.14em] text-emerald-700">PRO</span>
+            </h3>
+            <p className="mt-2 text-sm text-gray-600">{aiBadgeText}</p>
+          </div>
+          <div className="flex-1" />
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            {aiSecondaryText ? (
+              <p className="text-xs text-gray-500">{aiSecondaryText}</p>
+            ) : (
+              <span />
+            )}
+            <div className="flex items-center justify-center gap-2 self-stretch rounded-lg bg-gray-900 px-4 py-2 text-white group-hover:bg-green-900 transition-colors sm:self-auto">
               <span className="text-white font-medium text-sm">{aiCtaText}</span>
-              {/* el height <ArrowRight className="h-4 w-4 text-white group-hover:translate-x-1 transition-transform" /> */}
+              <ArrowRight className="h-4 w-4 text-white group-hover:translate-x-1 transition-transform" />
             </div>
           </div>
         </div>

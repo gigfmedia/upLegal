@@ -70,6 +70,23 @@ describe('4.41A dashboard card: Pro has no trial (rev)', () => {
     expect(c).toContain('>PRO<');
     expect(c).toContain('border-emerald-500/30');
   });
+
+  it('estructura espejo Google Calendar: header, descripción, spacer, footer', () => {
+    const c = cardBlock();
+    // Contenedor en columna a alto completo (misma altura por grid stretch).
+    expect(c).toMatch(/h-full flex flex-col/);
+    // Spacer flexible empuja el footer abajo (sin absolute ni offsets).
+    const spacerIdx = c.indexOf('flex-1');
+    expect(spacerIdx).toBeGreaterThan(-1);
+    expect(c).not.toContain('position:absolute');
+    expect(c).not.toContain('absolute ');
+    // Footer: secundaria izquierda + CTA derecha, apilable en mobile.
+    expect(c).toMatch(/justify-between/);
+    expect(c).toContain('sm:flex-row');
+    // El footer va después del spacer en el markup.
+    const footerIdx = c.indexOf('justify-between', spacerIdx);
+    expect(footerIdx).toBeGreaterThan(spacerIdx);
+  });
   it('sin lógica legacy-AI en este bloque (hook removido si quedó sin uso)', () => {
     const c = dashboard();
     expect(c).not.toContain('hasLegacyAI');
