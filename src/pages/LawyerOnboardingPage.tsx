@@ -16,6 +16,21 @@ export default function LawyerOnboardingPage() {
   const location = useLocation();
   const [checking, setChecking] = useState(true);
   const [profile, setProfile] = useState<any>(null);
+  const [skipping, setSkipping] = useState(false);
+
+  // Invitados por magic link (admin) pueden omitir el onboarding inicial.
+  const cameFromInvite = !!(user as any)?.user_metadata?.admin_lawyer_magic_link;
+
+  const handleSkip = async () => {
+    if (!user || skipping) return;
+    try {
+      setSkipping(true);
+      await supabase.from('profiles').update({ profile_setup_completed: true }).eq('user_id', user.id);
+      navigate('/lawyer/dashboard', { replace: true });
+    } catch {
+      setSkipping(false);
+    }
+  };
 
   useEffect(() => {
     if (isLoading) return;
@@ -109,6 +124,13 @@ export default function LawyerOnboardingPage() {
     <div className="min-h-screen bg-cream-900">
       <Header />
       <div className="py-10 px-4 pt-32">
+        {cameFromInvite && (
+          <div className="mx-auto mb-4 max-w-3xl text-right">
+            <Button variant="ghost" onClick={handleSkip} disabled={skipping} className="text-sm text-gray-500 hover:text-gray-900">
+              {skipping ? 'Omitiendo…' : 'Omitir por ahora'}
+            </Button>
+          </div>
+        )}
         <Suspense
           fallback={
             <div className="flex items-center justify-center py-20">
