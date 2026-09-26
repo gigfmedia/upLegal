@@ -24,6 +24,16 @@
 -- 6) Pro upgrade accounting: shared ai_operations ledger means same-month
 --    free ops also count in Pro monthly pools. Conservative by design;
 --    documented, no dual ledger.
+-- 7) 4.44C hardening (no quota/product change):
+--    a) can_delete_lawyer_case uses SET search_path = '' like the hardened
+--       4.36E authority (all references schema-qualified).
+--    b) Consumed-but-unidentified grants (grant row exists, no resolvable
+--       free Case workspace: NULL case_id or deleted case) fail closed on the
+--       DOCUMENT capacity path with AI_FREE_CASE_INVALID_SCOPE instead of
+--       falling through to no-plan behavior. Trial/Pro/legacy resolve before
+--       this point and are unaffected; lawyers with no grant row keep the
+--       legacy no-plan path; ai_workspaces inserts are untouched (workspaces
+--       stay uncounted for every plan, and provisioning must not regress).
 -- ===========================================================================
 
 -- ---------------------------------------------------------------------------
@@ -75,6 +85,23 @@ BEGIN
     JOIN public.lawyer_cases c ON c.id = g.case_id AND c.lawyer_id = NEW.lawyer_id
     WHERE g.lawyer_id = NEW.lawyer_id
       AND g.case_id IS NOT NULL;
+  END IF;
+
+  -- 4.44C: consumed-but-unidentified grant fails closed on the DOCUMENT
+  -- capacity path only. A grant row with no resolvable free Case workspace
+  -- (NULL case_id backfill or deleted free Case) means the lifetime allowance
+  -- is consumed but its scope is gone: allowing RETURN NEW below would permit
+  -- unlimited inserts. Trial/Pro/legacy resolve before this point and are
+  -- unaffected; lawyers with NO grant row keep the legacy no-plan path;
+  -- ai_workspaces inserts are untouched (never a commercial quota, and
+  -- entitlement-free provisioning must not regress). Never auto-repairs
+  -- case_id, never reinterprets as Pro.
+  IF TG_TABLE_NAME = 'ai_documents'
+     AND NOT v_is_trial AND NOT v_is_pro_limited AND NOT v_is_ai_active
+     AND v_free_workspace IS NULL
+     AND EXISTS (SELECT 1 FROM public.pro_free_case_grants g WHERE g.lawyer_id = NEW.lawyer_id) THEN
+    RAISE EXCEPTION 'AI_FREE_CASE_INVALID_SCOPE: no se pudo identificar tu primer caso. Actualiza a Pro para seguir usando documentos con IA.'
+      USING ERRCODE = 'P0001';
   END IF;
 
   -- Only limit if trial, pro_limited, or free_case plan.
@@ -226,7 +253,7 @@ GRANT EXECUTE ON FUNCTION public.ai_begin_operation(uuid,uuid,text,uuid,uuid,tex
 -- deletion succeeds again once the operation settles.
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.can_delete_lawyer_case(p_case_id uuid)
-RETURNS boolean LANGUAGE sql VOLATILE SECURITY DEFINER SET search_path=public AS $$
+RETURNS boolean LANGUAGE sql VOLATILE SECURITY DEFINER SET search_path = '' AS $$
  SELECT EXISTS (
   SELECT 1 FROM public.lawyer_cases c
   WHERE c.id = p_case_id AND c.lawyer_id = auth.uid()

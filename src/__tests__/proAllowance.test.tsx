@@ -133,6 +133,9 @@ describe('4.38C-B Pro allowance frontend contract', () => {
     expect(
       isFreeCaseDocumentLimitError({ code: 'P0001', message: 'AI_FREE_CASE_DOCUMENT_SCOPE: este documento debe pertenecer a tu primer caso.' })
     ).toBe(true);
+    expect(
+      isFreeCaseDocumentLimitError({ code: 'P0001', message: 'AI_FREE_CASE_INVALID_SCOPE: no se pudo identificar tu primer caso.' })
+    ).toBe(true);
     expect(isFreeCaseDocumentLimitError({ code: '23505', message: 'duplicate key' })).toBe(false);
     expect(freeCaseDocumentLimitMessage()).toContain('2 documentos');
     const chat = read('src/components/legalup-ai/AIChat.tsx');

@@ -35,6 +35,10 @@ export function isDocumentCapacityLimitError(
   // 4.44A: lifetime free first-Case markers (2 docs scoped to the free workspace).
   if (message.includes('FREE_CASE_DOCUMENT_LIMIT_REACHED')) return true;
   if (message.includes('AI_FREE_CASE_DOCUMENT_SCOPE')) return true;
+  // 4.44C: consumed-but-unidentified grant fails closed (never "no plan").
+  // Surfaces via PostgREST direct insert (no server route inserts ai_documents);
+  // map to the safe free-case message, never raw SQL text.
+  if (message.includes('AI_FREE_CASE_INVALID_SCOPE')) return true;
   if (String(error.code ?? '') === 'P0001' && /documento\(s\)/i.test(message)) return true;
   return false;
 }
@@ -47,7 +51,8 @@ export function isFreeCaseDocumentLimitError(
   const message = String(error.message ?? '');
   return (
     message.includes('FREE_CASE_DOCUMENT_LIMIT_REACHED') ||
-    message.includes('AI_FREE_CASE_DOCUMENT_SCOPE')
+    message.includes('AI_FREE_CASE_DOCUMENT_SCOPE') ||
+    message.includes('AI_FREE_CASE_INVALID_SCOPE')
   );
 }
 
