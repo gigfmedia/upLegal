@@ -15,6 +15,7 @@ import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AICaseCommandCenter } from '@/components/legalup-ai/AICaseCommandCenter';
+import { AICaseFreeSnapshot } from '@/components/legalup-ai/AICaseFreeSnapshot';
 import { AICaseLatestAnalysis } from '@/components/legalup-ai/AICaseLatestAnalysis';
 import { AICaseIntelligence } from '@/components/legalup-ai/AICaseIntelligence';
 import { AIResearchPanel } from '@/components/legalup-ai/AIResearchPanel';
@@ -64,7 +65,7 @@ function CaseDetailContent() {
     : (CASE_TABS as readonly string[]).includes(rawTab) ? rawTab : 'overview';
   const setActiveTab = (v: string) => setSearchParams(prev => { const p = new URLSearchParams(prev); p.set('tab', v); return p; }, { replace: true });
   const { workspaceId: effectiveWorkspaceId, ensureWorkspace } = useCaseDocumentWorkspace(caseId, caseData?.id === caseId ? caseData.ai_workspace_id : null);
-  const { canUse, isLoading: accessLoading } = useAIFeatureAccess();
+  const { canUse, isLoading: accessLoading, plan: aiPlan } = useAIFeatureAccess();
   const [proOpen, setProOpen] = useState(false);
   // 4.37D — manual appointment creation requires active Pro (same gate as
   // /lawyer/citas). Dedicated modal instance: triggerAction must stay
@@ -230,6 +231,15 @@ function CaseDetailContent() {
               metadata, every plan). Then the persisted document insight,
               then derived intelligence, then operational cards. */}
           <CaseOverviewSummary caseData={viewCase} />
+          {/* 4.48B: compact deterministic snapshot for free_case only.
+              Separate limited layer (never the full Command Center, no
+              case_analysis change). Read-only: 0 provider, 0 quota. */}
+          {aiPlan === 'free_case' && effectiveWorkspaceId && !accessLoading && (
+            <AICaseFreeSnapshot
+              workspaceId={effectiveWorkspaceId}
+              onUpgrade={() => setProOpen(true)}
+            />
+          )}
           {/* 4.46B (OPTION B): persisted latest document summary. Complements
               (never duplicates) the Command Center below: it renders only
               when the Center is absent, reusing the same path for every
