@@ -27,33 +27,10 @@ import { useCaseDocumentWorkspace } from '@/hooks/useCaseDocumentWorkspace';
 import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
 import { CaseDocuments } from '@/components/lawyer/CaseDocuments';
 import { CaseEditDialog } from '@/components/lawyer/CaseEditDialog';
+import { CaseOverviewSummary } from '@/components/lawyer/CaseOverviewSummary';
 import { CaseDescriptionCard } from '@/components/legalup-ai/CaseDescriptionCard';
 import { CASE_STATUS_COLORS } from '@/lib/caseStatus';
-
-const statusLabels: Record<CaseStatus, string> = {
-  new: 'Nuevo',
-  quoted: 'Cotizado',
-  paid: 'Pagado',
-  in_progress: 'En progreso',
-  delivered: 'Entregado',
-  closed: 'Cerrado',
-  cancelled: 'Cancelado',
-};
-
-const bookingStatusLabels: Record<string, string> = {
-  pending: 'Pendiente',
-  pending_payment: 'Pendiente de pago',
-  confirmed: 'Confirmada',
-  cancelled: 'Cancelada',
-  completed: 'Completada',
-  paid: 'Pagado',
-};
-
-const sourceLabels: Record<string, string> = {
-  LAWYER_DIRECT: 'Directo',
-  LEGALUP_MARKETPLACE: 'Marketplace',
-  UNKNOWN: 'Desconocido',
-};
+import { BOOKING_STATUS_LABELS as bookingStatusLabels, CASE_STATUS_LABELS as statusLabels } from '@/lib/caseLabels';
 
 export default function CaseDetailPage() {
   const { caseId } = useParams();
@@ -249,6 +226,23 @@ function CaseDetailContent() {
         </TabsList>
 
         <TabsContent value="overview" className="mt-4 space-y-4">
+          {/* 4.47A: main operational summary first (canonical lawyer_cases
+              metadata, every plan). Then the persisted document insight,
+              then derived intelligence, then operational cards. */}
+          <CaseOverviewSummary caseData={viewCase} />
+          {/* 4.46B (OPTION B): persisted latest document summary. Complements
+              (never duplicates) the Command Center below: it renders only
+              when the Center is absent, reusing the same path for every
+              plan. Read-only: 0 provider, 0 quota. */}
+          {!(canUse('case_analysis') && effectiveWorkspaceId) && effectiveWorkspaceId && !accessLoading && (
+            <AICaseLatestAnalysis
+              workspaceId={effectiveWorkspaceId}
+              onViewDocument={(documentId) => {
+                setOverviewDocId(documentId);
+                setActiveTab('documents');
+              }}
+            />
+          )}
           {/* 4.34L: Resumen = workspace legal primero. Command Center es el
               contenido primario; la edición administrativa vive en el modal. */}
           {!accessLoading && canUse('case_analysis') && effectiveWorkspaceId && (
@@ -261,19 +255,6 @@ function CaseDetailContent() {
               onAskQuestion={(q) => openCaseChat(q, null, 'command_center')}
               onWorkflowAsk={(q, actionId) => openCaseChat(q, null, 'workflow', actionId)}
               onInvestigate={() => setActiveTab('research')}
-            />
-          )}
-          {/* 4.46B (OPTION B): persisted latest document summary. Complements
-              (never duplicates) the Command Center above: it renders only
-              when the Center is absent, reusing the same path for every
-              plan. Read-only: 0 provider, 0 quota. */}
-          {!(canUse('case_analysis') && effectiveWorkspaceId) && effectiveWorkspaceId && !accessLoading && (
-            <AICaseLatestAnalysis
-              workspaceId={effectiveWorkspaceId}
-              onViewDocument={(documentId) => {
-                setOverviewDocId(documentId);
-                setActiveTab('documents');
-              }}
             />
           )}
       {/* Citas del caso — 1:N */}

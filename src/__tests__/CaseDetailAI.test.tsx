@@ -105,14 +105,17 @@ describe('4.34L case first-view hierarchy',()=>{
   expect(screen.getByTestId('cc')).toHaveTextContent('W1');
   expect(screen.queryByText('Cliente asociado')).not.toBeInTheDocument();
  });
- it('client name links to client without email in header',()=>{
+it('client name links to client without email in header',()=>{
   const cd = state.caseData as unknown as Record<string, unknown>;
   cd.client_id='CL1';cd.client={name:'Juan'};
   renderCase('overview');
-  const link=screen.getByRole('link',{name:'Juan'});
-  expect(link.getAttribute('href')).toBe('/lawyer/clients/CL1');
+  // 4.47A: header link preserved; Resumen del caso card links the same client.
+  const links=screen.getAllByRole('link',{name:'Juan'});
+  expect(links.length).toBeGreaterThanOrEqual(1);
+  for (const link of links) expect(link.getAttribute('href')).toBe('/lawyer/clients/CL1');
+  expect(screen.getByText('Resumen del caso')).toBeInTheDocument();
   expect(screen.queryByText(/@/)).not.toBeInTheDocument();
- });
+});
  it('save uses existing mutation and refreshes header; failure stays honest',async()=>{
   renderCase('overview');
   fireEvent.click(screen.getByRole('button',{name:/editar caso/i}));
