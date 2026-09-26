@@ -33,6 +33,27 @@ export const COMMERCIAL_LIMIT_CODES = Object.freeze({
   research: 'AI_RESEARCH_LIMIT_REACHED',
 });
 
+/**
+ * FASE 4.44A — lifetime free first-Case allowance (no monthly reset).
+ * Attached to the lawyer's one free LAWYER_DIRECT Case (case-scoped).
+ * Only successful logical operations consume (quota_units = 1).
+ */
+export const FREE_CASE_ALLOWANCE = Object.freeze({
+  /** Successful AI questions lifetime, shared case_chat + document_chat pool. */
+  chatLifetime: 3,
+  /** Successful document analyses lifetime (re-analysis counts as new). */
+  analysisLifetime: 1,
+  /** Current stored ai_documents rows in the free Case (deleting frees a slot). */
+  storedDocuments: 2,
+});
+
+/** Lifetime free-Case limit error codes (never provider internals). */
+export const FREE_CASE_LIMIT_CODES = Object.freeze({
+  chat: 'FREE_CASE_CHAT_LIMIT_REACHED',
+  analysis: 'FREE_CASE_ANALYSIS_LIMIT_REACHED',
+  documents: 'FREE_CASE_DOCUMENT_LIMIT_REACHED',
+});
+
 /** Stable DB marker prefix for the stored-document capacity trigger error. */
 export const DOCUMENT_CAPACITY_ERROR_MARKER = 'AI_DOCUMENT_CAPACITY_REACHED';
 
@@ -53,4 +74,18 @@ export function commercialQuotaForPlan(plan) {
 /** Commercial limit code for a metering capability (null when unknown). */
 export function commercialLimitCode(capability) {
   return COMMERCIAL_LIMIT_CODES[capability] ?? null;
+}
+
+/**
+ * Lifetime free-Case quota for a resolved plan, or null when the monthly
+ * commercial pools (or no quota) apply instead. Shape matches the
+ * ai_begin_operation free params: { caseId, workspaceId, chat, analysis }.
+ * Resolved case/workspace come from the access object, not from here.
+ */
+export function freeQuotaForPlan(plan) {
+  if (plan !== 'free_case') return null;
+  return {
+    chat: FREE_CASE_ALLOWANCE.chatLifetime,
+    analysis: FREE_CASE_ALLOWANCE.analysisLifetime,
+  };
 }

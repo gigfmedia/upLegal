@@ -15,7 +15,7 @@ const ast = ts.createSourceFile('server.mjs', src, ts.ScriptTarget.Latest, true,
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const user = id(1), foreign = id(2), caseId = id(3), workspaceId = id(4);
 
-const names = ['getAIWorkspaceOwned','requireAIEntitlement','requireAIAccess','getAILawyerAccess','getAILawyerSubscription',
+const names = ['getAIWorkspaceOwned','requireAIEntitlement','requireAIAccess','getAILawyerAccess','getAILawyerSubscription','getFreeCaseAccess',
  'getProLawyerSubscription','getProLawyerAccess','getPlanForAccess','serverCanUseAIFeature','isAIOverRateLimit','checkAIProtectionLimits',
  'getAIUsagePeriod','AI_FEATURES_ALL','PLAN_FEATURES_SERVER','AI_PROTECT_MAX_MONTHLY_TOKENS','AI_PROTECT_MAX_MONTHLY_REQUESTS',
  'aiRateLimiter','AI_RATE_WINDOW_MS','AI_PROTECT_RATE_LIMIT_PER_MINUTE',

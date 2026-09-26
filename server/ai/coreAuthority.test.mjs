@@ -1,5 +1,5 @@
 import { createAIMetering } from './metering.mjs';
-import { commercialQuotaForPlan, PRO_AI_ALLOWANCE } from './proAllowance.mjs';
+import { commercialQuotaForPlan, PRO_AI_ALLOWANCE, FREE_CASE_ALLOWANCE, freeQuotaForPlan } from './proAllowance.mjs';
 import { randomUUID } from 'node:crypto';
 // @vitest-environment node
 import { describe, it, expect, vi } from 'vitest';
@@ -16,7 +16,7 @@ const src = readFileSync(new URL('../../server.mjs', import.meta.url), 'utf8');
 const ast = ts.createSourceFile('server.mjs', src, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const user = id(1), foreign = id(2), caseId = id(3), workspaceId = id(4), conversationId = id(5);
-const names = ['requireAILawyer','getAIDocumentOwned','getAIWorkspaceOwned','getLawyerCaseOwned','requireAIEntitlement','getAIConversationOwned','getOrCreateAIConversation','AIChatRequestSchema','AIChatResponseSchema','AIDocumentAnalysisSchema','getAIUsagePeriod','recordAIUsage','isAIOverRateLimit','checkAIProtectionLimits','getAILawyerSubscription','getAILawyerAccess','getProLawyerSubscription','getProLawyerAccess','requireAIAccess','AI_FEATURES_ALL','PLAN_FEATURES_SERVER','getPlanForAccess','serverCanUseAIFeature','extractTextFromStoredPdf','commercialQuotaForPlan'];
+const names = ['requireAILawyer','getAIDocumentOwned','getAIWorkspaceOwned','getLawyerCaseOwned','requireAIEntitlement','getAIConversationOwned','getOrCreateAIConversation','AIChatRequestSchema','AIChatResponseSchema','AIDocumentAnalysisSchema','getAIUsagePeriod','recordAIUsage','isAIOverRateLimit','checkAIProtectionLimits','getAILawyerSubscription','getAILawyerAccess','getFreeCaseAccess','freeQuotaForEntitlement','getProLawyerSubscription','getProLawyerAccess','requireAIAccess','AI_FEATURES_ALL','PLAN_FEATURES_SERVER','getPlanForAccess','serverCanUseAIFeature','extractTextFromStoredPdf','commercialQuotaForPlan','freeQuotaForPlan','FREE_CASE_ALLOWANCE'];
 const paths = {
  provision:['post','/api/lawyer/cases/:caseId/ai-workspace'], process:['post','/api/ai/documents/:id/process'], analyze:['post','/api/ai/documents/:id/analyze'],
  del:['delete','/api/ai/documents/:id'], open:['get','/api/ai/documents/:id/open'],
@@ -45,7 +45,7 @@ function harness({paid=true, linked=true, count=3}={}) {
  }};
  const provider=vi.fn(async()=>({data:{answer:'Respuesta documental.',sources:[],summary:'Resumen',document_type:'contrato',parties:[],key_points:[],obligations:[],deadlines:[],risks:[],recommendations:[]},usage:{total_tokens:100,input_tokens:80,output_tokens:20}}));
  const routes={}, quiet={log(){},warn(){},error(){}};
-  const ctx=vm.createContext({createAIMetering:options=>createAIMetering({...options,log:()=>{}}),commercialQuotaForPlan,PRO_AI_ALLOWANCE,AI_PROTECT_MAX_MONTHLY_TOKENS:20000000,AI_PROTECT_MAX_MONTHLY_REQUESTS:5000,console:quiet,z,Buffer,supabase,hasCanonicalDocumentReference,resolveAnalysisModel,honestEvidenceLocation,buildChatContext,buildChatSystemPrompt,buildChatUserPrompt,CHAT_LIMITS,getProCaseHeader,formatProCaseBlock,verifyDocumentClaims,buildAnalysisSystemPrompt,buildAnalysisUserPrompt,
+  const ctx=vm.createContext({createAIMetering:options=>createAIMetering({...options,log:()=>{}}),commercialQuotaForPlan,freeQuotaForPlan,PRO_AI_ALLOWANCE,FREE_CASE_ALLOWANCE,AI_PROTECT_MAX_MONTHLY_TOKENS:20000000,AI_PROTECT_MAX_MONTHLY_REQUESTS:5000,console:quiet,z,Buffer,supabase,hasCanonicalDocumentReference,resolveAnalysisModel,honestEvidenceLocation,buildChatContext,buildChatSystemPrompt,buildChatUserPrompt,CHAT_LIMITS,getProCaseHeader,formatProCaseBlock,verifyDocumentClaims,buildAnalysisSystemPrompt,buildAnalysisUserPrompt,
   app:{get:(p,h)=>routes[`get ${p}`]=h,post:(p,h)=>routes[`post ${p}`]=h,delete:(p,h)=>routes[`delete ${p}`]=h},getUserIdFromToken:async()=>tokenUser,
  chatCompletion:provider,isAIProviderConfigured:()=>true,AI_DEFAULT_MODEL:'gpt-4o-mini',AI_CHAT_MAX_TOKENS:2400,AI_DOCUMENTS_BUCKET:'ai-documents',MAX_EXTRACTED_TEXT_CHARS:80000,
  pdfParse:async()=>({text:'Contrato documental de prueba con obligaciones entre partes.',numpages:1}),

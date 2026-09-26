@@ -296,6 +296,16 @@ export function AICaseDocumentsWorkspace({
                 Alcanzaste los 40 análisis de documentos incluidos este mes. Se renovarán el próximo mes.
               </p>
             )}
+            {(analyzeMutation.error as Error & { code?: string } | null)?.code === 'FREE_CASE_ANALYSIS_LIMIT_REACHED' && (
+              <p className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                Ya usaste el análisis incluido en tu primer caso. Pasa a Pro para seguir analizando.
+              </p>
+            )}
+            {(analyzeMutation.error as Error & { code?: string } | null)?.code === 'AI_RESOURCE_FORBIDDEN' && (
+              <p className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                Esta acción debe hacerse desde tu primer caso.
+              </p>
+            )}
             {(analyzeMutation.error as Error & { code?: string } | null)?.code === 'AI_OPERATION_IN_PROGRESS' && (
               <p className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
                 El análisis sigue en curso. Espera unos momentos y vuelve a intentarlo: no se duplicará.

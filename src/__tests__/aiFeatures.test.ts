@@ -4,6 +4,7 @@ import {
   AI_SUBSCRIPTION_PRICE_CLP,
   AI_SUBSCRIPTION_TRIAL_DAYS,
   AI_LIMITS,
+  AI_FREE_CASE_ALLOWANCE,
 } from '@/lib/aiFeatures';
 
 describe('aiFeatures — gating por plan (Fase 3.5)', () => {
@@ -29,5 +30,19 @@ describe('aiFeatures — gating por plan (Fase 3.5)', () => {
     expect(AI_SUBSCRIPTION_PRICE_CLP).toBe(49900);
     expect(AI_SUBSCRIPTION_TRIAL_DAYS).toBe(5);
     expect(AI_LIMITS.maxDocumentSizeBytes).toBe(20 * 1024 * 1024);
+  });
+
+  it('4.44A free_case habilita solo chat + análisis (research bloqueado)', () => {
+    expect(canUseAIFeature('document_analysis', 'free_case')).toBe(true);
+    expect(canUseAIFeature('case_chat', 'free_case')).toBe(true);
+    expect(canUseAIFeature('jurisprudence', 'free_case')).toBe(false);
+    expect(canUseAIFeature('case_analysis', 'free_case')).toBe(false);
+    expect(canUseAIFeature('workflow_generation', 'free_case')).toBe(false);
+    expect(canUseAIFeature('document_drafting', 'free_case')).toBe(false);
+    expect(AI_FREE_CASE_ALLOWANCE).toEqual({
+      chatLifetime: 3,
+      analysisLifetime: 1,
+      storedDocuments: 2,
+    });
   });
 });

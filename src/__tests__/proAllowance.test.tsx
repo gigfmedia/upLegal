@@ -2,10 +2,12 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { canUseAIFeature, AI_PRO_ALLOWANCE, AI_PRO_LIMITS } from '@/lib/aiFeatures';
+import { canUseAIFeature, AI_PRO_ALLOWANCE, AI_PRO_LIMITS, AI_FREE_CASE_ALLOWANCE } from '@/lib/aiFeatures';
 import {
   isDocumentCapacityLimitError,
+  isFreeCaseDocumentLimitError,
   documentCapacityLimitMessage,
+  freeCaseDocumentLimitMessage,
 } from '@/lib/aiDocumentLimits';
 import { isCommercialLimitCode } from '@/lib/aiLimitAnalytics';
 import { AIUsageMeter } from '@/components/legalup-ai/AIUsageMeter';
@@ -114,5 +116,32 @@ describe('4.38C-B Pro allowance frontend contract', () => {
     expect(lib).toContain('ai_usage_limit_reached');
     expect(lib).toContain('capability');
     expect(lib).not.toMatch(/question:|document_name:|message_length:|query_length:|user_id:/i);
+  });
+
+  it('4.44A free first-Case lifetime allowance frontend contract', () => {
+    expect(canUseAIFeature('document_analysis', 'free_case')).toBe(true);
+    expect(canUseAIFeature('case_chat', 'free_case')).toBe(true);
+    expect(canUseAIFeature('jurisprudence', 'free_case')).toBe(false);
+    expect(AI_FREE_CASE_ALLOWANCE).toEqual({
+      chatLifetime: 3,
+      analysisLifetime: 1,
+      storedDocuments: 2,
+    });
+    expect(
+      isDocumentCapacityLimitError({ code: 'P0001', message: 'FREE_CASE_DOCUMENT_LIMIT_REACHED: tu primer caso incluye hasta 2 documentos.' })
+    ).toBe(true);
+    expect(
+      isFreeCaseDocumentLimitError({ code: 'P0001', message: 'AI_FREE_CASE_DOCUMENT_SCOPE: este documento debe pertenecer a tu primer caso.' })
+    ).toBe(true);
+    expect(isFreeCaseDocumentLimitError({ code: '23505', message: 'duplicate key' })).toBe(false);
+    expect(freeCaseDocumentLimitMessage()).toContain('2 documentos');
+    const chat = read('src/components/legalup-ai/AIChat.tsx');
+    expect(chat).toContain('FREE_CASE_CHAT_LIMIT_REACHED');
+    const docs = read('src/components/legalup-ai/AICaseDocumentsWorkspace.tsx');
+    expect(docs).toContain('FREE_CASE_ANALYSIS_LIMIT_REACHED');
+    const meter = read('src/components/legalup-ai/AIUsageMeter.tsx');
+    expect(meter).toContain('free_case');
+    const hook = read('src/hooks/useFreeCaseAllowance.ts');
+    expect(hook).toContain("plan !== 'free_case'");
   });
 });

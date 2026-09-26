@@ -25,8 +25,8 @@ function PoolRow({ label, pool }: { label: string; pool: AIAllowancePool }) {
 }
 
 /**
- * Uso de IA del plan Pro (4.38C). Muestra cuotas comerciales mensuales
- * (consultas, análisis, investigaciones) y documentos almacenados.
+ * Uso de IA del plan (4.38C Pro mensual, 4.44A primer caso lifetime).
+ * Muestra cuotas comerciales y documentos almacenados.
  * La autoridad es server/DB; este componente solo visualiza.
  * Sin allowance resuelto, no renderiza nada.
  */
@@ -36,16 +36,20 @@ export function AIUsageMeter() {
   if (isLoading || !data?.allowance) return null;
 
   const { allowance } = data;
+  // 4.44A: lifetime free-Case allowance (sin reset mensual).
+  const isLifetime = allowance.plan === 'free_case';
 
   return (
     <div
       className="flex flex-col gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
-      title="Uso de IA incluido en tu plan este mes"
+      title={isLifetime ? 'Uso incluido en tu primer caso' : 'Uso de IA incluido en tu plan este mes'}
     >
-      <span className="text-xs font-medium text-gray-500">Uso de IA este mes</span>
+      <span className="text-xs font-medium text-gray-500">
+        {isLifetime ? 'Tu primer caso incluye' : 'Uso de IA este mes'}
+      </span>
       <PoolRow label="Consultas IA" pool={allowance.chat} />
       <PoolRow label="Análisis" pool={allowance.analysis} />
-      <PoolRow label="Investigaciones" pool={allowance.research} />
+      {!isLifetime && <PoolRow label="Investigaciones" pool={allowance.research} />}
       <PoolRow label="Documentos" pool={allowance.documents} />
     </div>
   );

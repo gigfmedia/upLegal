@@ -32,13 +32,33 @@ export function isDocumentCapacityLimitError(
   const message = String(error.message ?? '');
   // 4.38C: stable marker raised by ai_enforce_trial_limits for Pro (50 docs).
   if (message.includes('AI_DOCUMENT_CAPACITY_REACHED')) return true;
+  // 4.44A: lifetime free first-Case markers (2 docs scoped to the free workspace).
+  if (message.includes('FREE_CASE_DOCUMENT_LIMIT_REACHED')) return true;
+  if (message.includes('AI_FREE_CASE_DOCUMENT_SCOPE')) return true;
   if (String(error.code ?? '') === 'P0001' && /documento\(s\)/i.test(message)) return true;
   return false;
+}
+
+/** 4.44A: detecta el tope lifetime del primer caso gratis (2 documentos). */
+export function isFreeCaseDocumentLimitError(
+  error: { code?: string | number; message?: string } | null | undefined
+): boolean {
+  if (!error) return false;
+  const message = String(error.message ?? '');
+  return (
+    message.includes('FREE_CASE_DOCUMENT_LIMIT_REACHED') ||
+    message.includes('AI_FREE_CASE_DOCUMENT_SCOPE')
+  );
 }
 
 /** Mensaje de capacidad para el tope de documentos almacenados del plan. */
 export function documentCapacityLimitMessage(): string {
   return 'Alcanzaste el límite de 50 documentos almacenados. Puedes eliminar documentos que ya no necesites para liberar espacio.';
+}
+
+/** 4.44A: mensaje para el tope lifetime del primer caso gratis. */
+export function freeCaseDocumentLimitMessage(): string {
+  return 'Tu primer caso incluye hasta 2 documentos. Puedes eliminar uno para liberar espacio o pasar a Pro para más.';
 }
 
 /** Convierte un error de upload de Supabase Storage en un mensaje amigable para el usuario. */

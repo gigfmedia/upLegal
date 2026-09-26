@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabaseClient';
 import posthog from 'posthog-js';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { canUseAIFeature, type AIFeatureKey } from '@/lib/aiFeatures';
+import { useAIUsage } from '@/hooks/useAIUsage';
 import type { Database } from '@/types/supabase';
 
 export type AISubscription = Database['public']['Tables']['ai_subscriptions']['Row'];
@@ -16,6 +17,7 @@ export type AIAccessStatus =
   | 'past_due'
   | 'expired'
   | 'pro_limited'
+  | 'free_case'
   | 'none';
 
 const getApiBaseUrl = (): string => {
@@ -153,22 +155,33 @@ export function useAISubscription() {
 
 /**
  * Indica si el abogado puede usar una feature de LegalUp AI.
- * Requiere acceso (trial o plan activo) y plan con la feature.
+ * Requiere acceso (trial, plan activo, Pro o primer caso gratis) y plan con la feature.
+ * 4.44A: el plan free_case lo resuelve el backend (/api/ai/usage allowance);
+ * la autoridad sigue siendo server/DB, aquí solo orientamos la UI.
  */
 export function useAIFeatureAccess() {
   const { subscription, status, plan, hasAccess, trialDaysRemaining, isLoading } =
     useAISubscription();
+  const { data: usageData, isLoading: usageLoading } = useAIUsage();
+
+  // 4.44A: free first-Case lifetime plan. useAISubscription solo conoce
+  // ai_subscriptions + lawyer_subscriptions; el free_case vive en
+  // pro_free_case_grants y lo resuelve el backend en allowance.plan.
+  const isFreeCase = usageData?.allowance?.plan === 'free_case';
+  const effectiveHasAccess = hasAccess || isFreeCase;
+  const effectivePlan = isFreeCase && !hasAccess ? 'free_case' : plan;
+  const effectiveStatus = isFreeCase && !hasAccess ? 'free_case' as const : status;
 
   return {
     subscription,
-    plan,
-    status,
-    hasAccess,
+    plan: effectivePlan,
+    status: effectiveStatus,
+    hasAccess: effectiveHasAccess,
     trialDaysRemaining,
     // Fase 4.2.16: expone el estado de carga de la suscripción para que la UI no
     // muestre lock cards prematuramente mientras se determina el acceso.
-    isLoading,
-    canUse: (feature: AIFeatureKey) => hasAccess && canUseAIFeature(feature, plan),
+    isLoading: isLoading || (usageLoading && !usageData),
+    canUse: (feature: AIFeatureKey) => effectiveHasAccess && canUseAIFeature(feature, effectivePlan),
   };
 }
 

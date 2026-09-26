@@ -9,7 +9,9 @@ import {
   MAX_DOCUMENT_SIZE_BYTES,
   isDocumentOverMaxSize,
   isDocumentCapacityLimitError,
+  isFreeCaseDocumentLimitError,
   documentCapacityLimitMessage,
+  freeCaseDocumentLimitMessage,
   toFriendlyUploadError,
 } from '@/lib/aiDocumentLimits';
 
@@ -196,14 +198,16 @@ export function useUploadAIDocument(workspace: string | undefined | (() => Promi
         console.error('[LegalUpAI] Error creando documento:', insertError);
         // 4.38C: stored-document capacity is enforced by DB trigger (authority).
         if (isDocumentCapacityLimitError({ code: insertError.code, message: insertError.message })) {
+          // 4.44A: free first-Case lifetime cap gets its own copy (2 docs).
+          const isFree = isFreeCaseDocumentLimitError({ code: insertError.code, message: insertError.message });
           try {
             posthog.capture('ai_usage_limit_reached', {
               capability: 'documents',
-              code: 'AI_DOCUMENT_CAPACITY_REACHED',
+              code: isFree ? 'FREE_CASE_DOCUMENT_LIMIT_REACHED' : 'AI_DOCUMENT_CAPACITY_REACHED',
               workspace_id: workspaceId,
             });
           } catch { /* Telemetry must not interrupt upload. */ }
-          throw new Error(documentCapacityLimitMessage());
+          throw new Error(isFree ? freeCaseDocumentLimitMessage() : documentCapacityLimitMessage());
         }
         throw new Error('No se pudo registrar el documento. Inténtalo de nuevo.');
       }

@@ -16,6 +16,10 @@ export type AIAllowancePool = {
   used: number;
   /** Monthly/standing limit, or null when no commercial limit applies to the plan. */
   limit: number | null;
+  /** 4.44A: 'monthly' for calendar-month pools, null for lifetime pools. */
+  reset?: 'monthly' | null;
+  /** 4.44A: false when the capability is not included (e.g. research for free). */
+  available?: boolean;
 };
 
 /** 4.38C commercial allowance. Authority is server/DB; UI only displays. */

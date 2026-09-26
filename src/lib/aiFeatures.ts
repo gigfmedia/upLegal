@@ -60,12 +60,27 @@ export const AI_PRO_ALLOWANCE = {
   storedDocuments: 50,
 } as const;
 
+/**
+ * 4.44A free first-Case lifetime allowance (no monthly reset).
+ * Attached to the lawyer's one free LAWYER_DIRECT Case (case-scoped).
+ */
+export const AI_FREE_CASE_ALLOWANCE = {
+  /** Successful AI questions lifetime, shared case_chat + document_chat pool. */
+  chatLifetime: 3,
+  /** Successful document analyses lifetime. */
+  analysisLifetime: 1,
+  /** Current stored ai_documents rows in the free Case. */
+  storedDocuments: 2,
+} as const;
+
 /** Features disponibles según el plan de la suscripción AI. */
 const PLAN_FEATURES: Record<string, AIFeatureKey[]> = {
   free: [],
   essential: AI_FEATURES.map(f => f.key),
   // 4.38C: current Pro includes Research/Jurisprudence.
   pro_limited: ['document_analysis', 'case_chat', 'case_analysis', 'jurisprudence'],
+  // 4.44A: free first Case (chat + analysis only; research stays blocked).
+  free_case: ['document_analysis', 'case_chat'],
 };
 
 /**

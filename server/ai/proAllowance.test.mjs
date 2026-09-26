@@ -3,8 +3,11 @@ import {
   PRO_AI_ALLOWANCE,
   COMMERCIAL_LIMIT_CODES,
   DOCUMENT_CAPACITY_ERROR_MARKER,
+  FREE_CASE_ALLOWANCE,
+  FREE_CASE_LIMIT_CODES,
   commercialQuotaForPlan,
   commercialLimitCode,
+  freeQuotaForPlan,
 } from './proAllowance.mjs';
 
 describe('4.38C-B commercial Pro AI allowance authority', () => {
@@ -45,5 +48,30 @@ describe('4.38C-B commercial Pro AI allowance authority', () => {
 
   it('document capacity marker is stable for trigger/frontend matching', () => {
     expect(DOCUMENT_CAPACITY_ERROR_MARKER).toBe('AI_DOCUMENT_CAPACITY_REACHED');
+  });
+
+  it('4.44A free first-Case lifetime allowance matches the approved contract', () => {
+    expect(FREE_CASE_ALLOWANCE).toEqual({
+      chatLifetime: 3,
+      analysisLifetime: 1,
+      storedDocuments: 2,
+    });
+    expect(Object.isFrozen(FREE_CASE_ALLOWANCE)).toBe(true);
+    expect(Object.isFrozen(FREE_CASE_LIMIT_CODES)).toBe(true);
+    expect(FREE_CASE_LIMIT_CODES).toEqual({
+      chat: 'FREE_CASE_CHAT_LIMIT_REACHED',
+      analysis: 'FREE_CASE_ANALYSIS_LIMIT_REACHED',
+      documents: 'FREE_CASE_DOCUMENT_LIMIT_REACHED',
+    });
+  });
+
+  it('4.44A free_case gets lifetime quota; every other plan gets none', () => {
+    expect(freeQuotaForPlan('free_case')).toEqual({ chat: 3, analysis: 1 });
+    for (const plan of ['free', 'essential', 'pro_limited', 'trial', 'unknown', '', null, undefined]) {
+      expect(freeQuotaForPlan(plan)).toBeNull();
+    }
+    // Commercial and free pools never overlap: pro gets commercial only, free gets lifetime only.
+    expect(commercialQuotaForPlan('free_case')).toBeNull();
+    expect(commercialQuotaForPlan('pro_limited')).not.toBeNull();
   });
 });

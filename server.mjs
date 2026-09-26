@@ -1,5 +1,5 @@
 import { createAIMetering } from './server/ai/metering.mjs';
-import { PRO_AI_ALLOWANCE, commercialQuotaForPlan } from './server/ai/proAllowance.mjs';
+import { PRO_AI_ALLOWANCE, commercialQuotaForPlan, FREE_CASE_ALLOWANCE, freeQuotaForPlan } from './server/ai/proAllowance.mjs';
 import {
   CONFLICT_CODE,
   normalizeEmail,
@@ -495,6 +495,8 @@ const PLAN_FEATURES_SERVER = {
   essential: [...AI_FEATURES_ALL],
   // 4.38C: current Pro includes Research/Jurisprudence (10/month commercial quota).
   pro_limited: ['document_analysis','case_chat','case_analysis','jurisprudence'],
+  // 4.44A: free first-Case lifetime allowance (chat + analysis only; no research).
+  free_case: ['document_analysis','case_chat'],
 };
 function serverCanUseAIFeature(feature, plan = 'free') {
   const allowed = PLAN_FEATURES_SERVER[plan] ?? PLAN_FEATURES_SERVER.free;
@@ -503,11 +505,26 @@ function serverCanUseAIFeature(feature, plan = 'free') {
 function getPlanForAccess(access) {
   if (!access) return 'free';
   if (access.isProLimited || access.plan === 'pro_limited') return 'pro_limited';
+  // 4.44A: free first-Case plan must resolve before the hasAccess fallback
+  // below (which would otherwise map it to essential).
+  if (access.plan === 'free_case') return 'free_case';
   if (access.isTrialing || access.isActive) return 'essential';
   // fallback: if hasAccess but plan unknown, treat as essential for legacy
   if (access.hasAccess) return 'essential';
   return 'free';
 }
+
+// 4.44A: lifetime free-Case quota for resolved entitlement (null otherwise).
+// Case/workspace come from server-resolved access, never client input.
+const freeQuotaForEntitlement = (entitlement) => {
+  if (!entitlement || entitlement.plan !== 'free_case') return null;
+  const quota = freeQuotaForPlan(entitlement.plan);
+  if (!quota) return null;
+  const caseId = entitlement.access?.freeCaseId || null;
+  const workspaceId = entitlement.access?.freeWorkspaceId || null;
+  if (!caseId || !workspaceId) return null;
+  return { caseId, workspaceId, chat: quota.chat, analysis: quota.analysis };
+};
 
 // Límites de uso (Bloque 22). Trial: 3 casos / 10 documentos (trigger DB).
 // Pro: sin límite comercial de workspaces; 50 documentos (trigger DB, 4.38C).
@@ -8177,6 +8194,31 @@ const getAILawyerSubscription = async (userId) => {
 //              (p. ej. checkout abandonado), se conserva el acceso trial.
 //   past_due → deuda de pago; se conserva solo si el trial sigue vigente.
 //   expired / sin fila → sin acceso.
+// 4.44A: resolve the free first-Case identity for lifetime AI allowance.
+// Returns { caseId, workspaceId } or null. Authority = pro_free_case_grants
+// (durable ledger). Never infers from oldest/active/count. NULL case_id or
+// missing workspace = no free AI (fail-closed).
+const getFreeCaseAccess = async (userId) => {
+  try {
+    const { data: grant, error: grantError } = await supabase
+      .from('pro_free_case_grants')
+      .select('case_id')
+      .eq('lawyer_id', userId)
+      .maybeSingle();
+    if (grantError || !grant?.case_id) return null;
+    const { data: c, error: caseError } = await supabase
+      .from('lawyer_cases')
+      .select('id, ai_workspace_id')
+      .eq('id', grant.case_id)
+      .eq('lawyer_id', userId)
+      .maybeSingle();
+    if (caseError || !c?.ai_workspace_id) return null;
+    return { caseId: c.id, workspaceId: c.ai_workspace_id };
+  } catch {
+    return null;
+  }
+};
+
 const getAILawyerAccess = async (userId) => {
   const subscription = await getAILawyerSubscription(userId);
   const now = Date.now();
@@ -8245,6 +8287,30 @@ const getAILawyerAccess = async (userId) => {
         trialEndsAt: null,
         currentPeriodEnd: proAccess.currentPeriodEnd,
         cancelAtPeriodEnd: false,
+      };
+    }
+  }
+
+  // 4.44A: free first-Case lifetime plan (after legacy AI and Pro).
+  // Identity = pro_free_case_grants.case_id (durable ledger); NULL or
+  // missing workspace = consumed-but-unidentified = no free AI (fail-closed).
+  if (!hasAccess) {
+    const freeCase = await getFreeCaseAccess(userId);
+    if (freeCase) {
+      return {
+        subscription: null,
+        hasAccess: true,
+        status: 'free_case',
+        plan: 'free_case',
+        isTrialing: false,
+        isActive: false,
+        isProLimited: false,
+        trialDaysRemaining: 0,
+        trialEndsAt: null,
+        currentPeriodEnd: null,
+        cancelAtPeriodEnd: false,
+        freeCaseId: freeCase.caseId,
+        freeWorkspaceId: freeCase.workspaceId,
       };
     }
   }
@@ -9088,7 +9154,7 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
       });
     }
 
-    if (!await metering.begin(req, res, { lawyerId: userId, workspaceId: doc.workspace_id, capability: 'document_analysis', resourceId: doc.id, input: { model }, commercialLimits: commercialQuotaForPlan(entitlement.plan) })) return;
+    if (!await metering.begin(req, res, { lawyerId: userId, workspaceId: doc.workspace_id, capability: 'document_analysis', resourceId: doc.id, input: { model }, commercialLimits: commercialQuotaForPlan(entitlement.plan), freeQuota: freeQuotaForEntitlement(entitlement) })) return;
 
     // Asegura el texto extraído (procesa inline si hace falta).
     let text = doc.extracted_text;
@@ -9571,7 +9637,7 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       });
     }
 
-    if (!await metering.begin(req, res, { lawyerId: userId, workspaceId: workspace.id, capability: document_id ? 'document_chat' : 'case_chat', resourceId: document_id || conversation.id, input: { conversation_id, message, document_id: document_id || null, model: AI_DEFAULT_MODEL }, commercialLimits: commercialQuotaForPlan(entitlement.plan) })) return;
+    if (!await metering.begin(req, res, { lawyerId: userId, workspaceId: workspace.id, capability: document_id ? 'document_chat' : 'case_chat', resourceId: document_id || conversation.id, input: { conversation_id, message, document_id: document_id || null, model: AI_DEFAULT_MODEL }, commercialLimits: commercialQuotaForPlan(entitlement.plan), freeQuota: freeQuotaForEntitlement(entitlement) })) return;
 
     // Solo documentos listos del caso del abogado.
     const { data: readyDocs, error: docsError } = await supabase
@@ -10005,7 +10071,7 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
       });
     }
 
-    if (!await metering.begin(req, res, { lawyerId: userId, workspaceId: workspace.id, capability: 'research', input: { query, model: AI_DEFAULT_MODEL }, commercialLimits: commercialQuotaForPlan(entitlement.plan) })) return;
+    if (!await metering.begin(req, res, { lawyerId: userId, workspaceId: workspace.id, capability: 'research', input: { query, model: AI_DEFAULT_MODEL }, commercialLimits: commercialQuotaForPlan(entitlement.plan), freeQuota: freeQuotaForEntitlement(entitlement) })) return;
 
     // Fase 4.2.6 (CASE INTELLIGENCE): carga los documentos READY del caso con
     // filtro server-side doble capa (workspace_id + lawyer_id) y detecta el modo
@@ -10832,19 +10898,51 @@ app.get('/api/ai/usage', async (req, res) => {
     try {
       const access = await getAILawyerAccess(userId);
       const plan = getPlanForAccess(access);
-      const quota = commercialQuotaForPlan(plan);
-      const { count: storedDocuments } = await supabase
-        .from('ai_documents')
-        .select('id', { count: 'exact', head: true })
-        .eq('lawyer_id', userId);
-      const withLimit = (used, limit) => ({ used: used || 0, limit: limit ?? null });
-      allowance = {
-        plan,
-        chat: withLimit(usage.chat_message_count, quota?.chat),
-        analysis: withLimit(usage.document_analysis_count, quota?.analysis),
-        research: withLimit(usage.jurisprudence_research_count, quota?.research),
-        documents: withLimit(storedDocuments, plan === 'pro_limited' ? PRO_AI_ALLOWANCE.storedDocuments : null),
-      };
+      // 4.44A: free first-Case lifetime allowance (no monthly reset).
+      // Lifetime usage = succeeded ops (quota_units=1) + in-flight reservations,
+      // matching ai_begin_operation enforcement (reserved+succeeded scoped by
+      // free lawyer_case_id across all periods).
+      if (plan === 'free_case') {
+        const freeCase = await getFreeCaseAccess(userId);
+        if (freeCase) {
+          const { data: freeOps } = await supabase
+            .from('ai_operations')
+            .select('capability,status,quota_units')
+            .eq('lawyer_id', userId)
+            .eq('lawyer_case_id', freeCase.caseId)
+            .in('status', ['reserved', 'succeeded']);
+          const chatUsed = (freeOps || []).filter((o) => o.capability === 'case_chat' || o.capability === 'document_chat').length;
+          const analysisUsed = (freeOps || []).filter((o) => o.capability === 'document_analysis').length;
+          const { count: freeDocs } = await supabase
+            .from('ai_documents')
+            .select('id', { count: 'exact', head: true })
+            .eq('lawyer_id', userId)
+            .eq('workspace_id', freeCase.workspaceId);
+          const lifetime = (used, limit) => ({ used: used || 0, limit, reset: null, available: true });
+          allowance = {
+            plan,
+            chat: lifetime(chatUsed, FREE_CASE_ALLOWANCE.chatLifetime),
+            analysis: lifetime(analysisUsed, FREE_CASE_ALLOWANCE.analysisLifetime),
+            research: { used: 0, limit: 0, reset: null, available: false },
+            documents: lifetime(freeDocs, FREE_CASE_ALLOWANCE.storedDocuments),
+          };
+        }
+      }
+      if (!allowance) {
+        const quota = commercialQuotaForPlan(plan);
+        const { count: storedDocuments } = await supabase
+          .from('ai_documents')
+          .select('id', { count: 'exact', head: true })
+          .eq('lawyer_id', userId);
+        const withLimit = (used, limit) => ({ used: used || 0, limit: limit ?? null, reset: 'monthly', available: true });
+        allowance = {
+          plan,
+          chat: withLimit(usage.chat_message_count, quota?.chat),
+          analysis: withLimit(usage.document_analysis_count, quota?.analysis),
+          research: withLimit(usage.jurisprudence_research_count, quota?.research),
+          documents: withLimit(storedDocuments, plan === 'pro_limited' ? PRO_AI_ALLOWANCE.storedDocuments : null),
+        };
+      }
     } catch (allowanceError) {
       console.error('[LegalUpAI] allowance error:', allowanceError?.message || allowanceError);
     }

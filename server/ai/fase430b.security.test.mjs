@@ -1,5 +1,5 @@
 import { createAIMetering } from './metering.mjs';
-import { commercialQuotaForPlan } from './proAllowance.mjs';
+import { commercialQuotaForPlan, freeQuotaForPlan, FREE_CASE_ALLOWANCE } from './proAllowance.mjs';
 import { randomUUID } from 'node:crypto';
 // @vitest-environment node
 import { describe, it, expect, vi } from 'vitest';
@@ -9,7 +9,7 @@ import ts from 'typescript';
 import { hasCanonicalDocumentReference, resolveAnalysisModel } from './coreAuthority.mjs';
 const src=readFileSync(new URL('../../server.mjs',import.meta.url),'utf8');
 const ast=ts.createSourceFile('server.mjs',src,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
-const names=['getLawyerCaseOwned','getAIWorkspaceOwned','getAIDocumentOwned','requireAIEntitlement','AI_FEATURES_ALL','PLAN_FEATURES_SERVER','serverCanUseAIFeature','getPlanForAccess','commercialQuotaForPlan'];
+const names=['getLawyerCaseOwned','getAIWorkspaceOwned','getAIDocumentOwned','requireAIEntitlement','AI_FEATURES_ALL','PLAN_FEATURES_SERVER','serverCanUseAIFeature','getPlanForAccess','commercialQuotaForPlan','freeQuotaForPlan','FREE_CASE_ALLOWANCE','freeQuotaForEntitlement','getFreeCaseAccess'];
 const paths=['/api/lawyer/cases/:caseId/ai-workspace','/api/ai/documents/:id/analyze','/api/ai/cases/:caseId/jurisprudence','/api/ai/cases/:caseId/workflow/sync'];
 function harness({access={isProLimited:true},user='L1'}={}){
  const rows={lawyer_cases:[{id:'C1',lawyer_id:'L1',title:'Case',ai_workspace_id:null}],ai_workspaces:[],ai_documents:[{id:'D1',lawyer_id:'L1',workspace_id:'W1',file_path:'L1/W1/D1/original.pdf',status:'ready',analysis_status:'pending',extracted_text:'This is a sufficiently long legal document for the test.'}],ai_document_analyses:[]};
@@ -22,7 +22,7 @@ function harness({access={isProLimited:true},user='L1'}={}){
   if(action==='delete')rows[table]=list.filter(r=>!selected.includes(r));
   return {data:selected[0]?{...selected[0]}:null,error:null,count:list.length};
  };const q={select:()=>q,eq:(k,v)=>{filters.push([k,v]);return q;},is:(k,v)=>{filters.push([k,v]);return q;},neq:(k,v)=>{filters.push([k,v,'neq']);return q;},insert:p=>{action='insert';payload=p;return q;},update:p=>{action='update';payload=p;return q;},delete:()=>{action='delete';return q;},single:async()=>run(),maybeSingle:async()=>run(),then:(a,b)=>Promise.resolve(run()).then(a,b)};return q;}};
-  const ctx=vm.createContext({createAIMetering:options=>createAIMetering({...options,log:()=>{}}),commercialQuotaForPlan,AI_PROTECT_MAX_MONTHLY_TOKENS:20000000,AI_PROTECT_MAX_MONTHLY_REQUESTS:5000,hasCanonicalDocumentReference,resolveAnalysisModel,supabase,console:{log(){},error(){},warn(){}},app:{post:(p,h)=>routes[p]=h,get(){}},
+  const ctx=vm.createContext({createAIMetering:options=>createAIMetering({...options,log:()=>{}}),commercialQuotaForPlan,freeQuotaForPlan,FREE_CASE_ALLOWANCE,AI_PROTECT_MAX_MONTHLY_TOKENS:20000000,AI_PROTECT_MAX_MONTHLY_REQUESTS:5000,hasCanonicalDocumentReference,resolveAnalysisModel,supabase,console:{log(){},error(){},warn(){}},app:{post:(p,h)=>routes[p]=h,get(){}},
   requireAILawyer:async(_req,res)=>{if(!user){res.status(401).json({error:'unauthorized'});return null;}return user;},requireAIAccess:async()=>access,
   checkAILimits:async()=>null,isAIOverRateLimit:()=>false,checkAIProtectionLimits:async()=>null,
   getAILawyerAccess:async()=>access,isAIProviderConfigured:()=>true,chatCompletion:provider,AI_DEFAULT_MODEL:'existing',

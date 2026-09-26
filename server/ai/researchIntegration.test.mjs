@@ -1,5 +1,5 @@
 import { createAIMetering } from './metering.mjs';
-import { commercialQuotaForPlan } from './proAllowance.mjs';
+import { commercialQuotaForPlan, freeQuotaForPlan, FREE_CASE_ALLOWANCE } from './proAllowance.mjs';
 import { randomUUID } from 'node:crypto';
 // @vitest-environment node
 // 4.34D — research/jurisprudence integrado al Caso Pro (mismo engine, con header vivo).
@@ -49,11 +49,11 @@ const LLM_OK = { data: {
   conclusion: 'Las fuentes respaldan el derecho.',
 }, usage: { total_tokens: 500, input_tokens: 400, output_tokens: 100 } };
 
-const names = ['getAIWorkspaceOwned','requireAIEntitlement','requireAIAccess','getAILawyerAccess','getAILawyerSubscription',
+const names = ['getAIWorkspaceOwned','requireAIEntitlement','requireAIAccess','getAILawyerAccess','getAILawyerSubscription','getFreeCaseAccess','freeQuotaForEntitlement',
   'getProLawyerSubscription','getProLawyerAccess','getPlanForAccess','serverCanUseAIFeature','isAIOverRateLimit','checkAIProtectionLimits',
   'getAIUsagePeriod','recordAIUsage','AIResearchRequestSchema','AI_DEFAULT_MODEL','AI_CHAT_MAX_TOKENS','AI_FEATURES_ALL','PLAN_FEATURES_SERVER',
   'AI_PROTECT_MAX_MONTHLY_TOKENS','AI_PROTECT_MAX_MONTHLY_REQUESTS','AI_USAGE_CREDITS_PER_TOKEN','aiRateLimiter','AI_RATE_WINDOW_MS',
-  'AI_PROTECT_RATE_LIMIT_PER_MINUTE','logDiagnostic','commercialQuotaForPlan'];
+  'AI_PROTECT_RATE_LIMIT_PER_MINUTE','logDiagnostic','commercialQuotaForPlan','freeQuotaForPlan','FREE_CASE_ALLOWANCE'];
 
 function harness({ plan = 'essential', docs = false, defaultModel } = {}) {
   let tokenUser = user;
@@ -109,7 +109,7 @@ function harness({ plan = 'essential', docs = false, defaultModel } = {}) {
   } };
   const routes = {};
   const quiet = { log() {}, warn() {}, error() {} };
-  const ctx = vm.createContext({createAIMetering:options=>createAIMetering({...options,log:()=>{}}),commercialQuotaForPlan,AI_PROTECT_MAX_MONTHLY_TOKENS:20000000,AI_PROTECT_MAX_MONTHLY_REQUESTS:5000, console: quiet, z, Buffer, process: { env: defaultModel ? { AI_DEFAULT_MODEL: defaultModel } : {} }, supabase,
+  const ctx = vm.createContext({createAIMetering:options=>createAIMetering({...options,log:()=>{}}),commercialQuotaForPlan,freeQuotaForPlan,FREE_CASE_ALLOWANCE,AI_PROTECT_MAX_MONTHLY_TOKENS:20000000,AI_PROTECT_MAX_MONTHLY_REQUESTS:5000, console: quiet, z, Buffer, process: { env: defaultModel ? { AI_DEFAULT_MODEL: defaultModel } : {} }, supabase,
     searchJurisprudence: search, chatCompletion: provider, isAIProviderConfigured: () => true,
     validateResearchQuery, classifyLegalQuery, detectDocumentMode, selectDocumentEvidence,
     shouldAllowDocumentOnlyFallback, buildJurisprudenceSystemPrompt, buildJurisprudenceUserPrompt,

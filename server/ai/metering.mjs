@@ -28,13 +28,17 @@ export function createAIMetering({ supabase, tokenLimit, operationLimit, log = c
       if (message.includes('AI_CHAT_LIMIT_REACHED')) throw usageError('AI_CHAT_LIMIT_REACHED', 429);
       if (message.includes('AI_ANALYSIS_LIMIT_REACHED')) throw usageError('AI_ANALYSIS_LIMIT_REACHED', 429);
       if (message.includes('AI_RESEARCH_LIMIT_REACHED')) throw usageError('AI_RESEARCH_LIMIT_REACHED', 429);
+      // 4.44A free first-Case lifetime quotas: same typed-limit treatment.
+      if (message.includes('FREE_CASE_CHAT_LIMIT_REACHED')) throw usageError('FREE_CASE_CHAT_LIMIT_REACHED', 429);
+      if (message.includes('FREE_CASE_ANALYSIS_LIMIT_REACHED')) throw usageError('FREE_CASE_ANALYSIS_LIMIT_REACHED', 429);
+      if (message.includes('AI_RESOURCE_FORBIDDEN')) throw usageError('AI_RESOURCE_FORBIDDEN', 403);
       if (message.includes('AI_IDEMPOTENCY_CONFLICT')) throw usageError('AI_IDEMPOTENCY_CONFLICT', 409);
       throw usageError();
     }
     return result?.data;
   };
   return {
-    async begin(req, res, { lawyerId, workspaceId, capability, resourceId = null, input, commercialLimits = null }) {
+    async begin(req, res, { lawyerId, workspaceId, capability, resourceId = null, input, commercialLimits = null, freeQuota = null }) {
       const key = req.headers?.['x-ai-operation-id'];
       if (typeof key !== 'string' || !UUID.test(key)) {
         res.status(400).json({ error: 'Actualiza la página e intenta nuevamente.', code: 'AI_OPERATION_ID_REQUIRED' });
@@ -48,6 +52,11 @@ export function createAIMetering({ supabase, tokenLimit, operationLimit, log = c
         p_chat_limit: commercialLimits?.chat ?? null,
         p_analysis_limit: commercialLimits?.analysis ?? null,
         p_research_limit: commercialLimits?.research ?? null,
+        // 4.44A lifetime free-Case quotas, scoped by free case id (null disables).
+        p_free_case_id: freeQuota?.caseId ?? null,
+        p_free_workspace_id: freeQuota?.workspaceId ?? null,
+        p_free_chat_limit: freeQuota?.chat ?? null,
+        p_free_analysis_limit: freeQuota?.analysis ?? null,
       });
       if (!data?.operation_id) throw usageError();
       if (!data.created) {
