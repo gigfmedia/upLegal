@@ -76,6 +76,9 @@ export function useCaseEntitlement() {
   const { user } = useAuth();
   const [entitlement, setEntitlement] = useState<CaseEntitlement>(FAIL_CLOSED);
   const [loading, setLoading] = useState(true);
+  // 4.43A: error explícito para no confundir falla de lectura con falta de
+  // derecho (el paywall solo abre con lectura exitosa + canCreate=false).
+  const [error, setError] = useState(false);
 
   const refetch = useCallback(async (): Promise<CaseEntitlement> => {
     if (!user?.id) {
@@ -89,9 +92,11 @@ export function useCaseEntitlement() {
       if (error) throw error;
       const next = normalize(data);
       setEntitlement(next);
+      setError(false);
       return next;
     } catch {
       setEntitlement(FAIL_CLOSED);
+      setError(true);
       return FAIL_CLOSED;
     } finally {
       setLoading(false);
@@ -105,6 +110,7 @@ export function useCaseEntitlement() {
   return {
     entitlement,
     loading,
+    error,
     refetch,
     canCreateDirectCase: entitlement.canCreateDirectCase,
     freeCaseConsumed: entitlement.freeCaseConsumed,

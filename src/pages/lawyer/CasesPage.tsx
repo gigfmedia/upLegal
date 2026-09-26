@@ -22,6 +22,7 @@ import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
 import { ActiveCapacityModal } from '@/components/legalup-pro/ActiveCapacityModal';
 import { SharedCaseCard } from '@/components/legalup-ai/SharedCaseCard';
 import { CASE_STATUS_COLORS, CASE_STATUS_LABELS, isActiveCaseStatus } from '@/lib/caseStatus';
+import { decideCreateCaseAction } from '@/lib/caseCreateGate';
 import { CaseEditDialog } from '@/components/lawyer/CaseEditDialog';
 import posthog from 'posthog-js';
 
@@ -53,6 +54,7 @@ export default function CasesPage() {
   const {
     entitlement,
     loading: entitlementLoading,
+    error: entitlementError,
     refetch: refetchEntitlement,
     canCreateDirectCase,
   } = useCaseEntitlement();
@@ -75,8 +77,9 @@ export default function CasesPage() {
     void refetchEntitlement();
   };
 
-  // 4.36D — route a blocked create/reopen attempt to the correct UX:
+  // 4.43A — route a blocked create/reopen attempt to the correct UX:
   // free without allowance → subscription modal; Pro at limit → capacity UX.
+  // Loading/error NEVER open paywall (wait/retry instead).
   const openBlockedGate = (action: 'create_case' | 'reopen_case') => {
     if (hasProAccess && atActiveCapacity) {
       try {
@@ -90,6 +93,28 @@ export default function CasesPage() {
     }
     posthog.capture('pro_paywall_opened', { action });
     setProPaywallOpen(true);
+  };
+
+  // 4.43A — single authority for create UX: RPC canCreate decides;
+  // loading waits, read errors retry (never paywall).
+  const handleCreateClick = () => {
+    const action = decideCreateCaseAction({
+      loading: entitlementLoading,
+      error: entitlementError,
+      canCreate: canCreateCase,
+      isProAtCapacity: atActiveCapacity,
+    });
+    if (action === 'wait') return;
+    if (action === 'retry') {
+      toast({ title: 'No pudimos verificar tu acceso', description: 'Reintentando…' });
+      void refetchEntitlement();
+      return;
+    }
+    if (action === 'open-form') {
+      openDialog();
+      return;
+    }
+    openBlockedGate('create_case');
   };
 
   const filtered = useMemo(
@@ -163,7 +188,19 @@ export default function CasesPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canCreateCase) {
+    const action = decideCreateCaseAction({
+      loading: entitlementLoading,
+      error: entitlementError,
+      canCreate: canCreateCase,
+      isProAtCapacity: atActiveCapacity,
+    });
+    if (action === 'wait') return;
+    if (action === 'retry') {
+      toast({ title: 'No pudimos verificar tu acceso', description: 'Reintentando…' });
+      void refetchEntitlement();
+      return;
+    }
+    if (action !== 'open-form') {
       openBlockedGate('create_case');
       return;
     }
@@ -251,11 +288,7 @@ export default function CasesPage() {
           ) : null}
         </div>
         <Button onClick={() => {
-          if (!canCreateCase) {
-            openBlockedGate('create_case');
-            return;
-          }
-          openDialog();
+          handleCreateClick();
         }} className="bg-gray-900 hover:bg-green-900">
           <Plus className="h-4 w-4 mr-1" /> Nuevo caso
         </Button>
@@ -305,8 +338,7 @@ export default function CasesPage() {
               <p className="max-w-sm text-xs text-muted-foreground">Crea tu primer caso sin suscripción. Podrás organizar al cliente y sus documentos; las funciones de IA están incluidas con LegalUp Pro.</p>
             ) : null}
             <Button onClick={() => {
-              if (!canCreateCase) { openBlockedGate('create_case'); return; }
-              openDialog();
+              handleCreateClick();
             }} className="mt-2 bg-green-900 text-white hover:bg-green-800"><Plus className="h-4 w-4 mr-1" /> Crear mi primer caso</Button>
           </CardContent>
         </Card>
