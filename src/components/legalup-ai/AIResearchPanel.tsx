@@ -510,6 +510,8 @@ function errorToMessage(error: AIResearchError | null): string {
       return 'No se pudo autenticar con el proveedor de IA. Contacta al equipo de LegalUp.';
     case 'AI_RESEARCH_LIMIT_REACHED':
       return 'Alcanzaste las 10 investigaciones incluidas este mes. Se renovarán el próximo mes.';
+    case 'FREE_CASE_RESEARCH_LIMIT_REACHED':
+      return 'Ya usaste la investigación jurídica incluida en tu primer caso. Pasa a Pro para seguir investigando.';
     case 'AI_MONTHLY_LIMIT_REACHED':
       return 'Alcanzaste el uso de IA incluido este mes. Tu disponibilidad se renovará el próximo mes.';
     case 'AI_OPERATION_IN_PROGRESS':
@@ -593,7 +595,8 @@ export function AIResearchPanel({ workspaceId, locked = false, analyticsSurface,
             ...surfaceMeta,
           });
           // 4.38C: commercial limit analytics (safe props only, never content).
-          if (err.code === 'AI_RESEARCH_LIMIT_REACHED') {
+          // 4.49A: same treatment for the free first-Case lifetime pool.
+          if (err.code === 'AI_RESEARCH_LIMIT_REACHED' || err.code === 'FREE_CASE_RESEARCH_LIMIT_REACHED') {
             posthog.capture('ai_usage_limit_reached', {
               capability: 'research',
               code: err.code,

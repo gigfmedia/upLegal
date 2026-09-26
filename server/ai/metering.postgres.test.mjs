@@ -35,6 +35,15 @@ describe.skipIf(!container)('PostgreSQL real atomic metering (isolated local)', 
   await sql(readFileSync('supabase/migrations/20260928000000_ai_operation_metering.sql','utf8'));
   // Current production shape: 4.38C commercial allowance (trigger + quota params).
   await sql(readFileSync('supabase/migrations/20260930000000_pro_ai_allowance.sql','utf8'));
+  // 4.49A free-Case research: the JS coordinator (metering.mjs) always sends
+  // the free params (NULL-disabled), so the suite schema must expose the
+  // matching signature. Only the new migration is applied: 4.44A trigger and
+  // delete-guard bodies reference tables absent from this minimal schema, and
+  // neither affects metering behavior under test (has_pro_access stubbed).
+  // Drop the superseded overload first so positional calls keep resolving
+  // to a single function, exactly like production (one signature).
+  await sql(`DROP FUNCTION IF EXISTS public.ai_begin_operation(uuid,uuid,text,uuid,uuid,text,bigint,integer,uuid,integer,integer,integer);`);
+  await sql(readFileSync('supabase/migrations/20261001000000_free_case_research_allowance.sql','utf8'));
   },30000);
  beforeEach(async()=>{
  await sql(`TRUNCATE ai_usage,ai_provider_attempts,ai_operations,ai_usage_monthly,ai_documents,ai_conversations,lawyer_cases,ai_workspaces,profiles CASCADE;

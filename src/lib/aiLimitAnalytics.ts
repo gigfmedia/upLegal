@@ -30,6 +30,11 @@ export const AI_COMMERCIAL_LIMIT_CODES = [
   'AI_ANALYSIS_LIMIT_REACHED',
   'AI_RESEARCH_LIMIT_REACHED',
   'AI_DOCUMENT_CAPACITY_REACHED',
+  // 4.44A/4.49A lifetime free first-Case pools (same safe-props analytics).
+  'FREE_CASE_CHAT_LIMIT_REACHED',
+  'FREE_CASE_ANALYSIS_LIMIT_REACHED',
+  'FREE_CASE_RESEARCH_LIMIT_REACHED',
+  'FREE_CASE_DOCUMENT_LIMIT_REACHED',
 ] as const;
 
 export function isCommercialLimitCode(code: string | null | undefined): boolean {

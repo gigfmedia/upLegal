@@ -496,7 +496,8 @@ const PLAN_FEATURES_SERVER = {
   // 4.38C: current Pro includes Research/Jurisprudence (10/month commercial quota).
   pro_limited: ['document_analysis','case_chat','case_analysis','jurisprudence'],
   // 4.44A: free first-Case lifetime allowance (chat + analysis only; no research).
-  free_case: ['document_analysis','case_chat'],
+  // 4.49A: +1 lifetime Research/Jurisprudence (still no case_analysis).
+  free_case: ['document_analysis','case_chat','jurisprudence'],
 };
 function serverCanUseAIFeature(feature, plan = 'free') {
   const allowed = PLAN_FEATURES_SERVER[plan] ?? PLAN_FEATURES_SERVER.free;
@@ -523,7 +524,7 @@ const freeQuotaForEntitlement = (entitlement) => {
   const caseId = entitlement.access?.freeCaseId || null;
   const workspaceId = entitlement.access?.freeWorkspaceId || null;
   if (!caseId || !workspaceId) return null;
-  return { caseId, workspaceId, chat: quota.chat, analysis: quota.analysis };
+  return { caseId, workspaceId, chat: quota.chat, analysis: quota.analysis, research: quota.research };
 };
 
 // Límites de uso (Bloque 22). Trial: 3 casos / 10 documentos (trigger DB).
@@ -10055,7 +10056,8 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
 
     // 4.29D: advanced feature — 4.38C: current Pro includes jurisprudence
     // (10/month commercial quota enforced atomically in ai_begin_operation).
-    // The guard below still blocks free/trial-without-access plans.
+    // 4.49A: free first-Case includes 1 lifetime research (same atomic path
+    // with free quota params). The guard below still blocks plans without it.
     {
       const _plan = entitlement.plan ?? getPlanForAccess(await getAILawyerAccess(userId));
       if (!serverCanUseAIFeature('jurisprudence', _plan)) {
@@ -10907,12 +10909,15 @@ app.get('/api/ai/usage', async (req, res) => {
         if (freeCase) {
           const { data: freeOps } = await supabase
             .from('ai_operations')
-            .select('capability,status,quota_units')
+            .select('capability,status,is_free_allowance')
             .eq('lawyer_id', userId)
             .eq('lawyer_case_id', freeCase.caseId)
             .in('status', ['reserved', 'succeeded']);
           const chatUsed = (freeOps || []).filter((o) => o.capability === 'case_chat' || o.capability === 'document_chat').length;
           const analysisUsed = (freeOps || []).filter((o) => o.capability === 'document_analysis').length;
+          // 4.49A: free research counts only flag-attributed ops, so Pro-era
+          // research in the same Case never consumes the free 1/1 (§12).
+          const researchUsed = (freeOps || []).filter((o) => o.capability === 'research' && o.is_free_allowance).length;
           const { count: freeDocs } = await supabase
             .from('ai_documents')
             .select('id', { count: 'exact', head: true })
@@ -10923,7 +10928,7 @@ app.get('/api/ai/usage', async (req, res) => {
             plan,
             chat: lifetime(chatUsed, FREE_CASE_ALLOWANCE.chatLifetime),
             analysis: lifetime(analysisUsed, FREE_CASE_ALLOWANCE.analysisLifetime),
-            research: { used: 0, limit: 0, reset: null, available: false },
+            research: lifetime(researchUsed, FREE_CASE_ALLOWANCE.researchLifetime),
             documents: lifetime(freeDocs, FREE_CASE_ALLOWANCE.storedDocuments),
           };
         }

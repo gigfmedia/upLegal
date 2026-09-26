@@ -156,6 +156,19 @@ describe('4.34D research integrado al Caso Pro', () => {
     expect(begins[0].p_research_limit).toBe(10);
   });
 
+  it('4.49A free_case: jurisprudence gate passes and lifetime free quota reaches ai_begin_operation', async () => {
+    const h = harness({ plan: 'free' });
+    (h.rows.pro_free_case_grants ??= []).push({ lawyer_id: user, case_id: caseId });
+    const res = await h.call('post', { query: '¿Qué dice la jurisprudencia sobre protección de datos?' });
+    expect(res.statusCode).toBe(200);
+    const begins = h.rpc.mock.calls.filter(([name]) => name === 'ai_begin_operation').map(([, args]) => args);
+    expect(begins).toHaveLength(1);
+    expect(begins[0].p_research_limit).toBeNull();
+    expect(begins[0].p_free_case_id).toBe(caseId);
+    expect(begins[0].p_free_workspace_id).toBe(workspaceId);
+    expect(begins[0].p_free_research_limit).toBe(1);
+  });
+
   it('Pro base: historial legible (0 provider)', async () => {
     const h = harness({ plan: 'pro' });
     h.rows.ai_research_requests.push({ id: id(50), workspace_id: workspaceId, lawyer_id: user,

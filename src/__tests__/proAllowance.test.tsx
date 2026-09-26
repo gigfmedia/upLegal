@@ -121,10 +121,12 @@ describe('4.38C-B Pro allowance frontend contract', () => {
   it('4.44A free first-Case lifetime allowance frontend contract', () => {
     expect(canUseAIFeature('document_analysis', 'free_case')).toBe(true);
     expect(canUseAIFeature('case_chat', 'free_case')).toBe(true);
-    expect(canUseAIFeature('jurisprudence', 'free_case')).toBe(false);
+    // 4.49A: free_case incluye 1 investigación lifetime.
+    expect(canUseAIFeature('jurisprudence', 'free_case')).toBe(true);
     expect(AI_FREE_CASE_ALLOWANCE).toEqual({
       chatLifetime: 3,
       analysisLifetime: 1,
+      researchLifetime: 1,
       storedDocuments: 2,
     });
     expect(
@@ -142,6 +144,10 @@ describe('4.38C-B Pro allowance frontend contract', () => {
     expect(chat).toContain('FREE_CASE_CHAT_LIMIT_REACHED');
     const docs = read('src/components/legalup-ai/AICaseDocumentsWorkspace.tsx');
     expect(docs).toContain('FREE_CASE_ANALYSIS_LIMIT_REACHED');
+    // 4.49A: free research limit copy + meter shows the research pool.
+    const research = read('src/components/legalup-ai/AIResearchPanel.tsx');
+    expect(research).toContain('FREE_CASE_RESEARCH_LIMIT_REACHED');
+    expect(research).toContain('Ya usaste la investigación jurídica incluida en tu primer caso');
     const meter = read('src/components/legalup-ai/AIUsageMeter.tsx');
     expect(meter).toContain('free_case');
     const hook = read('src/hooks/useFreeCaseAllowance.ts');

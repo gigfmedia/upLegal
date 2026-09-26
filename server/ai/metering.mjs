@@ -29,8 +29,10 @@ export function createAIMetering({ supabase, tokenLimit, operationLimit, log = c
       if (message.includes('AI_ANALYSIS_LIMIT_REACHED')) throw usageError('AI_ANALYSIS_LIMIT_REACHED', 429);
       if (message.includes('AI_RESEARCH_LIMIT_REACHED')) throw usageError('AI_RESEARCH_LIMIT_REACHED', 429);
       // 4.44A free first-Case lifetime quotas: same typed-limit treatment.
+      // 4.49A adds the free research pool (same 429 mapping, never internals).
       if (message.includes('FREE_CASE_CHAT_LIMIT_REACHED')) throw usageError('FREE_CASE_CHAT_LIMIT_REACHED', 429);
       if (message.includes('FREE_CASE_ANALYSIS_LIMIT_REACHED')) throw usageError('FREE_CASE_ANALYSIS_LIMIT_REACHED', 429);
+      if (message.includes('FREE_CASE_RESEARCH_LIMIT_REACHED')) throw usageError('FREE_CASE_RESEARCH_LIMIT_REACHED', 429);
       if (message.includes('AI_RESOURCE_FORBIDDEN')) throw usageError('AI_RESOURCE_FORBIDDEN', 403);
       if (message.includes('AI_IDEMPOTENCY_CONFLICT')) throw usageError('AI_IDEMPOTENCY_CONFLICT', 409);
       throw usageError();
@@ -53,10 +55,12 @@ export function createAIMetering({ supabase, tokenLimit, operationLimit, log = c
         p_analysis_limit: commercialLimits?.analysis ?? null,
         p_research_limit: commercialLimits?.research ?? null,
         // 4.44A lifetime free-Case quotas, scoped by free case id (null disables).
+        // 4.49A adds the research pool (same lifetime semantics).
         p_free_case_id: freeQuota?.caseId ?? null,
         p_free_workspace_id: freeQuota?.workspaceId ?? null,
         p_free_chat_limit: freeQuota?.chat ?? null,
         p_free_analysis_limit: freeQuota?.analysis ?? null,
+        p_free_research_limit: freeQuota?.research ?? null,
       });
       if (!data?.operation_id) throw usageError();
       if (!data.created) {

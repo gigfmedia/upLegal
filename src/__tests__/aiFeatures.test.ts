@@ -35,13 +35,15 @@ describe('aiFeatures — gating por plan (Fase 3.5)', () => {
   it('4.44A free_case habilita solo chat + análisis (research bloqueado)', () => {
     expect(canUseAIFeature('document_analysis', 'free_case')).toBe(true);
     expect(canUseAIFeature('case_chat', 'free_case')).toBe(true);
-    expect(canUseAIFeature('jurisprudence', 'free_case')).toBe(false);
+    // 4.49A: free_case suma 1 investigación lifetime (sigue sin case_analysis).
+    expect(canUseAIFeature('jurisprudence', 'free_case')).toBe(true);
     expect(canUseAIFeature('case_analysis', 'free_case')).toBe(false);
     expect(canUseAIFeature('workflow_generation', 'free_case')).toBe(false);
     expect(canUseAIFeature('document_drafting', 'free_case')).toBe(false);
     expect(AI_FREE_CASE_ALLOWANCE).toEqual({
       chatLifetime: 3,
       analysisLifetime: 1,
+      researchLifetime: 1,
       storedDocuments: 2,
     });
   });

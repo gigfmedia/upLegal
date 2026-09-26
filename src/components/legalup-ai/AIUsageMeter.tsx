@@ -25,7 +25,8 @@ function PoolRow({ label, pool }: { label: string; pool: AIAllowancePool }) {
 }
 
 /**
- * Uso de IA del plan (4.38C Pro mensual, 4.44A primer caso lifetime).
+ * Uso de IA del plan (4.38C Pro mensual, 4.44A primer caso lifetime,
+ * 4.49A primer caso +1 investigación lifetime).
  * Muestra cuotas comerciales y documentos almacenados.
  * La autoridad es server/DB; este componente solo visualiza.
  * Sin allowance resuelto, no renderiza nada.
@@ -49,7 +50,7 @@ export function AIUsageMeter() {
       </span>
       <PoolRow label="Consultas IA" pool={allowance.chat} />
       <PoolRow label="Análisis" pool={allowance.analysis} />
-      {!isLifetime && <PoolRow label="Investigaciones" pool={allowance.research} />}
+      <PoolRow label="Investigaciones" pool={allowance.research} />
       <PoolRow label="Documentos" pool={allowance.documents} />
     </div>
   );
