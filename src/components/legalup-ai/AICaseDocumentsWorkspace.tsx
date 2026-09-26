@@ -16,6 +16,7 @@ import { AIDocumentList } from '@/components/legalup-ai/AIDocumentList';
 import { AIAnalysisView } from '@/components/legalup-ai/AIAnalysisView';
 import { AIChat } from '@/components/legalup-ai/AIChat';
 import { resolveSelectableAIModel } from '@/lib/aiModels';
+import { resolveSelectedDocument } from '@/lib/aiDocumentSelection';
 import { AIAnalysisModelSelect } from './AIAnalysisModelSelect';
 
 export type AICaseDocumentsWorkspaceProps = {
@@ -67,7 +68,7 @@ export function AICaseDocumentsWorkspace({
   const busy = useRef(false);
 
   const selectedDoc =
-    documents.find((doc) => doc.id === selectedDocId) ?? documents[0] ?? null;
+    resolveSelectedDocument(documents, selectedDocId);
   const modelKey = `${workspaceId}/${selectedDoc?.id ?? ''}`;
   const model = resolveSelectableAIModel(documentModels[modelKey] ?? selectedDoc?.model);
   const setModel = (value: string) => {

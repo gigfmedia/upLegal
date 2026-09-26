@@ -235,7 +235,7 @@ export function AIAnalysisView({
           <CardTitle className="text-base">Resumen ejecutivo</CardTitle>
         </CardHeader>
         <CardContent className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
-          {section.summary}
+          {section.summary || 'El análisis se completó, pero no hay un resumen disponible.'}
         </CardContent>
       </Card>
 
