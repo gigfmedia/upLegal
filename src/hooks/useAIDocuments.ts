@@ -378,6 +378,36 @@ export type AICaseIntelligence = {
 
 export const AI_CASE_INTELLIGENCE_QUERY_KEY = ['ai-case-intelligence'] as const;
 
+/**
+ * Hardening: never trust the network shape. Coerces every field the
+ * render path touches (getCaseStatus + section lists) so a partial 200
+ * can never throw inside AICaseIntelligence/CommandCenter. Elements are
+ * passed through untouched; only containers/defaults are enforced.
+ */
+export function normalizeCaseIntelligence(raw: unknown): AICaseIntelligence {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const arr = <T,>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
+  const num = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
+  const str = (v: unknown): string => (typeof v === 'string' ? v : '');
+  return {
+    workspace_id: str(r.workspace_id),
+    document_count: num(r.document_count),
+    pending_count: num(r.pending_count),
+    failed_count: num(r.failed_count),
+    total_documents: num(r.total_documents),
+    documents: arr(r.documents),
+    facts: arr(r.facts),
+    parties: arr(r.parties),
+    obligations: arr(r.obligations),
+    deadlines: arr(r.deadlines),
+    risks: arr(r.risks),
+    contradictions: arr(r.contradictions),
+    missingInformation: arr(r.missingInformation),
+    caseSummary: str(r.caseSummary),
+    attributionCoverage: typeof r.attributionCoverage === 'number' ? r.attributionCoverage : 1,
+  } as AICaseIntelligence;
+}
+
 export function useAICaseIntelligence(workspaceId: string | undefined, enabled = true) {
   const { user } = useAuth();
   return useQuery<AICaseIntelligence>({
@@ -391,7 +421,7 @@ export function useAICaseIntelligence(workspaceId: string | undefined, enabled =
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body?.error || 'No se pudo cargar la inteligencia del caso.');
-      return body as AICaseIntelligence;
+      return normalizeCaseIntelligence(body);
     },
   });
 }
