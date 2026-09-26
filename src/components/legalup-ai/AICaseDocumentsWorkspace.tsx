@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { AlertTriangle, FileText, Loader2, Lock, RefreshCw, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,6 +39,13 @@ export type AICaseDocumentsWorkspaceProps = {
   onAskDocument: (documentId: string) => void;
   /** PostHog {source} for document events. */
   analyticsSource: string;
+  /**
+   * 4.46B — optional controlled selection (e.g. Overview "Ver documento"
+   * CTA selects the analyzed document across tabs). Absent = uncontrolled
+   * internal state (legacy behavior unchanged).
+   */
+  selectedDocId?: string | null;
+  onSelectedDocChange?: (documentId: string) => void;
 };
 
 /**
@@ -58,10 +65,22 @@ export function AICaseDocumentsWorkspace({
   onUpgrade,
   onAskDocument,
   analyticsSource,
+  selectedDocId: externalSelectedDocId,
+  onSelectedDocChange,
 }: AICaseDocumentsWorkspaceProps) {
   const documentsQuery = useAIDocuments(workspaceId || undefined);
   const documents = useMemo(() => documentsQuery.data ?? [], [documentsQuery.data]);
-  const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
+  const [internalSelectedDocId, setInternalSelectedDocId] = useState<string | null>(null);
+  // 4.46B: controlled when the owner passes selectedDocId; otherwise legacy
+  // internal state. Either way the default resolution prefers analyzed docs.
+  const selectedDocId = externalSelectedDocId !== undefined ? externalSelectedDocId : internalSelectedDocId;
+  const setSelectedDocId = useCallback(
+    (id: string | null) => {
+      if (id) onSelectedDocChange?.(id);
+      if (externalSelectedDocId === undefined) setInternalSelectedDocId(id);
+    },
+    [externalSelectedDocId, onSelectedDocChange]
+  );
   const [documentModels, setDocumentModels] = useState<Record<string, string>>({});
   const processMutation = useProcessAIDocument();
   const analyzeMutation = useAnalyzeAIDocument();
@@ -79,7 +98,7 @@ export function AICaseDocumentsWorkspace({
     if (selectedDocId && !documents.some((doc) => doc.id === selectedDocId)) {
       setSelectedDocId(null);
     }
-  }, [documents, selectedDocId]);
+  }, [documents, selectedDocId, setSelectedDocId]);
 
   const analysisQuery = useAIDocumentAnalysis(
     selectedDoc?.id,

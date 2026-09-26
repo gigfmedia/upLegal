@@ -15,6 +15,7 @@ import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AICaseCommandCenter } from '@/components/legalup-ai/AICaseCommandCenter';
+import { AICaseLatestAnalysis } from '@/components/legalup-ai/AICaseLatestAnalysis';
 import { AICaseIntelligence } from '@/components/legalup-ai/AICaseIntelligence';
 import { AIResearchPanel } from '@/components/legalup-ai/AIResearchPanel';
 import { AICaseChatDrawer } from '@/components/legalup-ai/AICaseChatDrawer';
@@ -98,6 +99,9 @@ function CaseDetailContent() {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatQuestion, setChatQuestion] = useState<string | null>(null);
   const [chatDocumentId, setChatDocumentId] = useState<string | null>(null);
+  // 4.46B — Overview "Ver documento" selects the analyzed document in the
+  // Documents tab (controlled selection; absent = legacy internal state).
+  const [overviewDocId, setOverviewDocId] = useState<string | null>(null);
   const [briefWorkflowActionId, setBriefWorkflowActionId] = useState<string | null>(null);
   // 4.34T: workflow origin tracking (legacy parity: close restores same action).
   const [chatOrigin, setChatOrigin] = useState<string | null>(null);
@@ -259,6 +263,19 @@ function CaseDetailContent() {
               onInvestigate={() => setActiveTab('research')}
             />
           )}
+          {/* 4.46B (OPTION B): persisted latest document summary. Complements
+              (never duplicates) the Command Center above: it renders only
+              when the Center is absent, reusing the same path for every
+              plan. Read-only: 0 provider, 0 quota. */}
+          {!(canUse('case_analysis') && effectiveWorkspaceId) && effectiveWorkspaceId && !accessLoading && (
+            <AICaseLatestAnalysis
+              workspaceId={effectiveWorkspaceId}
+              onViewDocument={(documentId) => {
+                setOverviewDocId(documentId);
+                setActiveTab('documents');
+              }}
+            />
+          )}
       {/* Citas del caso — 1:N */}
       <Card className="mt-4">
         <CardHeader>
@@ -308,6 +325,7 @@ function CaseDetailContent() {
             <CardContent>
               <CaseDocuments key={caseId} workspaceId={effectiveWorkspaceId} ensureWorkspace={ensureWorkspace}
                 canAnalyze={canUse('document_analysis')} canChat={canUse('case_chat')} accessLoading={accessLoading}
+                selectedDocId={overviewDocId} onSelectDocument={setOverviewDocId}
                 onUpgrade={() => setProOpen(true)} />
             </CardContent>
           </Card>

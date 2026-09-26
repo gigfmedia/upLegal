@@ -10,9 +10,12 @@ type Props = {
   canChat: boolean;
   accessLoading: boolean;
   onUpgrade: () => void;
+  /** 4.46B — Overview "Ver documento" CTA selects across tabs. */
+  selectedDocId?: string | null;
+  onSelectDocument?: (documentId: string) => void;
 };
 
-export function CaseDocuments({ workspaceId, ensureWorkspace, canAnalyze, canChat, accessLoading, onUpgrade }: Props) {
+export function CaseDocuments({ workspaceId, ensureWorkspace, canAnalyze, canChat, accessLoading, onUpgrade, selectedDocId, onSelectDocument }: Props) {
   const documentsQuery = useAIDocuments(workspaceId || undefined);
   // Chat drawer local: misma conversación del caso (get-or-create en backend),
   // con documento seleccionado priorizado. Cerrar vuelve al mismo documento.
@@ -35,6 +38,8 @@ export function CaseDocuments({ workspaceId, ensureWorkspace, canAnalyze, canCha
         accessLoading={accessLoading}
         upgradeCtaLabel="Ver LegalUp Pro"
         onUpgrade={onUpgrade}
+        selectedDocId={selectedDocId}
+        onSelectedDocChange={onSelectDocument}
         onAskDocument={(documentId) => {
           // 4.40A: abrir el chat es solo navegación/estado. No se envía
           // ninguna pregunta por defecto; el usuario escribe la suya.
