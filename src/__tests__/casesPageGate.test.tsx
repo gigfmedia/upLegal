@@ -5,7 +5,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import CasesPage from '@/pages/lawyer/CasesPage';
 import posthog from 'posthog-js';
 
-vi.mock('@/hooks/useCaseEntitlement');
+vi.mock('@/hooks/useCaseEntitlement', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/hooks/useCaseEntitlement')>();
+  return { ...actual, useCaseEntitlement: vi.fn() };
+});
 vi.mock('@/hooks/useLawyerCases');
 vi.mock('@/hooks/useLawyerClients');
 vi.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast: vi.fn() }) }));
@@ -27,6 +30,7 @@ vi.mock('@/components/lawyer/CaseEditDialog', () => ({
 import { useCaseEntitlement } from '@/hooks/useCaseEntitlement';
 import { useLawyerCases } from '@/hooks/useLawyerCases';
 import { useLawyerClients } from '@/hooks/useLawyerClients';
+import { normalize } from '@/hooks/useCaseEntitlement';
 
 const mockedEntitlement = vi.mocked(useCaseEntitlement);
 const mockedCases = vi.mocked(useLawyerCases);
@@ -194,5 +198,68 @@ describe('4.43C CasesPage wired tree (production regression)', () => {
       expect(screen.getByPlaceholderText(/divorcio juan pérez/i)).toBeInTheDocument();
     });
     expect(screen.queryByTestId('pro-modal')).not.toBeInTheDocument();
+  });
+});
+
+describe('4.43D normalize mapea snake_case del RPC (causa raíz prod)', () => {
+  // Payload EXACTO observado en red de producción (claves snake_case).
+  const PROD_RPC_PAYLOAD = {
+    has_pro_access: false,
+    active_case_count: 0,
+    active_case_limit: 20,
+    free_case_consumed: false,
+    can_create_direct_case: true,
+  };
+
+  it('payload snake_case de producción mapea a canCreate=true', () => {
+    const out = normalize(PROD_RPC_PAYLOAD);
+    expect(out).toEqual({
+      hasProAccess: false,
+      freeCaseConsumed: false,
+      activeCaseCount: 0,
+      activeCaseLimit: 20,
+      canCreateDirectCase: true,
+    });
+  });
+
+  it('payload camelCase legacy sigue funcionando', () => {
+    const out = normalize({
+      hasProAccess: true,
+      freeCaseConsumed: false,
+      activeCaseCount: 5,
+      activeCaseLimit: 20,
+      canCreateDirectCase: true,
+    });
+    expect(out.canCreateDirectCase).toBe(true);
+    expect(out.hasProAccess).toBe(true);
+    expect(out.activeCaseLimit).toBe(20);
+  });
+
+  it('payload ausente/malformado cae en fail-closed (sin autorizar)', () => {
+    for (const bad of [null, undefined, {}, { has_pro_access: 'yes' }]) {
+      const out = normalize(bad);
+      expect(out.canCreateDirectCase).toBe(false);
+      expect(out.hasProAccess).toBe(false);
+    }
+    // freeCaseConsumed fail-closed: ausente !== false → true.
+    expect(normalize({}).freeCaseConsumed).toBe(true);
+    expect(normalize(null).activeCaseLimit).toBe(0);
+  });
+
+  it('snake_case tiene prioridad y Pro mapea completo', () => {
+    const out = normalize({
+      has_pro_access: true,
+      active_case_count: 19,
+      active_case_limit: 20,
+      free_case_consumed: true,
+      can_create_direct_case: true,
+    });
+    expect(out).toEqual({
+      hasProAccess: true,
+      freeCaseConsumed: true,
+      activeCaseCount: 19,
+      activeCaseLimit: 20,
+      canCreateDirectCase: true,
+    });
   });
 });

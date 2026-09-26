@@ -81,9 +81,6 @@ export default function CasesPage() {
   // free without allowance → subscription modal; Pro at limit → capacity UX.
   // Loading/error NEVER open paywall (wait/retry instead).
   const openBlockedGate = (action: 'create_case' | 'reopen_case') => {
-    try {
-      console.info('[4.43D-BLOCKED]', JSON.stringify({ action, source: 'cases-create-gate' }));
-    } catch { /* 4.43D-DEBUG noop */ }
     if (hasProAccess && atActiveCapacity) {
       try {
         posthog.capture('case_capacity_reached', {
@@ -98,38 +95,15 @@ export default function CasesPage() {
     setProPaywallOpen(true);
   };
 
-  // TEMP 4.43D — traza runtime mínima y segura (solo booleanos/conteos, sin PII).
-  // Remover antes de cerrar la fase.
-  const traceClick = () => {
-    try {
-      console.info(
-        '[4.43D-CLICK]',
-        JSON.stringify({
-          loading: entitlementLoading,
-          error: entitlementError,
-          canCreate: canCreateCase,
-          hasProAccess: entitlement.hasProAccess,
-          freeConsumed: entitlement.freeCaseConsumed,
-          activeCount: entitlement.activeCaseCount,
-          activeLimit: entitlement.activeCaseLimit,
-        })
-      );
-    } catch { /* 4.43D-DEBUG noop */ }
-  };
-
   // 4.43A — single authority for create UX: RPC canCreate decides;
   // loading waits, read errors retry (never paywall).
   const handleCreateClick = () => {
-    traceClick();
     const action = decideCreateCaseAction({
       loading: entitlementLoading,
       error: entitlementError,
       canCreate: canCreateCase,
       isProAtCapacity: atActiveCapacity,
     });
-    try {
-      console.info('[4.43D-DECISION]', JSON.stringify({ result: action }));
-    } catch { /* 4.43D-DEBUG noop */ }
     if (action === 'wait') return;
     if (action === 'retry') {
       toast({ title: 'No pudimos verificar tu acceso', description: 'Reintentando…' });
@@ -208,9 +182,6 @@ export default function CasesPage() {
   // 4.31C: always fetch fresh clients when opening the modal, so the
   // dropdown never depends on having visited ClientsPage first.
   const openDialog = () => {
-    try {
-      console.info('[4.43D-FORM-OPEN]');
-    } catch { /* 4.43D-DEBUG noop */ }
     setOpen(true);
     refetchClients();
   };
@@ -258,9 +229,6 @@ export default function CasesPage() {
       // Unknown errors keep the normal error toast.
       if (isFreeCaseEntitlementError(err)) {
         posthog.capture('pro_paywall_opened', { action: 'create_case', reason: 'entitlement_rejected' });
-        try {
-              console.info('[4.43D-BLOCKED]', JSON.stringify({ action: 'create_case', source: 'submit-catch-free' }));
-        } catch { /* 4.43D-DEBUG noop */ }
         setProPaywallOpen(true);
         void refetchEntitlement();
       } else if (isActiveCapacityError(err)) {
@@ -273,9 +241,6 @@ export default function CasesPage() {
         const latest = await refetchEntitlement();
         if (!latest.hasProAccess && latest.freeCaseConsumed) {
           posthog.capture('pro_paywall_opened', { action: 'create_case', reason: 'entitlement_rejected' });
-          try {
-                  console.info('[4.43D-BLOCKED]', JSON.stringify({ action: 'create_case', source: 'submit-catch-rowdenied' }));
-          } catch { /* 4.43D-DEBUG noop */ }
           setProPaywallOpen(true);
         } else if (latest.hasProAccess && latest.activeCaseLimit > 0 && latest.activeCaseCount >= latest.activeCaseLimit) {
           try {
@@ -460,9 +425,7 @@ export default function CasesPage() {
           </form>
         </DialogContent>
       </Dialog>
-      <ProPricingModal open={proPaywallOpen} onOpenChange={(open) => { try {
-          console.info('[4.43D-MODAL]', JSON.stringify({ open, triggerAction: 'create_case' }));
-      } catch { /* 4.43D-DEBUG noop */ } setProPaywallOpen(open); }} triggerAction="create_case" />
+      <ProPricingModal open={proPaywallOpen} onOpenChange={setProPaywallOpen} triggerAction="create_case" />
       <ActiveCapacityModal open={capacityModalOpen} onOpenChange={setCapacityModalOpen} limit={entitlement.activeCaseLimit} />
       {editCaseId && (
         <CaseEditDialog

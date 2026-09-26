@@ -58,15 +58,26 @@ function toCount(raw: unknown): number {
   return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
 }
 
-function normalize(raw: unknown): CaseEntitlement {
-  const r = (raw ?? {}) as Partial<Record<keyof CaseEntitlement, unknown>>;
+/**
+ * 4.43D — el RPC devuelve snake_case; se acepta camelCase por compatibilidad.
+ * Sin la clave correspondiente el valor queda en fail-closed (nunca autoriza).
+ */
+export function normalize(raw: unknown): CaseEntitlement {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  const pick = (...keys: string[]): unknown => {
+    for (const k of keys) {
+      const v = r[k];
+      if (v !== undefined) return v;
+    }
+    return undefined;
+  };
   return {
-    hasProAccess: r.hasProAccess === true,
+    hasProAccess: pick('has_pro_access', 'hasProAccess') === true,
     // Fail-closed on malformed payloads.
-    freeCaseConsumed: r.freeCaseConsumed !== false,
-    activeCaseCount: toCount(r.activeCaseCount),
-    activeCaseLimit: toCount(r.activeCaseLimit),
-    canCreateDirectCase: r.canCreateDirectCase === true,
+    freeCaseConsumed: pick('free_case_consumed', 'freeCaseConsumed') !== false,
+    activeCaseCount: toCount(pick('active_case_count', 'activeCaseCount')),
+    activeCaseLimit: toCount(pick('active_case_limit', 'activeCaseLimit')),
+    canCreateDirectCase: pick('can_create_direct_case', 'canCreateDirectCase') === true,
   };
 }
 
