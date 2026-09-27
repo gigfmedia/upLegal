@@ -78,7 +78,10 @@ export function useCaseActivityItems(
         list.push({
           id: `analysis-${doc.id}`,
           type: 'document_analyzed',
-          title: `${doc.original_filename} analizado`,
+          // 4.51B: unified historical wording (legacy parity). Filename lives
+          // in description (rendered once as secondary content), never in title.
+          title: 'Análisis de documento completado',
+          description: doc.original_filename,
           occurredAt: doc.updated_at,
           documentId: doc.id,
         });

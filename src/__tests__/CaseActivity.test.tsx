@@ -92,7 +92,8 @@ describe('CaseActivity 4.30F — operational activity MVP', () => {
       ],
     });
     expect(screen.getByText('contrato.pdf agregado')).toBeInTheDocument();
-    expect(screen.getByText('contrato.pdf analizado')).toBeInTheDocument();
+    // 4.51B unified copy: fixed title + filename once as secondary content.
+    expect(screen.getByText('Análisis de documento completado')).toBeInTheDocument();
     expect(screen.getAllByText(/contrato\.pdf/).length).toBe(2);
   });
 
@@ -103,7 +104,7 @@ describe('CaseActivity 4.30F — operational activity MVP', () => {
       ],
     });
     expect(screen.getByText('nota.pdf agregado')).toBeInTheDocument();
-    expect(screen.queryByText('nota.pdf analizado')).not.toBeInTheDocument();
+    expect(screen.queryByText('Análisis de documento completado')).not.toBeInTheDocument();
   });
 
   it('workflow completed uses completed_at; items without it do not fabricate completion', () => {
@@ -220,12 +221,54 @@ describe('CaseActivity 4.34J — note CRUD parity (legacy timeline model)', () =
     });
     expect(screen.getByText('Caso creado')).toBeInTheDocument();
     expect(screen.getByText('Llamó el cliente')).toBeInTheDocument();
-    expect(screen.getByText('c.pdf analizado')).toBeInTheDocument();
+    expect(screen.getByText('Análisis de documento completado')).toBeInTheDocument();
   });
 
   it('note mutations bind owner explicitly; update touches description only', () => {
     const src = readFileSync(resolve(process.cwd(), 'src/hooks/useAICaseTimeline.ts'), 'utf8');
     expect(src).toContain('lawyer_id: lawyerId');
     expect(src).toContain('.update({ description: trimmed })');
+  });
+});
+
+describe('4.51B unified analysis event copy (presentation only)', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('§15 analyzed document: fixed title, Análisis badge, filename once, Sparkles icon', () => {
+    setup({
+      docs: [
+        { id: 'd-1', original_filename: 'contrato.pdf', created_at: '2026-09-02T10:00:00.000Z', updated_at: '2026-09-03T10:00:00.000Z', analysis_status: 'ready' },
+      ],
+    });
+    expect(screen.getByText('Análisis de documento completado')).toBeInTheDocument();
+    expect(screen.getByText('Análisis')).toBeInTheDocument();
+    // filename exactly once (secondary description line), never inside the title
+    expect(screen.getAllByText(/contrato\.pdf/).length).toBe(2); // upload title + analysis description
+  });
+
+  it('§19 link preserved: analysis event navigates to Documents', () => {
+    const { onOpenDocuments } = setup({
+      docs: [
+        { id: 'd-1', original_filename: 'contrato.pdf', created_at: '2026-09-02T10:00:00.000Z', updated_at: '2026-09-03T10:00:00.000Z', analysis_status: 'ready' },
+      ],
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: /Análisis de documento completado.*ver en Documentos/i })
+    );
+    expect(onOpenDocuments).toHaveBeenCalled();
+  });
+
+  it('§20 order unchanged: newest analyzed event first', () => {
+    setup({
+      docs: [
+        { id: 'd-old', original_filename: 'viejo.pdf', created_at: '2026-09-01T10:00:00.000Z', updated_at: '2026-09-02T10:00:00.000Z', analysis_status: 'ready' },
+        { id: 'd-new', original_filename: 'nuevo.pdf', created_at: '2026-09-03T10:00:00.000Z', updated_at: '2026-09-04T10:00:00.000Z', analysis_status: 'ready' },
+      ],
+    });
+    const titles = screen.getAllByText('Análisis de documento completado');
+    expect(titles).toHaveLength(2);
+    const items = screen.getAllByRole('listitem');
+    const first = items[0].textContent ?? '';
+    expect(first).toContain('nuevo.pdf');
   });
 });
