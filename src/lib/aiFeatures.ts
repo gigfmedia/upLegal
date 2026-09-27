@@ -85,7 +85,32 @@ const PLAN_FEATURES: Record<string, AIFeatureKey[]> = {
   // 4.44A: free first Case (chat + analysis only; research stays blocked).
   // 4.49A: +1 lifetime jurisprudence/research (still no case_analysis).
   free_case: ['document_analysis', 'case_chat', 'jurisprudence'],
+  // 4.57B: future tier, commercially INACTIVE — explicitly no features
+  // (fail closed; identical to the unknown-plan fallback, but auditable).
+  plus: [],
 };
+
+/**
+ * 4.57B canonical frontend plan representation (mirrors server/ai/plans.mjs;
+ * backend remains authoritative). 'plus' is structurally present but
+ * commercially INACTIVE — never offered, never granted.
+ */
+export type PlanCode = 'free_case' | 'pro' | 'plus' | 'legacy';
+
+const RAW_PLAN_TO_CANONICAL: Record<string, PlanCode> = {
+  free_case: 'free_case',
+  pro: 'pro',
+  pro_limited: 'pro',
+  saas_essential: 'pro',
+  essential: 'legacy',
+  plus: 'plus',
+};
+
+/** Canonical plan code for a raw value, or null when unknown (fail closed). */
+export function normalizePlanCode(raw: unknown): PlanCode | null {
+  if (typeof raw !== 'string' || raw.length === 0) return null;
+  return RAW_PLAN_TO_CANONICAL[raw] ?? null;
+}
 
 /**
  * Indica si el abogado tiene la feature habilitada según su plan.

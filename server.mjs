@@ -1,6 +1,7 @@
 import { retiredAITrialInvite } from './server/retiredAITrialInvite.mjs';
 import { createAIMetering } from './server/ai/metering.mjs';
 import { PRO_AI_ALLOWANCE, commercialQuotaForPlan, FREE_CASE_ALLOWANCE, freeQuotaForPlan } from './server/ai/proAllowance.mjs';
+import { PLAN_NOT_AVAILABLE, resolveCheckoutPlanCode } from './server/ai/plans.mjs';
 import {
   CONFLICT_CODE,
   normalizeEmail,
@@ -8734,6 +8735,15 @@ app.post('/api/pro/subscribe', async (req, res) => {
   try {
     userId = await requireAILawyer(req, res);
     if (!userId) return;
+
+    // 4.57B multi-tier foundation: optional target plan. Missing/'pro' keep
+    // existing Pro behavior byte-for-byte. Anything else (incl. inactive
+    // 'plus') fails closed HERE, before founder reservation, MP calls or
+    // DB writes — Plus can never consume founder slots or create checkouts.
+    const checkoutPlan = resolveCheckoutPlanCode(req.body);
+    if (!checkoutPlan.ok) {
+      return res.status(400).json({ error: 'Plan no disponible.', code: PLAN_NOT_AVAILABLE });
+    }
 
     // Founder 15 check — server-side, counts active/pending founder slots
     const { count: founderCount } = await supabase

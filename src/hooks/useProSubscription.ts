@@ -90,7 +90,13 @@ export function useProFounderStatus(enabled = true) {
   return query;
 }
 
-export function useProSubscribe() {
+/**
+ * 4.57B multi-tier foundation: optional purchase target. Default 'pro' keeps
+ * existing behavior byte-for-byte (no request body). Any non-default target
+ * is forwarded; the server fails closed (PLAN_NOT_AVAILABLE) for tiers that
+ * are not commercially available (e.g. inactive 'plus').
+ */
+export function useProSubscribe(targetPlan: 'pro' | 'plus' = 'pro') {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   return useMutation({
@@ -103,6 +109,7 @@ export function useProSubscribe() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`,
         },
+        ...(targetPlan !== 'pro' ? { body: JSON.stringify({ plan: targetPlan }) } : {}),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to subscribe');

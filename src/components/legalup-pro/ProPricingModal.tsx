@@ -42,11 +42,17 @@ type ProPricingModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   triggerAction?: string;
+  /**
+   * 4.57B multi-tier foundation: future purchase target. Defaults to the
+   * current single Pro offer; no caller passes 'plus' in production, and
+   * the server fails closed (PLAN_NOT_AVAILABLE) if one ever does.
+   */
+  targetPlan?: 'pro' | 'plus';
 };
 
-export function ProPricingModal({ open, onOpenChange, triggerAction }: ProPricingModalProps) {
+export function ProPricingModal({ open, onOpenChange, triggerAction, targetPlan = 'pro' }: ProPricingModalProps) {
   const sub = useProSubscription();
-  const subscribe = useProSubscribe();
+  const subscribe = useProSubscribe(targetPlan);
   const [subscribing, setSubscribing] = useState(false);
 
   const { status, hasProAccess, isActive, isPastDue } = sub;

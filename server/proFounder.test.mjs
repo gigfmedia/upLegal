@@ -179,7 +179,12 @@ describe('4.32B.3 — webhook integration (source assertions)', () => {
     const start = server.indexOf("app.post('/api/pro/subscribe'");
     const end = server.indexOf("app.post('/api/pro/subscription/cancel'");
     const block = server.slice(start, end);
-    expect(block).not.toContain('req.body');
+    // 4.57B: the handler may read req.body.plan (tier selection, fail-closed
+    // via resolveCheckoutPlanCode) but never any client-supplied price.
+    expect(block).not.toContain('req.body.price');
+    expect(block).not.toContain('req.body.amount');
+    expect(block).not.toContain('req.body.transaction_amount');
+    expect(block).toContain('resolveCheckoutPlanCode');
     expect(block).toContain('transaction_amount: initialPrice');
   });
 
