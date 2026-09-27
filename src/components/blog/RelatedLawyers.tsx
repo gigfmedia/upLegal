@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Lawyer } from '@/components/LawyerCard';
 import { RelatedLawyerCard } from '@/components/blog/RelatedLawyerCard';
 import { searchLawyers } from '@/pages/api/search-lawyers';
+import { trackEvent } from '@/lib/track';
 import { Loader2 } from 'lucide-react';
 import { useInView } from 'react-intersection-observer';
 import {
@@ -43,10 +44,16 @@ export const RelatedLawyers = ({ category, title = "¿Necesitas resolver este pr
         const pagePath = window.location.pathname;
         const articleSlug = articleId || pagePath.split('/').pop() || '';
         // Backward-compatible aggregate + per-card events (real exposure, no duplicate on StrictMode)
+        // GA4 path (preserved verbatim for historical continuity)
         window.gtag('event', 'related_lawyers_shown', { specialty: category, page_path: pagePath, article_slug: articleSlug });
+        // PostHog path via shared helper (owner-filtered, adds page_path/device_category/timestamp).
+        // Mirrors the GA4 aggregate so the clean experiment is measurable in both systems.
+        try {
+          trackEvent('related_lawyers_shown', { specialty: category, category, page_path: pagePath, article_slug: articleSlug, source: 'related_lawyers' });
+        } catch {}
         lawyers.forEach((lawyer: any, idx: number) => {
           const hasReviews = Boolean((lawyer.reviews || lawyer.review_count || 0) > 0);
-          window.gtag('event', 'related_lawyers_shown', {
+          const perCardProps = {
             lawyer_id: lawyer.id || lawyer.user_id,
             lawyer_slug: lawyer.id,
             article_slug: articleSlug,
@@ -58,7 +65,12 @@ export const RelatedLawyers = ({ category, title = "¿Necesitas resolver este pr
             price: lawyer.consultationPrice || lawyer.hourlyRate || 0,
             availability: Boolean(lawyer.availability?.availableToday || lawyer.availableToday),
             card_position: idx,
-          });
+          };
+          window.gtag('event', 'related_lawyers_shown', perCardProps);
+          // PostHog mirror (same props + source; wrapped so a PostHog failure never breaks GA4)
+          try {
+            trackEvent('related_lawyers_shown', { ...perCardProps, source: 'related_lawyers' });
+          } catch {}
         });
       }
     }
