@@ -66,7 +66,7 @@ describe('CaseActivity 4.30F — operational activity MVP', () => {
   it('replaces placeholder: renders case-created event from lawyer_cases.created_at', () => {
     setup({ workspaceId: null });
     expect(screen.getByText('Timeline del caso')).toBeInTheDocument();
-    expect(screen.getByText('Caso creado')).toBeInTheDocument();
+    expect(screen.getAllByText('Caso creado').length).toBeGreaterThanOrEqual(2); // title + badge
     expect(screen.queryByText('La actividad del caso aparecerá aquí.')).not.toBeInTheDocument();
   });
   it('renders timeline heading with chronological copy', () => {
@@ -80,7 +80,7 @@ describe('CaseActivity 4.30F — operational activity MVP', () => {
       workspaceId: null,
       bookings: [{ id: 'b-1', service_title: 'Cita inicial', scheduled_date: '2026-09-05', scheduled_time: '10:00', status: 'confirmed' }],
     });
-    expect(screen.getByText('Caso creado')).toBeInTheDocument();
+    expect(screen.getAllByText('Caso creado').length).toBeGreaterThanOrEqual(2); // title + badge
     expect(screen.getByText('Cita agendada')).toBeInTheDocument();
     expect(mocks.docs).toHaveBeenCalledWith(undefined);
   });
@@ -91,7 +91,7 @@ describe('CaseActivity 4.30F — operational activity MVP', () => {
         { id: 'd-1', original_filename: 'contrato.pdf', created_at: '2026-09-02T10:00:00.000Z', updated_at: '2026-09-03T10:00:00.000Z', analysis_status: 'ready' },
       ],
     });
-    expect(screen.getByText('contrato.pdf agregado')).toBeInTheDocument();
+    expect(screen.getByText('Documento incorporado')).toBeInTheDocument();
     // 4.51B unified copy: fixed title + filename once as secondary content.
     expect(screen.getByText('Análisis de documento completado')).toBeInTheDocument();
     expect(screen.getAllByText(/contrato\.pdf/).length).toBe(2);
@@ -103,7 +103,7 @@ describe('CaseActivity 4.30F — operational activity MVP', () => {
         { id: 'd-2', original_filename: 'nota.pdf', created_at: '2026-09-02T10:00:00.000Z', updated_at: '2026-09-02T10:00:00.000Z', analysis_status: 'processing' },
       ],
     });
-    expect(screen.getByText('nota.pdf agregado')).toBeInTheDocument();
+    expect(screen.getByText('Documento incorporado')).toBeInTheDocument();
     expect(screen.queryByText('Análisis de documento completado')).not.toBeInTheDocument();
   });
 
@@ -146,7 +146,7 @@ describe('CaseActivity 4.30F — operational activity MVP', () => {
     const { onOpenDocuments } = setup({
       docs: [{ id: 'd-1', original_filename: 'c.pdf', created_at: '2026-09-02T10:00:00.000Z', updated_at: '2026-09-02T10:00:00.000Z', analysis_status: 'pending' }],
     });
-    fireEvent.click(screen.getByLabelText('c.pdf agregado — ver en Documentos'));
+    fireEvent.click(screen.getByLabelText('Documento incorporado — ver en Documentos'));
     expect(onOpenDocuments).toHaveBeenCalledTimes(1);
   });
 
@@ -219,7 +219,7 @@ describe('CaseActivity 4.34J — note CRUD parity (legacy timeline model)', () =
       notes: [noteEvent],
       docs: [{ id: 'd-1', original_filename: 'c.pdf', created_at: '2026-09-02T10:00:00.000Z', updated_at: '2026-09-02T10:00:00.000Z', analysis_status: 'ready' }],
     });
-    expect(screen.getByText('Caso creado')).toBeInTheDocument();
+    expect(screen.getAllByText('Caso creado').length).toBeGreaterThanOrEqual(2); // title + badge
     expect(screen.getByText('Llamó el cliente')).toBeInTheDocument();
     expect(screen.getByText('Análisis de documento completado')).toBeInTheDocument();
   });
@@ -242,8 +242,8 @@ describe('4.51B unified analysis event copy (presentation only)', () => {
     });
     expect(screen.getByText('Análisis de documento completado')).toBeInTheDocument();
     expect(screen.getByText('Análisis')).toBeInTheDocument();
-    // filename exactly once (secondary description line), never inside the title
-    expect(screen.getAllByText(/contrato\.pdf/).length).toBe(2); // upload title + analysis description
+    // filename exactly once per event (own resource row), never inside titles
+    expect(screen.getAllByText(/contrato\.pdf/).length).toBe(2); // upload resource + analysis resource
   });
 
   it('§19 link preserved: analysis event navigates to Documents', () => {
@@ -270,5 +270,61 @@ describe('4.51B unified analysis event copy (presentation only)', () => {
     const items = screen.getAllByRole('listitem');
     const first = items[0].textContent ?? '';
     expect(first).toContain('nuevo.pdf');
+  });
+});
+
+describe('4.52A historical event presentation (titles + resource rows)', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('§19 upload: fixed title, Documento badge, filename resource row (not in title)', () => {
+    setup({
+      docs: [
+        { id: 'd-1', original_filename: 'contrato.pdf', created_at: '2026-09-02T10:00:00.000Z', updated_at: '2026-09-02T10:00:00.000Z', analysis_status: 'pending' },
+      ],
+    });
+    expect(screen.getByText('Documento incorporado')).toBeInTheDocument();
+    expect(screen.getByText('Documento')).toBeInTheDocument();
+    expect(screen.queryByText(/contrato\.pdf agregado/)).not.toBeInTheDocument();
+    // filename exactly once (resource row)
+    expect(screen.getAllByText(/contrato\.pdf/).length).toBe(1);
+  });
+
+  it('§20 analysis resource row keeps filename out of the title', () => {
+    setup({
+      docs: [
+        { id: 'd-1', original_filename: 'contrato.pdf', created_at: '2026-09-02T10:00:00.000Z', updated_at: '2026-09-03T10:00:00.000Z', analysis_status: 'ready' },
+      ],
+    });
+    expect(screen.getByText('Análisis de documento completado')).toBeInTheDocument();
+    expect(screen.queryByText(/contrato\.pdf analizado/)).not.toBeInTheDocument();
+  });
+
+  it('§21 case created badge reads Caso creado', () => {
+    setup({ workspaceId: null });
+    expect(screen.getAllByText('Caso creado').length).toBeGreaterThanOrEqual(2); // title + badge
+    expect(screen.getAllByText('Caso creado').length).toBeGreaterThanOrEqual(2); // title + badge
+  });
+
+  it('§22 note presentation unchanged (title, body, actions)', () => {
+    setup({
+      notes: [
+        { id: 'n-1', event_type: 'note', title: 'Llamar al cliente', description: 'Urgente', event_date: '2026-09-05T10:00:00.000Z' },
+      ],
+    });
+    expect(screen.getByText('Llamar al cliente')).toBeInTheDocument();
+    expect(screen.getByText('Nota')).toBeInTheDocument();
+    expect(screen.getByText('Urgente')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /editar nota/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /eliminar nota/i })).toBeInTheDocument();
+  });
+
+  it('§23 upload resource navigates to Documents', () => {
+    const { onOpenDocuments } = setup({
+      docs: [
+        { id: 'd-1', original_filename: 'c.pdf', created_at: '2026-09-02T10:00:00.000Z', updated_at: '2026-09-02T10:00:00.000Z', analysis_status: 'pending' },
+      ],
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Documento incorporado.*ver en Documentos/i }));
+    expect(onOpenDocuments).toHaveBeenCalledTimes(1);
   });
 });

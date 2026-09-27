@@ -38,7 +38,7 @@ type Props = {
 };
 
 const TYPE_META: Record<CaseActivityItemType, { label: string; icon: typeof FolderPlus; className: string }> = {
-  case_created: { label: 'Caso', icon: FolderPlus, className: 'bg-green-100 text-green-700' },
+  case_created: { label: 'Caso creado', icon: FolderPlus, className: 'bg-green-100 text-green-700' },
   document_uploaded: { label: 'Documento', icon: FileText, className: 'bg-blue-100 text-blue-700' },
   document_analyzed: { label: 'Análisis', icon: Sparkles, className: 'bg-purple-100 text-purple-700' },
   workflow_completed: { label: 'Acción', icon: CheckCircle2, className: 'bg-emerald-100 text-emerald-700' },
@@ -121,6 +121,7 @@ export function CaseActivity({ caseData, workspaceId, bookings, onOpenDocuments 
         title: item.title,
         badge: meta.label,
         description: item.description ?? null,
+        documentName: item.resourceName ?? null,
         timeText: timelineEventTime(item.occurredAt),
         onSelect: item.documentId ? onOpenDocuments : null,
         selectLabel: item.documentId ? `${item.title} — ver en Documentos` : undefined,

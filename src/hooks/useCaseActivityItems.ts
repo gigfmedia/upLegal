@@ -18,6 +18,8 @@ export type CaseActivityItem = {
   type: CaseActivityItemType;
   title: string;
   description?: string | null;
+  /** 4.52A: resource filename for document events (own secondary row). */
+  resourceName?: string | null;
   occurredAt: string;
   documentId?: string;
 };
@@ -70,7 +72,9 @@ export function useCaseActivityItems(
       list.push({
         id: `doc-${doc.id}`,
         type: 'document_uploaded',
-        title: `${doc.original_filename} agregado`,
+        // 4.52A: historical wording; filename lives in resourceName (own row).
+        title: 'Documento incorporado',
+        resourceName: doc.original_filename,
         occurredAt: doc.created_at,
         documentId: doc.id,
       });
@@ -79,9 +83,9 @@ export function useCaseActivityItems(
           id: `analysis-${doc.id}`,
           type: 'document_analyzed',
           // 4.51B: unified historical wording (legacy parity). Filename lives
-          // in description (rendered once as secondary content), never in title.
+          // in resourceName (own row), never in title.
           title: 'Análisis de documento completado',
-          description: doc.original_filename,
+          resourceName: doc.original_filename,
           occurredAt: doc.updated_at,
           documentId: doc.id,
         });
