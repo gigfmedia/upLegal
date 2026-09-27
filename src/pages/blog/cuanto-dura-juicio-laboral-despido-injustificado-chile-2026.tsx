@@ -38,8 +38,8 @@ const BlogArticle = () => {
   return (
     <div className="min-h-screen bg-white">
       <BlogGrowthHacks
-        title="¿Cuánto dura un juicio laboral en Chile? Plazos y tiempos 2026"
-        description="¿Cuánto demora un juicio laboral en Chile? Revisa los plazos de las audiencias y sentencia, cuánto puede tardar el proceso y qué factores pueden alargarlo."
+        title="¿Cuánto dura un juicio laboral en Chile? De 3 a 8 meses"
+        description="Un juicio laboral por despido injustificado dura entre 3 y 8 meses en promedio. Revisa las etapas, qué alarga el proceso y cómo acelerarlo."
         image="/assets/duracion-juicio-laboral-chile-2026.png"
         url="https://legalup.cl/blog/cuanto-dura-juicio-laboral-despido-injustificado-chile-2026"
         datePublished="2026-05-05"
