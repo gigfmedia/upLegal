@@ -96,6 +96,7 @@ const ClientsPage = lazy(() => import('./pages/lawyer/ClientsPage'));
 const ClientDetailPage = lazy(() => import('./pages/lawyer/ClientDetailPage'));
 const CasesPage = lazy(() => import('./pages/lawyer/CasesPage'));
 const CaseDetailPage = lazy(() => import('./pages/lawyer/CaseDetailPage'));
+const LawyerSettingsPage = lazy(() => import('./pages/lawyer/SettingsPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const HowItWorksPage = lazy(() => import('./pages/HowItWorksPage'));
 const PaymentSettings = lazy(() => import('./pages/PaymentSettings'));
@@ -597,6 +598,7 @@ const AppContent = () => {
                 <Route path="clients/:clientId" element={<ClientDetailPage />} />
                 <Route path="cases" element={<CasesPage />} />
                 <Route path="cases/:caseId" element={<CaseDetailPage />} />
+                <Route path="settings" element={<LawyerSettingsPage />} />
                 <Route path="earnings" element={<EarningsPage />} />
                 <Route path="favorites" element={<DashboardFavorites />} />
                 <Route path="quotes/:quoteRequestId" element={<QuoteRequestsPage />} />

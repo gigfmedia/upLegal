@@ -25,6 +25,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabaseClient';
+import { SecurePasswordCard } from '@/components/auth/SecurePasswordCard';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,13 +58,6 @@ export default function DashboardSettings() {
     showRating: true,
   });
 
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
-  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-
   // Fetch user profile
   const { profile, loading: profileLoading } = useProfile(user?.id);
 
@@ -89,52 +83,6 @@ export default function DashboardSettings() {
 
     loadSettings();
   }, [user]);
-
-  const handlePasswordUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Las contraseñas no coinciden",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setIsUpdatingPassword(true);
-      
-      const { error } = await supabase.auth.updateUser({
-        password: passwordData.newPassword
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Contraseña actualizada",
-        description: "Tu contraseña ha sido actualizada correctamente.",
-        variant: "default",
-      });
-
-      // Reset form
-      setPasswordData({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      });
-
-    } catch (error) {
-      console.error('Error updating password:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar la contraseña. Por favor, inténtalo de nuevo.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUpdatingPassword(false);
-    }
-  };
 
   const handleNotificationChange = (key: string, value: boolean) => {
     setNotifications(prev => ({
@@ -410,72 +358,14 @@ export default function DashboardSettings() {
             </Card>
           )}
 
-          {/* Security Settings */}
+          {/* Security Settings — 4.53B shared secure password management
+              (has-password authority split + genuine current verification).
+              Replaces the legacy block whose current-password field was
+              never verified or sent. */}
+          <SecurePasswordCard />
+
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Shield className="h-5 w-5" />
-                <span>Seguridad</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="current-password">Contraseña Actual</Label>
-                <Input
-                  id="currentPassword"
-                  type="password"
-                  value={passwordData.currentPassword}
-                  onChange={(e) => setPasswordData(prev => ({...prev, currentPassword: e.target.value}))}
-                  required
-                  disabled={isUpdatingPassword}
-                  placeholder="Ingresa tu contraseña actual"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="new-password">Nueva Contraseña</Label>
-                <Input
-                  id="newPassword"
-                  type="password"
-                  value={passwordData.newPassword}
-                  onChange={(e) => setPasswordData(prev => ({...prev, newPassword: e.target.value}))}
-                  required
-                  minLength={6}
-                  disabled={isUpdatingPassword}
-                  placeholder="Ingresa nueva contraseña"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirmar Nueva Contraseña</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={passwordData.confirmPassword}
-                  onChange={(e) => setPasswordData(prev => ({...prev, confirmPassword: e.target.value}))}
-                  required
-                  disabled={isUpdatingPassword}
-                  placeholder="Confirma nueva contraseña"
-                />
-              </div>
-
-              <Button 
-                type="submit" 
-                disabled={isUpdatingPassword}
-                variant="outline" className="w-full"
-              >  
-                {isUpdatingPassword ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Actualizando...
-                  </>
-                ) : (
-                  "Actualizar Contraseña"
-                )}
-              </Button>
-
-              <Separator />
-
+            <CardContent className="space-y-4 pt-6">
               <div className="space-y-2">
                 <h4 className="font-medium">Autenticación de Dos Factores</h4>
                 <p className="text-sm text-muted-foreground">
