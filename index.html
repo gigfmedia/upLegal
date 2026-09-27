@@ -5,10 +5,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Título y descripción -->
+  <!-- Título. La description por ruta la gestiona react-helmet-async
+       (default en AppContent + override por ruta en componentes SEO).
+       No hardcodear ese tag aquí para evitar duplicados. -->
   <title>LegalUp — Consulta con abogados online en Chile</title>
-  <meta name="description"
-    content="Consulta con un abogado especialista en Chile. Arriendo, laboral, familia y más. Respuesta en 24 horas, sin salir de casa. Abogados verificados en LegalUp." />
 
   <script>
     // Global error handler to catch main bundle load failures (stale index.html)

@@ -316,6 +316,16 @@ const LawyerRedirect = () => {
 
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { MessageProvider } from '@/contexts/MessageProvider';
+import { Helmet } from 'react-helmet-async';
+
+// Default meta description (fallback Helmet-managed).
+// Route-specific SEO components (BlogGrowthHacks, landings, etc.) override
+// this via nested <Helmet>; react-helmet-async renders exactly one
+// meta[name="description"], innermost wins, and restores this default on
+// unmount — so SPA navigation never leaves stale or duplicate descriptions.
+// Copy must stay identical to the pre-5.15 shell default (dedup only).
+export const DEFAULT_META_DESCRIPTION =
+  'Consulta con un abogado especialista en Chile. Arriendo, laboral, familia y más. Respuesta en 24 horas, sin salir de casa. Abogados verificados en LegalUp.';
 
 const AppContent = () => {
   const { isLoading } = useAuth();
@@ -403,6 +413,9 @@ const AppContent = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <Helmet>
+        <meta name="description" content={DEFAULT_META_DESCRIPTION} />
+      </Helmet>
       <TooltipProvider>
         <ScrollToTop />
         <LoadingIndicator />
