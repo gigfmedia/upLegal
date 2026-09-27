@@ -1,9 +1,11 @@
 import { SecurePasswordCard } from '@/components/auth/SecurePasswordCard';
+import { AccountDataExportCard } from '@/components/account/AccountDataExportCard';
 
 /**
  * 4.53B — minimal lawyer Settings surface.
- * Currently hosts account security (password setup/change). Lawyers
- * previously had no password-management UI at all.
+ * 4.54C — plus the only reusable real account feature (data export).
+ * No 2FA (unimplemented), no deletion (fictitious + lawyer-unsafe),
+ * no placeholder switches, no integrations (live elsewhere).
  */
 export default function LawyerSettingsPage() {
   return (
@@ -15,6 +17,7 @@ export default function LawyerSettingsPage() {
         </p>
       </div>
       <SecurePasswordCard />
+      <AccountDataExportCard />
     </div>
   );
 }

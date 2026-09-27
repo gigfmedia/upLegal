@@ -17,15 +17,13 @@ import {
   Trash2,
   AlertTriangle,
   Settings,
-  Download,
-  Loader2
 } from 'lucide-react';
 import { CreditCard as CreditCardIcon } from 'lucide-react';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabaseClient';
 import { SecurePasswordCard } from '@/components/auth/SecurePasswordCard';
+import { AccountDataExportCard } from '@/components/account/AccountDataExportCard';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -132,66 +130,6 @@ export default function DashboardSettings() {
       description: "We'll process your request within 24 hours.",
       variant: "destructive",
     });
-  };
-
-  const handleExportData = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Get user profile data
-      let profileData = null;
-      if (user) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-        
-        if (error && error.code !== 'PGRST116') { // PGRST116 is the code for "no rows returned"
-          console.error('Error fetching profile:', error);
-          throw new Error('No se pudo obtener la información del perfil');
-        }
-        profileData = data || null;
-      }
-
-      // Prepare data to export
-      const userData = {
-        perfil: profileData,
-        notificaciones: notifications,
-        privacidad: privacy,
-        metadatos: user?.user_metadata || {},
-        fechaExportacion: new Date().toISOString(),
-      };
-
-      // Create and download JSON file
-      const dataStr = JSON.stringify(userData, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(dataBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `upLegal-datos-${new Date().toISOString().split('T')[0]}.json`;
-      
-      // Trigger download
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      toast({
-        title: "Datos exportados",
-        description: "Tus datos se han descargado correctamente.",
-        variant: "default",
-      });
-    } catch (error) {
-      console.error('Error al exportar datos:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "No se pudieron exportar los datos. Por favor, inténtalo de nuevo.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   return (
@@ -378,6 +316,9 @@ export default function DashboardSettings() {
             </CardContent>
           </Card>
 
+          {/* 4.54C shared account export (same behavior, sanitized credentials). */}
+          <AccountDataExportCard />
+
           {/* Account Management */}
           <Card>
             <CardHeader>
@@ -387,32 +328,6 @@ export default function DashboardSettings() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <h4 className="font-medium">Exportar Datos</h4>
-                <p className="text-sm text-muted-foreground">
-                  Descargar una copia de los datos de tu cuenta
-                </p>
-                <Button variant="outline"  
-                  onClick={handleExportData} 
-                  disabled={isLoading}
-                  className="w-full sm:w-auto"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Procesando...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="mr-2 h-4 w-4" />
-                      Exportar mis datos
-                    </>
-                  )}
-                </Button>
-              </div>
-
-              <Separator />
-
               <div className="space-y-2">
                 <h4 className="font-medium text-red-600">Zona de Peligro</h4>
                 <p className="text-sm text-muted-foreground">
