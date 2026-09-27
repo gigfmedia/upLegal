@@ -93,17 +93,21 @@ describe('4.38C-B Pro allowance frontend contract', () => {
   });
 
   it('limit UX copy present without provider internals or future tiers', () => {
+    // 4.57D: limit copy lives in the single planDisplay authority (plan-aware:
+    // Pro numbers + Plus path; Plus numbers + reset-only explanation).
+    const display = read('src/lib/planDisplay.ts');
+    expect(display).toContain('consultas IA incluidas este mes');
+    expect(display).toContain('Con LegalUp Plus tienes');
+    expect(display).toContain('Se renovarán el próximo mes');
+    expect(display).toContain('PLAN_QUOTAS_DISPLAY');
     const chat = read('src/components/legalup-ai/AIChat.tsx');
     expect(chat).toContain('AI_CHAT_LIMIT_REACHED');
-    expect(chat).toContain('Alcanzaste las 300 consultas IA incluidas este mes');
     const research = read('src/components/legalup-ai/AIResearchPanel.tsx');
     expect(research).toContain('AI_RESEARCH_LIMIT_REACHED');
-    expect(research).toContain('Alcanzaste las 10 investigaciones incluidas este mes');
     const docs = read('src/components/legalup-ai/AICaseDocumentsWorkspace.tsx');
     expect(docs).toContain('AI_ANALYSIS_LIMIT_REACHED');
-    expect(docs).toContain('Alcanzaste los 40 análisis de documentos incluidos este mes');
-    for (const c of [chat, research, docs]) {
-      expect(c).not.toMatch(/Ultra|Unlimited|upgrade.*plan/i);
+    for (const c of [chat, research, docs, display]) {
+      expect(c).not.toMatch(/Ultra|Unlimited|Enterprise|contact-sales/i);
     }
     const usage = read('src/hooks/useAIUsage.ts');
     expect(usage).toContain('allowance');

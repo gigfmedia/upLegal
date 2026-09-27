@@ -18,6 +18,8 @@ import { AIChat } from '@/components/legalup-ai/AIChat';
 import { resolveSelectableAIModel } from '@/lib/aiModels';
 import { resolveSelectedDocument } from '@/lib/aiDocumentSelection';
 import { AIAnalysisModelSelect } from './AIAnalysisModelSelect';
+import { useAIUsage } from '@/hooks/useAIUsage';
+import { analysisLimitMessage, upgradeTargetForPlan } from '@/lib/planDisplay';
 
 export type AICaseDocumentsWorkspaceProps = {
   workspaceId: string | null | undefined;
@@ -85,6 +87,14 @@ export function AICaseDocumentsWorkspace({
   const processMutation = useProcessAIDocument();
   const analyzeMutation = useAnalyzeAIDocument();
   const busy = useRef(false);
+  // 4.57D: backend-resolved plan for the analysis-limit banner. The upgrade
+  // CTA reuses the owner-provided onUpgrade (its modal auto-targets Plus
+  // for Pro lawyers) — no commercial shell inside this shared component.
+  const { data: usageData } = useAIUsage();
+  const usagePlan: unknown = usageData?.allowance?.plan;
+  const analysisLimitPlusCta =
+    (analyzeMutation.error as Error & { code?: string } | null)?.code === 'AI_ANALYSIS_LIMIT_REACHED'
+    && upgradeTargetForPlan(usagePlan) === 'plus';
 
   const selectedDoc =
     resolveSelectedDocument(documents, selectedDocId);
@@ -134,11 +144,18 @@ export function AICaseDocumentsWorkspace({
       { documentId: selectedDoc.id, model },
       {
         onSuccess: () => posthog.capture('ai_document_analysis_completed', { model, source: analyticsSource }),
-        onError: (err: Error & { code?: string }) => {
+          onError: (err: Error & { code?: string }) => {
           posthog.capture('ai_document_analysis_failed', { model, source: analyticsSource, error_code: err?.code });
           // 4.38C: commercial limit analytics (safe props only, never content).
+          // 4.57D: plan-aware (current_plan + upgrade target, no PII).
           if (err?.code === 'AI_ANALYSIS_LIMIT_REACHED') {
-            posthog.capture('ai_usage_limit_reached', { capability: 'analysis', code: err.code, source: analyticsSource });
+            posthog.capture('ai_usage_limit_reached', {
+              capability: 'analysis',
+              code: err.code,
+              source: analyticsSource,
+              current_plan: typeof usagePlan === 'string' ? usagePlan : undefined,
+              target_plan: upgradeTargetForPlan(usagePlan) ?? undefined,
+            });
           }
         },
         onSettled: () => {
@@ -312,9 +329,14 @@ export function AICaseDocumentsWorkspace({
           <CardContent>
             {/* 4.38C: commercial limit / in-progress banner (mutation-level, any analysis state). */}
             {(analyzeMutation.error as Error & { code?: string } | null)?.code === 'AI_ANALYSIS_LIMIT_REACHED' && (
-              <p className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                Alcanzaste los 40 análisis de documentos incluidos este mes. Se renovarán el próximo mes.
-              </p>
+              <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                <p className="min-w-0 flex-1">{analysisLimitMessage(usagePlan)}</p>
+                {analysisLimitPlusCta && (
+                  <Button type="button" variant="outline" size="sm" onClick={onUpgrade} className="shrink-0 border-amber-300 text-amber-900 hover:bg-amber-100">
+                    Ver LegalUp Plus
+                  </Button>
+                )}
+              </div>
             )}
             {(analyzeMutation.error as Error & { code?: string } | null)?.code === 'FREE_CASE_ANALYSIS_LIMIT_REACHED' && (
               <p className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">

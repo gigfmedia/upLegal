@@ -352,6 +352,7 @@ const FAQS = [
   { q: "¿Necesito usar el marketplace?", a: "No es obligatorio. Pro organiza tu práctica actual y además centraliza las solicitudes que recibas desde LegalUp." },
   { q: "¿Mis datos están separados de otros abogados?", a: "Sí. Cada abogado solo accede a su propia información: clientes, casos, documentos e ingresos están separados por cuenta." },
   { q: "¿Cuánto cuesta?", a: "LegalUp Pro cuesta $49.990/mes. Para los primeros 15 abogados con pago exitoso, el precio Founder es $19.990/mes durante los primeros 3 cobros exitosos y luego $49.990/mes." },
+  { q: "¿Qué es LegalUp Plus?", a: "Es el mismo producto Pro con mayor capacidad: hasta 40 casos activos, 150 documentos actuales, 750 consultas IA, 100 análisis y 25 investigaciones jurídicas al mes, por $79.990/mes. Sin equipos ni funciones exclusivas: capacidad operativa para mayor volumen." },
   { q: "¿Qué pasa después de los 3 meses?", a: "Los primeros 3 cobros son de $19.990/mes. Desde el cuarto cobro, el precio es $49.990/mes. Si cancelas y vuelves, tus cobros anteriores se mantienen y el conteo no se reinicia." },
   { q: "¿Puedo cancelar?", a: "Sí. Puedes cancelar tu suscripción en cualquier momento desde el dashboard. El acceso se mantiene hasta el fin del período ya pagado. Si necesitas ayuda, escríbenos a través de los canales de soporte de LegalUp." },
 ];
@@ -363,8 +364,11 @@ export default function LegalUpPro() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
   const [pricingOpen, setPricingOpen] = useState(false);
+  const [pricingTarget, setPricingTarget] = useState<'pro' | 'plus'>('pro');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const viewedRef = useRef(false);
+  // 4.57D: canonical Plus tier for CTA state (current-plan vs upgrade).
+  const isPlusUser = pro.canonicalPlan === 'plus' && pro.hasProAccess;
 
   const userRole = (user?.user_metadata?.role as string | undefined) ?? (user as any)?.role ?? (user as any)?.profile?.role ?? null;
 
@@ -458,18 +462,21 @@ export default function LegalUpPro() {
 
   // PRO.2.3: si el usuario vuelve autenticado con intención de checkout
   // pendiente (ej. login sin redirect), retomar directo al modal de compra.
+  // 4.57D: la intención Plus retoma el modal en modo Plus.
   useEffect(() => {
     if (!user || authLoading) return;
-    if (takeProPendingAction() !== "checkout") return;
+    const pending = takeProPendingAction();
+    if (pending !== "checkout" && pending !== "checkout_plus") return;
     if (pro.hasProAccess) return;
+    setPricingTarget(pending === "checkout_plus" ? "plus" : "pro");
     setPricingOpen(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading]);
 
-  const trackPlanCTA = (plan: "free" | "pro", source: string) => {
+  const trackPlanCTA = (plan: "free" | "pro" | "plus", source: string) => {
     const utms = getUTMs();
     try {
-      posthog.capture(plan === "free" ? "pro_free_cta_clicked" : "pro_paid_cta_clicked", {
+      posthog.capture(plan === "free" ? "pro_free_cta_clicked" : plan === "plus" ? "plus_cta_clicked" : "pro_paid_cta_clicked", {
         source,
         placement: "pricing",
         plan,
@@ -479,7 +486,7 @@ export default function LegalUpPro() {
         utm_medium: utms.medium,
         utm_campaign: utms.campaign,
       });
-    } catch {}
+    } catch { /* telemetry best-effort; never blocks CTA */ }
   };
 
   // PRO.2.3 Free: sin auth → signup (el acceso Free es el dashboard actual);
@@ -500,12 +507,30 @@ export default function LegalUpPro() {
     trackPlanCTA("pro", source);
     const action = resolveProCTA({ authenticated: !!user, hasProAccess: !!pro.hasProAccess });
     if (action.type === "dashboard") navigate("/lawyer/dashboard");
-    else if (action.type === "checkout") setPricingOpen(true);
+    else if (action.type === "checkout") { setPricingTarget("pro"); setPricingOpen(true); }
     else {
       setProPendingAction("checkout");
       setAuthMode("signup");
       setAuthOpen(true);
     }
+  };
+
+  // 4.57D Plus: sin auth → signup preservando intención Plus; con Plus →
+  // dashboard (plan actual); resto → modal en modo Plus (upgrade o compra).
+  const handlePlusCTA = (source: string) => {
+    trackPlanCTA("plus", source);
+    if (!user) {
+      setProPendingAction("checkout_plus");
+      setAuthMode("signup");
+      setAuthOpen(true);
+      return;
+    }
+    if (isPlusUser) {
+      navigate("/lawyer/dashboard");
+      return;
+    }
+    setPricingTarget("plus");
+    setPricingOpen(true);
   };
 
   return (
@@ -939,7 +964,7 @@ export default function LegalUpPro() {
       {/* TESTIMONIOS — entre cómo empezar y pricing */}
       <TestimonialsSection />
 
-      {/* PRECIO — comparativa Free / Pro (una sola sección canónica) */}
+      {/* PRECIO — comparativa Free / Pro / Plus (una sola sección canónica) */}
       <section id="pricing" className="border-b border-gray-100 bg-white">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
           <Reveal className="mx-auto max-w-3xl text-center">
@@ -951,7 +976,7 @@ export default function LegalUpPro() {
               Explora LegalUp Pro sin costo y activa el plan pago cuando tu práctica lo necesite.
             </p>
           </Reveal>
-          <div className="mx-auto mt-12 grid max-w-4xl gap-5 md:grid-cols-2">
+          <div className="mx-auto mt-12 grid max-w-6xl gap-5 md:grid-cols-3">
             {/* FREE — realidad actual sin suscripción: lectura + 1er caso + servicios */}
             <Reveal>
               <Card className="flex h-full flex-col rounded-3xl border-gray-200">
@@ -993,7 +1018,10 @@ export default function LegalUpPro() {
                 <CardContent className="flex flex-1 flex-col p-6 sm:p-8">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-bold">LegalUp Pro</h3>
-                    <Badge className="border-green-200 bg-green-100 text-green-800">Founder</Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-gray-900 text-white">Recomendado</Badge>
+                      <Badge className="border-green-200 bg-green-100 text-green-800">Founder</Badge>
+                    </div>
                   </div>
                   <div className="mt-3 flex items-end gap-1">
                     <span className="text-5xl font-bold tracking-tight">$19.990</span>
@@ -1026,6 +1054,47 @@ export default function LegalUpPro() {
                   </ul>
                   <p className="mt-6 text-xs leading-relaxed text-gray-500">
                     Founder corresponde a los primeros 15 abogados con pago exitoso. Tiene las mismas capacidades de Pro y un badge permanente; no acredita calidad profesional. Después de esos cupos, Pro cuesta $49.990/mes. Los casos cerrados no ocupan cupo. Servicios e ingresos del marketplace no requieren Pro.
+                  </p>
+                </CardContent>
+              </Card>
+            </Reveal>
+            {/* PLUS — mismo producto Pro con mayor capacidad (4.57D) */}
+            <Reveal delay={0.2}>
+              <Card className="flex h-full flex-col rounded-3xl border-gray-200">
+                <CardContent className="flex flex-1 flex-col p-6 sm:p-8">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-bold">LegalUp Plus</h3>
+                    <Badge variant="outline" className="border-gray-300 text-gray-600">Para mayor volumen</Badge>
+                  </div>
+                  <div className="mt-3 flex items-end gap-1">
+                    <span className="text-5xl font-bold tracking-tight">$79.990</span>
+                    <span className="pb-1 text-sm font-medium text-gray-500">/mes</span>
+                  </div>
+                  <p className="mt-2 text-sm text-gray-600">Todo lo de Pro, con mayor capacidad para más casos, documentos e investigación.</p>
+                  <Button
+                    variant="outline"
+                    onClick={() => handlePlusCTA("pricing_plus")}
+                    className="mt-6 h-12 w-full rounded-full text-base"
+                  >
+                    {!user ? "Comenzar con Plus" : isPlusUser ? "Tu plan actual" : "Pasar a Plus"} <ArrowRight className="h-4 w-4" />
+                  </Button>
+                  <div className="mt-6 rounded-xl bg-gray-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Elige Plus si tienes</p>
+                    <p className="mt-1 text-sm text-gray-600">Mayor volumen de casos simultáneos y uso intensivo de LegalUp AI.</p>
+                  </div>
+                  <ul className="mt-6 space-y-2.5 text-sm">
+                    <PlanRow included label="Todo lo incluido en LegalUp Pro" />
+                    <PlanRow included label="Hasta 40 casos activos" />
+                    <PlanRow included label="Clientes ilimitados" />
+                    <PlanRow included label="Hasta 150 documentos actuales" />
+                    <PlanRow included label="750 consultas IA / mes (caso y documentos)" />
+                    <PlanRow included label="100 análisis de documentos / mes" />
+                    <PlanRow included label="25 investigaciones jurídicas / mes" />
+                    <PlanRow included label="Citas con tus clientes" />
+                    <PlanRow included label="Command Center avanzado" />
+                  </ul>
+                  <p className="mt-6 text-xs leading-relaxed text-gray-500">
+                    Plus no incluye equipos, automatizaciones ni funciones exclusivas de IA: es capacidad operativa. Sin precio Founder en Plus.
                   </p>
                 </CardContent>
               </Card>
@@ -1108,6 +1177,7 @@ export default function LegalUpPro() {
         open={pricingOpen}
         onOpenChange={setPricingOpen}
         triggerAction="pro_landing"
+        targetPlan={pricingTarget}
       />
     </div>
   );

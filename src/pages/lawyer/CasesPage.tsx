@@ -18,6 +18,7 @@ import {
   isFreeCaseEntitlementError,
   isActiveCapacityError,
 } from '@/hooks/useCaseEntitlement';
+import { useProSubscription } from '@/hooks/useProSubscription';
 import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
 import { ActiveCapacityModal } from '@/components/legalup-pro/ActiveCapacityModal';
 import { SharedCaseCard } from '@/components/legalup-ai/SharedCaseCard';
@@ -59,8 +60,13 @@ export default function CasesPage() {
     canCreateDirectCase,
   } = useCaseEntitlement();
   const hasProAccess = entitlement.hasProAccess;
+  // 4.57D: Plus lawyers at capacity see no higher tier (close-a-case only);
+  // Pro lawyers at capacity get the Plus upgrade path.
+  const { isPlus } = useProSubscription();
   const [proPaywallOpen, setProPaywallOpen] = useState(false);
   const [capacityModalOpen, setCapacityModalOpen] = useState(false);
+  // 4.57D: paywall target for paid-lawyers surfaces (Pro at capacity → Plus).
+  const [paywallTarget, setPaywallTarget] = useState<'pro' | 'plus'>('pro');
   const [editCaseId, setEditCaseId] = useState<string | null>(null);
   const [editDialogKey, setEditDialogKey] = useState(0);
   const [actingCaseId, setActingCaseId] = useState<string | null>(null);
@@ -92,6 +98,8 @@ export default function CasesPage() {
       return;
     }
     posthog.capture('pro_paywall_opened', { action });
+    // 4.57D: free exhaustion always targets Pro (never Plus, never stale).
+    setPaywallTarget('pro');
     setProPaywallOpen(true);
   };
 
@@ -229,6 +237,7 @@ export default function CasesPage() {
       // Unknown errors keep the normal error toast.
       if (isFreeCaseEntitlementError(err)) {
         posthog.capture('pro_paywall_opened', { action: 'create_case', reason: 'entitlement_rejected' });
+        setPaywallTarget('pro');
         setProPaywallOpen(true);
         void refetchEntitlement();
       } else if (isActiveCapacityError(err)) {
@@ -241,6 +250,7 @@ export default function CasesPage() {
         const latest = await refetchEntitlement();
         if (!latest.hasProAccess && latest.freeCaseConsumed) {
           posthog.capture('pro_paywall_opened', { action: 'create_case', reason: 'entitlement_rejected' });
+          setPaywallTarget('pro');
           setProPaywallOpen(true);
         } else if (latest.hasProAccess && latest.activeCaseLimit > 0 && latest.activeCaseCount >= latest.activeCaseLimit) {
           try {
@@ -425,8 +435,17 @@ export default function CasesPage() {
           </form>
         </DialogContent>
       </Dialog>
-      <ProPricingModal open={proPaywallOpen} onOpenChange={setProPaywallOpen} triggerAction="create_case" />
-      <ActiveCapacityModal open={capacityModalOpen} onOpenChange={setCapacityModalOpen} limit={entitlement.activeCaseLimit} />
+      <ProPricingModal open={proPaywallOpen} onOpenChange={setProPaywallOpen} triggerAction="create_case" targetPlan={paywallTarget} />
+      <ActiveCapacityModal
+        open={capacityModalOpen}
+        onOpenChange={setCapacityModalOpen}
+        limit={entitlement.activeCaseLimit}
+        onUpgradeClick={isPlus ? undefined : () => {
+          try { posthog.capture('plus_limit_reached', { current_plan: 'pro', capability: 'active_cases', used: entitlement.activeCaseCount, limit: entitlement.activeCaseLimit, target_plan: 'plus' }); } catch { /* best-effort */ }
+          setPaywallTarget('plus');
+          setProPaywallOpen(true);
+        }}
+      />
       {editCaseId && (
         <CaseEditDialog
           key={editDialogKey}

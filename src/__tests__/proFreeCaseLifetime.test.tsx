@@ -25,6 +25,12 @@ const entState = vi.hoisted(() => ({
   loading: false,
 }));
 
+// 4.57D: CasesPage reads useProSubscription for the Plus upgrade path.
+vi.mock('@/hooks/useProSubscription', () => ({
+  useProSubscription: () => ({ isPlus: false, hasProAccess: false }),
+  useProSubscribe: () => ({ mutateAsync: vi.fn() }),
+}));
+
 vi.mock('@/hooks/useLawyerCases', () => ({
   useLawyerCases: () => ({
     cases: [],

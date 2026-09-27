@@ -64,6 +64,8 @@ export default function LawyerDashboardPage() {
   const { entitlement: caseEntitlement, loading: entitlementLoading } = useCaseEntitlement();
   const hasProAccessCheck = hasProAccess;
   const [proPaywallOpen, setProPaywallOpen] = useState(false);
+  // 4.57D: Plus checkout intent preserves its target through signup.
+  const [dashboardPaywallTarget, setDashboardPaywallTarget] = useState<'pro' | 'plus'>('pro');
   // 4.37B — dedicated paywall for manual appointment creation
   // (triggerAction must stay create_appointment, distinct from dashboard_get_started).
   const [apptPaywallOpen, setApptPaywallOpen] = useState(false);
@@ -75,12 +77,17 @@ export default function LawyerDashboardPage() {
   // PRO.2.3: retomar intención de checkout pendiente tras signup/onboarding
   // (el modal reconcilia preapprovals existentes, no duplica suscripciones).
   // Solo abogados autenticados sin Pro; un solo consumo por intención.
+  // 4.57D: la intención Plus retoma el modal en modo Plus.
   const proIntentResumedRef = useRef(false);
   useEffect(() => {
     if (!user || hasProAccessCheck || proIntentResumedRef.current) return;
     proIntentResumedRef.current = true;
-    if (takeProPendingAction() === 'checkout') setProPaywallOpen(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const pending = takeProPendingAction();
+    if (pending === 'checkout') setProPaywallOpen(true);
+    else if (pending === 'checkout_plus') {
+      setDashboardPaywallTarget('plus');
+      setProPaywallOpen(true);
+    }
   }, [user, hasProAccessCheck]);
 
   useEffect(() => {
@@ -619,7 +626,7 @@ export default function LawyerDashboardPage() {
           />
         </DialogContent>
       </Dialog>
-      <ProPricingModal open={proPaywallOpen} onOpenChange={setProPaywallOpen} triggerAction="dashboard_get_started" />
+      <ProPricingModal open={proPaywallOpen} onOpenChange={setProPaywallOpen} triggerAction="dashboard_get_started" targetPlan={dashboardPaywallTarget} />
       <ProPricingModal open={apptPaywallOpen} onOpenChange={setApptPaywallOpen} triggerAction="create_appointment" />
     </div>
   );

@@ -1,7 +1,7 @@
 import { retiredAITrialInvite } from './server/retiredAITrialInvite.mjs';
 import { createAIMetering } from './server/ai/metering.mjs';
-import { PRO_AI_ALLOWANCE, commercialQuotaForPlan, FREE_CASE_ALLOWANCE, freeQuotaForPlan } from './server/ai/proAllowance.mjs';
-import { PLAN_NOT_AVAILABLE, resolveCheckoutPlanCode } from './server/ai/plans.mjs';
+import { PRO_AI_ALLOWANCE, PLUS_AI_ALLOWANCE, commercialQuotaForPlan, FREE_CASE_ALLOWANCE, freeQuotaForPlan } from './server/ai/proAllowance.mjs';
+import { PLAN_NOT_AVAILABLE, normalizePlanCode, resolveCheckoutPlanCode, PLUS_PRICE_CLP, PRO_STANDARD_PRICE_CLP_CANON, resolvePlanPrice, canonicalPaidPlan } from './server/ai/plans.mjs';
 import {
   CONFLICT_CODE,
   normalizeEmail,
@@ -452,6 +452,8 @@ const PRO_INTRO_PRICE_CLP = 19990;
 const PRO_STANDARD_PRICE_CLP = 49990;
 const PRO_INTRO_SUCCESSFUL_PAYMENTS = 3;
 const PRO_EXTERNAL_REF_PREFIX = 'PRO_';
+const PLUS_EXTERNAL_REF_PREFIX = 'PLUS_';
+const PLUS_SUBSCRIPTION_PRICE_CLP = PLUS_PRICE_CLP;
 const PRO_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 const PRO_FOUNDER_LIMIT = 15;
 
@@ -497,6 +499,9 @@ const PLAN_FEATURES_SERVER = {
   essential: [...AI_FEATURES_ALL],
   // 4.38C: current Pro includes Research/Jurisprudence (10/month commercial quota).
   pro_limited: ['document_analysis','case_chat','case_analysis','jurisprudence'],
+  // 4.57D: Plus v1 = same core product as Pro, higher quotas only. No
+  // Plus-only features; shares the paid core set (Plus >= Pro by capacity).
+  plus: ['document_analysis','case_chat','case_analysis','jurisprudence'],
   // 4.44A: free first-Case lifetime allowance (chat + analysis only; no research).
   // 4.49A: +1 lifetime Research/Jurisprudence (still no case_analysis).
   free_case: ['document_analysis','case_chat','jurisprudence'],
@@ -507,6 +512,11 @@ function serverCanUseAIFeature(feature, plan = 'free') {
 }
 function getPlanForAccess(access) {
   if (!access) return 'free';
+  // 4.57D: Plus resolves its own plan (higher quotas); Pro keeps pro_limited.
+  // Stored Plus rows carry plan='plus' literally; direct comparison keeps
+  // this function free of module imports (vm-harness isolated tests).
+  if (access.plan === 'plus') return 'plus';
+  if (access.subscription?.plan === 'plus') return 'plus';
   if (access.isProLimited || access.plan === 'pro_limited') return 'pro_limited';
   // 4.44A: free first-Case plan must resolve before the hasAccess fallback
   // below (which would otherwise map it to essential).
@@ -5657,10 +5667,23 @@ const handleProPreapprovalWebhook = async (preapproval) => {
   const mpStatus = preapproval.status;
   const preapprovalId = preapproval.id;
   const externalRef = preapproval.external_reference || '';
-  const lawyerId = String(externalRef).replace(PRO_EXTERNAL_REF_PREFIX, '');
+  // 4.57D: intended plan comes from trusted server-created metadata
+  // (external_reference prefix), never from client redirect query.
+  const isPlusRef = String(externalRef).startsWith(PLUS_EXTERNAL_REF_PREFIX);
+  const lawyerId = String(externalRef)
+    .replace(PLUS_EXTERNAL_REF_PREFIX, '')
+    .replace(PRO_EXTERNAL_REF_PREFIX, '');
   if (!lawyerId) return;
-  const { data: subscription } = await supabase.from('lawyer_subscriptions').select('*').eq('lawyer_id', lawyerId).maybeSingle();
+  let { data: subscription } = await supabase.from('lawyer_subscriptions').select('*').eq('lawyer_id', lawyerId).maybeSingle();
   if (!subscription) return;
+  // Reconcile scheduled downgrades + stale old-Pro cancellations on every
+  // Pro-family webhook event (no cron dependency).
+  subscription = await maybeApplyScheduledDowngrade(subscription) ?? subscription;
+  subscription = await retryOldProCancel(subscription) ?? subscription;
+  if (isPlusRef) {
+    await handlePlusPreapprovalWebhook(subscription, preapproval, { mpStatus, preapprovalId });
+    return;
+  }
   const providerEventAt = preapproval.last_modified || preapproval.date_created || new Date().toISOString();
   const providerEventId = `${preapprovalId}:${mpStatus}:${providerEventAt}`;
   const { tryInsertSubscriptionEvent, derivePeriodFromProvider, shouldApplyEvent } = await import('./server/subscriptions/subscriptionEvents.mjs');
@@ -5690,11 +5713,59 @@ const handleProPreapprovalWebhook = async (preapproval) => {
   }
 };
 
+// 4.57D: Plus preapproval settlement. Shares the Pro-family event dedup
+// (tryInsertSubscriptionEvent + shouldApplyEvent) so retries never double
+// grant. Plus NEVER touches Founder state (no claim, no reservation, no
+// intro transition) and activates ONLY via completePlusUpgrade.
+const handlePlusPreapprovalWebhook = async (subscription, preapproval, { mpStatus, preapprovalId }) => {
+  const lawyerId = subscription.lawyer_id;
+  const providerEventAt = preapproval.last_modified || preapproval.date_created || new Date().toISOString();
+  const providerEventId = `${preapprovalId}:${mpStatus}:${providerEventAt}`;
+  const { tryInsertSubscriptionEvent, shouldApplyEvent } = await import('./server/subscriptions/subscriptionEvents.mjs');
+  const ev = await tryInsertSubscriptionEvent(supabase, { productType: 'pro', subscriptionId: subscription.id, providerEventId, providerEventAt, eventType: `plus_preapproval_${mpStatus}`, providerStatus: mpStatus });
+  if (!ev.inserted) return;
+  if (!(await shouldApplyEvent(supabase, { productType: 'pro', subscriptionId: subscription.id, providerEventAt }))) return;
+  const now = new Date();
+  if (mpStatus === 'authorized' || mpStatus === 'active') {
+    const pendingId = subscription.pending_provider_subscription_id;
+    const isExpected = pendingId ? String(pendingId) === String(preapprovalId) : subscription.plan === 'plus' && String(subscription.provider_subscription_id) === String(preapprovalId);
+    if (!isExpected && subscription.plan_change_status !== 'upgrade_pending') return;
+    const completed = await completePlusUpgrade(subscription, preapproval);
+    if (!completed.ok) {
+      try { await capturePostHog('plus_upgrade_failed', lawyerId, { reason: completed.reason }); } catch {}
+    }
+  } else if (['cancelled', 'rejected', 'expired'].includes(mpStatus)) {
+    // Failed/abandoned upgrade: clear transition state, Pro stays intact.
+    if (subscription.plan_change_status === 'upgrade_pending' && String(subscription.pending_provider_subscription_id || '') === String(preapprovalId)) {
+      await supabase.from('lawyer_subscriptions').update({ pending_plan: null, plan_change_status: null, plan_change_effective_at: null, pending_provider_subscription_id: null, pending_init_point: null, previous_provider_subscription_id: null, updated_at: now.toISOString() }).eq('id', subscription.id);
+      try { await capturePostHog('plus_upgrade_failed', lawyerId, { reason: `provider_${mpStatus}` }); } catch {}
+    } else if (subscription.plan === 'plus' && String(subscription.provider_subscription_id || '') === String(preapprovalId)) {
+      await supabase.from('lawyer_subscriptions').update({ status: 'cancelled', cancelled_at: now.toISOString(), cancel_at_period_end: true, updated_at: now.toISOString() }).eq('id', subscription.id);
+    }
+  } else if (mpStatus === 'paused') {
+    if (subscription.plan === 'plus') {
+      await supabase.from('lawyer_subscriptions').update({ status: 'past_due', updated_at: now.toISOString() }).eq('id', subscription.id);
+    }
+  }
+};
+
 const handleProAuthorizedPayment = async (payment) => {
   const preapprovalId = payment.preapproval_id;
   if (!preapprovalId) return;
-  const { data: subscription } = await supabase.from('lawyer_subscriptions').select('*').eq('provider_subscription_id', String(preapprovalId)).maybeSingle();
+  let { data: subscription } = await supabase.from('lawyer_subscriptions').select('*').eq('provider_subscription_id', String(preapprovalId)).maybeSingle();
+  if (!subscription) {
+    // 4.57D: in-flight Plus upgrade — the Plus preapproval lives in the
+    // pending column until confirmation flips it to canonical.
+    const pending = await supabase.from('lawyer_subscriptions').select('*').eq('pending_provider_subscription_id', String(preapprovalId)).maybeSingle();
+    subscription = pending.data ?? null;
+  }
   if (!subscription) return;
+  subscription = await maybeApplyScheduledDowngrade(subscription) ?? subscription;
+  subscription = await retryOldProCancel(subscription) ?? subscription;
+  // Effective Plus: steady plus row, or an upgrade whose Plus preapproval
+  // just paid. Everything Founder-related is skipped for Plus (§20).
+  const isPlusEffective = subscription.plan === 'plus'
+    || (subscription.plan_change_status === 'upgrade_pending' && String(subscription.pending_provider_subscription_id || '') === String(preapprovalId));
   const providerEventId = String(payment.id);
   const providerEventAt = payment.date_created || payment.date_approved || new Date().toISOString();
   const { tryInsertSubscriptionEvent, shouldApplyEvent, markSubscriptionEventProcessed, markSubscriptionEventFailed } = await import('./server/subscriptions/subscriptionEvents.mjs');
@@ -5716,6 +5787,8 @@ const handleProAuthorizedPayment = async (payment) => {
     }
   }
   // Ledger for intro → standard (4.28B.2) — dedup via provider_authorized_payment_id UNIQUE, lifetime per lawyer
+  // 4.57D: plan marker (NULL = historical Pro). Plus payments never feed
+  // Founder logic: reconcile + intro-count filter on plan.
   try {
     const { error: ledgerErr } = await supabase.from('pro_subscription_payments').insert({
       lawyer_subscription_id: subscription.id,
@@ -5726,6 +5799,7 @@ const handleProAuthorizedPayment = async (payment) => {
       currency: 'CLP',
       status: String(payment.status || ''),
       paid_at: providerEventAt,
+      plan: isPlusEffective ? 'plus' : 'pro',
     });
     if (ledgerErr && String(ledgerErr.code) === '23505') {
       await supabase.from('pro_subscription_payments').update({
@@ -5738,10 +5812,26 @@ const handleProAuthorizedPayment = async (payment) => {
   } catch {}
 
   if (payment.status === 'approved') {
-    // Lifetime intro count (approved only) per lawyer — determines transition and future checkout price
+    // 4.57D: an approved payment on the pending Plus preapproval confirms
+    // the upgrade even before the preapproval webhook arrives (same
+    // fail-closed completer; event dedup above keeps it single).
+    if (subscription.plan_change_status === 'upgrade_pending'
+      && String(subscription.pending_provider_subscription_id || '') === String(preapprovalId)) {
+      const completed = await completePlusUpgrade(subscription, {
+        id: String(preapprovalId),
+        transaction_amount: Number(payment.transaction_amount || 0) || 0,
+        date_created: providerEventAt,
+      });
+      if (!completed.ok) {
+        try { await capturePostHog('plus_upgrade_failed', subscription.lawyer_id, { reason: completed.reason }); } catch {}
+      }
+      await markSubscriptionEventProcessed(supabase, { productType: 'pro', providerEventId });
+      return;
+    }
+    // Lifetime intro count (approved PRO-plan payments only) per lawyer — determines transition and future checkout price
     try {
-      const { count: lifetimeApproved } = await supabase.from('pro_subscription_payments').select('id', { count: 'exact', head: true }).eq('lawyer_id', subscription.lawyer_id).eq('status', 'approved');
-      if ((lifetimeApproved ?? 0) >= PRO_INTRO_SUCCESSFUL_PAYMENTS) {
+      const { count: lifetimeApproved } = await supabase.from('pro_subscription_payments').select('id', { count: 'exact', head: true }).eq('lawyer_id', subscription.lawyer_id).eq('status', 'approved').or('plan.is.null,plan.eq.pro');
+      if ((lifetimeApproved ?? 0) >= PRO_INTRO_SUCCESSFUL_PAYMENTS && !isPlusEffective) {
         // One-way transition 19990 → 49990, provider-first
         await ensureProStandardPrice({ ...subscription, amount_clp: subscription.amount_clp });
       }
@@ -5750,9 +5840,10 @@ const handleProAuthorizedPayment = async (payment) => {
     // payment truth is durable in the ledger; reconcile_pro_founders() repairs.
     // 4.32B.4: consume the checkout reservation after claiming (reservation
     // protected the 19.990 promise during checkout; the badge is now permanent).
+    // 4.57D: Plus payments NEVER claim (slot safety) — skip by effective plan.
     try {
       const { shouldAttemptFounderClaim } = await import('./server/proFounder.mjs');
-      if (shouldAttemptFounderClaim(payment.status)) {
+      if (!isPlusEffective && shouldAttemptFounderClaim(payment.status)) {
         await supabase.rpc('claim_pro_founder_slot', { p_lawyer_id: subscription.lawyer_id });
         try {
           await supabase.from('pro_founder_reservations').delete().eq('lawyer_id', subscription.lawyer_id);
@@ -8180,11 +8271,16 @@ const getAILawyerAccess = async (userId) => {
   if (!hasAccess) {
     const proAccess = await getProLawyerAccess(userId);
     if (proAccess.hasAccess) {
+      // 4.57D: Plus keeps the paid-tier path (isProLimited) but carries its
+      // own plan so quotas/features resolve to Plus allowances, never Pro.
+      // Stored Plus rows carry plan='plus' literally (direct comparison:
+      // no module import, vm-harness safe).
+      const paidPlan = proAccess.subscription?.plan === 'plus' ? 'plus' : 'pro_limited';
       return {
         subscription: proAccess.subscription,
         hasAccess: true,
-        status: 'pro_limited',
-        plan: 'pro_limited',
+        status: paidPlan,
+        plan: paidPlan,
         isTrialing: false,
         isActive: false,
         isProLimited: true,
@@ -8730,22 +8826,182 @@ app.get('/api/pro/founder-status', async (req, res) => {
   }
 });
 
+// ---- LegalUp Plus v1 (4.57D) — upgrade/downgrade transition authority ----
+// Mercado Pago and Supabase share no transaction: explicit persisted state
+// (pending_plan / plan_change_status / effective_at / provider ids) on
+// lawyer_subscriptions, never faked atomicity. Pro access is never removed
+// before Plus confirms authoritative; Plus access never granted from a
+// redirect — only from trusted provider/server conditions.
+
+// Retry/cleanup for a retired Pro preapproval after a confirmed upgrade.
+// Keeps previous_provider_subscription_id set on failure → visibly
+// incomplete + retried on later webhook events (never silently dropped).
+const retryOldProCancel = async (subscription) => {
+  const oldId = subscription?.previous_provider_subscription_id;
+  if (!subscription || !oldId) return subscription;
+  if (subscription.plan !== 'plus') return subscription;
+  try {
+    const { cancelMpPreapproval } = await import('./server/subscriptions/cancelSubscription.mjs');
+    const cancelled = await cancelMpPreapproval({ preapprovalId: oldId, accessToken: mercadopagoAccessToken });
+    if (cancelled.ok || cancelled.alreadyCancelledHint) {
+      const { data } = await supabase.from('lawyer_subscriptions').update({ previous_provider_subscription_id: null, updated_at: new Date().toISOString() }).eq('id', subscription.id).select().single();
+      return data ?? { ...subscription, previous_provider_subscription_id: null };
+    }
+    console.error('[LegalUpPlus] old Pro preapproval cancel failed (will retry)', { subscription_id: subscription.id, provider_id: oldId });
+  } catch (e) {
+    console.error('[LegalUpPlus] old Pro cancel threw (will retry)', e?.message || e);
+  }
+  return subscription;
+};
+
+// Completes a Pro→Plus upgrade once the Plus preapproval is confirmed
+// (authorized/active) by a trusted source. Fail-closed on amount mismatch:
+// Plus activates ONLY at exactly 79.990. Never touches Founder state.
+const completePlusUpgrade = async (subscription, mpPreapproval) => {
+  try {
+    const amount = Number(mpPreapproval?.auto_recurring?.transaction_amount ?? mpPreapproval?.transaction_amount ?? 0);
+    if (amount !== PLUS_SUBSCRIPTION_PRICE_CLP) {
+      console.error('[LegalUpPlus] upgrade amount mismatch, refusing activation', { subscription_id: subscription?.id, amount });
+      return { ok: false, reason: 'AMOUNT_MISMATCH' };
+    }
+    const { derivePeriodFromProvider } = await import('./server/subscriptions/subscriptionEvents.mjs');
+    const derived = derivePeriodFromProvider(mpPreapproval);
+    if (!derived) return { ok: false, reason: 'NO_PERIOD' };
+    const now = new Date();
+    const { data, error } = await supabase.from('lawyer_subscriptions').update({
+      plan: 'plus',
+      status: 'active',
+      amount_clp: PLUS_SUBSCRIPTION_PRICE_CLP,
+      current_period_start: derived.start.toISOString(),
+      current_period_end: derived.end.toISOString(),
+      provider_subscription_id: String(mpPreapproval.id),
+      cancel_at_period_end: false,
+      cancelled_at: null,
+      pending_plan: null,
+      plan_change_status: null,
+      plan_change_effective_at: null,
+      pending_provider_subscription_id: null,
+      pending_init_point: null,
+      updated_at: now.toISOString(),
+    }).eq('id', subscription.id).select().single();
+    if (error) throw error;
+    await retryOldProCancel(data);
+    try { await capturePostHog('plus_upgrade_completed', subscription.lawyer_id, { from_plan: 'pro', target_plan: 'plus', price_clp: PLUS_SUBSCRIPTION_PRICE_CLP }); } catch {}
+    return { ok: true, subscription: data };
+  } catch (e) {
+    console.error('[LegalUpPlus] complete upgrade failed', e?.message || e);
+    return { ok: false, reason: 'DB_ERROR' };
+  }
+};
+
+// Applies a due Plus→Pro scheduled downgrade: provider-first PUT to the Pro
+// price (proven mechanism), then canonical plan flip. Founder history
+// preserved — returning price follows historical Pro intro count, never
+// restarts the discounted cycle. Failure keeps the schedule for retry.
+const maybeApplyScheduledDowngrade = async (subscription) => {
+  try {
+    if (!subscription || subscription.plan !== 'plus') return subscription;
+    if (subscription.plan_change_status !== 'downgrade_scheduled' || subscription.pending_plan !== 'pro') return subscription;
+    const eff = subscription.plan_change_effective_at ? Date.parse(subscription.plan_change_effective_at) : NaN;
+    if (Number.isNaN(eff) || Date.now() < eff) return subscription;
+    const { decideCheckoutPrice } = await import('./server/proFounder.mjs');
+    const [{ data: prof }, lifetimeRes] = await Promise.all([
+      supabase.from('profiles').select('is_founder').eq('id', subscription.lawyer_id).maybeSingle(),
+      supabase.from('pro_subscription_payments').select('id', { count: 'exact', head: true }).eq('lawyer_id', subscription.lawyer_id).eq('status', 'approved').or('plan.is.null,plan.eq.pro'),
+    ]);
+    const proPrice = decideCheckoutPrice({ isFounder: prof?.is_founder === true, lifetimeApproved: lifetimeRes?.count ?? 0, reservation: null });
+    if (subscription.provider_subscription_id) {
+      const put = await fetch(`https://api.mercadopago.com/preapproval/${subscription.provider_subscription_id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${mercadopagoAccessToken}` },
+        body: JSON.stringify({ auto_recurring: { transaction_amount: proPrice, currency_id: 'CLP' } }),
+      });
+      if (!put.ok) {
+        console.error('[LegalUpPlus] downgrade PUT failed (schedule kept for retry)', { subscription_id: subscription.id, status: put.status });
+        return subscription;
+      }
+    }
+    const now = new Date();
+    const { data, error } = await supabase.from('lawyer_subscriptions').update({
+      plan: PRO_SUBSCRIPTION_PLAN,
+      amount_clp: proPrice,
+      pending_plan: null,
+      plan_change_status: null,
+      plan_change_effective_at: null,
+      updated_at: now.toISOString(),
+    }).eq('id', subscription.id).select().single();
+    if (error) throw error;
+    try { await capturePostHog('plus_downgrade_completed', subscription.lawyer_id, { from_plan: 'plus', target_plan: 'pro', price_clp: proPrice }); } catch {}
+    return data;
+  } catch (e) {
+    console.error('[LegalUpPlus] scheduled downgrade failed (kept for retry)', e?.message || e);
+    return subscription;
+  }
+};
+
 app.post('/api/pro/subscribe', async (req, res) => {
   let userId = null;
   try {
     userId = await requireAILawyer(req, res);
     if (!userId) return;
 
-    // 4.57B multi-tier foundation: optional target plan. Missing/'pro' keep
-    // existing Pro behavior byte-for-byte. Anything else (incl. inactive
-    // 'plus') fails closed HERE, before founder reservation, MP calls or
-    // DB writes — Plus can never consume founder slots or create checkouts.
+    // 4.57D multi-tier checkout: plan=pro (default, backward compatible) or
+    // plan=plus. Anything else fails closed HERE, before founder reservation,
+    // MP calls or DB writes. Client-supplied price/amount/discount/quota are
+    // never read: the server resolves price from the plan catalog + user.
     const checkoutPlan = resolveCheckoutPlanCode(req.body);
     if (!checkoutPlan.ok) {
       return res.status(400).json({ error: 'Plan no disponible.', code: PLAN_NOT_AVAILABLE });
     }
+    const targetPlan = checkoutPlan.planCode; // 'pro' | 'plus'
+    const isPlusTarget = targetPlan === 'plus';
 
-    // Founder 15 check — server-side, counts active/pending founder slots
+    let subscription = await getProLawyerSubscription(userId);
+    const hasActivePaid = !!(subscription && subscription.status === 'active' && subscription.provider_subscription_id);
+    const currentPaidPlan = subscription ? canonicalPaidPlan(subscription) : null;
+
+    // 4.57D upgrade path (P0): active Pro + target Plus. NEVER naive
+    // cancel-then-create: Pro access stays intact until Plus is confirmed
+    // authoritative (§31). Same-tier re-checkout keeps existing 409 semantics.
+    const isUpgrade = isPlusTarget && hasActivePaid && currentPaidPlan === 'pro';
+    if (hasActivePaid && !isUpgrade) {
+      const alreadyMsg = currentPaidPlan === 'plus'
+        ? 'Ya tienes una suscripción Plus activa.'
+        : 'Ya tienes una suscripción Pro activa.';
+      return res.status(409).json({ error: alreadyMsg, code: 'ALREADY_SUBSCRIBED' });
+    }
+
+    // Upgrade resume (idempotency §33): a pending upgrade reuses its stored
+    // checkout instead of creating a duplicate Plus preapproval.
+    if (isUpgrade && subscription.plan_change_status === 'upgrade_pending' && subscription.pending_provider_subscription_id) {
+      try {
+        const mpCheck = await fetch(`https://api.mercadopago.com/preapproval/${subscription.pending_provider_subscription_id}`, {
+          headers: { Authorization: `Bearer ${mercadopagoAccessToken}` },
+        });
+        const mpData = await mpCheck.json().catch(() => ({}));
+        if (mpCheck.ok) {
+          const mpStatus = (mpData.status || '').toLowerCase();
+          if (['authorized', 'active'].includes(mpStatus)) {
+            const completed = await completePlusUpgrade(subscription, mpData);
+            if (completed.ok) {
+              return res.json({ success: true, already_active: true, status: 'active', plan: 'plus', provider_status: mpStatus });
+            }
+          }
+          if (mpStatus === 'pending' && subscription.pending_init_point) {
+            return res.json({ success: true, pending_checkout: true, upgrade: true, initPoint: subscription.pending_init_point, preapproval_id: subscription.pending_provider_subscription_id, provider_status: mpStatus });
+          }
+          if (!['cancelled', 'rejected', 'expired'].includes(mpStatus) && mpStatus !== 'pending') {
+            return res.status(502).json({ error: 'No se pudo verificar el estado con Mercado Pago, intenta nuevamente.', code: 'PROVIDER_ERROR', provider_status: mpCheck.status });
+          }
+          // cancelled/rejected/expired (or pending without URL) → fall through and create a fresh Plus preapproval.
+        }
+      } catch {
+        return res.status(503).json({ error: 'No se pudo contactar a Mercado Pago, intenta nuevamente.', code: 'PROVIDER_UNREACHABLE' });
+      }
+    }
+
+    // Founder 15 check — server-side, counts active/pending founder slots.
+    // Plus NEVER participates: no reservation, no slot, no intro price.
     const { count: founderCount } = await supabase
       .from('lawyer_subscriptions')
       .select('id', { count: 'exact', head: true })
@@ -8753,11 +9009,6 @@ app.post('/api/pro/subscribe', async (req, res) => {
       .in('status', ['pending', 'active']);
 
     const isFounderSlot = (founderCount ?? 0) < PRO_FOUNDER_LIMIT;
-
-    let subscription = await getProLawyerSubscription(userId);
-    if (subscription && subscription.status === 'active' && subscription.provider_subscription_id) {
-      return res.status(409).json({ error: 'Ya tienes una suscripción Pro activa.', code: 'ALREADY_SUBSCRIBED' });
-    }
     // Pending with provider id: intentar reconciliar o reutilizar checkout
     if (subscription && subscription.status === 'pending' && subscription.provider_subscription_id) {
       try {
@@ -8797,15 +9048,18 @@ app.post('/api/pro/subscribe', async (req, res) => {
 
     const appUrl = process.env.APP_URL || process.env.FRONTEND_URL || 'https://legalup.cl';
 
-    // 4.32B.4 Founder-aware price: existing Founders use the intro-count rule;
-    // others receive intro ONLY via an atomic Founder reservation (#16+ → standard).
+    // 4.57D price authority. Pro: certified Founder/standard resolver
+    // (intro-payment count reads PRO-plan payments only — Plus payments
+    // never advance the Founder counter). Plus: fixed 79.990, founder-blind.
     const { decideCheckoutPrice, PRO_FOUNDER_RESERVATION_TTL_SECONDS } = await import('./server/proFounder.mjs');
     let initialPrice = PRO_STANDARD_PRICE_CLP;
     let founderTrack = false;
-    try {
+    if (isPlusTarget) {
+      initialPrice = resolvePlanPrice({ planCode: 'plus' }).amountClp;
+    } else try {
       const [{ data: prof }, lifetimeRes, reservRes] = await Promise.all([
         supabase.from('profiles').select('is_founder').eq('id', userId).maybeSingle(),
-        supabase.from('pro_subscription_payments').select('id', { count: 'exact', head: true }).eq('lawyer_id', userId).eq('status', 'approved'),
+        supabase.from('pro_subscription_payments').select('id', { count: 'exact', head: true }).eq('lawyer_id', userId).eq('status', 'approved').or('plan.is.null,plan.eq.pro'),
         supabase.rpc('reserve_pro_founder_slot', { p_lawyer_id: userId, p_ttl_seconds: PRO_FOUNDER_RESERVATION_TTL_SECONDS }),
       ]);
       const isFounder = prof?.is_founder === true;
@@ -8826,12 +9080,31 @@ app.post('/api/pro/subscribe', async (req, res) => {
         .from('lawyer_subscriptions')
         .insert({
           lawyer_id: userId,
-          plan: PRO_SUBSCRIPTION_PLAN,
+          plan: isPlusTarget ? 'plus' : PRO_SUBSCRIPTION_PLAN,
           status: 'pending',
           provider: 'mercadopago',
           amount_clp: initialPrice,
-          is_founder: isFounderSlot,
+          // 4.57D: a new Plus row NEVER takes a Founder slot. The permanent
+          // badge lives in profiles.is_founder (earned only via Pro payments).
+          is_founder: isPlusTarget ? false : isFounderSlot,
         })
+        .select()
+        .single();
+      if (error) throw error;
+      subscription = data;
+    } else if (isUpgrade) {
+      // Upgrade staging: Pro row untouched (plan/amount/provider stay Pro)
+      // until the Plus preapproval confirms. Only transition state mutates.
+      const { data, error } = await supabase
+        .from('lawyer_subscriptions')
+        .update({
+          pending_plan: 'plus',
+          plan_change_status: 'upgrade_pending',
+          plan_change_effective_at: null,
+          previous_provider_subscription_id: subscription.provider_subscription_id,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', subscription.id)
         .select()
         .single();
       if (error) throw error;
@@ -8840,7 +9113,19 @@ app.post('/api/pro/subscribe', async (req, res) => {
       // Reactivar pending/cancelled/expired — actualizar amount según lifetime intro
       const { data, error } = await supabase
         .from('lawyer_subscriptions')
-        .update({ status: 'pending', amount_clp: initialPrice, is_founder: isFounderSlot, updated_at: new Date().toISOString() })
+        .update({
+          plan: isPlusTarget ? 'plus' : PRO_SUBSCRIPTION_PLAN,
+          status: 'pending',
+          amount_clp: initialPrice,
+          // Existing rows keep their earned is_founder value; only fresh
+          // Pro rows may take a free slot. Plus never flips it to true here
+          // (a historical Founder keeps true; anyone else stays as-is).
+          is_founder: isPlusTarget ? subscription.is_founder : isFounderSlot,
+          pending_plan: null,
+          plan_change_status: null,
+          plan_change_effective_at: null,
+          updated_at: new Date().toISOString(),
+        })
         .eq('id', subscription.id)
         .select()
         .single();
@@ -8850,8 +9135,8 @@ app.post('/api/pro/subscribe', async (req, res) => {
 
     const userData = await getAILawyerEmail(userId);
     const preapprovalData = {
-      reason: 'LegalUp Pro - Suscripción mensual',
-      external_reference: `${PRO_EXTERNAL_REF_PREFIX}${userId}`,
+      reason: isPlusTarget ? 'LegalUp Plus - Suscripción mensual' : 'LegalUp Pro - Suscripción mensual',
+      external_reference: `${isPlusTarget ? PLUS_EXTERNAL_REF_PREFIX : PRO_EXTERNAL_REF_PREFIX}${userId}`,
       payer_email: userData?.email || '',
       auto_recurring: {
         frequency: 1,
@@ -8878,26 +9163,135 @@ app.post('/api/pro/subscribe', async (req, res) => {
     const mpResult = await mpResponse.json();
     if (!mpResponse.ok) {
       console.error('[LegalUpPro] MP preapproval error:', mpResult);
-      // 4.32B.4: MP failure → release our reservation so retry can re-reserve.
-      // Only releases holds without an attached provider subscription.
-      try {
+    // 4.32B.4: MP failure → release our reservation so retry can re-reserve.
+    // Only releases holds without an attached provider subscription.
+    // Plus never reserves (no Founder path), so this is Pro-only by construction.
+    try {
+      if (!isPlusTarget) {
         await supabase.from('pro_founder_reservations').delete().eq('lawyer_id', userId).is('provider_subscription_id', null);
-      } catch {}
+      }
+      // A failed upgrade checkout must not strand transition state: a retry
+      // creates a fresh preapproval, so clear a stale pending link only when
+      // none was stored yet (stored links are resumed, never orphaned).
+      if (isUpgrade && !subscription.pending_provider_subscription_id) {
+        await supabase.from('lawyer_subscriptions').update({ pending_plan: null, plan_change_status: null, previous_provider_subscription_id: null, updated_at: new Date().toISOString() }).eq('id', subscription.id);
+      }
+    } catch {}
       return res.status(500).json({ error: 'No se pudo iniciar el cobro en Mercado Pago.', details: mpResult });
     }
 
-    await supabase.from('lawyer_subscriptions').update({ provider_subscription_id: String(mpResult.id), updated_at: new Date().toISOString() }).eq('id', subscription.id);
+    await supabase.from('lawyer_subscriptions').update(
+      isUpgrade
+        ? { pending_provider_subscription_id: String(mpResult.id), pending_init_point: mpResult.init_point || mpResult.sandbox_init_point || null, updated_at: new Date().toISOString() }
+        : { provider_subscription_id: String(mpResult.id), updated_at: new Date().toISOString() }
+    ).eq('id', subscription.id);
     // Attach provider subscription to our reservation (abandonment tracking).
     try {
       await supabase.from('pro_founder_reservations').update({ provider_subscription_id: String(mpResult.id) }).eq('lawyer_id', userId);
     } catch {}
 
-    await capturePostHog('pro_subscription_checkout_started', userId, { price_clp: initialPrice, founder_track: founderTrack, preapproval_id: String(mpResult.id), is_founder: isFounderSlot });
+    await capturePostHog(isPlusTarget ? 'plus_upgrade_started' : 'pro_subscription_checkout_started', userId, { price_clp: initialPrice, founder_track: founderTrack, preapproval_id: String(mpResult.id), is_founder: isFounderSlot, ...(isUpgrade ? { from_plan: 'pro', target_plan: 'plus' } : {}) });
 
-    res.json({ success: true, subscription_id: subscription.id, preapproval_id: String(mpResult.id), initPoint: mpResult.init_point || mpResult.sandbox_init_point, is_founder: isFounderSlot, initial_price_clp: initialPrice, founder_track: founderTrack });
+    res.json({ success: true, subscription_id: subscription.id, preapproval_id: String(mpResult.id), initPoint: mpResult.init_point || mpResult.sandbox_init_point, is_founder: isFounderSlot, initial_price_clp: initialPrice, founder_track: founderTrack, plan: targetPlan, ...(isUpgrade ? { upgrade: true, from_plan: 'pro', target_plan: 'plus', immediate: true, prorated_credit: false } : {}) });
   } catch (error) {
     console.error('[LegalUpPro] subscribe error:', error);
-    res.status(500).json({ error: 'No se pudo procesar la suscripción Pro.' });
+    res.status(500).json({ error: 'No se pudo procesar la suscripción.' });
+  }
+});
+
+// 4.57D: canonical subscription read for settings UI (plan mapping,
+// transition state, effective dates). Server-computed; RLS owner-select
+// already exposes the row, this adds canonical semantics only.
+app.get('/api/pro/subscription', async (req, res) => {
+  try {
+    const userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    let subscription = await getProLawyerSubscription(userId);
+    if (!subscription) return res.json({ success: true, subscription: null });
+    subscription = await maybeApplyScheduledDowngrade(subscription) ?? subscription;
+    const plan = canonicalPaidPlan(subscription);
+    res.json({
+      success: true,
+      subscription: {
+        id: subscription.id,
+        plan,
+        status: subscription.status,
+        amount_clp: subscription.amount_clp,
+        current_period_start: subscription.current_period_start,
+        current_period_end: subscription.current_period_end,
+        is_founder: !!subscription.is_founder,
+        cancel_at_period_end: !!subscription.cancel_at_period_end,
+        pending_plan: subscription.pending_plan ?? null,
+        plan_change_status: subscription.plan_change_status ?? null,
+        plan_change_effective_at: subscription.plan_change_effective_at ?? null,
+        old_pro_cancel_pending: !!subscription.previous_provider_subscription_id,
+      },
+    });
+  } catch (error) {
+    console.error('[LegalUpPlus] subscription read error:', error);
+    res.status(500).json({ error: 'No se pudo leer la suscripción.' });
+  }
+});
+
+// 4.57D: Plus → Pro scheduled downgrade. Effective at the Plus period end —
+// Plus limits stay fully active until then. Persisted server-side (never
+// browser state). No data deletion, ever; over-capacity becomes write-blocked
+// at the effective date via the plan-aware triggers/quotas.
+app.post('/api/pro/downgrade', async (req, res) => {
+  try {
+    const userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    const bodyPlan = typeof req.body?.target_plan === 'string' ? req.body.target_plan : 'pro';
+    if (normalizePlanCode(bodyPlan) !== 'pro') {
+      return res.status(400).json({ error: 'Destino de downgrade no válido.', code: PLAN_NOT_AVAILABLE });
+    }
+    let subscription = await getProLawyerSubscription(userId);
+    if (!subscription) return res.status(409).json({ error: 'No tienes una suscripción activa.', code: 'NOT_ACTIVE' });
+    subscription = await maybeApplyScheduledDowngrade(subscription) ?? subscription;
+    if (canonicalPaidPlan(subscription) !== 'plus' || subscription.status !== 'active') {
+      return res.status(409).json({ error: 'El downgrade programado requiere Plus activo.', code: 'NOT_PLUS_ACTIVE' });
+    }
+    if (subscription.plan_change_status === 'upgrade_pending') {
+      return res.status(409).json({ error: 'Hay un upgrade en curso. Intenta nuevamente cuando se complete.', code: 'TRANSITION_IN_PROGRESS' });
+    }
+    if (!subscription.current_period_end || Number.isNaN(Date.parse(subscription.current_period_end))) {
+      return res.status(409).json({ error: 'No se pudo determinar el fin del período. Intenta más tarde.', code: 'NO_PERIOD' });
+    }
+    if (subscription.plan_change_status === 'downgrade_scheduled') {
+      return res.json({ success: true, already_scheduled: true, effective_at: subscription.plan_change_effective_at, target_plan: 'pro' });
+    }
+    const { data, error } = await supabase.from('lawyer_subscriptions').update({
+      pending_plan: 'pro',
+      plan_change_status: 'downgrade_scheduled',
+      plan_change_effective_at: subscription.current_period_end,
+      updated_at: new Date().toISOString(),
+    }).eq('id', subscription.id).select().single();
+    if (error) throw error;
+    try { await capturePostHog('plus_downgrade_scheduled', userId, { from_plan: 'plus', target_plan: 'pro', effective_at: data.plan_change_effective_at }); } catch {}
+    res.json({ success: true, scheduled: true, effective_at: data.plan_change_effective_at, target_plan: 'pro' });
+  } catch (error) {
+    console.error('[LegalUpPlus] downgrade schedule error:', error);
+    res.status(500).json({ error: 'No se pudo programar el downgrade.' });
+  }
+});
+
+// 4.57D: cancel a scheduled Plus → Pro downgrade (safe while not yet effective).
+app.post('/api/pro/downgrade/cancel', async (req, res) => {
+  try {
+    const userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    const subscription = await getProLawyerSubscription(userId);
+    if (!subscription || subscription.plan_change_status !== 'downgrade_scheduled') {
+      return res.json({ success: true, nothing_scheduled: true });
+    }
+    const { error } = await supabase.from('lawyer_subscriptions').update({
+      pending_plan: null, plan_change_status: null, plan_change_effective_at: null, updated_at: new Date().toISOString(),
+    }).eq('id', subscription.id);
+    if (error) throw error;
+    res.json({ success: true, cancelled: true });
+  } catch (error) {
+    console.error('[LegalUpPlus] downgrade unschedule error:', error);
+    res.status(500).json({ error: 'No se pudo cancelar el downgrade programado.' });
   }
 });
 
@@ -8906,15 +9300,27 @@ app.post('/api/pro/subscription/cancel', async (req, res) => {
   try {
     userId = await requireAILawyer(req, res);
     if (!userId) return;
-    const subscription = await getProLawyerSubscription(userId);
+    let subscription = await getProLawyerSubscription(userId);
     if (!subscription) {
-      return res.status(409).json({ error: 'No tienes una suscripción Pro activa.', code: 'NOT_ACTIVE' });
+      return res.status(409).json({ error: 'No tienes una suscripción activa.', code: 'NOT_ACTIVE' });
+    }
+    const planLabel = canonicalPaidPlan(subscription) === 'plus' ? 'Plus' : 'Pro';
+    // 4.57D: abandoning an in-flight upgrade reverts transition state; the
+    // untouched Pro row (plan/provider/period) keeps full access.
+    if (subscription.plan_change_status === 'upgrade_pending' && subscription.pending_provider_subscription_id) {
+      try {
+        const { cancelMpPreapproval } = await import('./server/subscriptions/cancelSubscription.mjs');
+        await cancelMpPreapproval({ preapprovalId: subscription.pending_provider_subscription_id, accessToken: mercadopagoAccessToken });
+      } catch {}
+      await supabase.from('lawyer_subscriptions').update({ pending_plan: null, plan_change_status: null, plan_change_effective_at: null, pending_provider_subscription_id: null, pending_init_point: null, previous_provider_subscription_id: null, updated_at: new Date().toISOString() }).eq('id', subscription.id);
+      try { await capturePostHog('plus_upgrade_failed', userId, { reason: 'cancelled_by_user' }); } catch {}
+      return res.json({ success: true, upgrade_abandoned: true });
     }
     if (subscription.status === 'cancelled') {
       return res.json({ success: true, cancel_at_period_end: true, already_cancelled: true });
     }
     if (subscription.status !== 'active') {
-      return res.status(409).json({ error: 'No tienes una suscripción Pro activa.', code: 'NOT_ACTIVE' });
+      return res.status(409).json({ error: `No tienes una suscripción ${planLabel} activa.`, code: 'NOT_ACTIVE' });
     }
     if (subscription.provider_subscription_id) {
       const { cancelMpPreapproval, reconcileMpPreapprovalStatus } = await import('./server/subscriptions/cancelSubscription.mjs');
@@ -8935,7 +9341,10 @@ app.post('/api/pro/subscription/cancel', async (req, res) => {
       }
     }
     const now = new Date();
-    await supabase.from('lawyer_subscriptions').update({ status: 'cancelled', cancelled_at: now.toISOString(), cancel_at_period_end: true, updated_at: now.toISOString() }).eq('id', subscription.id);
+    // 4.57D: cancelling clears a scheduled downgrade (moot once cancelled);
+    // paid entitlement of the CURRENT plan runs to period end (no immediate
+    // switch to Free; free_case_consumed ledger untouched — §46).
+    await supabase.from('lawyer_subscriptions').update({ status: 'cancelled', cancelled_at: now.toISOString(), cancel_at_period_end: true, pending_plan: null, plan_change_status: null, plan_change_effective_at: null, updated_at: now.toISOString() }).eq('id', subscription.id);
     // 4.32B.4: cancellation never removes the permanent Founder badge, but a
     // pending (unpaid) reservation must not squat a slot.
     try {
@@ -8946,13 +9355,13 @@ app.post('/api/pro/subscription/cancel', async (req, res) => {
     // Reuse AI email template for Pro cancelled
     if (userData?.email) {
       try {
-        await sendAIEmail(userData.email, 'Tu suscripción de LegalUp Pro fue cancelada', `<p>Tu suscripción Pro se cancelará al final del período.</p>`);
+        await sendAIEmail(userData.email, `Tu suscripción de LegalUp ${planLabel} fue cancelada`, `<p>Tu suscripción ${planLabel} se cancelará al final del período.</p>`);
       } catch {}
     }
     res.json({ success: true, cancel_at_period_end: true });
   } catch (error) {
     console.error('[LegalUpPro] cancel error:', error);
-    res.status(500).json({ error: 'No se pudo cancelar la suscripción Pro.' });
+    res.status(500).json({ error: 'No se pudo cancelar la suscripción.' });
   }
 });
 
@@ -10807,7 +11216,8 @@ app.get('/api/ai/usage', async (req, res) => {
     const requests = (usage.document_analysis_count || 0) + (usage.chat_message_count || 0);
 
     // 4.38C: commercial allowance (authority is server/DB; frontend only displays).
-    // Limits apply to pro_limited; other plans get used counts with null limits.
+    // Limits apply to paid tiers (pro_limited, plus); other plans get used
+    // counts with null limits. 4.57D: Plus resolves its higher pools.
     // Never exposes provider cost, tokens detail beyond totals, or other lawyers.
     let allowance = null;
     try {
@@ -10858,7 +11268,7 @@ app.get('/api/ai/usage', async (req, res) => {
           chat: withLimit(usage.chat_message_count, quota?.chat),
           analysis: withLimit(usage.document_analysis_count, quota?.analysis),
           research: withLimit(usage.jurisprudence_research_count, quota?.research),
-          documents: withLimit(storedDocuments, plan === 'pro_limited' ? PRO_AI_ALLOWANCE.storedDocuments : null),
+          documents: withLimit(storedDocuments, plan === 'plus' ? PLUS_AI_ALLOWANCE.storedDocuments : plan === 'pro_limited' ? PRO_AI_ALLOWANCE.storedDocuments : null),
         };
       }
     } catch (allowanceError) {

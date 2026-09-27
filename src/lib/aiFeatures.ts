@@ -85,9 +85,9 @@ const PLAN_FEATURES: Record<string, AIFeatureKey[]> = {
   // 4.44A: free first Case (chat + analysis only; research stays blocked).
   // 4.49A: +1 lifetime jurisprudence/research (still no case_analysis).
   free_case: ['document_analysis', 'case_chat', 'jurisprudence'],
-  // 4.57B: future tier, commercially INACTIVE — explicitly no features
-  // (fail closed; identical to the unknown-plan fallback, but auditable).
-  plus: [],
+  // 4.57D: LegalUp Plus v1 = same core product as Pro, higher quotas only.
+  // No Plus-only features (backend authority: server/ai/plans.mjs).
+  plus: ['document_analysis', 'case_chat', 'case_analysis', 'jurisprudence'],
 };
 
 /**

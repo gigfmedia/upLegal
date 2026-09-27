@@ -23,6 +23,9 @@ import {
   type AIChatMessage as ChatMessage,
 } from '@/hooks/useAIChat';
 import type { AIDocumentListItem } from '@/hooks/useAIDocuments';
+import { useAIUsage } from '@/hooks/useAIUsage';
+import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
+import { chatLimitMessage, upgradeTargetForPlan } from '@/lib/planDisplay';
 
 type AIChatProps = {
   workspaceId: string;
@@ -35,7 +38,7 @@ type AIChatProps = {
   fullHeight?: boolean;
 };
 
-function errorToMessage(error: AIChatError | null): string {
+function errorToMessage(error: AIChatError | null, plan?: unknown): string {
   switch (error?.code) {
     case 'CONTEXT_TOO_LARGE':
       return 'Este caso contiene demasiada información para procesarla completa en una sola consulta.';
@@ -48,7 +51,7 @@ function errorToMessage(error: AIChatError | null): string {
     case 'OUTPUT_TOKEN_LIMIT':
       return 'La respuesta superó el presupuesto de tokens. Intenta de nuevo con una pregunta más acotada.';
     case 'AI_CHAT_LIMIT_REACHED':
-      return 'Alcanzaste las 300 consultas IA incluidas este mes. Tu disponibilidad se renovará el próximo mes.';
+      return chatLimitMessage(plan);
     case 'FREE_CASE_CHAT_LIMIT_REACHED':
       return 'Ya usaste las 3 consultas IA incluidas en tu primer caso. Pasa a Pro para seguir usando IA.';
     case 'AI_RESOURCE_FORBIDDEN':
@@ -88,6 +91,10 @@ function AIChatSession({ workspaceId, documents, documentId, onUploadClick, exte
 
   const chatQuery = useAICaseChat(workspaceId, chatEnabled);
   const sendMutation = useSendChatMessage(workspaceId);
+  // 4.57D: backend-resolved plan for limit copy + Plus upgrade targeting.
+  const { data: usageData } = useAIUsage();
+  const usagePlan: unknown = usageData?.allowance?.plan;
+  const [plusOpen, setPlusOpen] = useState(false);
 
   const [input, setInput] = useState('');
   const sending = sendMutation.isPending;
@@ -96,6 +103,9 @@ function AIChatSession({ workspaceId, documents, documentId, onUploadClick, exte
   const [pendingUser, setPendingUser] = useState<string | null>(null);
   const [error, setError] = useState<AIChatError | null>(null);
   const [failedMessage, setFailedMessage] = useState<string | null>(null);
+  // 4.57D: Plus CTA only on a commercial chat-limit error for Pro lawyers
+  // (Plus exhaustion shows reset-only copy; free targets Pro elsewhere).
+  const showPlusCta = error?.code === 'AI_CHAT_LIMIT_REACHED' && upgradeTargetForPlan(usagePlan) === 'plus';
   // Mensajes de asistente que llegaron en vivo (POST). Solo estos reciben el
   // efecto de escritura; el historial cargado al recargar la página se muestra
   // completo, sin re-animar burbujas antiguas.
@@ -262,16 +272,19 @@ function AIChatSession({ workspaceId, documents, documentId, onUploadClick, exte
           });
           // 4.38C: commercial limit analytics (safe props only, never content).
           // 4.44A: same treatment for the free first-Case lifetime pool.
+          // 4.57D: plan-aware (current_plan + upgrade target, no PII).
           if (err.code === 'AI_CHAT_LIMIT_REACHED' || err.code === 'FREE_CASE_CHAT_LIMIT_REACHED') {
             captureChatEvent('ai_usage_limit_reached', {
               capability: 'chat',
               code: err.code,
+              current_plan: typeof usagePlan === 'string' ? usagePlan : undefined,
+              target_plan: upgradeTargetForPlan(usagePlan) ?? undefined,
             });
           }
         },
       }
     );
-  }, [conversationId, documentId, readyCount, mutate]);
+  }, [conversationId, documentId, readyCount, mutate, usagePlan]);
 
   // Fase 4.18.1: pregunta externa desde Inteligencia del caso (Siguiente paso / Preguntas sugeridas)
   useEffect(() => {
@@ -455,10 +468,22 @@ function AIChatSession({ workspaceId, documents, documentId, onUploadClick, exte
                       className="h-4 w-4 shrink-0 text-amber-600"
                       aria-hidden="true"
                     />
-                    <p className="text-xs text-amber-900">{errorToMessage(error)}</p>
+                    <p className="text-xs text-amber-900">{errorToMessage(error, usagePlan)}</p>
+                    {showPlusCta && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPlusOpen(true)}
+                        className="shrink-0 border-amber-300 text-amber-900 hover:bg-amber-100"
+                      >
+                        Ver LegalUp Plus
+                      </Button>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
+              <ProPricingModal open={plusOpen} onOpenChange={setPlusOpen} triggerAction="ai_chat_limit" targetPlan="plus" />
             </div>
 
             <div className="mt-4 flex items-center gap-2">

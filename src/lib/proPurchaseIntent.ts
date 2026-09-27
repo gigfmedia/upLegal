@@ -9,7 +9,7 @@
 
 const KEY = "pro_pending_action";
 
-export type ProPendingAction = "checkout" | null;
+export type ProPendingAction = "checkout" | "checkout_plus" | null;
 
 function storage(): Storage | null {
   try {
@@ -35,7 +35,8 @@ export function takeProPendingAction(): ProPendingAction {
     if (!store) return null;
     const value = store.getItem(KEY);
     store.removeItem(KEY);
-    return value === "checkout" ? "checkout" : null;
+    // 4.57D: Plus checkout intent preserved alongside Pro.
+    return value === "checkout" || value === "checkout_plus" ? value : null;
   } catch {
     return null;
   }
@@ -44,7 +45,8 @@ export function takeProPendingAction(): ProPendingAction {
 /** Solo lectura (para tests/UI sin consumir). */
 export function peekProPendingAction(): ProPendingAction {
   try {
-    return storage()?.getItem(KEY) === "checkout" ? "checkout" : null;
+    const value = storage()?.getItem(KEY);
+    return value === "checkout" || value === "checkout_plus" ? value : null;
   } catch {
     return null;
   }

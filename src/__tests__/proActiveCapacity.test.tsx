@@ -29,6 +29,13 @@ const entState = vi.hoisted(() => ({
 
 const casesState = vi.hoisted(() => ({ cases: [] as unknown[] }));
 
+// 4.57D: CasesPage reads useProSubscription for the Plus upgrade path
+// (Pro at capacity → Plus CTA; Plus at capacity → close guidance).
+vi.mock('@/hooks/useProSubscription', () => ({
+  useProSubscription: () => ({ isPlus: false, hasProAccess: true }),
+  useProSubscribe: () => ({ mutateAsync: vi.fn() }),
+}));
+
 vi.mock('@/hooks/useLawyerCases', () => ({
   useLawyerCases: () => ({
     cases: casesState.cases,

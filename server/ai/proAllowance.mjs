@@ -25,6 +25,21 @@ export const PRO_AI_ALLOWANCE = Object.freeze({
   storedDocuments: 50,
 });
 
+/** Monthly/standing commercial limits for LegalUp Plus (4.57D: capacity only). */
+export const PLUS_AI_ALLOWANCE = Object.freeze({
+  /** Successful AI questions per UTC month, shared case_chat + document_chat pool. */
+  chatPerMonth: 750,
+  /** Successful document analyses per UTC month. */
+  analysisPerMonth: 100,
+  /** Successful research/jurisprudence operations per UTC month. */
+  researchPerMonth: 25,
+  /** Current stored ai_documents rows per lawyer (deleting frees a slot). */
+  storedDocuments: 150,
+});
+
+/** Active LAWYER_DIRECT case capacity per paid tier (DB trigger mirrors). */
+export const PAID_CASE_LIMITS = Object.freeze({ pro: 20, plus: 40 });
+
 /** Commercial limit error codes per metering capability (never provider internals). */
 export const COMMERCIAL_LIMIT_CODES = Object.freeze({
   case_chat: 'AI_CHAT_LIMIT_REACHED',
@@ -67,8 +82,16 @@ export const DOCUMENT_CAPACITY_ERROR_MARKER = 'AI_DOCUMENT_CAPACITY_REACHED';
  * Commercial quota for a resolved plan, or null when no commercial quota
  * applies (legacy essential, trial, free). Shape matches ai_begin_operation
  * commercial params: { chat, analysis, research } monthly successful units.
+ * Plus (4.57D) resolves its own higher pools; Pro unchanged.
  */
 export function commercialQuotaForPlan(plan) {
+  if (plan === 'plus') {
+    return {
+      chat: PLUS_AI_ALLOWANCE.chatPerMonth,
+      analysis: PLUS_AI_ALLOWANCE.analysisPerMonth,
+      research: PLUS_AI_ALLOWANCE.researchPerMonth,
+    };
+  }
   if (plan !== 'pro_limited') return null;
   return {
     chat: PRO_AI_ALLOWANCE.chatPerMonth,

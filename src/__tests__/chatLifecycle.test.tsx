@@ -15,6 +15,9 @@ vi.mock('@/components/legalup-ai/AIChatSuggestions', () => ({
   ),
 }));
 vi.mock('@/components/legalup-ai/AIChatMessage', () => ({ AIChatMessage: ({ message }: { message: { content: string } }) => <p>{message.content}</p> }));
+// 4.57D: AIChat reads plan-aware limit copy + renders the Plus upgrade modal.
+vi.mock('@/hooks/useAIUsage', () => ({ useAIUsage: () => ({ data: null }) }));
+vi.mock('@/components/legalup-pro/ProPricingModal', () => ({ ProPricingModal: () => null }));
 const documents = [{ id: 'doc-a', status: 'ready' }] as AIDocumentListItem[];
 const thinking = () => screen.queryByRole('status', { name: 'LegalUp AI está analizando la pregunta' });
 const input = () => screen.getByRole('textbox', { name: 'Pregunta para el asistente del caso' });

@@ -48,7 +48,9 @@ describe('4.56B current commercial contract', () => {
   it('Pro enumerates real monthly quotas and current stored capacity', () => {
     renderLanding();
     const pricing = document.querySelector('#pricing')!;
-    for (const label of ['Hasta 20 casos activos','Clientes ilimitados','Hasta 50 documentos actuales','300 consultas IA / mes (caso y documentos)','40 análisis de documentos / mes','10 investigaciones jurídicas / mes']) expect(within(pricing as HTMLElement).getByText(label)).toBeVisible();
+    for (const label of ['Hasta 20 casos activos','Hasta 50 documentos actuales','300 consultas IA / mes (caso y documentos)','40 análisis de documentos / mes','10 investigaciones jurídicas / mes']) expect(within(pricing as HTMLElement).getByText(label)).toBeVisible();
+    // 4.57D: shared rows (unlimited clients) appear on Pro and Plus cards.
+    expect(within(pricing as HTMLElement).getAllByText('Clientes ilimitados')).toHaveLength(2);
     expect(pricing.textContent).not.toMatch(prohibited);
     expect(pricing.textContent).toContain('Servicios e ingresos del marketplace no requieren Pro');
     expect(pricing.textContent).toContain('mismas capacidades');

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import posthog from 'posthog-js';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
-import { canUseAIFeature, type AIFeatureKey } from '@/lib/aiFeatures';
+import { canUseAIFeature, normalizePlanCode, type AIFeatureKey } from '@/lib/aiFeatures';
 import { useAIUsage } from '@/hooks/useAIUsage';
 import type { Database } from '@/types/supabase';
 
@@ -62,17 +62,17 @@ export function useAISubscription() {
   });
 
   // Pro entitlement fallback (unified access): si no hay AI access, verifica lawyer_subscriptions
-  const proQuery = useQuery<{ status: string; current_period_end: string | null } | null>({
+  const proQuery = useQuery<{ status: string; current_period_end: string | null; plan: string | null } | null>({
     queryKey: ['pro-subscription-for-ai', lawyerId],
     enabled: !!lawyerId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('lawyer_subscriptions')
-        .select('status, current_period_end')
+        .select('status, current_period_end, plan')
         .eq('lawyer_id', lawyerId!)
         .maybeSingle();
       if (error) return null;
-      return data as { status: string; current_period_end: string | null } | null;
+      return (data ?? null) as unknown as { status: string; current_period_end: string | null; plan: string | null } | null;
     },
   });
 
@@ -141,6 +141,9 @@ export function useAISubscription() {
     subscription,
     status,
     plan: isProLimited ? 'pro_limited' : (subscription?.plan ?? 'free'),
+    // 4.57D: canonical paid tier behind the Pro fallback (plus vs pro),
+    // for plan-aware copy. Feature access still resolves via plan/allowance.
+    paidPlan: isProLimited ? (normalizePlanCode(proQuery.data?.plan) === 'plus' ? 'plus' : 'pro') : null,
     isTrialing,
     isActive,
     hasAccess,

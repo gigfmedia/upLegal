@@ -18,6 +18,9 @@ vi.mock('@/contexts/AuthContext/clean/useAuth', () => ({ useAuth: () => ({ user:
 vi.mock('posthog-js', () => ({ default: { capture: vi.fn() } }));
 vi.mock('@/components/legalup-ai/AIDocumentUpload', () => ({ AIDocumentUpload: () => null }));
 vi.mock('@/components/legalup-ai/AIChat', () => ({ AIChat: () => null }));
+// 4.57D: workspace reads plan-aware limit copy + Plus modal.
+vi.mock('@/hooks/useAIUsage', () => ({ useAIUsage: () => ({ data: null }) }));
+vi.mock('@/components/legalup-pro/ProPricingModal', () => ({ ProPricingModal: () => null }));
 vi.mock('@/components/legalup-ai/AIDocumentList', () => ({ AIDocumentList: ({ documents, onSelect }: { documents: { id: string }[]; onSelect: (id: string) => void }) => <>{documents.map(d => <button key={d.id} onClick={() => onSelect(d.id)}>{d.id}</button>)}</> }));
 import { AICaseDocumentsWorkspace } from '@/components/legalup-ai/AICaseDocumentsWorkspace';
 const [A,B,C] = AI_MODELS;

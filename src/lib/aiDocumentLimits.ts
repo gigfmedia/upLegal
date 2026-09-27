@@ -7,6 +7,8 @@
  * infraestructura en sincronía (ver migración `ai_documents_bucket_size_limit`).
  */
 
+import { displayTier, PLAN_QUOTAS_DISPLAY } from './planDisplay';
+
 export const MAX_DOCUMENT_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB
 
 /** Indica si un tamaño de archivo excede el máximo permitido (20 MB). */
@@ -57,7 +59,18 @@ export function isFreeCaseDocumentLimitError(
 }
 
 /** Mensaje de capacidad para el tope de documentos almacenados del plan. */
-export function documentCapacityLimitMessage(): string {
+export function documentCapacityLimitMessage(plan?: unknown): string {
+  // 4.57D: plan-aware copy (Pro 50 → Plus CTA; Plus 150 → delete-to-free
+  // guidance, no higher tier). Unknown plan keeps the legacy Pro copy.
+  if (plan !== undefined) {
+    const tier = displayTier(plan);
+    if (tier === 'plus') {
+      return `Alcanzaste los ${PLAN_QUOTAS_DISPLAY.plus.documents} documentos almacenados de tu plan. Elimina documentos que ya no necesites para liberar espacio.`;
+    }
+    if (tier === 'pro') {
+      return `Alcanzaste los ${PLAN_QUOTAS_DISPLAY.pro.documents} documentos almacenados de tu plan. Con LegalUp Plus tienes ${PLAN_QUOTAS_DISPLAY.plus.documents}.`;
+    }
+  }
   return 'Alcanzaste el límite de 50 documentos almacenados. Puedes eliminar documentos que ya no necesites para liberar espacio.';
 }
 

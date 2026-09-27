@@ -28,6 +28,9 @@ vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('@/lib/supabaseClient', () => ({
   supabase: { auth: { getSession: async () => ({ data: { session: null } }) }, from: () => { throw new Error('no db'); } },
 }));
+// 4.57D: workspace reads plan-aware limit copy + Plus modal.
+vi.mock('@/hooks/useAIUsage', () => ({ useAIUsage: () => ({ data: null }) }));
+vi.mock('@/components/legalup-pro/ProPricingModal', () => ({ ProPricingModal: () => null }));
 vi.mock('@/components/legalup-ai/AIDocumentUpload', () => ({
   AIDocumentUpload: ({ onUploaded }: { onUploaded: (d: unknown) => void }) => (
     <button onClick={() => onUploaded({ id: 'd-new' })}>upload</button>

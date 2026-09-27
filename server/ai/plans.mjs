@@ -1,5 +1,6 @@
 /**
  * FASE 4.57B — canonical multi-tier plan foundation.
+ * FASE 4.57D — Plus v1 ACTIVATED (capacity-only tier above Pro).
  *
  * Single authority for plan identity, allowances and feature resolution.
  * Backend remains authoritative; frontend mirrors only types/values.
@@ -7,19 +8,18 @@
  * Canonical codes: free_case | pro | plus | legacy
  *   free_case — first lifetime LAWYER_DIRECT Case entitlement (4.44A/4.49A).
  *   pro       — paid LegalUp lawyer SaaS (any compatible stored value).
- *   plus      — future tier. STRUCTURALLY present, COMMERCIALLY INACTIVE.
- *               Never purchasable, never resolved from stored state, never
- *               granted by any gate in this phase.
+ *   plus      — LegalUp Plus v1: SAME product as Pro, HIGHER limits only.
+ *               No Plus-only features, no teams, no automation.
  *   legacy    — standalone-AI compatibility (trial/essential history).
  *
- * Founder is NOT a tier: plan=pro (or future plus) + founder flag/pricing
- * handled separately (server/proFounder.mjs). See §24-26 of the phase.
- *
- * Nothing here changes current entitlements: free/pro/legacy outputs below
- * are byte-identical to the certified 4.56 contract.
+ * Founder is NOT a tier: plan=pro (or plus) + founder flag/pricing
+ * handled separately (server/proFounder.mjs). Founder intro pricing
+ * applies ONLY to Pro; Plus is always the standard Plus price.
  */
 import {
   PRO_AI_ALLOWANCE,
+  PLUS_AI_ALLOWANCE,
+  PAID_CASE_LIMITS,
   FREE_CASE_ALLOWANCE,
 } from './proAllowance.mjs';
 import { decideCheckoutPrice } from '../proFounder.mjs';
@@ -33,6 +33,18 @@ export const PLAN_CODES = Object.freeze({
 
 /** Fail-closed code for inactive/unknown purchasable-tier requests. */
 export const PLAN_NOT_AVAILABLE = 'PLAN_NOT_AVAILABLE';
+
+/** 4.57D canonical server-side prices (client never authoritative). */
+export const PLUS_PRICE_CLP = 79990;
+export const PRO_STANDARD_PRICE_CLP_CANON = 49990;
+
+/** Core paid feature set (Pro and Plus v1 share it; Plus adds NO features). */
+const PAID_CORE_FEATURES = Object.freeze([
+  'document_analysis',
+  'case_chat',
+  'case_analysis',
+  'jurisprudence',
+]);
 
 /**
  * Raw persisted/synthesized plan values observed in the wild.
@@ -56,7 +68,7 @@ export function normalizePlanCode(raw) {
 
 /** Is this canonical code commercially purchasable today? */
 export function isCommerciallyAvailable(planCode) {
-  return planCode === PLAN_CODES.PRO;
+  return planCode === PLAN_CODES.PRO || planCode === PLAN_CODES.PLUS;
 }
 
 /**
@@ -82,22 +94,31 @@ export const PLAN_CATALOG = Object.freeze({
   pro: Object.freeze({
     status: 'paid',
     purchasable: true,
+    priceClp: PRO_STANDARD_PRICE_CLP_CANON,
     allowances: Object.freeze({
       // Mirrors pro_active_case_limit(); the DB trigger enforces.
-      activeCases: Object.freeze({ limit: 20, period: 'current', scope: 'lawyer_direct_active' }),
+      activeCases: Object.freeze({ limit: PAID_CASE_LIMITS.pro, period: 'current', scope: 'lawyer_direct_active' }),
       documents: Object.freeze({ limit: PRO_AI_ALLOWANCE.storedDocuments, period: 'current', scope: 'lawyer' }),
       chat: Object.freeze({ limit: PRO_AI_ALLOWANCE.chatPerMonth, period: 'calendar_month_utc', scope: 'shared_pool' }),
       analysis: Object.freeze({ limit: PRO_AI_ALLOWANCE.analysisPerMonth, period: 'calendar_month_utc', scope: 'monthly' }),
       research: Object.freeze({ limit: PRO_AI_ALLOWANCE.researchPerMonth, period: 'calendar_month_utc', scope: 'monthly' }),
     }),
-    features: Object.freeze(['document_analysis', 'case_chat', 'case_analysis', 'jurisprudence']),
+    features: PAID_CORE_FEATURES,
   }),
-  // 4.57B: structural placeholder only. No quotas, no price, no purchase.
+  // 4.57D: LegalUp Plus v1 — capacity only. Same core product as Pro,
+  // higher limits. Plus >= Pro expressed by shared feature set.
   plus: Object.freeze({
-    status: 'inactive',
-    purchasable: false,
-    allowances: null,
-    features: null,
+    status: 'paid',
+    purchasable: true,
+    priceClp: PLUS_PRICE_CLP,
+    allowances: Object.freeze({
+      activeCases: Object.freeze({ limit: PAID_CASE_LIMITS.plus, period: 'current', scope: 'lawyer_direct_active' }),
+      documents: Object.freeze({ limit: PLUS_AI_ALLOWANCE.storedDocuments, period: 'current', scope: 'lawyer' }),
+      chat: Object.freeze({ limit: PLUS_AI_ALLOWANCE.chatPerMonth, period: 'calendar_month_utc', scope: 'shared_pool' }),
+      analysis: Object.freeze({ limit: PLUS_AI_ALLOWANCE.analysisPerMonth, period: 'calendar_month_utc', scope: 'monthly' }),
+      research: Object.freeze({ limit: PLUS_AI_ALLOWANCE.researchPerMonth, period: 'calendar_month_utc', scope: 'monthly' }),
+    }),
+    features: PAID_CORE_FEATURES,
   }),
   legacy: Object.freeze({
     status: 'compatibility',
@@ -109,11 +130,9 @@ export const PLAN_CATALOG = Object.freeze({
 
 /**
  * Allowance set for a canonical plan, or null when unconfigured/inapplicable.
- * Plus returns null (UNCONFIGURED) — never Pro limits, never unlimited,
- * never placeholder numbers. Legacy returns null (own historical logic).
+ * Legacy returns null (own historical logic).
  */
 export function getPlanAllowances(planCode) {
-  if (planCode === PLAN_CODES.PLUS) return null;
   const entry = PLAN_CATALOG[planCode];
   if (!entry || !entry.allowances) return null;
   return entry.allowances;
@@ -127,25 +146,23 @@ export function resolvePlanAllowance(planCode, capability) {
 }
 
 /**
- * Feature check. Plus returns false for everything in 4.57B: the tier is
- * structurally a Pro superset (see PLAN_CATALOG.pro.features as the
- * reference set), but no gate may resolve access from the plus code while
- * the tier is commercially inactive. Fail closed, always.
+ * Feature check. Pro and Plus v1 share the paid core set (Plus adds NO
+ * Plus-only features). Free_case has its own set; legacy none.
  */
 export function hasPlanFeature(planCode, feature) {
-  if (planCode === PLAN_CODES.PLUS) return false;
   const entry = PLAN_CATALOG[planCode];
   if (!entry || !entry.features) return false;
   return entry.features.includes(feature);
 }
 
-/** Active-case capacity ({limit,...}) — pro 20; plus UNCONFIGURED (null). */
+/** Active-case capacity ({limit,...}) — pro 20, plus 40. */
 export function getActiveCaseLimit(planCode) {
   if (planCode === PLAN_CODES.FREE_CASE) {
     return { limit: 1, period: 'lifetime', scope: 'lawyer_direct_first' };
   }
-  if (planCode === PLAN_CODES.PRO) {
-    return { limit: 20, period: 'current', scope: 'lawyer_direct_active' };
+  if (planCode === PLAN_CODES.PRO || planCode === PLAN_CODES.PLUS) {
+    const limit = PAID_CASE_LIMITS[planCode];
+    return { limit, period: 'current', scope: 'lawyer_direct_active' };
   }
   return null;
 }
@@ -165,23 +182,27 @@ export function canonicalPaidPlan(subscription) {
 /**
  * Checkout plan resolution for POST /api/pro/subscribe bodies.
  * Missing/undefined → existing Pro behavior. Explicit 'pro' → Pro.
- * 'plus', legacy values and anything unknown → fail closed BEFORE any
- * side effect (no MP call, no DB write, no founder-slot touch).
+ * Explicit 'plus' → Plus (purchasable since 4.57D). Legacy values and
+ * anything unknown → fail closed BEFORE any side effect (no MP call,
+ * no DB write, no founder-slot touch).
  */
 export function resolveCheckoutPlanCode(body) {
   const raw = body?.plan;
   if (raw === undefined || raw === null) return { ok: true, planCode: PLAN_CODES.PRO };
   const code = normalizePlanCode(raw);
-  if (code === PLAN_CODES.PRO) return { ok: true, planCode: PLAN_CODES.PRO };
+  if (code === PLAN_CODES.PRO || code === PLAN_CODES.PLUS) return { ok: true, planCode: code };
   return { ok: false, code: PLAN_NOT_AVAILABLE };
 }
 
 /**
- * Price resolution by canonical plan. Pro delegates to the certified
- * Founder/standard resolver (unchanged). Plus (or anything unpurchasable)
- * fails closed — never defaults to the Pro price.
+ * Price resolution by canonical plan.
+ *   pro  → certified Founder/standard resolver (unchanged).
+ *   plus → 79.990 ALWAYS. Founder status, intro counts and reservations
+ *           never change the Plus price. Anything unpurchasable fails
+ *           closed — never defaults to another tier's price.
  */
 export function resolvePlanPrice({ planCode, isFounder, lifetimeApproved, reservation }) {
+  if (planCode === PLAN_CODES.PLUS) return { ok: true, amountClp: PLUS_PRICE_CLP };
   if (planCode !== PLAN_CODES.PRO) return { ok: false, code: PLAN_NOT_AVAILABLE };
   return {
     ok: true,

@@ -109,11 +109,13 @@ describe('4.32B.2 — Founder billing safety (profiles.is_founder)', () => {
   it('profiles.is_founder reads are limited to founder-track price decision', () => {
     // 4.32B.4: the only legitimate server read is the checkout price branch
     // (existing Founder → intro-count rule). No other billing/entitlement read.
+    // 4.57D: plus one legitimate read in the scheduled-downgrade executor
+    // (returning Founder price follows history, never restarts the cycle).
     const reads = server.split('\n').filter((l) => l.includes('prof?.is_founder'));
     expect(reads.length).toBeGreaterThan(0);
-    expect(reads.length).toBeLessThanOrEqual(2);
+    expect(reads.length).toBeLessThanOrEqual(3);
     for (const line of reads) {
-      expect(line).toMatch(/isFounder|initialPrice|founderTrack/);
+      expect(line).toMatch(/isFounder|initialPrice|founderTrack|proPrice/);
     }
   });
 

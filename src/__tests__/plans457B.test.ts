@@ -19,11 +19,13 @@ describe('4.57B — canonical plan representation (frontend mirror)', () => {
     expect(normalizePlanCode(42)).toBeNull();
   });
 
-  it('plus grants no features (INACTIVE tier)', () => {
-    expect(canUseAIFeature('document_analysis', 'plus')).toBe(false);
-    expect(canUseAIFeature('case_chat', 'plus')).toBe(false);
-    expect(canUseAIFeature('case_analysis', 'plus')).toBe(false);
-    expect(canUseAIFeature('jurisprudence', 'plus')).toBe(false);
+  it('plus grants the Pro core set (4.57D: same product, higher quotas)', () => {
+    expect(canUseAIFeature('document_analysis', 'plus')).toBe(true);
+    expect(canUseAIFeature('case_chat', 'plus')).toBe(true);
+    expect(canUseAIFeature('case_analysis', 'plus')).toBe(true);
+    expect(canUseAIFeature('jurisprudence', 'plus')).toBe(true);
+    expect(canUseAIFeature('workflow_generation', 'plus')).toBe(false);
+    expect(canUseAIFeature('document_drafting', 'plus')).toBe(false);
   });
 
   it('existing plans unchanged: free_case and pro_limited outputs identical', () => {

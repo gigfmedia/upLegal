@@ -11,6 +11,9 @@ import type { AIDocumentListItem } from '@/hooks/useAIDocuments';
 // ---------------------------------------------------------------------------
 
 vi.mock('posthog-js', () => ({ default: { capture: vi.fn(), init: vi.fn() } }));
+// 4.57D: AIChat/AIResearchPanel read plan-aware limit copy + Plus modal.
+vi.mock('@/hooks/useAIUsage', () => ({ useAIUsage: () => ({ data: null }) }));
+vi.mock('@/components/legalup-pro/ProPricingModal', () => ({ ProPricingModal: () => null }));
 
 vi.mock('@/hooks/useAIChat', () => ({
   useAICaseChat: () => ({

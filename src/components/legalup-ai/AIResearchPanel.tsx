@@ -28,6 +28,9 @@ import {
   type AIResearchRequest,
   type AIResearchSource,
 } from '@/hooks/useAIResearch';
+import { useAIUsage } from '@/hooks/useAIUsage';
+import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
+import { researchLimitMessage, upgradeTargetForPlan } from '@/lib/planDisplay';
 
 type AIResearchPanelProps = {
   workspaceId: string;
@@ -480,7 +483,7 @@ function GroupedSources({ sources }: { sources: AIResearchSource[] }) {
   );
 }
 
-function errorToMessage(error: AIResearchError | null): string {
+function errorToMessage(error: AIResearchError | null, plan?: unknown): string {
   switch (error?.code) {
     case 'NO_SOURCES_FOUND':
       return 'No encontramos jurisprudencia ni normativa en las fuentes públicas consultadas. Prueba con otros términos.';
@@ -509,7 +512,7 @@ function errorToMessage(error: AIResearchError | null): string {
     case 'AI_PROVIDER_AUTH':
       return 'No se pudo autenticar con el proveedor de IA. Contacta al equipo de LegalUp.';
     case 'AI_RESEARCH_LIMIT_REACHED':
-      return 'Alcanzaste las 10 investigaciones incluidas este mes. Se renovarán el próximo mes.';
+      return researchLimitMessage(plan);
     case 'FREE_CASE_RESEARCH_LIMIT_REACHED':
       return 'Ya usaste la investigación jurídica incluida en tu primer caso. Pasa a Pro para seguir investigando.';
     case 'AI_MONTHLY_LIMIT_REACHED':
@@ -541,6 +544,12 @@ export function AIResearchPanel({ workspaceId, locked = false, analyticsSurface,
   const researchQuery = useAICaseResearch(workspaceId, true);
   const runMutation = useRunAIResearch(workspaceId);
   const surfaceMeta = analyticsSurface ? { surface: analyticsSurface } : {};
+  // 4.57D: backend-resolved plan for limit copy + Plus upgrade targeting.
+  const { data: usageData } = useAIUsage();
+  const usagePlan: unknown = usageData?.allowance?.plan;
+  const [plusOpen, setPlusOpen] = useState(false);
+  const showPlusCta =
+    runMutation.error?.code === 'AI_RESEARCH_LIMIT_REACHED' && upgradeTargetForPlan(usagePlan) === 'plus';
 
   const [input, setInput] = useState(initialQuery ?? '');
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -596,10 +605,13 @@ export function AIResearchPanel({ workspaceId, locked = false, analyticsSurface,
           });
           // 4.38C: commercial limit analytics (safe props only, never content).
           // 4.49A: same treatment for the free first-Case lifetime pool.
+          // 4.57D: plan-aware (current_plan + upgrade target, no PII).
           if (err.code === 'AI_RESEARCH_LIMIT_REACHED' || err.code === 'FREE_CASE_RESEARCH_LIMIT_REACHED') {
             posthog.capture('ai_usage_limit_reached', {
               capability: 'research',
               code: err.code,
+              current_plan: typeof usagePlan === 'string' ? usagePlan : undefined,
+              target_plan: upgradeTargetForPlan(usagePlan) ?? undefined,
               ...surfaceMeta,
             });
           }
@@ -710,8 +722,19 @@ export function AIResearchPanel({ workspaceId, locked = false, analyticsSurface,
             >
               <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" aria-hidden="true" />
               <p className="min-w-0 flex-1 text-xs text-amber-900">
-                {errorToMessage(runMutation.error)}
+                {errorToMessage(runMutation.error, usagePlan)}
               </p>
+              {showPlusCta && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPlusOpen(true)}
+                  className="shrink-0 border-amber-300 text-amber-900 hover:bg-amber-100"
+                >
+                  Ver LegalUp Plus
+                </Button>
+              )}
               {canRetry && (
                 <Button
                   type="button"
@@ -806,6 +829,7 @@ export function AIResearchPanel({ workspaceId, locked = false, analyticsSurface,
           </ul>
         )}
       </CardContent>
+      <ProPricingModal open={plusOpen} onOpenChange={setPlusOpen} triggerAction="ai_research_limit" targetPlan="plus" />
     </Card>
   );
 }

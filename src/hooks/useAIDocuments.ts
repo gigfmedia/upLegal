@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import posthog from 'posthog-js';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
+import { useAIUsage } from '@/hooks/useAIUsage';
 import type { Database } from '@/types/supabase';
 import {
   MAX_DOCUMENT_SIZE_BYTES,
@@ -158,6 +159,10 @@ export function useAIDocumentAnalysis(documentId: string | undefined, enabled = 
 export function useUploadAIDocument(workspace: string | undefined | (() => Promise<string>)) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  // 4.57D: plan-aware capacity copy (Pro 50 → Plus; Plus 150 → no higher
+  // tier). Best-effort: unknown plan keeps the legacy message.
+  const { data: usageData } = useAIUsage();
+  const usagePlan: unknown = usageData?.allowance?.plan;
 
   return useMutation<AIDocument, Error, File>({
     mutationFn: async (file) => {
@@ -207,7 +212,7 @@ export function useUploadAIDocument(workspace: string | undefined | (() => Promi
               workspace_id: workspaceId,
             });
           } catch { /* Telemetry must not interrupt upload. */ }
-          throw new Error(isFree ? freeCaseDocumentLimitMessage() : documentCapacityLimitMessage());
+          throw new Error(isFree ? freeCaseDocumentLimitMessage() : documentCapacityLimitMessage(usagePlan));
         }
         throw new Error('No se pudo registrar el documento. Inténtalo de nuevo.');
       }
