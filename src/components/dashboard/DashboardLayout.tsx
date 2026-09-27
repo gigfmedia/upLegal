@@ -262,7 +262,6 @@ function DashboardLayout() {
           ? [{ href: '/lawyer/ai', icon: Scale, label: 'Historial de casos', highlightIcon: false, aiBadge: false }]
           : []),
         { href: '/lawyer/profile', icon: User, label: 'Perfil' },
-        { href: '/lawyer/settings', icon: Settings, label: 'Configuración' },
         { href: '/lawyer/services', icon: FileText, label: 'Servicios', badge: showServicesBadge },
         { href: '/lawyer/notificaciones', icon: Bell, label: 'Notificaciones' },
         ...commonItems
@@ -289,7 +288,7 @@ function DashboardLayout() {
     const captacion = ['/lawyer/requests', '/lawyer/jobs'].map(get).filter(Boolean) as NavItem[];
     const gestion = ['/lawyer/clients', '/lawyer/cases', '/lawyer/citas', '/lawyer/earnings'].map(get).filter(Boolean) as NavItem[];
     const herramientas = ['/lawyer/ai'].map(get).filter(Boolean) as NavItem[];
-    const perfil = ['/lawyer/profile', '/lawyer/settings', '/lawyer/services', '/lawyer/notificaciones'].map(get).filter(Boolean) as NavItem[];
+    const perfil = ['/lawyer/profile', '/lawyer/services', '/lawyer/notificaciones'].map(get).filter(Boolean) as NavItem[];
     const cuenta = ['/dashboard/payment-settings'].map(get).filter(Boolean) as NavItem[];
     // Any remaining items (should be none, but keep for safety)
     const accounted = new Set([...inicio, ...captacion, ...gestion, ...herramientas, ...perfil, ...cuenta].map(i => i.href));
@@ -328,6 +327,13 @@ function DashboardLayout() {
       console.error('Error during logout:', error);
     }
   };
+
+  // 4.54A — single account-settings destination per role, pinned above logout.
+  // Lawyers: /lawyer/settings ("Configuración de cuenta"). Others keep
+  // /dashboard/settings ("Configuración"). One concept, no duplicates.
+  const isLawyerSurface = userRole === 'lawyer' && !currentPath.startsWith('/admin');
+  const accountSettingsHref = isLawyerSurface ? '/lawyer/settings' : '/dashboard/settings';
+  const accountSettingsLabel = isLawyerSurface ? 'Configuración de cuenta' : 'Configuración';
 
   // Show loading state while checking auth
   if (isLoading) {
@@ -479,15 +485,15 @@ function DashboardLayout() {
                 <ul className="space-y-1">
                   <li>
                     <Link
-                      to="/dashboard/settings"
+                      to={accountSettingsHref}
                       className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                        location.pathname === '/dashboard/settings'
+                        location.pathname === accountSettingsHref
                           ? 'bg-gray-100 text-gray-900'
                           : 'text-gray-700 hover:bg-gray-100'
                       }`}
                     >
                       <Settings className="mr-3 h-5 w-5 text-gray-400" />
-                      Configuración
+                      {accountSettingsLabel}
                     </Link>
                   </li>
                   <li>
@@ -616,16 +622,16 @@ function DashboardLayout() {
                 <ul className="space-y-1">
                   <li>
                     <Link
-                      to="/dashboard/settings"
+                      to={accountSettingsHref}
                       className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                        location.pathname === '/dashboard/settings'
+                        location.pathname === accountSettingsHref
                           ? 'bg-gray-100 text-gray-900'
                           : 'text-gray-700 hover:bg-gray-100'
                       }`}
                       onClick={() => setIsSidebarOpen(false)}
                     >
                       <Settings className="mr-3 h-5 w-5 text-gray-400" />
-                      Configuración
+                      {accountSettingsLabel}
                     </Link>
                   </li>
                   <li>
