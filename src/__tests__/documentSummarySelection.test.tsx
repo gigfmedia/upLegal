@@ -92,9 +92,12 @@ describe('4.45A stored summary render (no provider, no quota)', () => {
   });
 
   it('omits empty sections but keeps summary (grounding-filtered shape)', () => {
+    // 4.50A: empty sections stay visible with honest copy instead of vanishing.
     render(<AIAnalysisView {...baseProps} analysis={prodFixture()} />);
-    expect(screen.queryByText('Partes intervinientes')).not.toBeInTheDocument();
-    expect(screen.queryByText('Puntos clave')).not.toBeInTheDocument();
+    expect(screen.getByText('Partes intervinientes')).toBeInTheDocument();
+    expect(
+      screen.getByText('No se identificaron partes intervinientes explícitas en este documento.')
+    ).toBeInTheDocument();
     expect(
       screen.getByText('Resumen de prueba del documento con hallazgos verificados.')
     ).toBeInTheDocument();
@@ -103,7 +106,7 @@ describe('4.45A stored summary render (no provider, no quota)', () => {
   it('empty summary shows safe fallback, never a blank tab', () => {
     render(<AIAnalysisView {...baseProps} analysis={prodFixture({ summary: '' })} />);
     expect(
-      screen.getByText('El análisis se completó, pero no hay un resumen disponible.')
+      screen.getByText('No se pudo obtener un resumen útil de este documento.')
     ).toBeInTheDocument();
   });
 

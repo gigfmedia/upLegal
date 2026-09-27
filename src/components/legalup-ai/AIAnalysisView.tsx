@@ -33,22 +33,29 @@ type Section = {
 };
 
 function normalizeAnalysis(analysis: AIDocumentAnalysis): Section {
+  // 4.50A: whitespace-only strings are empty (never render blank bullets).
   const asStringArray = (value: unknown): string[] =>
-    Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+    Array.isArray(value)
+      ? value.filter(
+          (item): item is string => typeof item === 'string' && item.trim().length > 0
+        )
+      : [];
 
   const deadlines = Array.isArray(analysis.deadlines)
-    ? analysis.deadlines.map((item) => {
-        if (typeof item === 'string') return { date: '', description: item };
-        const obj = item as { date?: unknown; description?: unknown };
-        return {
-          date: typeof obj.date === 'string' ? obj.date : '',
-          description: typeof obj.description === 'string' ? obj.description : '',
-        };
-      })
+    ? analysis.deadlines
+        .map((item) => {
+          if (typeof item === 'string') return { date: '', description: item };
+          const obj = item as { date?: unknown; description?: unknown };
+          return {
+            date: typeof obj.date === 'string' ? obj.date : '',
+            description: typeof obj.description === 'string' ? obj.description : '',
+          };
+        })
+        .filter((d) => d.date.trim().length > 0 || d.description.trim().length > 0)
     : [];
 
   return {
-    summary: analysis.summary || '',
+    summary: typeof analysis.summary === 'string' ? analysis.summary : '',
     document_type: analysis.document_type || '',
     parties: asStringArray(analysis.parties),
     key_points: asStringArray(analysis.key_points),
@@ -65,14 +72,16 @@ function SectionList({
   items,
   claims,
   tone = 'default',
+  emptyMessage,
 }: {
   title: string;
   icon: React.ReactNode;
   items: string[];
   claims?: Array<{ text: string; evidence: string; page_number: number | null; fragment_id?: string | null; source_id: string }>;
   tone?: 'default' | 'warning' | 'success';
+  /** 4.50A: honest empty state — the category was considered, no explicit evidence found. */
+  emptyMessage: string;
 }) {
-  if (items.length === 0) return null;
   const toneClass =
     tone === 'warning'
       ? 'border-amber-200 bg-amber-50/60'
@@ -81,6 +90,20 @@ function SectionList({
         : 'border-gray-200 bg-gray-50/60';
 
   const findClaim = (text: string) => (claims ?? []).find((c) => c.text === text);
+
+  // 4.50A: keep the section visible with its honest empty message instead of
+  // silently omitting it. Neutral styling (no warning/error treatment).
+  if (items.length === 0) {
+    return (
+      <div className="rounded-lg border border-gray-200 bg-gray-50/60 p-4">
+        <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-900">
+          {icon}
+          {title}
+        </h3>
+        <p className="text-sm text-muted-foreground">{emptyMessage}</p>
+      </div>
+    );
+  }
 
   return (
     <div className={`rounded-lg border p-4 ${toneClass}`}>
@@ -235,38 +258,36 @@ export function AIAnalysisView({
           <CardTitle className="text-base">Resumen ejecutivo</CardTitle>
         </CardHeader>
         <CardContent className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
-          {section.summary || 'El análisis se completó, pero no hay un resumen disponible.'}
+          {section.summary.trim() ||
+            'No se pudo obtener un resumen útil de este documento.'}
         </CardContent>
       </Card>
 
-      {section.parties.length > 0 && (
-        <SectionList
-          title="Partes intervinientes"
-          icon={<Users className="h-4 w-4 text-gray-500" aria-hidden="true" />}
-          items={section.parties}
-          claims={analysis.claims as unknown as Array<{ text: string; evidence: string; page_number: number | null; source_id: string }>}
-        />
-      )}
+      <SectionList
+        title="Partes intervinientes"
+        icon={<Users className="h-4 w-4 text-gray-500" aria-hidden="true" />}
+        items={section.parties}
+        claims={analysis.claims as unknown as Array<{ text: string; evidence: string; page_number: number | null; source_id: string }>}
+        emptyMessage="No se identificaron partes intervinientes explícitas en este documento."
+      />
 
-      {section.key_points.length > 0 && (
-        <SectionList
-          title="Puntos clave"
-          icon={<ListChecks className="h-4 w-4 text-gray-500" aria-hidden="true" />}
-          items={section.key_points}
-          claims={analysis.claims as unknown as Array<{ text: string; evidence: string; page_number: number | null; source_id: string }>}
-        />
-      )}
+      <SectionList
+        title="Puntos clave"
+        icon={<ListChecks className="h-4 w-4 text-gray-500" aria-hidden="true" />}
+        items={section.key_points}
+        claims={analysis.claims as unknown as Array<{ text: string; evidence: string; page_number: number | null; source_id: string }>}
+        emptyMessage="No se identificaron puntos clave adicionales en este documento."
+      />
 
-      {section.obligations.length > 0 && (
-        <SectionList
-          title="Obligaciones"
-          icon={<Scale className="h-4 w-4 text-gray-500" aria-hidden="true" />}
-          items={section.obligations}
-          claims={analysis.claims as unknown as Array<{ text: string; evidence: string; page_number: number | null; source_id: string }>}
-        />
-      )}
+      <SectionList
+        title="Obligaciones"
+        icon={<Scale className="h-4 w-4 text-gray-500" aria-hidden="true" />}
+        items={section.obligations}
+        claims={analysis.claims as unknown as Array<{ text: string; evidence: string; page_number: number | null; source_id: string }>}
+        emptyMessage="No se identificaron obligaciones explícitas en este documento."
+      />
 
-      {section.deadlines.length > 0 && (
+      {section.deadlines.length > 0 ? (
         <div className="rounded-lg border border-blue-200 bg-blue-50/60 p-4">
           <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-900">
             <CalendarClock className="h-4 w-4 text-blue-600" aria-hidden="true" />
@@ -285,27 +306,35 @@ export function AIAnalysisView({
             ))}
           </ul>
         </div>
+      ) : (
+        <div className="rounded-lg border border-gray-200 bg-gray-50/60 p-4">
+          <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-900">
+            <CalendarClock className="h-4 w-4 text-blue-600" aria-hidden="true" />
+            Plazos y fechas clave
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            No se identificaron plazos ni fechas clave explícitas en este documento.
+          </p>
+        </div>
       )}
 
-      {section.risks.length > 0 && (
-        <SectionList
-          title="Riesgos y alertas"
-          icon={<ShieldAlert className="h-4 w-4 text-amber-600" aria-hidden="true" />}
-          items={section.risks}
-          claims={analysis.claims as unknown as Array<{ text: string; evidence: string; page_number: number | null; source_id: string }>}
-          tone="warning"
-        />
-      )}
+      <SectionList
+        title="Riesgos y alertas"
+        icon={<ShieldAlert className="h-4 w-4 text-amber-600" aria-hidden="true" />}
+        items={section.risks}
+        claims={analysis.claims as unknown as Array<{ text: string; evidence: string; page_number: number | null; source_id: string }>}
+        tone="warning"
+        emptyMessage="No se identificaron riesgos explícitos en este documento."
+      />
 
-      {section.recommendations.length > 0 && (
-        <SectionList
-          title="Recomendaciones"
-          icon={<CheckCircle2 className="h-4 w-4 text-green-600" aria-hidden="true" />}
-          items={section.recommendations}
-          claims={analysis.claims as unknown as Array<{ text: string; evidence: string; page_number: number | null; source_id: string }>}
-          tone="success"
-        />
-      )}
+      <SectionList
+        title="Recomendaciones"
+        icon={<CheckCircle2 className="h-4 w-4 text-green-600" aria-hidden="true" />}
+        items={section.recommendations}
+        claims={analysis.claims as unknown as Array<{ text: string; evidence: string; page_number: number | null; source_id: string }>}
+        tone="success"
+        emptyMessage="No se generaron recomendaciones específicas a partir de este documento."
+      />
 
       <p className="flex items-center gap-2 text-xs text-muted-foreground">
         <FileQuestion className="h-4 w-4 shrink-0" aria-hidden="true" />
