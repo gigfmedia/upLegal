@@ -9,7 +9,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
-import { AUTH_PASSWORD_QUERY_KEY, useHasAuthPassword } from '@/hooks/useHasAuthPassword';
+import {
+  PASSWORD_SETUP_QUERY_KEY,
+  markPasswordSetupComplete,
+  usePasswordSetupState,
+} from '@/hooks/usePasswordSetupState';
 import { isPasswordStrong } from '@/lib/passwordValidation';
 
 function PasswordField({
@@ -60,12 +64,13 @@ function PasswordField({
 }
 
 /**
- * 4.53B — shared secure password management (lawyer + client settings).
+ * 4.53D — shared secure password management (lawyer + client settings).
  *
- * Authority split via public.has_auth_password() (caller-only RPC):
- * - no password  -> "Crear contraseña" (new + confirm, no current field)
- * - has password -> "Cambiar contraseña" (current GENUINELY verified via
- *   signInWithPassword before updateUser; the old field was never sent).
+ * Authority split via server-controlled app_metadata.password_setup:
+ * - setup_required (false) -> "Crear contraseña" (new + confirm, no current)
+ * - setup_complete (true) / legacy_unknown (absent) -> "Cambiar contraseña"
+ *   with GENUINE current verification via signInWithPassword before
+ *   updateUser (the legacy field was never sent).
  *
  * Privacy: password values only ever go to Supabase Auth (updateUser /
  * signInWithPassword). Never logged, never analytics, never backend.
@@ -74,7 +79,7 @@ export function SecurePasswordCard() {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { hasPassword, isLoading, isError, refetch } = useHasAuthPassword();
+  const { state, refetch } = usePasswordSetupState();
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -87,9 +92,29 @@ export function SecurePasswordCard() {
     setConfirmPassword('');
   };
 
-  const refreshAuthority = () => {
-    void queryClient.invalidateQueries({ queryKey: AUTH_PASSWORD_QUERY_KEY });
+  const refreshAuthority = async () => {
+    try {
+      await supabase.auth.getUser();
+    } catch {
+      /* best effort; invalidation still refreshes */
+    }
+    void queryClient.invalidateQueries({ queryKey: PASSWORD_SETUP_QUERY_KEY });
     refetch();
+  };
+
+  /** Marker finalize with recoverable UX (§9): never claim full success silently. */
+  const finalizeMarker = async (wasLegacy: boolean) => {
+    const marked = await markPasswordSetupComplete();
+    if (!marked) {
+      toast({
+        title: wasLegacy ? 'Contraseña actualizada.' : 'Contraseña creada.',
+        description:
+          'No pudimos registrar el cambio. Recarga la página e inténtalo de nuevo si el estado no se actualiza.',
+        variant: 'destructive',
+      });
+    }
+    await refreshAuthority();
+    return marked;
   };
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -111,18 +136,14 @@ export function SecurePasswordCard() {
       // Target identity comes exclusively from the current session.
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
-      // Convenience/audit metadata only — never password-state authority.
-      try {
-        await supabase.auth.updateUser({ data: { password_setup_at: new Date().toISOString() } });
-      } catch {
-        /* metadata must not break creation */
-      }
       clearFields();
-      refreshAuthority();
-      toast({
-        title: 'Contraseña creada correctamente.',
-        description: 'Ya puedes iniciar sesión con tu correo y contraseña.',
-      });
+      const marked = await finalizeMarker(false);
+      if (marked) {
+        toast({
+          title: 'Contraseña creada correctamente.',
+          description: 'Ya puedes iniciar sesión con tu correo y contraseña.',
+        });
+      }
     } catch (error) {
       toast({
         title: 'Error',
@@ -169,7 +190,12 @@ export function SecurePasswordCard() {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
       clearFields();
-      refreshAuthority();
+      // Legacy accounts graduate into explicit authority on verified change.
+      if (state === 'legacy_unknown') {
+        await finalizeMarker(true);
+      } else {
+        await refreshAuthority();
+      }
       toast({ title: 'Contraseña actualizada correctamente.' });
     } catch (error) {
       toast({
@@ -182,7 +208,7 @@ export function SecurePasswordCard() {
     }
   };
 
-  if (isLoading) {
+  if (state === 'loading') {
     return (
       <Card>
         <CardHeader>
@@ -200,8 +226,8 @@ export function SecurePasswordCard() {
     );
   }
 
-  // Fail-safe: never guess "no password" on authority failure.
-  if (isError || hasPassword === null) {
+  // Fail-safe: never guess passwordless on authority failure.
+  if (state === 'error') {
     return (
       <Card>
         <CardHeader>
@@ -222,7 +248,7 @@ export function SecurePasswordCard() {
     );
   }
 
-  if (!hasPassword) {
+  if (state === 'setup_required') {
     return (
       <Card>
         <CardHeader>

@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Check, ArrowLeft } from 'lucide-react';
 import { AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { markPasswordSetupComplete } from '@/hooks/usePasswordSetupState';
 import { useToast } from '@/hooks/use-toast';
 import Header from "@/components/Header";
 
@@ -106,6 +107,15 @@ export default function ResetPasswordPage() {
       });
 
       if (updateError) throw updateError;
+
+      // 4.53D: graduate into explicit password authority while the recovery
+      // session is still valid (before sign-out below). Best effort: failure
+      // leaves legacy_unknown (safe Cambiar fallback) without blocking reset.
+      try {
+        await markPasswordSetupComplete();
+      } catch {
+        /* marker retry happens naturally on next verified change */
+      }
       
       setSuccess(true);
       toast({

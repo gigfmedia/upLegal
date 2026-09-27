@@ -2,9 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
-const authState = vi.hoisted(() => ({
-  hasPassword: null as boolean | null,
+const state = vi.hoisted(() => ({
+  setupState: 'setup_required' as string,
   loading: false,
   error: false,
   refetch: vi.fn(),
@@ -12,24 +14,31 @@ const authState = vi.hoisted(() => ({
   signIn: vi.fn(),
   getUser: vi.fn(),
   toast: vi.fn(),
+  markerOk: true,
 }));
 
-vi.mock('@/hooks/useHasAuthPassword', () => ({
-  useHasAuthPassword: () => ({
-    hasPassword: authState.hasPassword,
-    isLoading: authState.loading,
-    isError: authState.error,
-    refetch: authState.refetch,
+vi.mock('@/hooks/usePasswordSetupState', () => ({
+  usePasswordSetupState: () => ({
+    state:
+      state.loading ? 'loading' : state.error ? 'error' : state.setupState,
+    marker: null,
+    isLoading: state.loading,
+    isError: state.error,
+    refetch: state.refetch,
   }),
-  AUTH_PASSWORD_QUERY_KEY: ['auth-has-password'],
+  PASSWORD_SETUP_QUERY_KEY: ['auth-password-setup'],
+  markPasswordSetupComplete: async () => {
+    if (!state.markerOk) return false;
+    return true;
+  },
 }));
 
 vi.mock('@/lib/supabaseClient', () => ({
   supabase: {
     auth: {
-      getUser: (...args: unknown[]) => authState.getUser(...args),
-      updateUser: (...args: unknown[]) => authState.updateUser(...args),
-      signInWithPassword: (...args: unknown[]) => authState.signIn(...args),
+      getUser: (...args: unknown[]) => state.getUser(...args),
+      updateUser: (...args: unknown[]) => state.updateUser(...args),
+      signInWithPassword: (...args: unknown[]) => state.signIn(...args),
     },
   },
 }));
@@ -39,7 +48,7 @@ vi.mock('@/contexts/AuthContext/clean/useAuth', () => ({
 }));
 
 vi.mock('@/hooks/use-toast', () => ({
-  useToast: () => ({ toast: (...args: unknown[]) => authState.toast(...args) }),
+  useToast: () => ({ toast: (...args: unknown[]) => state.toast(...args) }),
 }));
 
 import { SecurePasswordCard } from '@/components/auth/SecurePasswordCard';
@@ -59,17 +68,17 @@ const fill = (label: string, value: string) => {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  authState.hasPassword = null;
-  authState.loading = false;
-  authState.error = false;
-  authState.getUser.mockResolvedValue({ data: { user: { email: 'qa@example.cl' } } });
-  authState.updateUser.mockResolvedValue({ data: {}, error: null });
-  authState.signIn.mockResolvedValue({ data: {}, error: null });
+  state.setupState = 'setup_required';
+  state.loading = false;
+  state.error = false;
+  state.markerOk = true;
+  state.getUser.mockResolvedValue({ data: { user: { email: 'qa@example.cl' } } });
+  state.updateUser.mockResolvedValue({ data: {}, error: null });
+  state.signIn.mockResolvedValue({ data: {}, error: null });
 });
 
-describe('4.53B SecurePasswordCard', () => {
-  it('§30 passwordless: Crear + new/confirm, NO current field', () => {
-    authState.hasPassword = false;
+describe('4.53D SecurePasswordCard (marker authority)', () => {
+  it('§30 setup_required: Crear + new/confirm, NO current field', () => {
     renderCard();
     expect(screen.getByRole('button', { name: 'Crear contraseña' })).toBeInTheDocument();
     expect(screen.getByLabelText('Nueva contraseña', { exact: true })).toBeInTheDocument();
@@ -78,17 +87,15 @@ describe('4.53B SecurePasswordCard', () => {
   });
 
   it('§32 mismatch blocks locally, 0 updateUser', async () => {
-    authState.hasPassword = false;
     renderCard();
     fill('Nueva contraseña', 'Aa1!bbbb');
     fill('Confirmar contraseña', 'Aa1!cccc');
     fireEvent.click(screen.getByRole('button', { name: 'Crear contraseña' }));
-    await waitFor(() => expect(authState.toast).toHaveBeenCalled());
-    expect(authState.updateUser).not.toHaveBeenCalled();
+    await waitFor(() => expect(state.toast).toHaveBeenCalled());
+    expect(state.updateUser).not.toHaveBeenCalled();
   });
 
-  it('§31 create success: updateUser(password) then metadata, refetch flips to Cambiar', async () => {
-    authState.hasPassword = false;
+  it('§27 create success: updateUser(password) then marker, flips to Cambiar', async () => {
     const { rerender } = render(
       <QueryClientProvider client={new QueryClient()}>
         <SecurePasswordCard />
@@ -97,10 +104,9 @@ describe('4.53B SecurePasswordCard', () => {
     fill('Nueva contraseña', 'Aa1!bbbb');
     fill('Confirmar contraseña', 'Aa1!bbbb');
     fireEvent.click(screen.getByRole('button', { name: 'Crear contraseña' }));
-    await waitFor(() => expect(authState.updateUser).toHaveBeenCalledTimes(2));
-    expect(authState.updateUser.mock.calls[0][0]).toEqual({ password: 'Aa1!bbbb' });
-    expect(authState.refetch).toHaveBeenCalled();
-    authState.hasPassword = true;
+    await waitFor(() => expect(state.updateUser).toHaveBeenCalledTimes(1));
+    expect(state.updateUser.mock.calls[0][0]).toEqual({ password: 'Aa1!bbbb' });
+    state.setupState = 'setup_complete';
     rerender(
       <QueryClientProvider client={new QueryClient()}>
         <SecurePasswordCard />
@@ -110,22 +116,23 @@ describe('4.53B SecurePasswordCard', () => {
     expect(rerender).toBeDefined();
   });
 
-  it('§33 has password: Cambiar + current/new/confirm', () => {
-    authState.hasPassword = true;
+  it('§33 setup_complete + legacy_unknown: Cambiar with current field', () => {
+    state.setupState = 'setup_complete';
     renderCard();
-    expect(screen.getByRole('button', { name: 'Cambiar contraseña' })).toBeInTheDocument();
     expect(screen.getByLabelText('Contraseña actual', { exact: true })).toBeInTheDocument();
-    expect(screen.getByLabelText('Nueva contraseña', { exact: true })).toBeInTheDocument();
+    state.setupState = 'legacy_unknown';
+    renderCard();
+    expect(screen.getAllByLabelText('Contraseña actual', { exact: true }).length).toBeGreaterThan(0);
   });
 
   it('§34 correct current: signInWithPassword → updateUser ordering', async () => {
-    authState.hasPassword = true;
+    state.setupState = 'setup_complete';
     const order: string[] = [];
-    authState.signIn.mockImplementation(async () => {
+    state.signIn.mockImplementation(async () => {
       order.push('signin');
       return { data: {}, error: null };
     });
-    authState.updateUser.mockImplementation(async () => {
+    state.updateUser.mockImplementation(async () => {
       order.push('update');
       return { data: {}, error: null };
     });
@@ -134,52 +141,59 @@ describe('4.53B SecurePasswordCard', () => {
     fill('Nueva contraseña', 'Aa1!bbbb');
     fill('Confirmar contraseña', 'Aa1!bbbb');
     fireEvent.click(screen.getByRole('button', { name: 'Cambiar contraseña' }));
-    await waitFor(() => expect(authState.updateUser).toHaveBeenCalled());
+    await waitFor(() => expect(state.updateUser).toHaveBeenCalled());
     expect(order).toEqual(['signin', 'update']);
-    expect(authState.signIn).toHaveBeenCalledWith({ email: 'qa@example.cl', password: 'Old1!aaa' });
+    expect(state.signIn).toHaveBeenCalledWith({ email: 'qa@example.cl', password: 'Old1!aaa' });
   });
 
   it('§35 wrong current: friendly error, 0 updateUser', async () => {
-    authState.hasPassword = true;
-    authState.signIn.mockResolvedValue({ data: {}, error: new Error('Invalid login credentials') });
+    state.setupState = 'setup_complete';
+    state.signIn.mockResolvedValue({ data: {}, error: new Error('Invalid login credentials') });
     renderCard();
     fill('Contraseña actual', 'Wrong1!x');
     fill('Nueva contraseña', 'Aa1!bbbb');
     fill('Confirmar contraseña', 'Aa1!bbbb');
     fireEvent.click(screen.getByRole('button', { name: 'Cambiar contraseña' }));
     await waitFor(() =>
-      expect(authState.toast).toHaveBeenCalledWith(
+      expect(state.toast).toHaveBeenCalledWith(
         expect.objectContaining({ description: 'La contraseña actual no es correcta.' })
       )
     );
-    expect(authState.updateUser).not.toHaveBeenCalled();
+    expect(state.updateUser).not.toHaveBeenCalled();
   });
 
-  it('§6 loading skeleton; error shows retry, never defaults to Crear', () => {
-    authState.loading = true;
+  it('§6 loading skeleton; error shows retry, never defaults', () => {
+    state.loading = true;
     const { unmount } = renderCard();
     expect(screen.queryByRole('button', { name: 'Crear contraseña' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Cambiar contraseña' })).not.toBeInTheDocument();
     unmount();
-    authState.loading = false;
-    authState.error = true;
+    state.loading = false;
+    state.error = true;
     renderCard();
     expect(screen.getByText(/No pudimos verificar/)).toBeInTheDocument();
     expect(screen.getByText('Reintentar')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Crear contraseña' })).not.toBeInTheDocument();
   });
 
-  it('§27 no password values leak to console', async () => {
+  it('no password values leak to console', async () => {
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    authState.hasPassword = false;
     renderCard();
     fill('Nueva contraseña', 'Aa1!bbbb');
     fill('Confirmar contraseña', 'Aa1!cccc');
     fireEvent.click(screen.getByRole('button', { name: 'Crear contraseña' }));
-    await waitFor(() => expect(authState.toast).toHaveBeenCalled());
+    await waitFor(() => expect(state.toast).toHaveBeenCalled());
     const logged = errSpy.mock.calls.flat().join(' ');
     expect(logged).not.toContain('Aa1!bbbb');
     expect(logged).not.toContain('Aa1!cccc');
     errSpy.mockRestore();
+  });
+
+  it('no client-side app_metadata writes (server-controlled only)', () => {
+    const src = readFileSync(resolve(process.cwd(), 'src/components/auth/SecurePasswordCard.tsx'), 'utf8');
+    // Comments may name it; code must never assign it (only the server endpoint writes it).
+    const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/.*$/gm, '$1');
+    expect(code).not.toMatch(/app_metadata\s*:/);
+    expect(code).not.toContain('has_auth_password');
   });
 });

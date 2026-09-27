@@ -3736,7 +3736,6 @@ export type Database = {
             }[]
           }
       get_my_case_entitlement: { Args: never; Returns: Json }
-      has_auth_password: { Args: never; Returns: boolean }
       increment_ai_usage_monthly:
         | {
             Args: {

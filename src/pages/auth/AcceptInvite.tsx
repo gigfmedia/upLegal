@@ -1,6 +1,7 @@
 import { Component, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
+import { markPasswordSetupComplete } from '@/hooks/usePasswordSetupState';
 import { Loader2, CheckCircle, AlertCircle, Eye, EyeOff, Check, XCircle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -219,6 +220,14 @@ function AcceptInviteInner() {
       });
 
       if (updateError) throw updateError;
+
+      // 4.53D: graduate into explicit password authority (best effort; the
+      // setup_required state retries benignly if the marker call fails).
+      try {
+        await markPasswordSetupComplete();
+      } catch {
+        /* marker retry happens naturally on next verified change */
+      }
 
       await supabase.from('profiles').upsert({
         id: user.id,

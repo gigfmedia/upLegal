@@ -4585,6 +4585,9 @@ app.post('/api/admin/invite-lawyer-magic-link', requireAdmin, async (req, res) =
       }
 
       // 4) Confirmar email + rol lawyer + marcador (todo server-side).
+      // 4.53D: app_metadata.password_setup=false (server-controlled; el
+      // browser jamás puede escribir app_metadata). Resend path no toca
+      // cuentas existentes (fail-conservative para legacy).
       const { error: updateError } = await supabase.auth.admin.updateUserById(userId, {
         email_confirm: true,
         user_metadata: {
@@ -4593,6 +4596,7 @@ app.post('/api/admin/invite-lawyer-magic-link', requireAdmin, async (req, res) =
           last_name: lastName,
           ...buildInviteMarker(adminId),
         },
+        app_metadata: { password_setup: false },
       });
       if (updateError) {
         console.error('[LawyerInvite] updateUser failed', updateError?.message);
@@ -4679,6 +4683,39 @@ app.post('/api/admin/invite-lawyer-magic-link', requireAdmin, async (req, res) =
   } catch (error) {
     console.error('[LawyerInvite] unexpected error', error?.message);
     return res.status(500).json({ success: false, message: 'Error al invitar abogado.', error: error?.message });
+  }
+});
+
+// ============================================
+// FASE 4.53D — marca server-side de password setup (app_metadata).
+// El browser jamás elige el uid destino: siempre el dueño del JWT.
+// No recibe ni devuelve passwords ni datos sensibles.
+// ============================================
+app.post('/api/auth/password-setup-complete', async (req, res) => {
+  try {
+    const userId = await requireAILawyer(req, res);
+    if (!userId) return;
+
+    const { data: wrap, error: readError } = await supabase.auth.admin.getUserById(userId);
+    if (readError || !wrap?.user) {
+      return res.status(404).json({ success: false, code: 'USER_NOT_FOUND', message: 'No se encontró tu cuenta.' });
+    }
+    const current = wrap.user.app_metadata || {};
+    const { error: updateError } = await supabase.auth.admin.updateUserById(userId, {
+      app_metadata: {
+        ...current,
+        password_setup: true,
+        password_setup_at: new Date().toISOString(),
+      },
+    });
+    if (updateError) {
+      console.error('[PasswordSetup] marker failed', updateError?.message);
+      return res.status(502).json({ success: false, code: 'MARKER_FAILED', message: 'No se pudo registrar el cambio. Inténtalo de nuevo.' });
+    }
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('[PasswordSetup] unexpected error', error?.message);
+    return res.status(500).json({ success: false, message: 'Error inesperado.' });
   }
 });
 

@@ -193,6 +193,7 @@ function makeSupabaseMock(state) {
           if (u) {
             if (attrs.email_confirm !== undefined) u.email_confirmed_at = new Date().toISOString();
             u.user_metadata = { ...(u.user_metadata || {}), ...(attrs.user_metadata || {}) };
+            u.app_metadata = { ...(u.app_metadata || {}), ...(attrs.app_metadata || {}) };
           }
           return { data: { user: u }, error: null };
         },
@@ -302,6 +303,10 @@ describe('POST /api/admin/invite-lawyer-magic-link (harness vm)', () => {
     expect(upd.attrs.email_confirm).toBe(true);
     expect(upd.attrs.user_metadata.role).toBe('lawyer');
     expect(upd.attrs.user_metadata.admin_lawyer_magic_link.v).toBe(1);
+    // 4.53D: create path stamps server-controlled password_setup=false.
+    expect(upd.attrs.app_metadata).toMatchObject({ password_setup: false });
+    const created = h.state.authUsers.find((u) => u.email === 'nueva@example.cl');
+    expect(created.app_metadata.password_setup).toBe(false);
     expect(h.state.tables.profiles).toHaveLength(1);
     expect(h.state.tables.profiles[0]).toMatchObject({ email: 'nueva@example.cl', role: 'lawyer' });
     expect(h.state.sentEmails).toHaveLength(1);
@@ -409,5 +414,23 @@ describe('POST /api/admin/invite-lawyer-magic-link (harness vm)', () => {
     expect(region).not.toMatch(/console\.(log|info|warn|error)\([^)]*action_?[Ll]ink/i);
     expect(region).not.toContain('inviteUserByEmail');
     expect(region).toContain('requireAdmin');
+  });
+
+  it('4.53D resend no toca app_metadata existente (fail-conservative legacy)', async () => {
+    const h = harness({
+      seed: {
+        authUsers: [{
+          id: 'u7', email: 'known@example.cl',
+          user_metadata: { admin_lawyer_magic_link: { v: 1, by: 'a1', at: new Date().toISOString() } },
+          app_metadata: { password_setup: true },
+        }],
+      },
+    });
+    const res = await call(h, { email: 'known@example.cl' });
+    expect(res.statusCode).toBe(200);
+    expect(res.body.resent).toBe(true);
+    const user = h.state.authUsers.find((u) => u.email === 'known@example.cl');
+    expect(user.app_metadata.password_setup).toBe(true);
+    expect(h.state.updateCalls.filter((c) => c.attrs.app_metadata !== undefined)).toHaveLength(0);
   });
 });
