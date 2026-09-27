@@ -22,6 +22,11 @@ const PERKS = [
   'Citas con tus clientes',
   'Gestión de tu operación',
   'LegalUp AI integrado',
+  'Hasta 50 documentos actuales',
+  '300 consultas IA / mes (caso y documentos)',
+  '40 análisis de documentos / mes',
+  '10 investigaciones jurídicas / mes',
+  'Command Center: vista avanzada de hechos, riesgos y pendientes',
 ];
 
 function formatDate(value: string | null): string {
@@ -73,7 +78,7 @@ export function ProPricingModal({ open, onOpenChange, triggerAction }: ProPricin
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>LegalUp Pro</DialogTitle>
           <DialogDescription>Tu oficina legal, organizada en un solo lugar.</DialogDescription>
@@ -81,23 +86,24 @@ export function ProPricingModal({ open, onOpenChange, triggerAction }: ProPricin
 
         <div className="space-y-4">
           <div className="relative overflow-hidden rounded-xl border border-green-200 bg-gradient-to-br from-green-50 to-white p-6">
-            <Badge className="absolute right-4 top-4 bg-green-100 text-green-800">Founder 15</Badge>
+            {isFounderRate && <Badge className="absolute right-4 top-4 bg-green-100 text-green-800">Founder 15</Badge>}
             <p className="text-3xl font-bold text-gray-900">
               {fmtPrice(previewPrice)}<span className="text-sm font-medium text-muted-foreground">/mes</span>
             </p>
             {isFounderRate ? (
               <>
-                <p className="text-sm text-muted-foreground">por tus primeros 3 cobros</p>
+                <p className="text-sm text-muted-foreground">por tus primeros 3 cobros exitosos</p>
                 <p className="mt-1 text-xs text-muted-foreground">Desde el cuarto cobro, $49.990/mes.</p>
                 <p className="mt-2 text-xs text-green-700 font-medium">
                   {slotsRemaining != null && slotsRemaining > 0
-                    ? `¡Quedan ${slotsRemaining} cupos Founder! Los primeros 15 abogados en contratar Pro obtienen el badge Founder permanente.`
-                    : 'Los primeros 15 abogados en contratar Pro obtienen el badge Founder permanente.'}
+                    ? `¡Quedan ${slotsRemaining} cupos Founder! Los primeros 15 abogados con pago exitoso obtienen el badge Founder permanente.`
+                    : 'Los primeros 15 abogados con pago exitoso obtienen el badge Founder permanente.'}
                 </p>
               </>
             ) : (
               <p className="mt-1 text-xs text-muted-foreground">$49.990/mes. Los cupos Founder ya fueron asignados.</p>
             )}
+            <p className="mt-2 text-xs text-muted-foreground">Founder tiene las mismas capacidades de Pro. Cancelar y reactivar no reinicia los cobros exitosos. Los documentos son capacidad almacenada, sin reinicio mensual.</p>
             <ul className="mt-4 space-y-2">
               {PERKS.map((perk) => (
                 <li key={perk} className="flex items-start gap-2 text-sm text-gray-700">

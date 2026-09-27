@@ -339,18 +339,19 @@ const STORIES = [
 const AI_CAPABILITIES = [
   { icon: FileText, title: "Análisis de documentos", desc: "Estructura, puntos clave y riesgos dentro del caso." },
   { icon: MessageSquare, title: "Chat del caso", desc: "Preguntas sobre el contenido de tus casos y documentos." },
-  { icon: Search, title: "Investigación", desc: "Jurisprudencia y normativa chilena con fuentes verificables." },
+  { icon: Search, title: "Investigación jurídica", desc: "Fuentes del Tribunal Constitucional, BCN / LeyChile y OpenAlex." },
   { icon: Clock, title: "Uso mensual incluido", desc: "300 consultas, 40 análisis y 10 investigaciones al mes." },
 ];
 
 const FAQS = [
+  { q: "¿Qué incluye mi primer caso sin costo?", a: "Un caso directo durante la vida de tu cuenta, hasta 2 documentos actuales, 3 consultas IA compartidas entre caso y documentos, 1 análisis y 1 investigación jurídica en total. Incluye estado del caso y cronología. Los usos no se renuevan mensualmente. Crear clientes, citas manuales y usar Command Center avanzado requiere Pro." },
   { q: "¿Qué es LegalUp Pro?", a: "Es el espacio de trabajo para abogados dentro de LegalUp: solicitudes, clientes, casos, citas e ingresos en un solo lugar, con IA integrada en tus casos." },
   { q: "¿Para quién es?", a: "Para abogados, estudios jurídicos y equipos legales que gestionan su práctica y quieren centralizarla sin depender de planillas, mensajes y herramientas separadas." },
   { q: "¿Qué puedo gestionar?", a: "Clientes con su historial, casos con su trabajo asociado, solicitudes desde un inbox centralizado, agenda de citas, los servicios que ofreces y los ingresos de tu actividad en la plataforma." },
-  { q: "¿LegalUp Pro incluye LegalUp AI?", a: "Sí, LegalUp AI viene integrado en tus casos: análisis de documentos, chat sobre casos e investigación de jurisprudencia, con uso mensual incluido." },
+  { q: "¿LegalUp Pro incluye LegalUp AI?", a: "Sí, LegalUp AI viene integrado en tus casos: análisis de documentos, chat sobre casos e investigación jurídica, con uso mensual incluido." },
   { q: "¿Necesito usar el marketplace?", a: "No es obligatorio. Pro organiza tu práctica actual y además centraliza las solicitudes que recibas desde LegalUp." },
   { q: "¿Mis datos están separados de otros abogados?", a: "Sí. Cada abogado solo accede a su propia información: clientes, casos, documentos e ingresos están separados por cuenta." },
-  { q: "¿Cuánto cuesta?", a: "$19.990/mes durante tus primeros 3 cobros. Desde el cuarto cobro, $49.990/mes." },
+  { q: "¿Cuánto cuesta?", a: "LegalUp Pro cuesta $49.990/mes. Para los primeros 15 abogados con pago exitoso, el precio Founder es $19.990/mes durante los primeros 3 cobros exitosos y luego $49.990/mes." },
   { q: "¿Qué pasa después de los 3 meses?", a: "Los primeros 3 cobros son de $19.990/mes. Desde el cuarto cobro, el precio es $49.990/mes. Si cancelas y vuelves, tus cobros anteriores se mantienen y el conteo no se reinicia." },
   { q: "¿Puedo cancelar?", a: "Sí. Puedes cancelar tu suscripción en cualquier momento desde el dashboard. El acceso se mantiene hasta el fin del período ya pagado. Si necesitas ayuda, escríbenos a través de los canales de soporte de LegalUp." },
 ];
@@ -648,7 +649,7 @@ export default function LegalUpPro() {
               className="mt-4 text-xs text-gray-700"
             >
               <button onClick={() => scrollToId("pricing")} className="underline decoration-green-800/30 underline-offset-2 hover:text-gray-900">
-                Plan Free disponible · Plan Pro con acceso Founder
+                Tu primer caso sin costo · LegalUp Pro para continuar
               </button>
             </motion.p>
           </div>
@@ -955,31 +956,33 @@ export default function LegalUpPro() {
             <Reveal>
               <Card className="flex h-full flex-col rounded-3xl border-gray-200">
                 <CardContent className="flex flex-1 flex-col p-6 sm:p-8">
-                  <h3 className="text-lg font-bold">Free</h3>
+                  <h3 className="text-lg font-bold">Tu primer caso</h3>
                   <div className="mt-3 flex items-end gap-1">
                     <span className="text-5xl font-bold tracking-tight">$0</span>
                   </div>
-                  <p className="mt-2 text-sm text-gray-600">Para comenzar a organizar tu práctica con LegalUp.</p>
+                  <p className="mt-2 text-sm text-gray-600">Un caso sin costo, con LegalUp AI incluido en cantidades limitadas.</p>
                   <Button
                     variant="outline"
                     onClick={() => handleFreeCTA("pricing_free")}
                     className="mt-6 h-12 w-full rounded-full text-base"
                   >
-                    {!user ? "Comenzar gratis" : "Ir a mi panel"}
+                    {!user ? "Crear mi primer caso" : "Ir a mi panel"}
                   </Button>
                   <div className="mt-6 rounded-xl bg-gray-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Elige Free si quieres</p>
-                    <p className="mt-1 text-sm text-gray-600">Empezar a centralizar tu práctica y probar el flujo de LegalUp Pro.</p>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Tu primer caso incluye</p>
+                    <p className="mt-1 text-sm text-gray-600">Sin tarjeta. Un único caso durante la vida de tu cuenta; los usos de IA no se renuevan cada mes.</p>
                   </div>
                   <ul className="mt-6 space-y-2.5 text-sm">
-                    <PlanRow included label="Panel y vista general" />
-                    <PlanRow included label="Tu primer caso" />
-                    <PlanRow included label="Servicios e ingresos" />
-                    <PlanRow label="Crear clientes" />
-                    <PlanRow label="Casos adicionales" />
-                    <PlanRow label="Procesar solicitudes" />
-                    <PlanRow label="Crear citas" />
-                    <PlanRow label="IA integrada" />
+                    <PlanRow included label="1 caso directo durante la vida de tu cuenta" />
+                    <PlanRow included label="Hasta 2 documentos actuales" />
+                    <PlanRow included label="3 consultas con LegalUp AI en total (caso y documentos)" />
+                    <PlanRow included label="1 análisis de documento en total" />
+                    <PlanRow included label="1 investigación jurídica en total" />
+                    <PlanRow included label="Estado del caso, cronología y resultados guardados" />
+                    <PlanRow included label="Servicios e ingresos del marketplace" />
+                    <PlanRow label="Crear clientes: requiere Pro" />
+                    <PlanRow label="Casos adicionales y citas manuales: requieren Pro" />
+                    <PlanRow label="Command Center avanzado: requiere Pro" />
                   </ul>
                 </CardContent>
               </Card>
@@ -989,14 +992,14 @@ export default function LegalUpPro() {
               <Card className="flex h-full flex-col rounded-3xl border-green-300 shadow-xl">
                 <CardContent className="flex flex-1 flex-col p-6 sm:p-8">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-bold">Pro</h3>
+                    <h3 className="text-lg font-bold">LegalUp Pro</h3>
                     <Badge className="border-green-200 bg-green-100 text-green-800">Founder</Badge>
                   </div>
                   <div className="mt-3 flex items-end gap-1">
                     <span className="text-5xl font-bold tracking-tight">$19.990</span>
                     <span className="pb-1 text-sm font-medium text-gray-500">/mes</span>
                   </div>
-                  <p className="mt-2 text-sm text-gray-600">Precio Founder durante tus primeros 3 cobros. Desde el cuarto cobro, $49.990/mes.</p>
+                  <p className="mt-2 text-sm text-gray-600">Precio Founder durante tus primeros 3 cobros exitosos. Desde el cuarto cobro, $49.990/mes.</p>
                   <Button
                     onClick={() => handleProCTA("pricing_pro")}
                     className="mt-6 h-12 w-full rounded-full bg-gray-900 text-base hover:bg-green-900"
@@ -1010,14 +1013,19 @@ export default function LegalUpPro() {
                   <ul className="mt-6 space-y-2.5 text-sm">
                     <PlanRow included label="Panel y vista general" />
                     <PlanRow included label="Hasta 20 casos activos" />
-                    <PlanRow included label="Crear clientes" />
+                    <PlanRow included label="Clientes ilimitados" />
                     <PlanRow included label="Procesar solicitudes" />
-                    <PlanRow included label="Crear citas" />
+                    <PlanRow included label="Citas con tus clientes" />
                     <PlanRow included label="Servicios e ingresos" />
-                    <PlanRow included label="IA integrada: análisis, chat e investigación" />
+                    <PlanRow included label="Hasta 50 documentos actuales" />
+                    <PlanRow included label="300 consultas IA / mes (caso y documentos)" />
+                    <PlanRow included label="40 análisis de documentos / mes" />
+                    <PlanRow included label="10 investigaciones jurídicas / mes" />
+                    <PlanRow included label="Estado del caso y cronología" />
+                    <PlanRow included label="Command Center: vista avanzada de hechos, riesgos y pendientes" />
                   </ul>
                   <p className="mt-6 text-xs leading-relaxed text-gray-500">
-                    Después de los 15 cupos Founder, Pro cuesta $49.990/mes. El badge Founder queda permanentemente en tu perfil. Sin compromiso anual.
+                    Founder corresponde a los primeros 15 abogados con pago exitoso. Tiene las mismas capacidades de Pro y un badge permanente; no acredita calidad profesional. Después de esos cupos, Pro cuesta $49.990/mes. Los casos cerrados no ocupan cupo. Servicios e ingresos del marketplace no requieren Pro.
                   </p>
                 </CardContent>
               </Card>
@@ -1066,7 +1074,7 @@ export default function LegalUpPro() {
                 Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
-            <p className="mt-5 text-sm font-medium text-green-900">$19.990/mes × 3 cobros · Sin compromiso anual</p>
+            <p className="mt-5 text-sm font-medium text-green-900">Founder: $19.990/mes × 3 cobros exitosos · Luego $49.990/mes</p>
           </Reveal>
             </div>
           </div>

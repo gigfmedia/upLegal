@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { getSupabaseAdminClient } from '@/lib/supabaseClient';
-import { Loader2, Mail, User, Check, AlertTriangle, Send, Eye, Sparkles } from 'lucide-react';
+import { Loader2, Mail, User, Check, AlertTriangle, Send, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
@@ -44,10 +43,6 @@ export default function LawyerProfilesPage() {
   const [loading, setLoading] = useState(true);
   const [sendingEmails, setSendingEmails] = useState<string[]>([]);
   const [testMode, setTestMode] = useState(true);
-  const [selectedAIIds, setSelectedAIIds] = useState<Set<string>>(new Set());
-  const [showAIInviteDialog, setShowAIInviteDialog] = useState(false);
-  const [sendingAIInvite, setSendingAIInvite] = useState(false);
-  const [aiInviteResult, setAiInviteResult] = useState<null | { sent: number; skipped: number; failed: number }>(null);
   // FASE 4.42A — invitar abogado NUEVO con magic link (sin Pro/trial).
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
@@ -216,59 +211,6 @@ export default function LawyerProfilesPage() {
       });
     } finally {
       setSendingEmails([]);
-    }
-  };
-
-  const toggleAISelection = (id: string) => {
-    setSelectedAIIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const toggleAllAI = () => {
-    if (selectedAIIds.size === lawyers.length) {
-      setSelectedAIIds(new Set());
-    } else {
-      setSelectedAIIds(new Set(lawyers.map(l => l.id)));
-    }
-  };
-
-  const sendAIInvite = async () => {
-    if (selectedAIIds.size === 0) {
-      toast({ title: 'Selecciona al menos un abogado', variant: 'destructive' });
-      return;
-    }
-    try {
-      setSendingAIInvite(true);
-      const { data: { session } } = await (await import('@/lib/supabaseClient')).supabase.auth.getSession();
-      const res = await fetch('/api/admin/ai/send-lawyer-invite', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token || ''}`,
-        },
-        body: JSON.stringify({ lawyerIds: Array.from(selectedAIIds) }),
-      });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body?.message || 'Error al enviar invitaciones');
-      setAiInviteResult({ sent: body.sent || 0, skipped: body.skipped || 0, failed: body.failed || 0 });
-      toast({ title: 'Invitaciones enviadas', description: `${body.sent} enviados, ${body.skipped} omitidos, ${body.failed} fallidos` });
-      setSelectedAIIds(new Set());
-      setShowAIInviteDialog(false);
-      if (body.failed === 0 && body.sent > 0) {
-        try { (await import('posthog-js')).default.capture('ai_lawyer_email_sent', { source: 'admin', campaign: 'legalup_ai_trial', sent: body.sent }); } catch {
-          // ignore tracking error
-        }
-      }
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : 'No se pudieron enviar las invitaciones';
-      console.error('Error sending AI invites:', error);
-      toast({ title: 'Error', description: msg, variant: 'destructive' });
-    } finally {
-      setSendingAIInvite(false);
     }
   };
 
@@ -453,33 +395,6 @@ export default function LawyerProfilesPage() {
               </CardContent>
             </Card>
           )}
-            <Card className="rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-white to-white overflow-hidden">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-gray-900">
-                  <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
-                    <Sparkles className="h-4 w-4" />
-                  </div>
-                  LegalUp AI
-                </CardTitle>
-                <CardDescription className="text-gray-600">
-                  Invita a abogados registrados a probar LegalUp AI durante 5 días gratis.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-3 items-center">
-                  <Button onClick={() => setShowAIInviteDialog(true)} className="bg-gray-900 hover:bg-green-900 text-white flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    Enviar email LegalUp AI
-                  </Button>
-                  {aiInviteResult && (
-                    <span className="text-sm text-emerald-700">
-                      Último envío: {aiInviteResult.sent} enviados, {aiInviteResult.skipped} omitidos, {aiInviteResult.failed} fallidos
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-gray-500 mt-3">5 días gratis · luego $49.900 CLP/mes · Sin permanencia · Flujo real: /ai → trial</p>
-              </CardContent>
-            </Card>
             {/* FASE 4.42A — invitar abogado NUEVO con magic link (sin Pro/trial) */}
             <Card className="rounded-xl border border-gray-200 bg-white overflow-hidden">
               <CardHeader>
@@ -598,72 +513,6 @@ export default function LawyerProfilesPage() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Dialog Invitación LegalUp AI */}
-        <Dialog open={showAIInviteDialog} onOpenChange={setShowAIInviteDialog}>
-          <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-emerald-600" />
-                Enviar email LegalUp AI
-              </DialogTitle>
-              <DialogDescription>
-                Selecciona los abogados registrados que recibirán la invitación a probar LegalUp AI durante 5 días gratis. El CTA lleva a <span className="font-mono text-xs">/ai?utm_source=email…</span>
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="flex items-center justify-between py-2 border-y">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="select-all-ai"
-                  checked={lawyers.length > 0 && selectedAIIds.size === lawyers.length}
-                  onCheckedChange={toggleAllAI}
-                />
-                <label htmlFor="select-all-ai" className="text-sm font-medium">
-                  Seleccionar todos ({lawyers.length})
-                </label>
-              </div>
-              <span className="text-sm text-muted-foreground">
-                {selectedAIIds.size} seleccionados
-              </span>
-            </div>
-
-            <div className="flex-1 overflow-y-auto space-y-2 py-2 pr-2" style={{ maxHeight: '340px' }}>
-              {lawyers.map(lawyer => (
-                <label key={lawyer.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                  <Checkbox
-                    checked={selectedAIIds.has(lawyer.id)}
-                    onCheckedChange={() => toggleAISelection(lawyer.id)}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{lawyer.first_name} {lawyer.last_name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{lawyer.email}</p>
-                  </div>
-                  <Badge variant="outline" className="text-xs">{lawyer.profile_completion || 0}%</Badge>
-                </label>
-              ))}
-              {lawyers.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-8">No hay abogados para mostrar</p>
-              )}
-            </div>
-
-            {selectedAIIds.size > 0 && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
-                <p className="font-medium text-amber-900">Vas a enviar LegalUp AI a {selectedAIIds.size} abogado{selectedAIIds.size > 1 ? 's' : ''}.</p>
-                <p className="text-xs text-amber-700 mt-1">Asunto: Conoce LegalUp AI — 5 días gratis para probarlo · 5 días gratis · luego $49.900 CLP/mes</p>
-              </div>
-            )}
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowAIInviteDialog(false)} disabled={sendingAIInvite}>
-                Cancelar
-              </Button>
-              <Button onClick={sendAIInvite} disabled={selectedAIIds.size === 0 || sendingAIInvite} className="bg-gray-900 hover:bg-green-900 text-white">
-                {sendingAIInvite ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Enviando...</> : `Enviar email (${selectedAIIds.size})`}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
 
         {/* FASE 4.42A — dialog invitar abogado nuevo (email + nombre opcional) */}
         <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>

@@ -38,7 +38,7 @@ describe('PRO.2.3 pricing section contract (static)', () => {
     expect(c).toContain('Empieza gratis. Crece con Pro.');
     expect(c).toContain('$19.990');
     expect(c).toContain('$49.990');
-    expect(c).toContain('Comenzar gratis');
+    expect(c).toContain('Crear mi primer caso');
     expect(c).toContain('Pasar a Pro');
     // Una sola sección de pricing (la antigua tarjeta única desapareció).
     expect(c).not.toContain('Un precio simple para empezar hoy');
@@ -52,7 +52,7 @@ describe('PRO.2.3 pricing section contract (static)', () => {
       'Hasta 20 casos activos',
       'Crear clientes',
       'Procesar solicitudes',
-      'Crear citas',
+      'Citas con tus clientes',
       'Servicios e ingresos',
       'IA integrada',
     ]) {
@@ -64,7 +64,7 @@ describe('PRO.2.3 pricing section contract (static)', () => {
 
   it('hero no longer competes as a giant pricing moment', () => {
     const c = landing();
-    expect(c).toContain('Plan Free disponible');
+    expect(c).toContain('Tu primer caso sin costo');
     // El hero no muestra $19.990 en display gigante.
     const heroBlock = c.slice(c.indexOf('Gestiona tu práctica legal'), c.indexOf('id="producto"'));
     expect(heroBlock).not.toContain('$19.990');

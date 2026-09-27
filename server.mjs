@@ -1,3 +1,4 @@
+import { retiredAITrialInvite } from './server/retiredAITrialInvite.mjs';
 import { createAIMetering } from './server/ai/metering.mjs';
 import { PRO_AI_ALLOWANCE, commercialQuotaForPlan, FREE_CASE_ALLOWANCE, freeQuotaForPlan } from './server/ai/proAllowance.mjs';
 import {
@@ -4355,144 +4356,7 @@ app.post('/api/admin/notify-lawyers', requireAdmin, async (req, res) => {
 // ============================================
 // LEGALUP AI — INVITACIÓN A ABOGADOS (FASE EMAIL)
 // ============================================
-app.post('/api/admin/ai/send-lawyer-invite', requireAdmin, async (req, res) => {
-  try {
-    const { lawyerIds } = req.body || {};
-
-    if (!Array.isArray(lawyerIds) || lawyerIds.length === 0) {
-      return res.status(400).json({ success: false, message: 'Debes seleccionar al menos un abogado (lawyerIds).' });
-    }
-    if (lawyerIds.length > 100) {
-      return res.status(400).json({ success: false, message: 'Máximo 100 abogados por envío.' });
-    }
-
-    if (!resend) {
-      return res.status(500).json({ success: false, message: 'Servicio de email no configurado (RESEND_API_KEY).' });
-    }
-
-    // Fetch abogados registrados (solo desde DB, no aceptar emails arbitrarios)
-    const { data: lawyers, error: fetchError } = await supabase
-      .from('profiles')
-      .select('id, email, first_name, last_name')
-      .in('id', lawyerIds)
-      .eq('role', 'lawyer');
-
-    if (fetchError) {
-      console.error('[LegalUpAI Invite] fetch error', fetchError);
-      return res.status(500).json({ success: false, message: 'Error al obtener abogados', error: fetchError.message });
-    }
-
-    const foundById = new Map((lawyers || []).map(l => [l.id, l]));
-    const missingIds = lawyerIds.filter(id => !foundById.has(id));
-
-    let sent = 0;
-    let skipped = 0;
-    let failed = 0;
-    const failedDetails = [];
-    const skippedDetails = [];
-
-    const ctaBase = `${appUrl}/ai?utm_source=email&utm_medium=email&utm_campaign=${LEGALUP_AI_INVITE_CAMPAIGN}&utm_content=lawyer_invitation`;
-    const priceText = `$${AI_SUBSCRIPTION_PRICE_CLP.toLocaleString('es-CL')} CLP/mes`;
-
-    // Para tracking post-envío, capturamos evento de admin
-    const adminId = req.adminUser?.id || null;
-
-    for (const id of lawyerIds) {
-      const lawyer = foundById.get(id);
-      if (!lawyer) {
-        failed++;
-        failedDetails.push({ lawyerId: id, reason: 'ID no encontrado o no es abogado' });
-        continue;
-      }
-      if (!lawyer.email) {
-        skipped++;
-        skippedDetails.push({ lawyerId: id, email: null, reason: 'sin email' });
-        continue;
-      }
-
-      // Prevención duplicado suave: si ya se envió esta campaña a este abogado en los últimos 30 días, omitir
-      try {
-        const { data: recent } = await supabase
-          .from('ai_lawyer_invites')
-          .select('id, sent_at')
-          .eq('lawyer_id', id)
-          .eq('campaign', LEGALUP_AI_INVITE_CAMPAIGN)
-          .gte('sent_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-          .maybeSingle();
-        if (recent) {
-          skipped++;
-          skippedDetails.push({ lawyerId: id, email: lawyer.email, reason: 'ya enviado hace <30 días' });
-          continue;
-        }
-      } catch (e) {
-        // Si la tabla no existe aún, ignoramos el check
-        console.warn('[LegalUpAI Invite] dedup check skipped', e?.message);
-      }
-
-      const lawyerName = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim();
-      const html = buildLegalUpAIInviteEmail({ lawyerName, ctaUrl: ctaBase });
-
-      try {
-        await resend.emails.send({
-          from: 'LegalUp AI <hola@mg.legalup.cl>',
-          to: lawyer.email,
-          subject: LEGALUP_AI_INVITE_SUBJECT,
-          html,
-        });
-
-        // Log para auditoría/dedup
-        try {
-          await supabase.from('ai_lawyer_invites').insert({
-            lawyer_id: id,
-            campaign: LEGALUP_AI_INVITE_CAMPAIGN,
-            sent_at: new Date().toISOString(),
-            sent_by: adminId,
-            email: lawyer.email,
-          });
-        } catch (logErr) {
-          console.warn('[LegalUpAI Invite] log insert failed', logErr?.message);
-        }
-
-        sent++;
-      } catch (mailErr) {
-        console.error('[LegalUpAI Invite] send failed', lawyer.email, mailErr);
-        failed++;
-        failedDetails.push({ lawyerId: id, email: lawyer.email, reason: mailErr?.message || 'send error' });
-      }
-
-      // Pequeña pausa para no saturar Resend
-      await new Promise(r => setTimeout(r, 120));
-    }
-
-    // PostHog del admin (no PII)
-    try {
-      await capturePostHog('ai_lawyer_email_sent', adminId || 'admin', {
-        campaign: LEGALUP_AI_INVITE_CAMPAIGN,
-        requested: lawyerIds.length,
-        sent,
-        skipped,
-        failed,
-      });
-    } catch {}
-
-    return res.json({
-      success: true,
-      requested: lawyerIds.length,
-      sent,
-      skipped,
-      failed,
-      missingIds: missingIds.length ? missingIds : undefined,
-      skippedDetails: skippedDetails.length ? skippedDetails : undefined,
-      failedDetails: failedDetails.length ? failedDetails : undefined,
-      ctaUrl: ctaBase,
-      subject: LEGALUP_AI_INVITE_SUBJECT,
-      preheader: LEGALUP_AI_INVITE_PREHEADER,
-    });
-  } catch (error) {
-    console.error('[LegalUpAI Invite] unexpected error', error);
-    return res.status(500).json({ success: false, message: 'Error al enviar invitaciones', error: error.message });
-  }
-});
+app.post('/api/admin/ai/send-lawyer-invite', requireAdmin, retiredAITrialInvite);
 
 // ============================================
 // FASE 4.42A — admin lawyer magic-link onboarding (solo nuevos emails).
@@ -4876,24 +4740,24 @@ const aiSubscriptionEmailTemplates = {
     <p>Tu prueba de <strong>${AI_SUBSCRIPTION_TRIAL_DAYS} días gratis</strong> de LegalUp AI ya está activa. Disfruta de:</p>
     <div style="background:#f3f4f6;padding:20px;border-radius:8px;margin:20px 0;">
       <p style="margin:5px 0;">✓ Analiza documentos con IA</p>
-      <p style="margin:5px 0;">✓ Crea casos privados y organízalos</p>
+      <p style="margin:5px 0;">✓ Consulta tus casos históricos</p>
       <p style="margin:5px 0;">✓ Chatea con tu caso y obtén respuestas con contexto</p>
     </div>
-    <p>Después de la prueba, la suscripción cuesta <strong>$49.900/mes</strong>.</p>
+    <p>Este acceso histórico conserva su fecha de término. Conoce las capacidades actuales de <a href="${appUrl}/pro">LegalUp Pro</a>.</p>
     <div style="text-align:center;margin:30px 0;">
       <a href="${appUrl}/lawyer/ai" style="display:inline-block;background:#111;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:bold;">Ir a LegalUp AI</a>
     </div>
   `, 'AI'),
   welcome: () => aiSubscriptionEmailTemplates.shell(`
     <h1 style="color:#1a202c;">¡Bienvenido a LegalUp AI!</h1>
-    <p>Tu suscripción <strong>Pro</strong> está activa. Sigue trabajando tus casos con todas las herramientas de LegalUp AI.</p>
+    <p>Tu suscripción histórica de <strong>LegalUp AI</strong> está activa. Sigue trabajando tus casos con todas las herramientas de LegalUp AI.</p>
     <div style="text-align:center;margin:30px 0;">
       <a href="${appUrl}/lawyer/ai" style="display:inline-block;background:#111;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:bold;">Ir a mi workspace</a>
     </div>
   `, 'AI'),
   renewal: (periodEnd) => aiSubscriptionEmailTemplates.shell(`
     <h1 style="color:#1a202c;">Tu suscripción se renovó</h1>
-    <p>Tu plan <strong>Pro</strong> se renovó exitosamente. Tus beneficios están activos hasta el <strong>${periodEnd}</strong>.</p>
+    <p>Tu plan histórico de <strong>LegalUp AI</strong> se renovó exitosamente. Tus beneficios están activos hasta el <strong>${periodEnd}</strong>.</p>
   `, 'AI'),
   payment_failed: () => aiSubscriptionEmailTemplates.shell(`
     <h1 style="color:#dc2626;">Pago no procesado</h1>
@@ -4904,7 +4768,7 @@ const aiSubscriptionEmailTemplates = {
   `, 'AI'),
   cancelled: (periodEnd) => aiSubscriptionEmailTemplates.shell(`
     <h1 style="color:#1a202c;">Suscripción cancelada</h1>
-    <p>Tu suscripción <strong>Pro</strong> fue cancelada. Tus beneficios seguirán activos hasta el <strong>${periodEnd}</strong>.</p>
+    <p>Tu suscripción histórica de <strong>LegalUp AI</strong> fue cancelada. Tus beneficios seguirán activos hasta el <strong>${periodEnd}</strong>.</p>
     <p>Si cambias de opinión, puedes reactivar tu suscripción en cualquier momento.</p>
   `, 'AI'),
   trialReminder: (daysLeft) => {
@@ -4923,19 +4787,21 @@ const aiSubscriptionEmailTemplates = {
     return aiSubscriptionEmailTemplates.shell(`
     <h1 style="color:#1a202c;">${heading}</h1>
     <p>${intro}</p>
-    <p>Suscríbete por <strong>$49.900/mes</strong> para no perder el acceso a tus casos, análisis y chat contextual.</p>
+    <p>Para continuar con las capacidades actuales, revisa <a href="${appUrl}/pro">LegalUp Pro</a>. Tus resultados guardados se conservan.</p>
     <div style="background:#f3f4f6;padding:20px;border-radius:8px;margin:20px 0;">
       <p style="margin:5px 0;">✓ Analiza documentos con IA</p>
-      <p style="margin:5px 0;">✓ Crea casos privados y organízalos</p>
+      <p style="margin:5px 0;">✓ Consulta tus casos históricos</p>
       <p style="margin:5px 0;">✓ Chatea con tu caso</p>
     </div>
     <div style="text-align:center;margin:30px 0;">
-      <a href="${appUrl}/lawyer/ai" style="display:inline-block;background:#111;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:bold;">Suscribirme ahora</a>
+      <a href="${appUrl}/pro" style="display:inline-block;background:#111;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:bold;">Ver LegalUp Pro</a>
     </div>
   `, 'AI');
   },
 };
 
+// Historical template retained for reference only. No production send path.
+// /api/admin/ai/send-lawyer-invite returns 410 (retiredAITrialInvite).
 // ---- LegalUp AI — Invitación a abogados registrados (FASE EMAIL) ----
 const LEGALUP_AI_INVITE_CAMPAIGN = 'legalup_ai_trial';
 const LEGALUP_AI_INVITE_SUBJECT = 'Conoce LegalUp AI — 5 días gratis para probarlo';

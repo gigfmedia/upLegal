@@ -13,7 +13,6 @@ import {
   useCancelAISubscription,
   type AIAccessStatus,
 } from '@/hooks/useAISubscription';
-import { AI_SUBSCRIPTION_PRICE_LABEL, AI_SUBSCRIPTION_TRIAL_DAYS } from '@/lib/aiFeatures';
 import { AIPricingModal } from '@/components/legalup-ai/AIPricingModal';
 
 function formatDate(value: string | null): string {
@@ -25,9 +24,9 @@ function formatDate(value: string | null): string {
   }
 }
 
-const STATUS_META: Record<AIAccessStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  trialing: { label: 'En prueba gratuita', variant: 'secondary' },
-  active: { label: 'Plan Essential activo', variant: 'default' },
+const STATUS_META: Partial<Record<AIAccessStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }>> = {
+  trialing: { label: 'Acceso histórico temporal', variant: 'secondary' },
+  active: { label: 'Suscripción histórica activa', variant: 'default' },
   cancelled: { label: 'Cancelada', variant: 'outline' },
   past_due: { label: 'Pago pendiente', variant: 'destructive' },
   expired: { label: 'Expirada', variant: 'destructive' },
@@ -77,9 +76,9 @@ export function AISubscriptionCard() {
                 <Crown className="h-5 w-5" aria-hidden="true" />
               </span>
               <div>
-                <p className="font-semibold text-gray-900">Plan Essential</p>
+                <p className="font-semibold text-gray-900">Suscripción histórica LegalUp AI</p>
                 <p className="text-sm text-muted-foreground">
-                  {AI_SUBSCRIPTION_PRICE_LABEL}/mes
+                  Condiciones de tu suscripción vigente
                 </p>
               </div>
             </div>
@@ -95,7 +94,7 @@ export function AISubscriptionCard() {
             </div>
             {isTrialing && (
               <div className="rounded-lg bg-gray-50 p-3">
-                <dt className="text-xs font-medium text-muted-foreground">Fin de la prueba</dt>
+                <dt className="text-xs font-medium text-muted-foreground">Fin del acceso histórico</dt>
                 <dd className="mt-1 text-sm font-semibold text-gray-900">
                   {formatDate(trialEndsAt)}
                 </dd>
@@ -106,14 +105,6 @@ export function AISubscriptionCard() {
                 <dt className="text-xs font-medium text-muted-foreground">Próxima renovación</dt>
                 <dd className="mt-1 text-sm font-semibold text-gray-900">
                   {formatDate(currentPeriodEnd)}
-                </dd>
-              </div>
-            )}
-            {status === 'none' && (
-              <div className="rounded-lg bg-gray-50 p-3">
-                <dt className="text-xs font-medium text-muted-foreground">Prueba gratuita</dt>
-                <dd className="mt-1 text-sm font-semibold text-gray-900">
-                  {AI_SUBSCRIPTION_TRIAL_DAYS} días sin tarjeta
                 </dd>
               </div>
             )}
@@ -144,12 +135,12 @@ export function AISubscriptionCard() {
             <div className="flex flex-col gap-2 sm:flex-row">
               {hasAccess && !isActive ? (
                 <Button type="button" onClick={() => setPricingOpen(true)} className="bg-gray-900 text-white hover:bg-green-900">
-                  Suscribirme ahora
+                  Ver LegalUp Pro
                 </Button>
               ) : null}
               {!hasAccess ? (
                 <Button type="button" onClick={() => setPricingOpen(true)} className="bg-gray-900 text-white hover:bg-green-900">
-                  Ver planes
+                  Ver LegalUp Pro
                 </Button>
               ) : null}
               {isActive ? (

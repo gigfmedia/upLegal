@@ -1808,7 +1808,7 @@ function PricingSection({
             </Button>
           </div>
           <p className="mt-4 text-xs text-[var(--muted-foreground)]">
-            LegalUp AI está incluido en LegalUp Pro. Consulta las condiciones vigentes del plan.
+            LegalUp AI está incluido en LegalUp Pro. Tu primer caso sin costo incluye usos limitados; consulta las capacidades y condiciones en Pro.
           </p>
         </motion.div>
       </div>
@@ -2090,7 +2090,7 @@ function LegalUpAI() {
               </Button>
             </div>
             <p className="mt-4 text-xs text-[var(--muted-foreground)]">
-              LegalUp AI está incluido en LegalUp Pro. Consulta las condiciones vigentes del plan.
+              LegalUp AI está incluido en LegalUp Pro. Tu primer caso sin costo incluye usos limitados; consulta las capacidades y condiciones en Pro.
             </p>
           </motion.div>
         </div>
