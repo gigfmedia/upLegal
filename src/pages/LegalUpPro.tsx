@@ -633,7 +633,7 @@ export default function LegalUpPro() {
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3, ease: EASE }}
-              className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"
+              className="relative z-30 mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"
             >
               <Button size="lg" onClick={() => handleCTAClick("hero")} className="rounded-full h-12 w-full bg-gray-900 px-8 text-base shadow-lg hover:bg-green-900 sm:w-auto sm:px-10 sm:text-lg">
                 Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
@@ -646,7 +646,7 @@ export default function LegalUpPro() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.45 }}
-              className="mt-4 text-xs text-gray-700"
+              className="relative z-30 mt-4 text-xs text-gray-700"
             >
               <button onClick={() => scrollToId("pricing")} className="underline decoration-green-800/30 underline-offset-2 hover:text-gray-900">
                 Tu primer caso sin costo · LegalUp Pro para continuar
