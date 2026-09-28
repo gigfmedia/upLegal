@@ -505,9 +505,9 @@ const Index = () => {
       
       {/* Hero Section - Padding top adjusted for Top Bar (40px) + Header (64px).
           Inset green bg with margin like LegalUp Pro hero (rounded on desktop). */}
-      <section className="bg-white">
-        <div className="px-3 pt-[116px] pb-3 sm:px-6 sm:pt-[128px] sm:pb-6">
-          <div className="rounded-[28px] bg-gray-100 px-4 pb-16 pt-12 sm:rounded-[40px] sm:px-8 sm:pt-16">
+      <section className="bg-gray-100 sm:bg-white">
+        <div className="pt-32 sm:px-6 sm:pt-[128px] sm:pb-6">
+          <div className="bg-gray-100 px-4 pb-16 sm:rounded-[40px] sm:px-8 sm:pt-16 sm:min-h-[calc(100dvh-152px)]">
             <div className="max-w-7xl mx-auto text-center">
           <p className="border border-gray-300 rounded-full p-1 text-sm text-gray-600 mb-8 max-w-3xl mx-auto w-fit px-2 py-2 mt-12 flex items-center gap-2">
             <span className="w-1 h-1 bg-green-400 rounded-full"></span>
@@ -683,8 +683,11 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-100">
-        <div className="max-w-7xl mx-auto">
+      <section className="bg-white">
+        <div className="pb-0 sm:px-6 sm:pb-6">
+          <div className="bg-gray-100 sm:rounded-[40px]">
+            <div className="py-20 px-4 sm:px-6 lg:px-8">
+              <div className="max-w-7xl mx-auto">
       
           {/* Header */}
           <div className="mb-12">
@@ -751,12 +754,18 @@ const Index = () => {
             </div>
           </div>
           <MPbadge />
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Emotional Block */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-green-900 overflow-hidden">
-        <div className="max-w-7xl mx-auto text-center">
+      <section className="bg-white">
+        <div className="pb-0 sm:px-6 sm:pb-6">
+          <div className="bg-green-900 overflow-hidden sm:rounded-[40px]">
+            <div className="py-24 px-4 sm:px-6 lg:px-8">
+              <div className="max-w-7xl mx-auto text-center">
           {/* <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-5">
             <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -826,6 +835,9 @@ const Index = () => {
           <p className="text-sm text-white/70 mt-8 max-w-xl mx-auto leading-relaxed">
             Resuelve trámites legales sin esperar una consulta. Genera documentos profesionales en minutos y, si lo necesitas, un abogado puede revisarlos antes de utilizarlos.
           </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -983,8 +995,11 @@ const Index = () => {
       </Suspense>
 
       {/* FAQ Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
-        <div className="max-w-4xl mx-auto">
+      <section className="bg-white">
+        <div className="pb-0 sm:px-6 sm:pb-6">
+          <div className="bg-gray-50 sm:rounded-[40px]">
+            <div className="py-16 px-4 sm:px-6 lg:px-8">
+              <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <p className="border bg-gray-900 rounded-full p-1 text-sm text-white mb-4 max-w-3xl mx-auto w-fit px-2 mt-4">FAQ</p>
             <h2 className="text-3xl font-bold font-serif text-gray-900 mb-2">
@@ -1071,12 +1086,17 @@ const Index = () => {
               Hablar con un abogado
             </Button>
           </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* LegalUp Pro para abogados (FASE 5.12) — espejo del CTA final de /pro */}
+      {/* LegalUp Pro para abogados (FASE 5.12) — espejo del CTA final de /pro.
+          Excepción: conserva el marco con margen también en mobile.
+          En desktop sin padding-top: el margen inferior del FAQ ya separa. */}
       <section className="bg-white">
-        <div className="px-3 py-3 sm:px-6 sm:py-6">
+        <div className="px-3 py-3 sm:px-6 sm:pb-6 sm:pt-0">
           <div className="overflow-hidden rounded-[28px] bg-gradient-to-b from-green-300 via-green-200 to-[#edf7f0] sm:rounded-[40px]">
         <div className="max-w-5xl mx-auto text-center px-5 py-14 sm:px-12 sm:py-20">
           <p className="text-sm font-semibold uppercase tracking-widest text-green-800 mb-3">

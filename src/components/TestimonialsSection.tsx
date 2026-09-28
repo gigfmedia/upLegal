@@ -41,8 +41,11 @@ const testimonials: Testimonial[] = [
 
 export const TestimonialsSection = () => {
   return (
-    <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50/50">
-      <div className="max-w-7xl mx-auto">
+    <section className="bg-gray-50/50 sm:bg-white">
+      <div className="pb-0 sm:px-6 sm:pb-6">
+        <div className="bg-gray-50 sm:rounded-[40px]">
+          <div className="py-20 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
           <p className="border bg-gray-900 rounded-full p-1 text-sm text-white mb-4 max-w-3xl mx-auto w-fit px-2 mt-4">OPINIONES</p>
           <h2 className="text-3xl font-bold font-serif text-gray-900 mb-2">
@@ -103,6 +106,9 @@ export const TestimonialsSection = () => {
               </CardContent>
             </Card>
           ))}
+            </div>
+          </div>
+        </div>
         </div>
       </div>
     </section>
