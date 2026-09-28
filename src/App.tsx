@@ -423,7 +423,10 @@ const AppContent = () => {
           <Suspense fallback={null}>
             <GoogleAnalytics />
           </Suspense>
-          {!location.pathname.startsWith('/lawyer') &&
+          {/* LegalUpAssistant deshabilitado: el chat no funciona y nadie lo ocupa.
+              Se deja WhatsApp (Footer) como canal de contacto. */}
+          {false &&
+            !location.pathname.startsWith('/lawyer') &&
             !location.pathname.startsWith('/admin') &&
             !location.pathname.startsWith('/empresa') &&
             !location.pathname.startsWith('/pro') &&
