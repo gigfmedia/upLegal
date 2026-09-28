@@ -128,6 +128,45 @@ const BlogArticle = () => {
           </p>
 
           <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Qué puedes pedir ante un incumplimiento</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              La respuesta directa es que puedes elegir entre exigir que cumplan o resolver el contrato y recuperar tu dinero, y en ambos casos sumar indemnización. Esta tabla mapea cada situación a su alternativa:
+            </p>
+            <div className="overflow-x-auto mb-6">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border border-gray-300 p-3 text-left font-bold">Situación</th>
+                    <th className="border border-gray-300 p-3 text-left font-bold">Alternativa</th>
+                    <th className="border border-gray-300 p-3 text-left font-bold">Qué significa</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border border-gray-300 p-3">El servicio aún te sirve</td>
+                    <td className="border border-gray-300 p-3">Cumplimiento forzado</td>
+                    <td className="border border-gray-300 p-3">Obligar a terminar lo pactado, más indemnización por la demora acreditada.</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Perdiste la confianza o el plazo era esencial</td>
+                    <td className="border border-gray-300 p-3">Resolución</td>
+                    <td className="border border-gray-300 p-3">Dejar el contrato sin efecto, recuperar lo pagado y cobrar perjuicios como el sobrecosto de contratar a otro.</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Cumplimiento parcial, defectuoso o tardío</td>
+                    <td className="border border-gray-300 p-3">Rebaja, reparación o resolución según el caso</td>
+                    <td className="border border-gray-300 p-3">Ajustar el precio, exigir que lo rehaga a su costo o resolver, siempre más los perjuicios probados.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <h3 className="text-xl font-bold mb-4 text-gray-900">¿Qué es la condición resolutoria tácita?</h3>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Es la regla del artículo 1489 del Código Civil presente en todo contrato bilateral: si una parte no cumple, se entiende que la otra puede pedir la resolución o el cumplimiento, con indemnización de perjuicios. No necesita estar escrita en tu contrato para invocarla.
+            </p>
+          </div>
+
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Tus dos caminos: cumplimiento o resolución con indemnización</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
               Si todavía quieres el servicio (el taller tiene tu auto, la obra está avanzada), puedes exigir el cumplimiento más una indemnización por el retraso. Si ya perdiste la confianza o el plazo era esencial, resuelves el contrato: recuperas lo pagado y cobras los perjuicios, como el sobrecosto de contratar a otro.
@@ -183,6 +222,34 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Cuándo el SERNAC no es el camino: si contrataste a un particular de forma ocasional (el vecino que hace arreglos, sin actividad comercial habitual), no hay relación de consumo y debes ir directo por la vía civil. Y si fuiste tú quien tampoco cumplió del todo —no pagaste una cuota, no entregaste materiales—, el prestador puede oponer la excepción de contrato no cumplido: mientras no cumplas tu parte, no puedes exigirle la suya. Revisa tu propio cumplimiento antes de demandar.
             </p>
+            <div className="overflow-x-auto mb-6">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border border-gray-300 p-3 text-left font-bold">Situación</th>
+                    <th className="border border-gray-300 p-3 text-left font-bold">Vía que puede corresponder</th>
+                    <th className="border border-gray-300 p-3 text-left font-bold">Qué revisar</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Empresa o profesional establecido</td>
+                    <td className="border border-gray-300 p-3">SERNAC (reclamo y mediación) y luego juzgado de policía local o civil.</td>
+                    <td className="border border-gray-300 p-3">Boletas, contrato y publicidad de lo ofrecido.</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Particular ocasional, sin actividad comercial</td>
+                    <td className="border border-gray-300 p-3">Vía civil directa: no hay relación de consumo.</td>
+                    <td className="border border-gray-300 p-3">Mensajes, pagos y testigos que acrediten lo pactado.</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Tú tampoco cumpliste tu parte</td>
+                    <td className="border border-gray-300 p-3">Regularizar primero: te pueden oponer la excepción de contrato no cumplido.</td>
+                    <td className="border border-gray-300 p-3">Tus propios pagos y entregas antes de exigir.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">

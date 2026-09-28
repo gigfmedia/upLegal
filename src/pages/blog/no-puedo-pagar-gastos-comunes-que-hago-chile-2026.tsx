@@ -124,8 +124,15 @@ const BlogArticle = () => {
           />
 
           <p className="text-base text-gray-600 leading-relaxed mb-8 -mt-4">
-            Los gastos comunes financian la mantención, seguridad y servicios del edificio. En Chile se rigen por la Ley de Copropiedad Inmobiliaria y por el reglamento interno de cada comunidad. No pagarlos no es como atrasarse en una cuenta cualquiera: la comunidad tiene herramientas legales directas contra el moroso.
+            Los gastos comunes financian la mantención, seguridad y servicios del edificio. En Chile se rigen por la Ley de Copropiedad Inmobiliaria (Ley 21.442) y por el reglamento interno de cada comunidad. No pagarlos no es como atrasarse en una cuenta cualquiera: la comunidad tiene herramientas legales directas contra el moroso.
           </p>
+
+          <div className="mb-12">
+            <h3 className="text-xl font-bold mb-4 text-gray-900">¿Qué son los gastos comunes?</h3>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Son los aportes obligatorios de cada copropietario para cubrir la administración, mantención, reparación y consumos colectivos del condominio: agua y luz de espacios comunes, sueldos de conserjes, ascensores, seguros y el fondo de reserva para imprevistos. Se pagan dentro de los 10 primeros días del aviso de cobro y no dejan de generarse aunque no uses los servicios o el departamento esté desocupado.
+            </p>
+          </div>
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Te pueden cortar la luz por deber gastos comunes?</h2>
@@ -151,6 +158,51 @@ const BlogArticle = () => {
           </div>
 
           <RelatedLawyers category="Derecho Civil" />
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué puede pasar si no pagas los gastos comunes?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              La respuesta corta es que cada etapa de mora activa una consecuencia distinta. Esta tabla resume el escalamiento completo según la Ley de Copropiedad:
+            </p>
+            <div className="overflow-x-auto mb-6">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border border-gray-300 p-3 text-left font-bold">Situación</th>
+                    <th className="border border-gray-300 p-3 text-left font-bold">Qué puede ocurrir</th>
+                    <th className="border border-gray-300 p-3 text-left font-bold">Qué conviene revisar</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Atraso inicial (1-2 cuotas)</td>
+                    <td className="border border-gray-300 p-3">Intereses de mora según tu reglamento, con tope del 50% del interés corriente bancario.</td>
+                    <td className="border border-gray-300 p-3">La liquidación detallada y el interés aplicado por la administración.</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">3 o más cuotas impagas</td>
+                    <td className="border border-gray-300 p-3">Suspensión de luz y telecomunicaciones a requerimiento del administrador con autorización del comité.</td>
+                    <td className="border border-gray-300 p-3">Si hay estado de catástrofe o un electrodependiente en el hogar: el corte no procede.</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Cobranza judicial</td>
+                    <td className="border border-gray-300 p-3">El aviso de cobro tiene mérito ejecutivo: juicio ejecutivo, embargo de bienes, y se suman las cuotas que se devenguen en el juicio.</td>
+                    <td className="border border-gray-300 p-3">Notificación y plazos procesales; no ignorar la demanda.</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Quieres vender</td>
+                    <td className="border border-gray-300 p-3">Sin certificado de no deuda no hay escritura: debes pagar o pactar la deuda con el comprador.</td>
+                    <td className="border border-gray-300 p-3">El certificado emitido por la administración antes de firmar.</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Corte de agua</td>
+                    <td className="border border-gray-300 p-3">No procede por deuda de gastos comunes: la Corte Suprema lo considera autotutela ilícita.</td>
+                    <td className="border border-gray-300 p-3">Reclamar por escrito y asesorarse si lo intentan.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Multas, intereses y cobranza judicial</h2>
@@ -199,6 +251,34 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Por eso, si arriendas: exige el comprobante de gastos comunes al día junto con cada renta, y ante el primer atraso actúa de inmediato. Y si eres arrendatario y tu contrato incluye los gastos comunes, pagarlos es parte de cumplir tu contrato: el no pago puede usarse como causal en un juicio de término de arriendo.
             </p>
+            <div className="overflow-x-auto mb-6">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border border-gray-300 p-3 text-left font-bold">Aspecto</th>
+                    <th className="border border-gray-300 p-3 text-left font-bold">Propietario</th>
+                    <th className="border border-gray-300 p-3 text-left font-bold">Arrendatario</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Frente a la comunidad</td>
+                    <td className="border border-gray-300 p-3">Responde siempre: es el copropietario y a su nombre llegan multas, cortes y demandas.</td>
+                    <td className="border border-gray-300 p-3">No es deudor directo de la comunidad, aunque use los servicios.</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Entre las partes</td>
+                    <td className="border border-gray-300 p-3">Puede repetir contra el arrendatario lo que pagó, si el contrato le asignaba ese gasto.</td>
+                    <td className="border border-gray-300 p-3">Paga solo si el contrato de arriendo se lo asigna expresamente.</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Qué verificar</td>
+                    <td className="border border-gray-300 p-3">Comprobante de gastos al día junto a cada renta; actuar al primer atraso.</td>
+                    <td className="border border-gray-300 p-3">Que el contrato diga quién paga; el no pago puede fundar el término del arriendo.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">

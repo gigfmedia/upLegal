@@ -145,6 +145,45 @@ const BlogArticle = () => {
           </div>
 
           <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Qué necesitas acreditar para ganar</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Todo caso de negligencia médica se gana o se pierde en tres elementos. Esta tabla muestra cada uno, qué significa y con qué antecedente se respalda —tener el documento ayuda a acreditar el elemento, pero ningún papel por sí solo gana el juicio—:
+            </p>
+            <div className="overflow-x-auto mb-6">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border border-gray-300 p-3 text-left font-bold">Elemento</th>
+                    <th className="border border-gray-300 p-3 text-left font-bold">Qué significa</th>
+                    <th className="border border-gray-300 p-3 text-left font-bold">Ejemplo de antecedente útil</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Falla (culpa)</td>
+                    <td className="border border-gray-300 p-3">Actuación por debajo de la lex artis: lo que un profesional diligente habría hecho distinto.</td>
+                    <td className="border border-gray-300 p-3">Peritaje médico y segunda opinión documentada que describan el error técnico.</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Daño</td>
+                    <td className="border border-gray-300 p-3">Menoscabo concreto en tu salud o patrimonio, físico o moral.</td>
+                    <td className="border border-gray-300 p-3">Ficha clínica, certificados, boletas de gastos, licencias médicas.</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Causalidad</td>
+                    <td className="border border-gray-300 p-3">Conexión directa entre la falla y tu daño: sin esa falla, el daño no habría ocurrido.</td>
+                    <td className="border border-gray-300 p-3">Peritaje que conecte técnicamente el error con tu estado actual.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <h3 className="text-xl font-bold mb-4 text-gray-900">¿Qué es la lex artis?</h3>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Es el estándar de conducta exigible al profesional de la salud: lo que un médico diligente de la misma especialidad habría hecho en esas circunstancias, según el estado de la ciencia. La medicina es una obligación de medios, no de resultados: no se exige curar siempre, se exige actuar correctamente.
+            </p>
+          </div>
+
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Cómo se prueba: el estándar y quién debe probar qué</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
               El parámetro que usan los tribunales es la lex artis: lo que un profesional diligente de la misma especialidad habría hecho en esas circunstancias. No se exige perfección ni resultado garantizado —la medicina es una obligación de medios—, se exige haber actuado como correspondía según el estado de la ciencia.
@@ -203,6 +242,44 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               En ambos casos, el paso cero es el mismo: solicita por escrito copia íntegra de tu ficha clínica. La Ley de Derechos y Deberes de los Pacientes (Ley 20.584) te reconoce el derecho a la información y a tu ficha: es la base sobre la que cualquier abogado evaluará tu caso.
             </p>
+            <div className="overflow-x-auto mb-6">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border border-gray-300 p-3 text-left font-bold">Aspecto</th>
+                    <th className="border border-gray-300 p-3 text-left font-bold">Sistema público</th>
+                    <th className="border border-gray-300 p-3 text-left font-bold">Sistema privado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Dónde se pide la mediación</td>
+                    <td className="border border-gray-300 p-3">Consejo de Defensa del Estado.</td>
+                    <td className="border border-gray-300 p-3">Superintendencia de Salud, por escrito.</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Duración</td>
+                    <td className="border border-gray-300 p-3">Procedimiento acotado con acta de cierre.</td>
+                    <td className="border border-gray-300 p-3">Hasta 60 días corridos, prorrogables por 60 más.</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Costo</td>
+                    <td className="border border-gray-300 p-3">Trámite estatal previo a la demanda.</td>
+                    <td className="border border-gray-300 p-3">Pagado: los honorarios del mediador van por las partes según arancel.</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Si fracasa</td>
+                    <td className="border border-gray-300 p-3">Acta que habilita la demanda en tribunales civiles.</td>
+                    <td className="border border-gray-300 p-3">Certificado de mediación frustrada que habilita la demanda.</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Vía adicional</td>
+                    <td className="border border-gray-300 p-3">Reclamo en el propio establecimiento y la Superintendencia según el caso.</td>
+                    <td className="border border-gray-300 p-3">Reclamo en el SERNAC por ser un servicio de consumo.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">

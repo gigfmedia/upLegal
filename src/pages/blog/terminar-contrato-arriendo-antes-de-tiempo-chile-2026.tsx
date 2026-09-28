@@ -164,6 +164,45 @@ const BlogArticle = () => {
           </div>
 
           <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué pasa según el tipo de contrato?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Tus opciones dependen del tipo de arriendo que firmaste. Esta tabla resume las reglas de la Ley de Arriendos para cada caso:
+            </p>
+            <div className="overflow-x-auto mb-6">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border border-gray-300 p-3 text-left font-bold">Tipo de arriendo</th>
+                    <th className="border border-gray-300 p-3 text-left font-bold">¿Se puede terminar antes?</th>
+                    <th className="border border-gray-300 p-3 text-left font-bold">Qué revisar</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Plazo fijo de hasta 1 año</td>
+                    <td className="border border-gray-300 p-3">Sí, restituyendo y pagando la renta hasta el día de la restitución.</td>
+                    <td className="border border-gray-300 p-3">Cláusula de multa del contrato; el arrendador solo puede exigir la restitución por vía judicial.</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Plazo fijo superior a 1 año (habitación)</td>
+                    <td className="border border-gray-300 p-3">Sí, y sin pagar las rentas del período faltante si el contrato prohíbe subarrendar.</td>
+                    <td className="border border-gray-300 p-3">La prohibición de subarrendar en tu contrato: es la condición que activa esta salida.</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Mes a mes o indefinido</td>
+                    <td className="border border-gray-300 p-3">Sí; el desahucio del arrendador requiere vía judicial o notario, y pagas solo hasta la restitución.</td>
+                    <td className="border border-gray-300 p-3">Que el desahucio cumpla la formalidad legal antes de entregar.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <h3 className="text-xl font-bold mb-4 text-gray-900">¿Qué es la restitución?</h3>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Es la devolución material del inmueble al arrendador: entrega de llaves, desocupación total y constancia del estado. Todo el sistema gira en torno a ella: la renta se debe hasta el día de la restitución, la garantía se rinde contra ella y sin ella el contrato sigue produciendo efectos aunque ya no vivas ahí.
+            </p>
+          </div>
+
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Cuánto aviso debes dar y cómo darlo</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
               Da aviso por escrito —correo electrónico con confirmación o carta— con la anticipación que exija tu contrato. Lo habitual en contratos a plazo es 30 días o más. En arriendos mes a mes o de duración indefinida, el desahucio del arrendador debe hacerse judicialmente o por notificación personal de un notario: si es tu arrendador quien te pide salir, exige que cumpla esa formalidad.
@@ -224,14 +263,47 @@ const BlogArticle = () => {
           </div>
 
           <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">El checklist de una salida limpia</h2>
-            <div className="space-y-3 mb-6">
-              {["Lee tu contrato y detecta cláusulas de término anticipado, multa y garantía", "Avisa por escrito con la anticipación exigida y guarda el comprobante", "Paga rentas, gastos comunes y servicios hasta el día de la restitución", "Entrega las llaves con acta firmada, fotos del estado y lecturas de medidores", "Exige por escrito la rendición y devolución de la garantía con plazo"].map((item, i) => (
-                <div key={i} className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                  <span className="text-green-600 font-bold flex-shrink-0">{i + 1}.</span>
-                  <span className="text-base text-gray-700">{item}</span>
-                </div>
-              ))}
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Antes de entregar la propiedad: paso, acción y respaldo</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Sigue esta secuencia y guarda cada respaldo: es lo que te protege si el arrendador después alega otra fecha u otros daños.
+            </p>
+            <div className="overflow-x-auto mb-6">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border border-gray-300 p-3 text-left font-bold">Paso</th>
+                    <th className="border border-gray-300 p-3 text-left font-bold">Qué hacer</th>
+                    <th className="border border-gray-300 p-3 text-left font-bold">Qué guardar como respaldo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border border-gray-300 p-3">1. Contrato</td>
+                    <td className="border border-gray-300 p-3">Leerlo completo y detectar término anticipado, multa y garantía.</td>
+                    <td className="border border-gray-300 p-3">Copia del contrato con las cláusulas marcadas.</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">2. Aviso</td>
+                    <td className="border border-gray-300 p-3">Avisar por escrito con la anticipación exigida, indicando fecha de restitución.</td>
+                    <td className="border border-gray-300 p-3">Correo con confirmación o carta con recepción.</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">3. Cuentas</td>
+                    <td className="border border-gray-300 p-3">Pagar renta, gastos comunes y servicios hasta el día de la entrega.</td>
+                    <td className="border border-gray-300 p-3">Comprobantes de pago de cada ítem.</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">4. Estado</td>
+                    <td className="border border-gray-300 p-3">Fotografiar cada habitación, artefactos y medidores el día de la entrega.</td>
+                    <td className="border border-gray-300 p-3">Fotos con fecha y lecturas de medidores.</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">5. Llaves y garantía</td>
+                    <td className="border border-gray-300 p-3">Entregar las llaves contra acta firmada y exigir por escrito la rendición de la garantía.</td>
+                    <td className="border border-gray-300 p-3">Acta de restitución firmada y correo de solicitud.</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
 
