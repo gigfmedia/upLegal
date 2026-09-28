@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 
@@ -94,13 +94,28 @@ describe('4.33D canonical acquisition and legacy compatibility', () => {
   });
   it.each([0, 1, 2, 3, 4])('public CTA %s goes to Pro without a standalone offer', index => {
     const { container } = mount(<LegalUpAI />, '/ai');
-    expect(container.textContent).not.toMatch(/5 días gratis|Prueba gratis durante 5 días|\$49\.900|LegalUp AI Essential|Investigación de Jurisprudencia|Jurisprudencia chilena/);
+    // 4.56E: research is a real current capability (free 1 / Pro 10 / Plus 25),
+    // so its feature card is legitimate page copy. The veto still blocks all
+    // legacy standalone-acquisition claims (trial, Essential, $49.900).
+    expect(container.textContent).not.toMatch(/5 días gratis|Prueba gratis durante 5 días|\$49\.900|LegalUp AI Essential/);
     expect(screen.getAllByText(/LegalUp AI está incluido en LegalUp Pro/).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button', { name: /Activar LegalUp Pro/ }).length).toBe(5);
     fireEvent.click(screen.getAllByRole('button', { name: /Activar LegalUp Pro/ })[index]);
     expect(screen.getByTestId('destination')).toHaveTextContent('/pro');
     expect(state.trial).not.toHaveBeenCalled(); expect(state.subscribe).not.toHaveBeenCalled(); expect(state.create).not.toHaveBeenCalled();
   }, 15000);
+  it('4.56E feature grid renders 6 cards with research Disponible and drafting upcoming', () => {
+    mount(<LegalUpAI />, '/ai');
+    for (const title of ['Análisis de Documentos', 'Resumen de Casos', 'Chat Contextual', 'Contexto privado del caso', 'Investigación de Jurisprudencia', 'Redacción Asistida']) {
+      expect(screen.getByText(title)).toBeInTheDocument();
+    }
+    expect(screen.getByText('Búsqueda de jurisprudencia y normativa chilena con fuentes verificables.')).toBeInTheDocument();
+    // 5 Disponible badges (research included) + Redacción Asistida stays upcoming.
+    expect(screen.getAllByText('Disponible').length).toBe(5);
+    const draftingCard = screen.getByText('Redacción Asistida').closest('div.group');
+    expect(draftingCard).not.toBeNull();
+    expect(within(draftingCard as HTMLElement).getByText('Próximamente')).toBeInTheDocument();
+  });
   it('old pending trial does not start a trial and UTM attribution survives CTA', () => {
     localStorage.setItem('aiPendingTrial', '1');
     window.history.replaceState(null, '', '/ai?utm_source=ai_campaign&utm_campaign=launch&price=1');

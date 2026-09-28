@@ -891,6 +891,14 @@ const FEATURES = [
     available: true,
   },
   {
+    icon: Zap,
+    title: "Investigación de Jurisprudencia",
+    description:
+      "Búsqueda de jurisprudencia y normativa chilena con fuentes verificables.",
+    visual: "draft" as const,
+    available: true,
+  },
+  {
     icon: BarChart3,
     title: "Redacción Asistida",
     description:
