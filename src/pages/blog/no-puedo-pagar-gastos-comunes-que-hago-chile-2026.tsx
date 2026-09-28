@@ -118,6 +118,7 @@ const BlogArticle = () => {
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
+            showBorder={false}
             title="¿No puedes pagar los gastos comunes? Qué pasa y qué hacer en Chile 2026"
             url="https://legalup.cl/blog/no-puedo-pagar-gastos-comunes-que-hago-chile-2026"
           />

@@ -118,6 +118,7 @@ const BlogArticle = () => {
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
+            showBorder={false}
             title="Negligencia médica en Chile 2026: cuándo puedes demandar y qué indemnización pedir"
             url="https://legalup.cl/blog/negligencia-medica-chile-2026"
           />

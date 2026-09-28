@@ -118,6 +118,7 @@ const BlogArticle = () => {
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
+            showBorder={false}
             title="¿Te quieres ir antes de que termine el contrato de arriendo? Aviso, multa y garantía en Chile 2026"
             url="https://legalup.cl/blog/terminar-contrato-arriendo-antes-de-tiempo-chile-2026"
           />

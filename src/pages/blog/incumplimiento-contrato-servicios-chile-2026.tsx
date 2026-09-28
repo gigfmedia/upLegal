@@ -118,6 +118,7 @@ const BlogArticle = () => {
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
+            showBorder={false}
             title="¿Contrataste un servicio y no cumplieron? Qué hacer ante el incumplimiento en Chile 2026"
             url="https://legalup.cl/blog/incumplimiento-contrato-servicios-chile-2026"
           />
