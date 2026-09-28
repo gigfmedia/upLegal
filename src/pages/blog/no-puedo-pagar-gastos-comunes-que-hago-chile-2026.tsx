@@ -51,8 +51,8 @@ const BlogArticle = () => {
         description="¿No puedes pagar los gastos comunes de tu edificio? Revisa si te pueden cortar la luz, qué multas e intereses aplican y cómo evitar una demanda."
         image="/assets/gastos-comunes-edificio-chile-2026.png"
         url="https://legalup.cl/blog/no-puedo-pagar-gastos-comunes-que-hago-chile-2026"
-        datePublished="2026-09-28"
-        dateModified="2026-09-28"
+        datePublished="2026-08-24"
+        dateModified="2026-08-24"
         faqs={faqs}
       />
       <Header onAuthClick={() => { }} />
@@ -100,7 +100,7 @@ const BlogArticle = () => {
           <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900 text-sm sm:text-base">
             <div className="flex items-center gap-2 text-green-900">
               <Calendar className="h-4 w-4" />
-              <span>28 de Septiembre, 2026</span>
+              <span>24 de Agosto, 2026</span>
             </div>
             <div className="flex items-center gap-2 text-green-900">
               <User className="h-4 w-4" />

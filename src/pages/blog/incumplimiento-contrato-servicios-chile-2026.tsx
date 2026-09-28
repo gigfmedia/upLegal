@@ -51,8 +51,8 @@ const BlogArticle = () => {
         description="¿Un maestro, contratista o taller no cumplió lo pactado? Revisa cómo exigir el cumplimiento o la devolución de tu dinero, con o sin contrato firmado."
         image="/assets/incumplimiento-contrato-servicios-chile-2026.png"
         url="https://legalup.cl/blog/incumplimiento-contrato-servicios-chile-2026"
-        datePublished="2026-09-28"
-        dateModified="2026-09-28"
+        datePublished="2026-08-26"
+        dateModified="2026-08-26"
         faqs={faqs}
       />
       <Header onAuthClick={() => { }} />
@@ -100,7 +100,7 @@ const BlogArticle = () => {
           <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900 text-sm sm:text-base">
             <div className="flex items-center gap-2 text-green-900">
               <Calendar className="h-4 w-4" />
-              <span>28 de Septiembre, 2026</span>
+              <span>26 de Agosto, 2026</span>
             </div>
             <div className="flex items-center gap-2 text-green-900">
               <User className="h-4 w-4" />
