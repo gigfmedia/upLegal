@@ -656,6 +656,17 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
+            <Link
+              to="/blog/terminar-contrato-arriendo-antes-de-tiempo-chile-2026"
+              className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+            >
+              👉 ¿Necesitas irte antes del plazo? Aviso, multa y garantía
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+
           {/* CTA before Conclusion */}
           <div className="mb-12">
             <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-xl mb-6">

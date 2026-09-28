@@ -94,6 +94,10 @@ const LeyEmiliaArticle = lazy(() => import('../pages/blog/manejo-estado-ebriedad
 const QuerellaArticle = lazy(() => import('../pages/blog/querella-criminal-chile-2026'));
 const HerenciaArticle = lazy(() => import('../pages/blog/herencia-posesion-efectiva-chile-2026'));
 const NulidadContratoArticle = lazy(() => import('../pages/blog/nulidad-contrato-chile-2026'));
+const GastosComunesArticle = lazy(() => import('../pages/blog/no-puedo-pagar-gastos-comunes-que-hago-chile-2026'));
+const TerminarArriendoArticle = lazy(() => import('../pages/blog/terminar-contrato-arriendo-antes-de-tiempo-chile-2026'));
+const NegligenciaMedicaArticle = lazy(() => import('../pages/blog/negligencia-medica-chile-2026'));
+const IncumplimientoServiciosArticle = lazy(() => import('../pages/blog/incumplimiento-contrato-servicios-chile-2026'));
 // const LeyConsumidorArticle = lazy(() => import('../pages/blog/ley-del-consumidor-chile-2026'));
 
 
@@ -196,6 +200,10 @@ export const BlogRoutes = () => (
       <Route path="querella-criminal-chile-2026" element={<QuerellaArticle />} />
       <Route path="herencia-posesion-efectiva-chile-2026" element={<HerenciaArticle />} />
       <Route path="nulidad-contrato-chile-2026" element={<NulidadContratoArticle />} />
+      <Route path="no-puedo-pagar-gastos-comunes-que-hago-chile-2026" element={<GastosComunesArticle />} />
+      <Route path="terminar-contrato-arriendo-antes-de-tiempo-chile-2026" element={<TerminarArriendoArticle />} />
+      <Route path="negligencia-medica-chile-2026" element={<NegligenciaMedicaArticle />} />
+      <Route path="incumplimiento-contrato-servicios-chile-2026" element={<IncumplimientoServiciosArticle />} />
       {/* <Route path="ley-del-consumidor-chile-2026" element={<LeyConsumidorArticle />} /> */}
 
     </Routes>

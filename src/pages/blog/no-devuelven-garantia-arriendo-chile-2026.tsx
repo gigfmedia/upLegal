@@ -558,6 +558,17 @@ const BlogArticle = () => {
             </Link>
           </div>
 
+          <div className="text-center py-4 border-b border-gray-100 my-8">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
+            <Link
+              to="/blog/terminar-contrato-arriendo-antes-de-tiempo-chile-2026"
+              className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+            >
+              👉 ¿Te fuiste antes del plazo? Cómo salir sin perder la garantía
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+
           <div className="mb-12">
             
           </div>

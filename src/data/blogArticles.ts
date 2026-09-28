@@ -945,5 +945,48 @@ export const articles: Article[] = [
     date: "13 de Enero, 2026",
     readTime: "9 min",
     image: "/assets/arriendo-chile-2026.png"
+  },
+  {
+    id: "no-puedo-pagar-gastos-comunes-que-hago-chile-2026",
+    title: "¿No puedes pagar los gastos comunes? Qué pasa y qué hacer en Chile 2026",
+    excerpt: "Deber gastos comunes sale caro: corte de luz, multas, intereses y cobranza judicial. Revisa qué puede pasarte realmente y cómo frenar la deuda a tiempo.",
+    category: "Derecho Civil",
+    cluster: "inmuebles",
+    author: "LegalUp",
+    date: "28 de Septiembre, 2026",
+    readTime: "9 min",
+    image: "/assets/gastos-comunes-edificio-chile-2026.png"
+  },
+  {
+    id: "terminar-contrato-arriendo-antes-de-tiempo-chile-2026",
+    title: "¿Te quieres ir antes de que termine el contrato de arriendo? Aviso, multa y garantía en Chile 2026",
+    excerpt: "Irte antes del plazo se puede, pero hacerlo mal cuesta la garantía y hasta una demanda. Revisa cuánto aviso dar, si aplica multa y cómo salir pagando lo justo.",
+    category: "Derecho Civil",
+    cluster: "inmuebles",
+    author: "LegalUp",
+    date: "28 de Septiembre, 2026",
+    readTime: "9 min",
+    image: "/assets/terminar-arriendo-antes-chile-2026.png"
+  },
+  {
+    id: "negligencia-medica-chile-2026",
+    title: "Negligencia médica en Chile 2026: cuándo puedes demandar y qué indemnización pedir",
+    excerpt: "No todo mal resultado médico es demandable, pero la falla evitable con daño concreto sí se indemniza. Revisa si tu caso califica, qué pruebas necesitas y qué pedir.",
+    category: "Derecho Civil",
+    author: "LegalUp",
+    date: "28 de Septiembre, 2026",
+    readTime: "10 min",
+    image: "/assets/negligencia-medica-chile-2026.png"
+  },
+  {
+    id: "incumplimiento-contrato-servicios-chile-2026",
+    title: "¿Contrataste un servicio y no cumplieron? Qué hacer ante el incumplimiento en Chile 2026",
+    excerpt: "Maestro, contratista o taller que no cumplió: puedes exigir cumplimiento o resolución con indemnización, incluso sin contrato firmado. Revisa el orden correcto.",
+    category: "Derecho Civil",
+    cluster: "obligaciones",
+    author: "LegalUp",
+    date: "28 de Septiembre, 2026",
+    readTime: "9 min",
+    image: "/assets/incumplimiento-contrato-servicios-chile-2026.png"
   }
 ];
