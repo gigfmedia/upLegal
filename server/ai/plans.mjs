@@ -34,6 +34,21 @@ export const PLAN_CODES = Object.freeze({
 /** Fail-closed code for inactive/unknown purchasable-tier requests. */
 export const PLAN_NOT_AVAILABLE = 'PLAN_NOT_AVAILABLE';
 
+/** Kill-switch code: Plus acquisition disabled by operator (access intact). */
+export const PLUS_ACQUISITION_DISABLED = 'PLUS_ACQUISITION_DISABLED';
+
+/**
+ * 4.57E kill switch — server-authoritative Plus acquisition gate.
+ * Explicit env: PLUS_ACQUISITION_ENABLED=false blocks NEW Plus checkouts
+ * and Pro→Plus upgrades. Everything else is untouched: existing Plus
+ * access, renewals/webhooks, downgrades, cancellations, and all of Pro.
+ * Default true (absent/any-other-value = enabled); reads env lazily so
+ * tests can inject without process mutation.
+ */
+export function isPlusAcquisitionEnabled(env = process.env) {
+  return String(env?.PLUS_ACQUISITION_ENABLED ?? 'true').toLowerCase() !== 'false';
+}
+
 /** 4.57D canonical server-side prices (client never authoritative). */
 export const PLUS_PRICE_CLP = 79990;
 export const PRO_STANDARD_PRICE_CLP_CANON = 49990;

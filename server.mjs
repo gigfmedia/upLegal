@@ -1,7 +1,7 @@
 import { retiredAITrialInvite } from './server/retiredAITrialInvite.mjs';
 import { createAIMetering } from './server/ai/metering.mjs';
 import { PRO_AI_ALLOWANCE, PLUS_AI_ALLOWANCE, commercialQuotaForPlan, FREE_CASE_ALLOWANCE, freeQuotaForPlan } from './server/ai/proAllowance.mjs';
-import { PLAN_NOT_AVAILABLE, normalizePlanCode, resolveCheckoutPlanCode, PLUS_PRICE_CLP, PRO_STANDARD_PRICE_CLP_CANON, resolvePlanPrice, canonicalPaidPlan } from './server/ai/plans.mjs';
+import { PLAN_NOT_AVAILABLE, PLUS_ACQUISITION_DISABLED, isPlusAcquisitionEnabled, normalizePlanCode, resolveCheckoutPlanCode, PLUS_PRICE_CLP, PRO_STANDARD_PRICE_CLP_CANON, resolvePlanPrice, canonicalPaidPlan } from './server/ai/plans.mjs';
 import {
   CONFLICT_CODE,
   normalizeEmail,
@@ -8955,6 +8955,13 @@ app.post('/api/pro/subscribe', async (req, res) => {
     }
     const targetPlan = checkoutPlan.planCode; // 'pro' | 'plus'
     const isPlusTarget = targetPlan === 'plus';
+
+    // 4.57E kill switch: block NEW Plus checkouts/upgrades at the gate,
+    // before any side effect. Existing Plus access, renewals, downgrades,
+    // cancellations and all of Pro are unaffected.
+    if (isPlusTarget && !isPlusAcquisitionEnabled()) {
+      return res.status(403).json({ error: 'La contratación de LegalUp Plus está pausada temporalmente.', code: PLUS_ACQUISITION_DISABLED });
+    }
 
     let subscription = await getProLawyerSubscription(userId);
     const hasActivePaid = !!(subscription && subscription.status === 'active' && subscription.provider_subscription_id);

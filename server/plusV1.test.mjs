@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { PLUS_AI_ALLOWANCE, PAID_CASE_LIMITS, PRO_AI_ALLOWANCE, commercialQuotaForPlan } from './ai/proAllowance.mjs';
+import { isPlusAcquisitionEnabled, PLUS_ACQUISITION_DISABLED } from './ai/plans.mjs';
 
 const read = (p) => readFileSync(resolve(process.cwd(), p), 'utf8');
 
@@ -140,6 +141,22 @@ describe('4.57D Plus v1 — allowances and server wiring', () => {
     const server = read('server.mjs');
     expect(server).toContain('PLUS_AI_ALLOWANCE');
     expect(server).toContain("plan === 'plus' ? PLUS_AI_ALLOWANCE.storedDocuments");
+  });
+
+  it('kill switch gates new Plus acquisition only (server authoritative)', () => {
+    expect(isPlusAcquisitionEnabled()).toBe(true);
+    expect(isPlusAcquisitionEnabled({})).toBe(true);
+    expect(isPlusAcquisitionEnabled({ PLUS_ACQUISITION_ENABLED: 'true' })).toBe(true);
+    expect(isPlusAcquisitionEnabled({ PLUS_ACQUISITION_ENABLED: 'false' })).toBe(false);
+    expect(isPlusAcquisitionEnabled({ PLUS_ACQUISITION_ENABLED: 'FALSE' })).toBe(false);
+    expect(PLUS_ACQUISITION_DISABLED).toBe('PLUS_ACQUISITION_DISABLED');
+    const server = read('server.mjs');
+    expect(server).toContain('isPlusAcquisitionEnabled()');
+    expect(server).toContain('PLUS_ACQUISITION_DISABLED');
+    // Gate sits before any side effect, Plus-target only.
+    const idx = server.indexOf('isPlusAcquisitionEnabled()');
+    expect(server.lastIndexOf('resolveCheckoutPlanCode(req.body)', idx)).toBeGreaterThan(-1);
+    expect(server.indexOf('is_founder', idx)).toBeGreaterThan(idx);
   });
 
   it('AI access maps Plus rows to the plus plan (never pro_limited quotas)', () => {
