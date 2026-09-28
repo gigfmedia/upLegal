@@ -966,17 +966,17 @@ export default function LegalUpPro() {
 
       {/* PRECIO — comparativa Free / Pro / Plus (una sola sección canónica) */}
       <section id="pricing" className="border-b border-gray-100 bg-white">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24">
           <Reveal className="mx-auto max-w-3xl text-center">
             <Eyebrow>Planes</Eyebrow>
             <h2 className="mt-4 text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl">
               Empieza gratis. Crece con Pro.
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-gray-600">
+            <p className="mx-auto mt-4 text-lg leading-relaxed text-gray-600">
               Explora LegalUp Pro sin costo y activa el plan pago cuando tu práctica lo necesite.
             </p>
           </Reveal>
-          <div className="mx-auto mt-12 grid max-w-6xl gap-5 md:grid-cols-3">
+          <div className="mx-auto mt-12 grid max-w-7xl gap-5 md:grid-cols-3">
             {/* FREE — realidad actual sin suscripción: lectura + 1er caso + servicios */}
             <Reveal>
               <Card className="flex h-full flex-col rounded-3xl border-gray-200">

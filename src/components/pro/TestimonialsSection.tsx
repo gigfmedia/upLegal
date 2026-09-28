@@ -53,7 +53,7 @@ export function TestimonialsSection() {
           <p className="whitespace-nowrap text-xs font-semibold uppercase tracking-[0.18em] text-green-700">
             Abogados con LegalUp Pro
           </p>
-          <h2 id="testimonios-pro" className="mt-3 max-w-2xl whitespace-nowrap text-xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+          <h2 id="testimonios-pro" className="mt-4 text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl">
             Menos administrar, más ejercer.
           </h2>
         </motion.div>
