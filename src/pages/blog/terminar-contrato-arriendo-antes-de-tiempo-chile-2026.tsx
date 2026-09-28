@@ -37,6 +37,10 @@ const BlogArticle = () => {
     {
       question: "¿Cómo dejo constancia de que devolví el inmueble?",
       answer: "Entrega las llaves contra un acta de restitución firmada por ambas partes, con fecha, estado del inmueble y lecturas de medidores. Saca fotos y guarda todos los comprobantes de pago. Sin acta, el arrendador puede alegar que la restitución fue posterior y cobrarte más renta.",
+    },
+    {
+      question: "Mi contrato dura más de un año y prohíbe subarrendar: ¿igual pago los meses que faltan?",
+      answer: "No. En arriendos habitacionales a plazo fijo superior a un año, la Ley 18.101 establece que si el contrato te prohíbe subarrendar, puedes poner término anticipado sin pagar la renta del período faltante. Debes igual las rentas hasta la restitución y los daños acreditables, pero no los meses futuros.",
     }
   ];
 
@@ -149,9 +153,19 @@ const BlogArticle = () => {
           <RelatedLawyers category="Derecho Civil" />
 
           <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">El caso especial: arriendos de más de un año</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Si tu arriendo es habitacional a plazo fijo superior a un año, la Ley de Arriendos (Ley 18.101) te da una herramienta poderosa: cuando el contrato te prohíbe subarrendar, puedes poner término anticipado sin pagar la renta del período que falte. Es decir, la propia ley compensa la prohibición de subarrendar con una salida sin costo de rentas futuras.
+            </p>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Revisa tu contrato hoy: si dura más de un año y dice que no puedes subarrendar ni ceder el arriendo, tu salida anticipada no te obliga a pagar los meses restantes. Igual debes las rentas hasta la restitución efectiva y los daños acreditables, pero no el "castigo" de pagar un contrato que ya no usas.
+            </p>
+          </div>
+
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Cuánto aviso debes dar y cómo darlo</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
-              Da aviso por escrito —correo electrónico con confirmación o carta— con la anticipación que exija tu contrato. Lo habitual en contratos a plazo es 30 días o más. En arriendos mes a mes o indefinidos, el desahucio sigue reglas legales con intervención judicial, así que asesórate antes de moverte.
+              Da aviso por escrito —correo electrónico con confirmación o carta— con la anticipación que exija tu contrato. Lo habitual en contratos a plazo es 30 días o más. En arriendos mes a mes o de duración indefinida, el desahucio del arrendador debe hacerse judicialmente o por notificación personal de un notario: si es tu arrendador quien te pide salir, exige que cumpla esa formalidad.
             </p>
             <p className="text-gray-600 mb-6 leading-relaxed">
               El aviso no te libera de pagar: debes la renta hasta el día en que restituyas efectivamente el inmueble. Avisar con tiempo no elimina ese pago, pero evita multas, te deja negociar la salida y demuestra buena fe si el caso llega a tribunales.
@@ -173,7 +187,7 @@ const BlogArticle = () => {
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">La garantía: qué te pueden descontar y qué no</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
-              La garantía habitual equivale a un mes de renta y su fin es asegurar deterioros y deudas, no castigar tu salida. Al restituir, el arrendador debe devolverla descontando únicamente lo justificado: rentas adeudadas, cuentas de servicios impagas y daños que excedan el desgaste normal, acreditados.
+              Por ley la garantía debe ser en dinero y no puede exceder de un mes de renta: si te cobraron más, ese exceso es cuestionable. Su fin es asegurar deterioros y deudas, no castigar tu salida. Al restituir, el arrendador debe devolverla reajustada según la variación del IPC, descontando únicamente lo justificado: rentas adeudadas, cuentas de servicios impagas y daños que excedan el desgaste normal, acreditados.
             </p>
             <p className="text-gray-600 mb-6 leading-relaxed">
               No te pueden descontar "porque te fuiste antes" salvo que el contrato lo autorice expresamente como multa. Si te retienen la garantía completa sin rendición, tienes derecho a exigir la rendición detallada y a reclamar judicialmente la diferencia.
@@ -189,6 +203,23 @@ const BlogArticle = () => {
               👉 No te devuelven la garantía del arriendo: cómo recuperarla
               <ChevronRight className="h-4 w-4" />
             </Link>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Y si el arrendador no quiere recibir las llaves?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Pasa más de lo que crees: el arrendador se enoja, no contesta o se niega a recibir el inmueble para seguir cobrando renta. No caigas en la trampa de quedarte con las llaves en el bolsillo sin hacer nada, porque la renta sigue corriendo hasta la restitución efectiva.
+            </p>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Lo práctico es dejar constancia por todos los medios: envía el aviso de término por correo y por carta, propone por escrito día y hora para la entrega, y si no hay respuesta, levanta un acta notarial dejando constancia del estado del inmueble y de tu disposición a restituir. Guarda las llaves a disposición del arrendador y no las uses. Esa paper trail es tu defensa si después te cobra meses extra.
+            </p>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Ejemplo: cronograma de una salida en 45 días</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Ejemplo hipotético con un contrato a 12 meses que exige 30 días de aviso. Día 1: lees el contrato y detectas que no hay multa por término anticipado. Día 2: envías el aviso escrito indicando fecha de restitución en 35 días. Días 3 a 30: pagas la renta corriente, pides presupuestos de flete y fotografías todo el inmueble. Día 35: entregas las llaves con acta firmada, fotos y lecturas de medidores, y pagas la renta proporcional hasta ese día. Día 40: envías correo exigiendo la rendición de la garantía con plazo de 10 días. Resultado: pagaste solo lo usado y tienes respaldo de cada paso.
+            </p>
           </div>
 
           <div className="mb-12">

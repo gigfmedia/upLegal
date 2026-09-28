@@ -37,6 +37,10 @@ const BlogArticle = () => {
     {
       question: "¿Cuánto plazo tengo para demandar un incumplimiento?",
       answer: "Las acciones personales por incumplimiento prescriben en 5 años por regla general del Código Civil. En consumo, los plazos para reclamar ante el SERNAC y demandar son más breves. No dejes pasar el tiempo: mientras antes actúes, más fácil es probar y recuperar.",
+    },
+    {
+      question: "¿Qué pasa si yo tampoco cumplí mi parte del trato?",
+      answer: "El prestador puede defenderse con la excepción de contrato no cumplido: si no pagaste lo acordado o no entregaste lo que te tocaba, no puedes exigirle que cumpla mientras sigas en falta. Antes de reclamar, ponte al día con tus propias obligaciones o prepárate para que te lo enrostren en el juicio.",
     }
   ];
 
@@ -119,13 +123,16 @@ const BlogArticle = () => {
           />
 
           <p className="text-base text-gray-600 leading-relaxed mb-8 -mt-4">
-            Cuando una parte no cumple lo pactado, la ley chilena te da a elegir: exigir que cumpla forzadamente o resolver el contrato y pedir indemnización de perjuicios. Esa elección —cumplimiento o resolución— es el corazón de todo reclamo por incumplimiento, y conviene decidirla con estrategia, no con rabia.
+            Cuando una parte no cumple lo pactado, la ley chilena te da a elegir: exigir que cumpla forzadamente o resolver el contrato y pedir indemnización de perjuicios. Lo dice expresamente el artículo 1489 del Código Civil para los contratos bilaterales: el contratante cumplidor puede pedir a su arbitrio la resolución o el cumplimiento, con indemnización de perjuicios en ambos casos. Esa elección es el corazón de todo reclamo, y conviene decidirla con estrategia, no con rabia.
           </p>
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Tus dos caminos: cumplimiento o resolución con indemnización</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
               Si todavía quieres el servicio (el taller tiene tu auto, la obra está avanzada), puedes exigir el cumplimiento más una indemnización por el retraso. Si ya perdiste la confianza o el plazo era esencial, resuelves el contrato: recuperas lo pagado y cobras los perjuicios, como el sobrecosto de contratar a otro.
+            </p>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              El incumplimiento no tiene que ser total para activar estos remedios: también cuentan el cumplimiento parcial (hizo la mitad), el defectuoso (lo hizo mal) y el tardío (lo hizo fuera de plazo cuando el tiempo importaba). Lo que cambia es qué pides: rebaja del precio, reparación a su costo o resolución completa, siempre más los perjuicios que acredites. La indemnización comprende el daño emergente y el lucro cesante.
             </p>
             <div className="grid sm:grid-cols-2 gap-6 mt-6">
               <div className="bg-green-50 p-5 rounded-xl">
@@ -167,10 +174,13 @@ const BlogArticle = () => {
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">El requerimiento escrito: el paso que casi todos se saltan</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
-              Antes de demandar, envía un requerimiento escrito (correo basta) exigiendo el cumplimiento en un plazo determinado —por ejemplo 10 días— y advirtiendo que de lo contrario resolverás el contrato y cobrarás perjuicios. Este documento hace tres cosas: constituye en mora al deudor, fija una fecha clara de incumplimiento y demuestra ante el tribunal que actuaste de buena fe.
+              Antes de demandar, envía un requerimiento escrito (correo basta) exigiendo el cumplimiento en un plazo determinado —por ejemplo 10 días— y advirtiendo que de lo contrario resolverás el contrato y cobrarás perjuicios. Este documento hace tres cosas: constituye en mora al deudor, fija una fecha clara de incumplimiento y demuestra ante el tribunal que actuaste de buena fe. El detalle técnico importa: si tu acuerdo tenía plazo, la mora se produce sola al vencerlo; si no tenía plazo, necesitas este requerimiento (o la notificación judicial) para constituirla.
             </p>
             <p className="text-gray-600 mb-6 leading-relaxed">
-              Si el prestador es una empresa, reclama en paralelo ante el SERNAC. La mediación del SERNAC resuelve muchos casos sin juicio, y si no hay acuerdo, la constancia del reclamo respalda tu demanda posterior.
+              Si el prestador es una empresa o profesional establecido, reclama en paralelo ante el SERNAC: por teléfono al 800 700 100, en el Portal del Consumidor o en oficinas regionales, acompañando todos tus antecedentes. La mediación del SERNAC resuelve muchos casos sin juicio, y si no hay acuerdo, la constancia del reclamo respalda tu demanda posterior.
+            </p>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Cuándo el SERNAC no es el camino: si contrataste a un particular de forma ocasional (el vecino que hace arreglos, sin actividad comercial habitual), no hay relación de consumo y debes ir directo por la vía civil. Y si fuiste tú quien tampoco cumplió del todo —no pagaste una cuota, no entregaste materiales—, el prestador puede oponer la excepción de contrato no cumplido: mientras no cumplas tu parte, no puedes exigirle la suya. Revisa tu propio cumplimiento antes de demandar.
             </p>
           </div>
 

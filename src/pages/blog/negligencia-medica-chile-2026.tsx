@@ -28,7 +28,7 @@ const BlogArticle = () => {
     },
     {
       question: "¿Necesito una mediación antes de demandar?",
-      answer: "Si la atención fue en un establecimiento público de salud, la ley exige una mediación previa ante el Consejo de Defensa del Estado antes de demandar. Si fue en una clínica privada, puedes demandar directamente en tribunales civiles, aunque una reclamación previa por escrito siempre fortalece tu posición.",
+      answer: "Sí, en ambos casos. La Ley 19.966 exige mediación previa para demandar a prestadores públicos (ante el Consejo de Defensa del Estado) y privados (ante la Superintendencia de Salud). Dura hasta 60 días corridos prorrogables por 60 más, tiene costo, suspende la prescripción mientras dura, y si fracasa recibes el certificado que habilita la demanda.",
     },
     {
       question: "¿Qué pruebas necesito para una demanda por negligencia médica?",
@@ -37,6 +37,10 @@ const BlogArticle = () => {
     {
       question: "¿Puedo reclamar contra una clínica privada en el SERNAC?",
       answer: "Sí. Las clínicas privadas son proveedores bajo la Ley del Consumidor, así que puedes reclamar ante el SERNAC por mala calidad del servicio. Esa vía sirve para presionar una solución y deja constancia, pero la indemnización relevante se obtiene en tribunales civiles con una demanda de perjuicios.",
+    },
+    {
+      question: "¿Qué pueden hacer los familiares si el paciente falleció?",
+      answer: "Los herederos pueden demandar la indemnización de los perjuicios que el fallecimiento les causó: gastos funerarios y médicos (daño emergente), sustento que aportaba el fallecido (lucro cesante) y el dolor por la pérdida (daño moral). Necesitan los mismos elementos —falla, daño y causalidad— más los certificados que acrediten el vínculo y los gastos.",
     }
   ];
 
@@ -139,6 +143,19 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Cómo se prueba: el estándar y quién debe probar qué</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              El parámetro que usan los tribunales es la lex artis: lo que un profesional diligente de la misma especialidad habría hecho en esas circunstancias. No se exige perfección ni resultado garantizado —la medicina es una obligación de medios—, se exige haber actuado como correspondía según el estado de la ciencia.
+            </p>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              En la práctica contractual, la carga de probar la diligencia recae en el prestador: es la clínica o el médico quien debe demostrar que actuó conforme a la lex artis. Tú debes probar el daño y la conexión entre la atención y ese daño, y ahí el peritaje médico es insustituible: sin un perito que explique técnicamente la falla, el tribunal no tiene cómo darte la razón.
+            </p>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Un punto a tu favor: la clínica responde por su personal dependiente. Si el error lo cometió un médico de su staff, la institución responde civilmente por el hecho ajeno de sus dependientes. Por eso la demanda suele dirigirse contra la institución y no solo contra el profesional.
+            </p>
+          </div>
+
           <RelatedLawyers category="Derecho Civil" />
 
           <div className="mb-12">
@@ -157,7 +174,7 @@ const BlogArticle = () => {
               </div>
               <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
                 <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <span className="text-base text-gray-700"><strong>Daño moral:</strong> dolor, secuelas, impacto en tu vida familiar y proyecto de vida. Lo fija el tribunal según gravedad y prueba: no hay tabla oficial.</span>
+                <span className="text-base text-gray-700"><strong>Daño moral:</strong> dolor, secuelas, impacto en tu vida familiar y proyecto de vida. Lo fija el tribunal según gravedad y prueba: no hay tabla oficial. Para dimensionar: la Corte Suprema ha confirmado indemnizaciones de decenas de millones de pesos por daño moral en diagnósticos errados graves.</span>
               </div>
             </div>
           </div>
@@ -165,12 +182,25 @@ const BlogArticle = () => {
           <BlogContextualCTA articleSlug="negligencia-medica-chile-2026" legalCategory="civil" />
 
           <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">Clínica privada vs hospital público: la vía cambia</h2>
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">La mediación previa es obligatoria: pública y privada</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
-              Si la atención fue en una clínica o consulta privada, demandas directamente ante juzgados civiles, y además puedes reclamar ante el SERNAC por ser un servicio de consumo. Si fue en un hospital o consultorio público, la ley exige primero una mediación ante el Consejo de Defensa del Estado: sin esa mediación, tu demanda será declarada inadmisible.
+              Atención a un error frecuente: la mediación previa no es solo para hospitales públicos. La Ley 19.966 la exige como requisito para demandar a cualquier prestador de salud, público o privado. Sin el trámite previo, tu demanda será declarada inadmisible. Lo que cambia es dónde se hace:
+            </p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6 mb-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Prestador privado (clínica, centro médico, profesional)</h3>
+                <p className="text-green-700">La solicitud se presenta por escrito ante la Superintendencia de Salud, que propone una nómina de mediadores. El proceso dura hasta 60 días corridos, prorrogables por 60 más. Tiene costo: los honorarios del mediador los pagan las partes según arancel. Si no hay acuerdo o la contraparte no participa, recibes el certificado de mediación frustrada y recién ahí puedes demandar.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Prestador público (hospital, consultorio)</h3>
+                <p className="text-red-700">La mediación se solicita ante el Consejo de Defensa del Estado. El esquema es el mismo: intentar el acuerdo antes del juicio, con acta de cierre que habilita la demanda si fracasa. No te saltes este paso por impaciencia: es requisito de admisibilidad.</p>
+              </div>
+            </div>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Dos efectos prácticos que pocos conocen. Primero, mientras dura la mediación se suspende el plazo de prescripción de tus acciones, así que el trámite protege tu plazo en vez de consumirlo. Segundo, la participación es voluntaria una vez iniciada: cualquiera puede ponerle término y pedir el acta para ir a juicio.
             </p>
             <p className="text-gray-600 mb-6 leading-relaxed">
-              En ambos casos, el paso cero es el mismo: solicita por escrito copia íntegra de tu ficha clínica. Es tu derecho como paciente y es la base sobre la que cualquier abogado evaluará tu caso.
+              En ambos casos, el paso cero es el mismo: solicita por escrito copia íntegra de tu ficha clínica. La Ley de Derechos y Deberes de los Pacientes (Ley 20.584) te reconoce el derecho a la información y a tu ficha: es la base sobre la que cualquier abogado evaluará tu caso.
             </p>
           </div>
 
@@ -183,6 +213,13 @@ const BlogArticle = () => {
               👉 Juicio ejecutivo en Chile: cómo cobrar lo que te deben por sentencia
               <ChevronRight className="h-4 w-4" />
             </Link>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Las etapas del proceso (sin promesas de plazo)</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              El camino típico es: mediación previa obligatoria, demanda ante juzgados civiles, contestación del prestador, etapa de prueba —donde el peritaje médico suele ser decisivo—, sentencia de primera instancia y eventual apelación. Ninguna etapa tiene duración garantizada: depende del tribunal, la complejidad técnica y si hay acuerdo en el camino. Lo que sí controlas tú es entrar con la prueba ordenada desde el día uno.
+            </p>
           </div>
 
           <div className="mb-12">

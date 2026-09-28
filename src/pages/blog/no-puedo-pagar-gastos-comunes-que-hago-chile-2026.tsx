@@ -16,7 +16,7 @@ const BlogArticle = () => {
   const faqs = [
     {
       question: "¿Me pueden cortar la luz por no pagar los gastos comunes?",
-      answer: "En muchos edificios el reglamento de copropiedad faculta a la administración a suspender el suministro eléctrico de la unidad morosa. Revisa tu reglamento: ahí está la respuesta para tu caso concreto. Además del corte, la deuda sigue existiendo y puede cobrarse judicialmente con intereses y multas.",
+      answer: "Sí. La Ley de Copropiedad (Ley 21.442) ordena suspender la luz y las telecomunicaciones a las unidades con tres o más cuotas impagas, a requerimiento del administrador con autorización del comité. No aplica en estado de catástrofe ni en hogares con electrodependientes, y el agua potable nunca puede cortarse por esta causa. El corte no extingue la deuda.",
     },
     {
       question: "¿Qué pasa si debo varios meses de gastos comunes?",
@@ -37,6 +37,10 @@ const BlogArticle = () => {
     {
       question: "¿Qué hago si creo que el cobro de gastos comunes es incorrecto?",
       answer: "Pide a la administración el detalle de la liquidación: prorrateo, fondos de reserva y multas aplicadas. Compara con tu reglamento de copropiedad. Si el cobro no corresponde a lo reglamentado, reclama por escrito a la administración y al comité. Si no hay respuesta, un abogado puede revisar si existe cobro indebido.",
+    },
+    {
+      question: "¿Dejar desocupado el departamento me exime de pagar?",
+      answer: "No. La ley es expresa: que no uses los servicios comunes o que la unidad permanezca desocupada no te exime de pagar los gastos comunes. La deuda se genera igual, con los mismos intereses, multas y riesgo de corte y demanda.",
     }
   ];
 
@@ -75,9 +79,9 @@ const BlogArticle = () => {
 
             <ul className="space-y-2 text-green-900">
               {[
-                "Los gastos comunes son obligatorios: la deuda acumula intereses y multas del reglamento",
-                "Muchos reglamentos facultan el corte de luz de la unidad morosa: revisa el tuyo",
-                "La comunidad puede cobrarte judicialmente y la deuda puede llegar a embargo",
+                "Los gastos comunes son obligatorios: se pagan dentro de los 10 primeros días del aviso de cobro",
+                "Con 3 o más cuotas impagas, la ley permite suspender la luz de tu unidad morosa",
+                "El aviso de cobro tiene mérito ejecutivo: la comunidad puede demandarte y embargar",
                 "Sin certificado de no deuda no puedes vender tu departamento",
                 "Frente a la comunidad el dueño responde aunque arriende: verifica a tu arrendatario"
               ].map((item, i) => (
@@ -125,19 +129,22 @@ const BlogArticle = () => {
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Te pueden cortar la luz por deber gastos comunes?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
-              Sí, en muchos casos. La mayoría de los reglamentos de copropiedad faculta expresamente a la administración a suspender el suministro eléctrico de la unidad morosa después de cierto período de mora. Es la medida de presión más común y suele aplicarse antes que la vía judicial.
+              Sí, y no depende de tu reglamento: lo ordena la Ley de Copropiedad (Ley 21.442). Cuando una unidad debe tres o más cuotas de gastos comunes —continuas o discontinuas—, las empresas eléctricas y de telecomunicaciones deben suspenderle el servicio a requerimiento escrito del administrador, previa autorización del comité de administración. Es la medida de presión más común y suele aplicarse antes que la vía judicial.
             </p>
             <p className="text-gray-600 mb-6 leading-relaxed">
-              Ojo con dos matices importantes. Primero, la facultad de cortar debe estar en tu reglamento: si no está, el corte puede ser impugnable. Segundo, el corte no extingue la deuda: sigues debiendo los meses impagos más intereses y multas, y la comunidad igual puede demandarte.
+              Hay dos excepciones que debes conocer. No pueden cortarte la luz durante la vigencia de una declaración de estado de catástrofe que afecte al condominio, ni si en tu hogar vive una persona electrodependiente. Y el agua potable no se puede cortar por deuda de gastos comunes: la Corte Suprema ha confirmado que suspender el agua es un acto de autotutela ilícito, porque impide el acceso a un bien esencial para la vida.
+            </p>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Ojo con lo más importante: el corte no extingue la deuda. Sigues debiendo los meses impagos más intereses y multas —la ley hace extensivas estas medidas de apremio también a multas, intereses y aportes al fondo de reserva—, y la comunidad igual puede demandarte por el total.
             </p>
             <div className="grid sm:grid-cols-2 gap-6 mt-6">
               <div className="bg-green-50 p-5 rounded-xl">
-                <h3 className="font-bold text-green-800 text-lg mb-2">Si el reglamento lo faculta</h3>
-                <p className="text-green-700">La administración puede suspender la luz de tu unidad hasta que regularices. El camino es pagar o convenir un plan de pago.</p>
+                <h3 className="font-bold text-green-800 text-lg mb-2">Debes 3 o más cuotas</h3>
+                <p className="text-green-700">El corte de luz es legalmente procedente. El camino es pagar o convenir un plan de pago por escrito antes de que lo ejecuten.</p>
               </div>
               <div className="bg-red-50 p-5 rounded-xl">
-                <h3 className="font-bold text-red-800 text-lg mb-2">Si el reglamento no lo contempla</h3>
-                <p className="text-red-700">El corte puede reclamarse. Pide el reglamento por escrito y asesórate antes de aceptarlo como un hecho.</p>
+                <h3 className="font-bold text-red-800 text-lg mb-2">Te cortaron el agua o eres electrodependiente</h3>
+                <p className="text-red-700">El corte es impugnable. Reclama por escrito a la administración y asesórate: la ley te protege expresamente en esos casos.</p>
               </div>
             </div>
           </div>
@@ -165,6 +172,19 @@ const BlogArticle = () => {
             </div>
             <p className="text-gray-600 mb-6 leading-relaxed">
               Si ya recibiste una demanda o una notificación de cobranza judicial, no la ignores: los plazos procesales corren igual aunque no respondas, y no responder solo empeora tu posición. Es el momento de hablar con un abogado.
+            </p>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Un dato procesal a tu favor y en tu contra: el aviso de cobro firmado por el administrador tiene mérito ejecutivo, así que la comunidad no necesita un juicio largo para embargarte. Y una vez deducida la acción, se entienden incluidas las cuotas que se devenguen durante el juicio. Cada mes que pasa en juicio suma a la misma demanda.
+            </p>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">El convenio de pago: cómo evitar el juicio</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              La propia ley faculta al administrador a celebrar convenios de pago con los morosos, en cuotas mensuales. Si no puedes pagar la deuda completa, esta es tu mejor carta: acércate a la administración antes de que demanden y propone por escrito un plan realista —monto de cada cuota, fechas y compromiso de mantener al día los gastos corrientes mientras pagas lo atrasado—.
+            </p>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Un convenio por escrito frena el corte de servicios y la demanda, siempre que lo cumplas. Si lo incumples, la comunidad retoma la cobranza judicial con la deuda completa más lo acumulado. Por eso propone cuotas que realmente puedas pagar, aunque sean bajas, en vez de un plan optimista que vas a romper al segundo mes.
             </p>
           </div>
 
