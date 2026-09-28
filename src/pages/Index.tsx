@@ -505,9 +505,9 @@ const Index = () => {
       
       {/* Hero Section - Padding top adjusted for Top Bar (40px) + Header (64px).
           Inset green bg with margin like LegalUp Pro hero (rounded on desktop). */}
-      <section className="bg-white">
-        <div className="px-3 pt-[116px] pb-3 sm:px-6 sm:pt-[128px] sm:pb-6">
-          <div className="rounded-[28px] bg-gray-100 px-4 pb-16 pt-12 sm:rounded-[40px] sm:px-8 sm:pt-16">
+      <section className="bg-gray-100 sm:bg-white">
+        <div className="px-0 pt-32 pb-0 sm:px-6 sm:pt-[128px] sm:pb-6">
+          <div className="bg-gray-100 px-4 pb-16 sm:rounded-[40px] sm:px-8 sm:pt-16">
             <div className="max-w-7xl mx-auto text-center">
           <p className="border border-gray-300 rounded-full p-1 text-sm text-gray-600 mb-8 max-w-3xl mx-auto w-fit px-2 py-2 mt-12 flex items-center gap-2">
             <span className="w-1 h-1 bg-green-400 rounded-full"></span>
@@ -608,7 +608,7 @@ const Index = () => {
       </section>
       
       {/* Lista de Abogados */}
-      <section ref={featuredSectionRef} id="abogados-destacados" className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
+      <section ref={featuredSectionRef} id="abogados-destacados" className="py-16 sm:pt-0 sm:pb-16 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <h2 className="text-2xl sm:text-3xl font-bold font-serif text-gray-900 whitespace-nowrap">
