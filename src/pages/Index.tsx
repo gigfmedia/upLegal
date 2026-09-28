@@ -506,8 +506,8 @@ const Index = () => {
       {/* Hero Section - Padding top adjusted for Top Bar (40px) + Header (64px).
           Inset green bg with margin like LegalUp Pro hero (rounded on desktop). */}
       <section className="bg-white">
-        <div className="px-3 pt-3 sm:px-6 sm:pt-6">
-          <div className="rounded-[28px] bg-gray-100 px-4 pb-16 pt-32 sm:rounded-[40px] sm:px-8 min-h-screen">
+        <div className="px-3 pt-[116px] sm:px-6 sm:pt-[128px]">
+          <div className="rounded-[28px] bg-gray-100 px-4 pb-16 pt-12 sm:rounded-[40px] sm:px-8 sm:pt-16 min-h-screen">
             <div className="max-w-7xl mx-auto text-center">
           <p className="border border-gray-300 rounded-full p-1 text-sm text-gray-600 mb-8 max-w-3xl mx-auto w-fit px-2 py-2 mt-12 flex items-center gap-2">
             <span className="w-1 h-1 bg-green-400 rounded-full"></span>
