@@ -214,10 +214,10 @@ const ArriendoLanding = () => {
 
                     <h2 className="text-3xl font-bold text-gray-900 mt-12 mb-6">¿Cuánto cuesta un abogado para problemas de arriendo?</h2>
                     <p>
-                        En LegalUp cada abogado publica su propia tarifa por hora, así que el precio que ves es el que pagas. Para evaluar tu caso puedes agendar una consulta inicial que vale la mitad de la tarifa por hora del abogado (una sesión de 30 minutos de media, según la tarifa publicada en su perfil).
+                        En LegalUp cada abogado publica su propia tarifa por hora, y el precio que ves en su perfil y al agendar ya incluye el recargo de la plataforma: es el que pagas. La consulta estándar es de 60 minutos, y también puedes agendar sesiones de 90 o 120 minutos según tu caso.
                     </p>
                     <p>
-                        Al pagar en línea se agrega un recargo del 10% por los costos de la plataforma (tarifas de Mercado Pago y procesamiento de tu pago). El valor del abogado y el recargo se muestran desglosados antes de confirmar el pago, sin cargos ocultos.
+                        Al pagar en línea, el total ya incluye un recargo del 10% por los costos de la plataforma (tarifas de Mercado Pago y procesamiento de tu pago). Ves el total a pagar antes de confirmar, sin cargos ocultos.
                     </p>
                     <p>
                         Un juicio de arriendo o la redacción de un contrato tienen tarifas variables según la complejidad del caso. Al comparar abogados en LegalUp verás su tarifa por hora y podrás elegir al especialista que mejor se ajuste a tu presupuesto.
