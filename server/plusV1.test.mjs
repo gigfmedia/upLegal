@@ -108,6 +108,16 @@ describe('4.57D Plus v1 — allowances and server wiring', () => {
     expect(sql).toContain('lawyer_active_case_limit(NEW.lawyer_id)');
     expect(sql).toContain('lawyer_active_case_limit(auth.uid())');
     expect(sql).toContain('WHEN v_is_plus THEN 150 WHEN v_is_pro_limited THEN 50 ELSE 10 END');
+    // 4.57D.2: the hardened Free branches must survive (P0 regression guard).
+    // The trigger body must be the 4.44A/4.44C version + Plus, nothing less.
+    expect(sql).toContain('v_free_workspace');
+    expect(sql).toContain('v_is_ai_active');
+    expect(sql).toContain('FREE_CASE_DOCUMENT_LIMIT_REACHED');
+    expect(sql).toContain('AI_FREE_CASE_DOCUMENT_SCOPE');
+    expect(sql).toContain('AI_FREE_CASE_INVALID_SCOPE');
+    expect(sql).toContain('IF v_count >= 2 THEN');
+    expect(sql).toContain('límite de 50 documentos almacenados de tu plan');
+    expect(sql).toContain('límite de 150 documentos almacenados de tu plan');
     expect(sql).toContain('pending_plan');
     expect(sql).toContain('plan_change_status');
     expect(sql).toContain('plan_change_effective_at');
