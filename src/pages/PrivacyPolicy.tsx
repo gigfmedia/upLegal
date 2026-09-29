@@ -37,7 +37,7 @@ const PrivacyPolicy = () => {
             <p>
               En LegalUp.cl, “LegalUp” es la marca comercial y el nombre de la plataforma,
               operada por la sociedad LegalUp SpA (“nosotros”, responsable del tratamiento).
-              Valoramos y respetamos la privacidad de nuestros usuarios.
+              Valoramos y respetamos la privacidad de nuestros usuarios.{" "}
               {/* TODO(legal): completar RUT, domicilio y correo legal de LegalUp SpA como responsable del tratamiento. */}
               Esta Política de Privacidad explica cómo recopilamos, usamos, almacenamos y protegemos la información
               personal de los usuarios que utilizan nuestra plataforma, ya sean personas que buscan asesoría legal

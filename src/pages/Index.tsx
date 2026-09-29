@@ -858,7 +858,7 @@ const Index = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {/* Derecho Laboral */}
             <Card 
-              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
+              className="rounded-3xl group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
               onClick={() => navigate('/abogados-laborales')}
             >
 
@@ -873,7 +873,7 @@ const Index = () => {
 
             {/* Derecho de Familia */}
             <Card 
-              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
+              className="rounded-3xl group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
               onClick={() => navigate('/abogados-divorcio')}
             >
 
@@ -888,7 +888,7 @@ const Index = () => {
 
             {/* Derecho Civil */}
             <Card 
-              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
+              className="rounded-3xl group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
               onClick={() => navigate('/abogados-arriendo')}
             >
               <CardContent className="p-6">
@@ -902,7 +902,7 @@ const Index = () => {
 
             {/* Derecho Civil */}
             <Card 
-              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
+              className="rounded-3xl group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
               onClick={() => navigate('/search?category=Derecho+Civil')}
             >
 
@@ -917,7 +917,7 @@ const Index = () => {
 
             {/* Derecho Penal */}
             <Card 
-              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
+              className="rounded-3xl group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
               onClick={() => navigate('/abogados-penales')}
             >
 
@@ -932,7 +932,7 @@ const Index = () => {
 
             {/* Derecho Comercial */}
             <Card 
-              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
+              className="rounded-3xl group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
               onClick={() => navigate('/search?category=Derecho+Comercial')}
             >
               <CardContent className="p-6">
@@ -960,7 +960,7 @@ const Index = () => {
 
             {/* Derecho Inmobiliario */}
             <Card 
-              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
+              className="rounded-3xl group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
               onClick={() => navigate('/search?category=Derecho+de+Propiedad+Intelectual')}
             >
               <CardContent className="p-6">
@@ -974,7 +974,7 @@ const Index = () => {
 
             {/* Ver todas las especialidades */}
             <Card 
-              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full border-2 border-dashed border-gray-300 hover:border-gray-500"
+              className="rounded-3xl group cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full border-2 border-dashed border-gray-300 hover:border-gray-500"
               onClick={() => navigate('/search')}
             >
               <CardContent className="p-6 flex flex-col items-center justify-center h-full">
