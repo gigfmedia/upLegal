@@ -7,18 +7,25 @@ import App from './App';
 import './index.css';
 
 import { loadPostHog, posthog } from './lib/posthogLoader';
+import { getStoredConsent, subscribeConsent } from './lib/cookieConsent';
 import { isTestHostname, isOwnerActive, isOwnerDevice } from './lib/owner';
 
 // P1/P2: posthog-js se carga diferido (fuera del critical path de la landing).
 // Con `import('posthog-js')` dinámico, el chunk (~73KB gzip) solo se solicita
-// cuando el navegador está idle. Los eventos/registros tempranos se encolan en
-// posthogLoader y se reproducen al inicializar, así no se pierde data.
+// cuando el navegador está idle. Sin consentimiento analytics, las llamadas al
+// facade se descartan (sin cola ni replay posterior); con consentimiento, la
+// captura comienza desde ese momento.
 // IMPORTANTE: startSessionRecording() SIN args respeta el trigger remoto de
 // /decide (solo /booking*). Con `true` se forzaría el override de url_trigger
 // y el recorder (61KB) cargaría también en la landing — justo lo que evitamos.
+//
+// CONSENTIMIENTO: posthog.init() NO corre sin `consent.analytics === true`.
+// Si no hay decisión al llegar a idle, se espera al otorgamiento (vía
+// subscribeConsent). Sin init no hay red hacia PostHog.
 if (typeof window !== 'undefined') {
   const win = window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => void };
   const initPostHogWhenIdle = () => {
+    if (getStoredConsent()?.analytics !== true) return;
     try {
       loadPostHog().then(() => {
         try {
@@ -31,10 +38,21 @@ if (typeof window !== 'undefined') {
       // Nunca bloquear el boot de la app por analytics
     }
   };
-  if (typeof win.requestIdleCallback === 'function') {
-    win.requestIdleCallback(initPostHogWhenIdle, { timeout: 4000 });
-  } else {
-    win.setTimeout(initPostHogWhenIdle, 3000);
+  const scheduleIdleInit = () => {
+    if (typeof win.requestIdleCallback === 'function') {
+      win.requestIdleCallback(initPostHogWhenIdle, { timeout: 4000 });
+    } else {
+      win.setTimeout(initPostHogWhenIdle, 3000);
+    }
+  };
+  scheduleIdleInit();
+  // Consentimiento otorgado después del idle: inicializa entonces.
+  try {
+    subscribeConsent((stored) => {
+      if (stored.analytics === true) initPostHogWhenIdle();
+    });
+  } catch {
+    // noop
   }
 }
 

@@ -151,6 +151,20 @@ const PrivacyPolicy = () => {
               <li>Analítica y estadísticas de uso</li>
             </ul>
             <p className="mt-2">Puedes deshabilitar cookies desde tu navegador, pero algunas funciones pueden verse afectadas.</p>
+            <p className="mt-2">
+              Las cookies necesarias para el funcionamiento (autenticación, seguridad y
+              sesión) siempre están activas. Las cookies opcionales de analítica,
+              marketing y preferencias solo se activan con tu consentimiento, que puedes
+              otorgar, rechazar o modificar en cualquier momento desde{' '}
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent('legalup:open-cookie-preferences'))}
+                className="text-green-900 underline hover:text-green-600"
+              >
+                Configurar cookies
+              </button>{' '}
+              o en nuestra <a href="/cookies" className="text-green-900 hover:text-green-600 underline">Política de Cookies</a>.
+            </p>
 
             <h2 className="text-xl font-semibold mt-8 mb-4">8. Retención de datos</h2>
             <p>Conservamos la información:</p>

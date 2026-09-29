@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { getStoredConsent, subscribeConsent } from "@/lib/cookieConsent";
+import { ensureGa4Loaded, disableGa4 } from "@/lib/consentTrackers";
 
 declare global {
   interface Window {
@@ -14,36 +16,13 @@ declare global {
 // inyectamos gtag/js si NO existe ya un script gtag.js en el DOM (ej. el que
 // carga GTM). Sin duplicados y sin perder GA4: si gtag.js ya está, los eventos
 // siguen funcionando; si no, lo cargamos una única vez.
-const GA_GTAG_SCRIPT = "gtag/js";
+//
+// CONSENTIMIENTO (Cookie Consent Manager): gtag.js NO se carga hasta que
+// `consent.analytics === true`. Sin el script, los `window.gtag(...)` de la
+// app caen al stub de index.html (cola en memoria, sin red). Al otorgar
+// consentimiento, `ensureGa4Loaded()` descarta esa cola pre-consentimiento y
+// configura GA4. Al revocar, se niega storage y se detienen los page_view.
 const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || "G-ZJCG1RNJT6";
-
-function gtagScriptAlreadyLoaded(): boolean {
-  if (typeof document === "undefined") return false;
-  return Array.from(document.querySelectorAll("script")).some((s) =>
-    (s.src || "").includes(GA_GTAG_SCRIPT)
-  );
-}
-
-function ensureGtagLoaded(): void {
-  if (typeof window === "undefined" || typeof document === "undefined") return;
-  if (gtagScriptAlreadyLoaded()) return;
-
-  const script = document.createElement("script");
-  script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
-  document.head.appendChild(script);
-
-  // El stub de dataLayer/gtag ya lo define index.html ANTES del boot (para
-  // encolar eventos tempranos y para que main.tsx capture realTag). No
-  // sobrescribimos window.gtag aquí para no pisar el wrapper anti-dueño que
-  // instala main.tsx; solo aseguramos que exista el dataLayer.
-  window.dataLayer = window.dataLayer || [];
-  if (typeof window.gtag !== "function") {
-    window.gtag = function gtag() {
-      window.dataLayer.push(arguments);
-    };
-  }
-}
 
 function gtag(...args: unknown[]): void {
   if (typeof window !== "undefined" && typeof window.gtag === "function") {
@@ -56,20 +35,25 @@ const GoogleAnalytics = () => {
 
   const [initialized, setInitialized] = useState(false);
 
+  // Inicializa GA4 solo con consentimiento analytics. Reacciona a cambios
+  // (otorgar tardío o revocación) sin remontar el componente.
   useEffect(() => {
-    // Cargar el script real de gtag.js ANTES de encolar config/eventos. Sin esta
-    // llamada, los comandos gtag van al stub del dataLayer pero nunca se envían
-    // (regresión FASE 9: GA4 quedó en 0 porque se perdió la inyección del script).
-    ensureGtagLoaded();
-    // Configurar GA4. Si gtag.js ya está (por GTM u otra carga) no se duplica;
-    // el config entra al dataLayer igualmente.
-    gtag("js", new Date());
-    gtag("config", GA_MEASUREMENT_ID);
-    setInitialized(true);
+    const syncWithConsent = () => {
+      if (getStoredConsent()?.analytics === true) {
+        ensureGa4Loaded();
+        setInitialized(true);
+      } else {
+        disableGa4();
+        setInitialized(false);
+      }
+    };
+    syncWithConsent();
+    const unsubscribe = subscribeConsent(syncWithConsent);
+    return unsubscribe;
   }, []);
 
   useEffect(() => {
-    if (initialized) {
+    if (initialized && getStoredConsent()?.analytics === true) {
       gtag("event", "page_view", {
         page_path: location.pathname + location.search,
         page_title: typeof document !== "undefined" ? document.title : undefined,

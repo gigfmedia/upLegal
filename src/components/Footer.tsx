@@ -2,6 +2,22 @@ import { Link, useLocation } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { useStickyBottomBar } from '@/contexts/StickyBottomBarContext';
 import { LEGAL_ENTITY_COPYRIGHT, LEGAL_ENTITY_OPERATOR_LINE } from '@/lib/legalEntity';
+import { openCookiePreferences } from '@/lib/cookieConsent';
+
+const FooterCookieSettings = () => (
+  <>
+    <Link to="/cookies" className="text-muted-foreground hover:text-foreground transition-colors">
+      Cookies
+    </Link>
+    <button
+      type="button"
+      onClick={openCookiePreferences}
+      className="text-muted-foreground hover:text-foreground transition-colors"
+    >
+      Configurar cookies
+    </button>
+  </>
+);
 
 const Footer = () => {
   const location = useLocation();
@@ -174,6 +190,8 @@ const Footer = () => {
               >
                 Contáctanos
               </a>
+
+              <FooterCookieSettings />
             </div>
 
             {/* Redes sociales */}

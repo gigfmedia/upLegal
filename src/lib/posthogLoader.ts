@@ -1,4 +1,5 @@
 import type { PostHog } from 'posthog-js';
+import { getStoredConsent } from './cookieConsent';
 
 const posthogKey = import.meta.env.VITE_POSTHOG_KEY || 'phc_CSTbdRjVd5ffcXTJNXS8ZgNtfir4AA3TzU2CTrpvU73C';
 const posthogHost = import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com';
@@ -6,7 +7,20 @@ const posthogHost = import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.c
 let posthogInstance: PostHog | null = null;
 let loadPromise: Promise<PostHog> | null = null;
 
+// Cola acotada al vuelo de init: solo acumula llamadas hechas CON
+// consentimiento analytics vigente (entre loadPostHog() y su init).
+// Sin consentimiento, las llamadas se descartan (nunca se encolan ni se
+// reproducen después). Sin replay de eventos pre-consentimiento.
 const pendingCalls: Array<() => void> = [];
+
+/** `true` solo si el usuario otorgó consentimiento analytics (versión válida). */
+const hasAnalyticsConsent = (): boolean => {
+  try {
+    return getStoredConsent()?.analytics === true;
+  } catch {
+    return false;
+  }
+};
 
 export const loadPostHog = (): Promise<PostHog> => {
   if (loadPromise) return loadPromise;
@@ -47,6 +61,9 @@ const runWhenReady = (call: (posthog: PostHog) => void): void => {
     }
     return;
   }
+  // Sin consentimiento analytics: descartar, NO encolar. Los eventos
+  // pre-consentimiento no deben conservarse para un replay posterior.
+  if (!hasAnalyticsConsent()) return;
   pendingCalls.push(() => {
     try {
       if (posthogInstance) call(posthogInstance);
@@ -58,9 +75,25 @@ const runWhenReady = (call: (posthog: PostHog) => void): void => {
 
 export const getPostHogInstance = (): PostHog | null => posthogInstance;
 
-// Facade con cola: los métodos se encolan hasta que posthog-js carga e init,
-// así ningún evento/registro temprano se pierde mientras posthog-js no está en
-// el critical path de la landing.
+/**
+ * Vacía la cola de vuelo (se usa al revocar opcionales: nada pendiente debe
+ * viajar sin consentimiento vigente).
+ */
+export const dropPendingCalls = (): void => {
+  pendingCalls.splice(0, pendingCalls.length);
+};
+
+/** Solo para tests: resetea el singleton y la cola. */
+export const resetPostHogForTests = (): void => {
+  posthogInstance = null;
+  loadPromise = null;
+  pendingCalls.splice(0, pendingCalls.length);
+};
+
+// Facade con gate de consentimiento: sin `analytics === true` las llamadas
+// se descartan (sin cola ni replay). Con consentimiento, los métodos se
+// encolan solo durante el vuelo de init y luego van directo a la instancia,
+// así la captura comienza desde el momento del consentimiento.
 export const posthog = {
   register: (properties: Record<string, unknown>): void => {
     runWhenReady((ph) => ph.register(properties));

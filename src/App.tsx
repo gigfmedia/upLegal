@@ -16,6 +16,7 @@ import { DeferredMount } from '@/components/DeferredMount';
 
 // Context Providers
 import { AuthProvider } from '@/contexts/AuthContext/clean/AuthContext';
+import { CookieConsentProvider } from '@/contexts/CookieConsentContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { persistUTMsFromURL } from '@/lib/bookingAttribution';
@@ -107,6 +108,9 @@ const AuthCallback = lazy(() => import('./pages/auth/AuthCallback'));
 const AcceptInvite = lazy(() => import('./pages/auth/AcceptInvite'));
 const BookingPage = lazy(() => import('./pages/BookingPage'));
 const PostHogBoundary = lazy(() => import('@/components/PostHogBoundary'));
+const CookieBanner = lazy(() => import('@/components/cookies/CookieBanner'));
+const CookiePreferencesModal = lazy(() => import('@/components/cookies/CookiePreferencesModal'));
+const CookiesPolicy = lazy(() => import('./pages/CookiesPolicy'));
 const BookingSuccessPage = lazy(() => import('./pages/BookingSuccessPage'));
 const CheckoutResume = lazy(() => import('./pages/CheckoutResume'));
 const QuoteRequestsPage = lazy(() => import('./pages/lawyer/QuoteRequestsPage'));
@@ -454,6 +458,7 @@ const AppContent = () => {
               <Route path="/como-funciona" element={<HowItWorksPage />} />
               <Route path="/terminos" element={<TermsOfService />} />
               <Route path="/privacidad" element={<PrivacyPolicy />} />
+              <Route path="/cookies" element={<CookiesPolicy />} />
 
               {/* Booking Routes */}
               <Route path="/booking/failure" element={<PaymentFailure />} />
@@ -679,13 +684,21 @@ const GoogleAnalytics = lazy(() => import('@/components/GoogleAnalytics'));
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <StickyBottomBarProvider>
-        <Toaster />
-        <Sonner />
-        <ErrorBoundary>
-          <AppContent />
-        </ErrorBoundary>
-      </StickyBottomBarProvider>
+      <CookieConsentProvider>
+        <StickyBottomBarProvider>
+          <Toaster />
+          <Sonner />
+          <ErrorBoundary>
+            <AppContent />
+          </ErrorBoundary>
+          <Suspense fallback={null}>
+            <CookieBanner />
+          </Suspense>
+          <Suspense fallback={null}>
+            <CookiePreferencesModal />
+          </Suspense>
+        </StickyBottomBarProvider>
+      </CookieConsentProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

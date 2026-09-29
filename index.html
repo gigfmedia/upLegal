@@ -92,10 +92,24 @@
           ; n.type = "text/javascript", n.async = !0, n.src = r + "?sdkid=" + e + "&lib=" + t; e = document.getElementsByTagName("script")[0]; e.parentNode.insertBefore(n, e)
       };
 
+      function hasMarketingConsent() {
+        try {
+          var raw = window.localStorage.getItem('legalup_cookie_consent');
+          if (!raw) return false;
+          var parsed = JSON.parse(raw);
+          return parsed.version === '1' && parsed.marketing === true;
+        } catch (e) { return false; }
+      }
       function loadTikTok() {
+        // CONSENTIMIENTO: el pixel solo carga con consentimiento marketing.
+        if (!hasMarketingConsent()) return;
+        if (ttq.loaded) return;
         ttq.load('D7J6UK3C77U32HD1GSC0');
+        ttq.loaded = true;
         ttq.page();
       }
+      // Consentimiento otorgado después del load: la app dispara este evento.
+      window.addEventListener('legalup:consent-marketing', loadTikTok);
       // P3: igual que GTM, TikTok espera el evento load de window antes de
       // programar el idle. Saca los ~112ms de parse/exec de events.js del
       // critical path (TBT) sin perder el pixel: el stub ttq encola las
