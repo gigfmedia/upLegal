@@ -110,6 +110,7 @@ const BookingPage = lazy(() => import('./pages/BookingPage'));
 const PostHogBoundary = lazy(() => import('@/components/PostHogBoundary'));
 const CookieBanner = lazy(() => import('@/components/cookies/CookieBanner'));
 const CookiePreferencesModal = lazy(() => import('@/components/cookies/CookiePreferencesModal'));
+const BookingResumeBanner = lazy(() => import('@/components/booking/BookingResumeBanner'));
 const CookiesPolicy = lazy(() => import('./pages/CookiesPolicy'));
 const BookingSuccessPage = lazy(() => import('./pages/BookingSuccessPage'));
 const CheckoutResume = lazy(() => import('./pages/CheckoutResume'));
@@ -696,6 +697,9 @@ const App = () => (
           </Suspense>
           <Suspense fallback={null}>
             <CookiePreferencesModal />
+          </Suspense>
+          <Suspense fallback={null}>
+            <BookingResumeBanner />
           </Suspense>
         </StickyBottomBarProvider>
       </CookieConsentProvider>

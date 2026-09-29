@@ -57,6 +57,13 @@ export default function BookingSuccessPage() {
 
         const data = await response.json();
         setBooking(data.booking);
+        // Reserva confirmada: limpia el intent temporal de recuperación.
+        try {
+          const { clearBookingIntent } = await import('@/lib/bookingIntent');
+          clearBookingIntent();
+        } catch {
+          // la limpieza nunca debe romper la página de éxito
+        }
       } catch (error) {
         console.error('Error fetching booking in success page:', error);
       } finally {

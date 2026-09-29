@@ -72,6 +72,16 @@ export default function PaymentSuccess() {
           // Email sending is now handled in server.mjs webhook (Mercado Pago)
         }
 
+        // Reserva completada: el intent temporal ya cumplió su función.
+        if (data.status === 'approved') {
+          try {
+            const { clearBookingIntent } = await import('@/lib/bookingIntent');
+            clearBookingIntent();
+          } catch {
+            // la limpieza nunca debe romper la página de éxito
+          }
+        }
+
         // Log payment outcome
         await logPaymentEvent({
           event_type: data.status === 'approved' ? 'success' : (data.status === 'pending' ? 'pending' : 'failure'),

@@ -763,6 +763,41 @@ export default function BookingPage() {
     import('@/lib/bookingFunnel').then(({ trackBookingStarted }) => trackBookingStarted({ lawyer_id: lawyer?.user_id, source: 'booking_page', article_slug: (lawyer as any)?.article_slug || null }));
     setSelectedTime(time);
 
+    // Booking intent: el usuario ya eligió abogado + fecha + hora concreta.
+    // Solo estado local (no bloquea el slot ni crea booking/pago). Reemplaza
+    // cualquier intención anterior.
+    if (lawyer?.user_id && selectedDate) {
+      try {
+        const dateStr = format(selectedDate, 'yyyy-MM-dd');
+        const fullName = `${lawyer.first_name} ${lawyer.last_name}`;
+        const nameSlug = fullName
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
+        import('@/lib/bookingIntent').then(({ saveBookingIntent, trackBookingIntentEvent }) => {
+          const stored = saveBookingIntent({
+            lawyerId: lawyer.user_id,
+            lawyerName: fullName,
+            lawyerSlug: null,
+            lawyerPhoto: lawyer.avatar_url || null,
+            specialty: lawyer.specialties?.[0] || null,
+            appointmentDate: dateStr,
+            appointmentTime: time,
+            appointmentStart: null,
+            durationMinutes: duration,
+            appointmentType: 'appointment',
+            serviceId: null,
+            bookingUrl: `/booking/${nameSlug}-${lawyer.user_id}?date=${dateStr}&time=${time}&duration=${duration}`,
+          });
+          if (stored) trackBookingIntentEvent('booking_intent_saved', stored);
+        });
+      } catch {
+        // el intent nunca debe romper la selección de horario
+      }
+    }
+
     // Scroll to summary section after state updates and renders
     setTimeout(() => {
       summaryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
