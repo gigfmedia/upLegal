@@ -22,13 +22,13 @@
 
 export const BRAND_NAME = 'LegalUp' as const;
 
-export const LEGAL_ENTITY_NAME = 'LegalUp SpA' as const;
+export const LEGAL_ENTITY_NAME = 'LegalUp SPA' as const;
 
 /** Línea legal discreta para el footer del sitio. */
 export const LEGAL_ENTITY_OPERATOR_LINE = `${BRAND_NAME} es operado por ${LEGAL_ENTITY_NAME}.` as const;
 
 /** Copyright legal del sitio y documentos. */
-export const LEGAL_ENTITY_COPYRIGHT = `© 2026 ${LEGAL_ENTITY_NAME}. Todos los derechos reservados.` as const;
+export const LEGAL_ENTITY_COPYRIGHT = `© 2026 ${LEGAL_ENTITY_NAME}` as const;
 
 // ---------------------------------------------------------------------------
 // Placeholders pendientes de confirmación. Se dejan como `null` a propósito:

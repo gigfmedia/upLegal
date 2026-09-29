@@ -217,7 +217,7 @@ const Footer = () => {
               <p className="mt-4 text-base leading-relaxed text-white/70">
                 Asesoría legal online con abogados verificados.
                 <br />
-                Gestiona consultas, casos y servicios legales desde un solo lugar.
+                Gestiona consultas, casos y servicios legales desde<br /> un solo lugar.
               </p>
               <div className="mt-6 flex items-center gap-2">
                 <a
