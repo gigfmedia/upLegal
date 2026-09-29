@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { useStickyBottomBar } from '@/contexts/StickyBottomBarContext';
+import { LEGAL_ENTITY_COPYRIGHT, LEGAL_ENTITY_OPERATOR_LINE } from '@/lib/legalEntity';
 
 const Footer = () => {
   const location = useLocation();
@@ -146,8 +147,9 @@ const Footer = () => {
           <div className="flex flex-col items-center justify-between space-y-4 md:flex-row md:space-y-0">
 
             {/* Copy */}
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <span>© 2026 LegalUp. Todos los derechos reservados.</span>
+            <div className="flex flex-col items-center gap-1 text-sm text-muted-foreground md:items-start">
+              <span>{LEGAL_ENTITY_COPYRIGHT}</span>
+              <span className="text-xs">{LEGAL_ENTITY_OPERATOR_LINE}</span>
             </div>
 
             {/* Middle links */}

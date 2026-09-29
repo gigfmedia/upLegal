@@ -89,7 +89,8 @@ serve(async (req) => {
           
           <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #6b7280; line-height: 1.5;">
             <p style="margin: 5px 0;">Si tienes alguna pregunta, no dudes en contactarnos en <a href="mailto:soporte@legalup.cl" style="color: #2563eb; text-decoration: none;">soporte@legalup.cl</a></p>
-            <p style="margin: 5px 0;">© ${new Date().getFullYear()} LegalUp. Todos los derechos reservados.</p>
+            <p style="margin: 5px 0;">© ${new Date().getFullYear()} LegalUp SpA. Todos los derechos reservados.</p>
+            <p style="margin: 5px 0; font-size: 11px; color: #9ca3af;">LegalUp es operado por LegalUp SpA. <!-- TODO(legal): agregar RUT y datos de facturación cuando se confirmen. --></p>
             <p style="margin: 5px 0; font-size: 11px; color: #9ca3af;">Este es un correo automático, por favor no respondas a este mensaje.</p>
           </div>
         </div>

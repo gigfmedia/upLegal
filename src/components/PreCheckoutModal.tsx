@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { logPaymentEvent } from '@/utils/paymentLogger';
 import { supabase } from '@/lib/supabaseClient';
 import { posthog } from '@/lib/posthogLoader';
+import { LEGAL_ENTITY_NAME } from '@/lib/legalEntity';
 
 export interface AppointmentCheckoutData {
   type: 'appointment';
@@ -389,6 +390,13 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
               requiresQuote ? 'Solicitar evaluación' : (isService ? 'Confirmar y pagar servicio' : 'Confirmar y pagar asesoría')
             )}
           </Button>
+
+          {!requiresQuote && (
+            <p className="text-[11px] text-gray-500 text-center">
+              El pago será procesado por {LEGAL_ENTITY_NAME} a través de Mercado Pago.
+              {/* TODO(legal): agregar RUT y datos de facturación cuando se confirmen. */}
+            </p>
+          )}
 
           {!requiresQuote && (
             <>

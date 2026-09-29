@@ -35,9 +35,12 @@ const PrivacyPolicy = () => {
           </CardHeader>
           <CardContent className="space-y-6 text-justify">
             <p>
-              En LegalUp.cl ("LegalUp", "nosotros"), valoramos y respetamos la privacidad de nuestros usuarios. 
-              Esta Política de Privacidad explica cómo recopilamos, usamos, almacenamos y protegemos la información 
-              personal de los usuarios que utilizan nuestra plataforma, ya sean personas que buscan asesoría legal 
+              En LegalUp.cl, “LegalUp” es la marca comercial y el nombre de la plataforma,
+              operada por la sociedad LegalUp SpA (“nosotros”, responsable del tratamiento).
+              Valoramos y respetamos la privacidad de nuestros usuarios.
+              {/* TODO(legal): completar RUT, domicilio y correo legal de LegalUp SpA como responsable del tratamiento. */}
+              Esta Política de Privacidad explica cómo recopilamos, usamos, almacenamos y protegemos la información
+              personal de los usuarios que utilizan nuestra plataforma, ya sean personas que buscan asesoría legal
               ("Usuarios") o abogados que ofrecen servicios ("Profesionales").
             </p>
             <p className="font-medium">
@@ -65,8 +68,15 @@ const PrivacyPolicy = () => {
 
             <h3 className="font-medium mt-4">1.3. Información de pagos</h3>
             <p>
-              Los pagos se procesan a través de proveedores externos (pasarelas de pago). LegalUp no almacena información 
+              Los pagos se procesan a través de proveedores externos (pasarelas de pago). LegalUp SpA no almacena información
               completa de tarjetas, pero sí recibimos datos básicos asociados a la transacción (estado, monto, fecha, ID de pago).
+            </p>
+
+            <h2 className="text-xl font-semibold mt-8 mb-4">1.4. Responsable del tratamiento</h2>
+            <p>
+              El responsable del tratamiento de los datos personales recogidos a través de la plataforma LegalUp es
+              LegalUp SpA.
+              {/* TODO(legal): agregar RUT, domicilio y correo de contacto del responsable cuando se confirmen. */}
             </p>
 
             <h2 className="text-xl font-semibold mt-8 mb-4">2. Cómo utilizamos la información</h2>
@@ -113,11 +123,11 @@ const PrivacyPolicy = () => {
             <h3 className="font-medium mt-4">4.4. Prevención de fraude o seguridad</h3>
             <p>Si detectamos actividades maliciosas o intentos de abuso.</p>
             
-            <p className="font-medium">LegalUp no vende información personal a terceros.</p>
+            <p className="font-medium">LegalUp SpA no vende información personal a terceros.</p>
 
             <h2 className="text-xl font-semibold mt-8 mb-4">5. Almacenamiento y seguridad</h2>
             <p>
-              LegalUp implementa medidas de seguridad razonables para proteger la información de accesos no autorizados, 
+              LegalUp SpA implementa medidas de seguridad razonables para proteger la información de accesos no autorizados,
               pérdida o modificación. Sin embargo, ningún sistema es 100% invulnerable. No garantizamos seguridad absoluta.
             </p>
 
@@ -152,14 +162,14 @@ const PrivacyPolicy = () => {
             <p className="mt-2">Documentos y mensajes pueden ser eliminados al cerrar la cuenta, según la legislación aplicable.</p>
 
             <h2 className="text-xl font-semibold mt-8 mb-4">9. Privacidad entre Usuario y Abogado</h2>
-            <p>LegalUp no participa en la relación abogado-cliente.</p>
+            <p>LegalUp SpA, a través de la plataforma LegalUp, no participa en la relación abogado-cliente.</p>
             <p>Los Abogados son responsables de:</p>
             <ul className="list-disc pl-6 space-y-2">
               <li>Manejar de forma confidencial la información entregada por los Usuarios.</li>
               <li>Cumplir normas éticas y profesionales aplicables a su ejercicio.</li>
             </ul>
             <p className="mt-2">
-              LegalUp no revisa ni accede al contenido de esa comunicación, salvo casos estrictamente necesarios 
+              LegalUp SpA no revisa ni accede al contenido de esa comunicación, salvo casos estrictamente necesarios
               por razones técnicas o de seguridad.
             </p>
 
@@ -177,6 +187,10 @@ const PrivacyPolicy = () => {
             </p>
 
             <h2 className="text-xl font-semibold mt-8 mb-4">12. Contacto</h2>
+            <p>
+              El responsable de esta plataforma es LegalUp SpA.
+              {/* TODO(legal): completar RUT, domicilio y correo legal de LegalUp SpA. */}
+            </p>
             <p>Para consultas o soporte:</p>
             <p>Sitio web: <a href="https://legalup.cl" className="text-primary hover:underline">LegalUp.cl</a></p>
             <p>Correo: <a href="mailto:juan.fercommerce@gmail.com" className="text-green-900 hover:text-green-600 underline">contacto@legalup.cl</a></p>

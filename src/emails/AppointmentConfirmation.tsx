@@ -141,7 +141,7 @@ export function AppointmentConfirmationEmail({
           
           <div style={styles.copyright}>
             <p style={styles.copyrightText}>
-              © {new Date().getFullYear()} LegalUp. Todos los derechos reservados.
+              © {new Date().getFullYear()} LegalUp SpA. Todos los derechos reservados.
             </p>
             <p style={styles.copyrightNote}>
               Este es un correo automático, por favor no respondas a este mensaje.

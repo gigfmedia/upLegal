@@ -38,9 +38,12 @@ const TermsOfService = () => {
           </CardHeader>
           <CardContent className="space-y-6 text-justify">
             <p>
-              Bienvenido a LegalUp.cl ("LegalUp", "la Plataforma", "nosotros"). 
-              Estos Términos de Servicio regulan el acceso y uso de la Plataforma 
+              Bienvenido a LegalUp.cl. En estos Términos, “LegalUp” es la marca
+              comercial y el nombre de la plataforma (“la Plataforma”), y
+              “LegalUp SpA” es la sociedad que la opera (“nosotros”).
+              Estos Términos de Servicio regulan el acceso y uso de la Plataforma
               por parte de usuarios clientes, abogados, y cualquier persona que interactúe con nuestros servicios.
+              {/* TODO(legal): agregar RUT, domicilio y correo legal de LegalUp SpA cuando se confirmen. No mostrar RUT públicamente salvo obligación legal. */}
             </p>
             <p className="font-medium">
               Al usar LegalUp.cl, aceptas estos Términos. Si no estás de acuerdo, no utilices la Plataforma.
@@ -49,8 +52,8 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-xl font-semibold mb-3">1. Naturaleza del servicio</h2>
               <ul className="list-disc pl-6 space-y-2">
-                <li>LegalUp.cl es una plataforma tecnológica de intermediación que conecta a personas que requieren servicios legales ("Usuarios") con abogados independientes ("Profesionales" o "Abogados").</li>
-                <li>LegalUp no es un estudio jurídico, no presta servicios legales y no actúa como representación legal de los Usuarios.</li>
+                <li>LegalUp.cl es una plataforma tecnológica de intermediación, operada por LegalUp SpA, que conecta a personas que requieren servicios legales ("Usuarios") con abogados independientes ("Profesionales" o "Abogados").</li>
+                <li>LegalUp SpA no es un estudio jurídico, no presta servicios legales y no actúa como representación legal de los Usuarios; la marca LegalUp identifica únicamente la plataforma.</li>
                 <li>Cada Abogado es responsable de su ejercicio profesional, cumplimiento normativo y resultados de su asesoría.</li>
               </ul>
             </section>
@@ -61,7 +64,7 @@ const TermsOfService = () => {
                 <li>Para utilizar ciertos servicios, deberás crear una cuenta proporcionando información veraz y actualizada.</li>
                 <li>Debes tener al menos 18 años.</li>
                 <li>Eres responsable de la confidencialidad de tus credenciales.</li>
-                <li>LegalUp puede suspender o eliminar cuentas que incumplan estos Términos o presenten actividad sospechosa.</li>
+                <li>LegalUp SpA puede suspender o eliminar cuentas que incumplan estos Términos o presenten actividad sospechosa.</li>
               </ul>
             </section>
 
@@ -69,8 +72,8 @@ const TermsOfService = () => {
               <h2 className="text-xl font-semibold mb-3">3. Relación entre Usuarios y Abogados</h2>
               <ul className="list-disc pl-6 space-y-2">
                 <li>Los servicios legales son contratados directamente entre el Usuario y el Abogado.</li>
-                <li>LegalUp no participa en la relación profesional, en la confección de documentos, ni en decisiones jurídicas.</li>
-                <li>LegalUp no garantiza resultados, tiempos de respuesta, calidad de servicio ni la veracidad de la información entregada por los Abogados.</li>
+                <li>LegalUp SpA, a través de la plataforma LegalUp, no participa en la relación profesional, en la confección de documentos, ni en decisiones jurídicas.</li>
+                <li>LegalUp SpA no garantiza resultados, tiempos de respuesta, calidad de servicio ni la veracidad de la información entregada por los Abogados.</li>
                 <li>Los Abogados aceptan que son plenamente responsables por:
                   <ul className="list-[circle] pl-6 mt-2 space-y-1">
                     <li>La calidad y precisión del servicio legal.</li>
@@ -84,11 +87,11 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-xl font-semibold mb-3">4. Pagos y comisiones</h2>
               <ul className="list-disc pl-6 space-y-2">
-                <li>LegalUp podrá cobrar una comisión por los servicios de intermediación, derivación o gestión de clientes que realice, respecto de cada cliente o caso generado directa o indirectamente a través de LegalUp, independiente del medio de contacto, pago o formalización utilizado.</li>
+                <li>LegalUp SpA, a través de la plataforma LegalUp, podrá cobrar una comisión por los servicios de intermediación, derivación o gestión de clientes que realice, respecto de cada cliente o caso generado directa o indirectamente a través de LegalUp, independiente del medio de contacto, pago o formalización utilizado.</li>
                 <li>El precio del servicio profesional es definido libremente por cada Abogado.</li>
-                <li>La comisión de LegalUp será retenida, descontada o facturada al Abogado, según corresponda, conforme al mecanismo de pago utilizado en cada caso.</li>
-                <li>LegalUp no se responsabiliza por retrasos, fallas o errores imputables a bancos, proveedores externos o pasarelas de pago.</li>
-                <li>No se permiten transacciones realizadas con el objeto de eludir o evadir el pago de la comisión correspondiente a LegalUp respecto de clientes o casos derivados por la Plataforma.</li>
+                <li>La comisión de LegalUp SpA será retenida, descontada o facturada al Abogado, según corresponda, conforme al mecanismo de pago utilizado en cada caso.</li>
+                <li>LegalUp SpA no se responsabiliza por retrasos, fallas o errores imputables a bancos, proveedores externos o pasarelas de pago.</li>
+                <li>No se permiten transacciones realizadas con el objeto de eludir o evadir el pago de la comisión correspondiente a LegalUp SpA respecto de clientes o casos derivados por la Plataforma.</li>
               </ul>
             </section>
 
@@ -102,7 +105,7 @@ const TermsOfService = () => {
                 <li>Interferir con el funcionamiento técnico de la Plataforma.</li>
                 <li>Intentar contactar a profesionales o usuarios para fines ajenos a los servicios legales ofrecidos.</li>
               </ul>
-              <p className="mt-3">LegalUp puede suspender o eliminar cuentas que infrinjan estas reglas.</p>
+              <p className="mt-3">LegalUp SpA puede suspender o eliminar cuentas que infrinjan estas reglas.</p>
             </section>
 
             <section>
@@ -115,22 +118,22 @@ const TermsOfService = () => {
                 <li>No infringe derechos de terceros.</li>
               </ul>
               <p className="mt-3">
-                LegalUp no revisa ni valida el contenido suministrado por los Usuarios o Abogados.
+                LegalUp SpA no revisa ni valida el contenido suministrado por los Usuarios o Abogados.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold mb-3">7. Privacidad y manejo de datos</h2>
               <ul className="list-disc pl-6 space-y-2">
-                <li>El uso de LegalUp implica la recopilación y tratamiento de datos personales conforme a nuestra Política de Privacidad.</li>
+                <li>El uso de la plataforma LegalUp implica la recopilación y tratamiento de datos personales conforme a nuestra Política de Privacidad.</li>
                 <li>Recomendamos leerla atentamente.</li>
-                <li>LegalUp implementa medidas razonables de seguridad, pero no garantiza protección absoluta contra amenazas externas.</li>
+                <li>LegalUp SpA implementa medidas razonables de seguridad, pero no garantiza protección absoluta contra amenazas externas.</li>
               </ul>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold mb-3">8. Limitación de responsabilidad</h2>
-              <p>LegalUp no es responsable por:</p>
+              <p>LegalUp SpA no es responsable por:</p>
               <ul className="list-disc pl-6 mt-2 space-y-2">
                 <li>El desempeño, calidad o resultado de los servicios legales.</li>
                 <li>Daños directos o indirectos derivados de la relación entre Usuario y Abogado.</li>
@@ -145,14 +148,14 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-xl font-semibold mb-3">9. Modificaciones de la Plataforma y los Términos</h2>
               <ul className="list-disc pl-6 space-y-2">
-                <li>LegalUp puede actualizar, modificar o descontinuar cualquier funcionalidad sin aviso previo.</li>
+                <li>LegalUp SpA puede actualizar, modificar o descontinuar cualquier funcionalidad sin aviso previo.</li>
                 <li>También podremos actualizar estos Términos. Continuar usando la Plataforma después de dichos cambios implica aceptación.</li>
               </ul>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold mb-3">10. Terminación del servicio</h2>
-              <p>LegalUp puede suspender o eliminar cuentas por:</p>
+              <p>LegalUp SpA puede suspender o eliminar cuentas por:</p>
               <ul className="list-disc pl-6 mt-2 space-y-2">
                 <li>Incumplimiento de estos Términos.</li>
                 <li>Uso indebido de la Plataforma.</li>
@@ -172,6 +175,10 @@ const TermsOfService = () => {
             </section>
 
             <h2 className="text-xl font-semibold mb-3">12. Contacto</h2>
+            <p>
+              La plataforma LegalUp es operada por LegalUp SpA.
+              {/* TODO(legal): completar RUT, domicilio y correo legal de LegalUp SpA. */}
+            </p>
             <p>Para consultas o soporte:</p>
             <p>Sitio web: <a href="https://legalup.cl" className="text-primary hover:underline">LegalUp.cl</a></p>
             <p>Correo: <a href="mailto:juan.fercommerce@gmail.com" className="text-green-900 hover:text-green-600 underline">contacto@legalup.cl</a></p>
