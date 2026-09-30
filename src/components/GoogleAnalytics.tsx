@@ -63,6 +63,7 @@ const GoogleAnalytics = () => {
     settled: true,
     pendingTitle: undefined as string | undefined,
     hasCommit: false,
+    lastCommitFrame: -1,
     debounceLeft: -1,
     frames: 0,
     stableCount: 0,
@@ -93,6 +94,7 @@ const GoogleAnalytics = () => {
       const s = navRef.current;
       if (s.settled) return;
       s.hasCommit = true;
+      s.lastCommitFrame = s.frames;
       s.pendingTitle = (e as CustomEvent<{ title?: string }>)?.detail?.title;
       if (typeof requestAnimationFrame === "function") {
         s.debounceLeft = 5;
@@ -101,12 +103,14 @@ const GoogleAnalytics = () => {
       }
     };
     window.addEventListener("legalup:helmet-commit", onCommit);
-    // RESPALDO: solo si Helmet ya habló (hasCommit) y el título se
-    // estabilizó —rutas sin título propio, ej. home— o tope absoluto
-    // MAX_FRAMES (consent tardío, rutas sin Helmet). Un chunk lento NO
-    // dispara el fallback: sin commit, se sigue esperando el título final.
+    // RESPALDO: solo tras SILENCIO de commits (ningún commit en los
+    // últimos QUIET_FRAMES) con título estable —rutas sin título propio—
+    // o tope absoluto MAX_FRAMES (consent tardío, rutas sin Helmet).
+    // Un commit sin título (ej. schema-only) NO habilita el fallback con
+    // el título actual: el titulado puede venir después (chunk lento).
     const STABLE_FRAMES = 10;
-    const MAX_FRAMES = 300;
+    const QUIET_FRAMES = 120;
+    const MAX_FRAMES = 600;
     let rafId = 0;
     const loop = () => {
       const s = navRef.current;
@@ -121,8 +125,9 @@ const GoogleAnalytics = () => {
           s.stableCount = currentTitle === s.lastTitle ? s.stableCount + 1 : 1;
           s.lastTitle = currentTitle;
           s.frames += 1;
+          const quietFor = s.hasCommit ? s.frames - s.lastCommitFrame : s.frames;
           if (
-            (s.hasCommit && s.stableCount >= STABLE_FRAMES) ||
+            (s.hasCommit && s.stableCount >= STABLE_FRAMES && quietFor >= QUIET_FRAMES) ||
             s.frames >= MAX_FRAMES
           ) {
             doSend(s.key ?? "", s.generation);
@@ -153,6 +158,7 @@ const GoogleAnalytics = () => {
     s.settled = false;
     s.pendingTitle = undefined;
     s.hasCommit = false;
+    s.lastCommitFrame = -1;
     s.debounceLeft = -1;
     s.frames = 0;
     s.stableCount = 0;

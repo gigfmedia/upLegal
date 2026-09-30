@@ -26,7 +26,7 @@ let rafQueue: FrameRequestCallback[];
 function flushRaf() {
   act(() => {
     let guard = 0;
-    while (rafQueue.length && guard++ < 500) {
+    while (rafQueue.length && guard++ < 800) {
       const cbs = rafQueue.splice(0);
       cbs.forEach((cb) => cb(0));
     }
