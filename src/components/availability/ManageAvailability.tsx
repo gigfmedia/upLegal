@@ -1,8 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Calendar, Loader2, CheckIcon, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/components/ui/use-toast";
@@ -19,11 +17,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 const HOURS = Array.from({ length: 10 }, (_, i) => 9 + i); // 09:00–20:00
 const DAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
-function AvailabilityGrid({ lawyerId, onClose, onAvailabilityChange }) {
+// Exportado para tests: permite renderizar el grid sin el portal del Dialog.
+export function AvailabilityGrid({ lawyerId, onClose, onAvailabilityChange }) {
   const { toast } = useToast();
   const [availability, setAvailability] = useState({});
   const [originalAvailability, setOriginalAvailability] = useState({});
-  const [meetLink, setMeetLink] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -61,7 +59,6 @@ function AvailabilityGrid({ lawyerId, onClose, onAvailabilityChange }) {
           savedAvailability = {};
         }
           
-        setMeetLink(data?.meet_link || '');
         setAvailability(savedAvailability || {});
         setOriginalAvailability(savedAvailability || {});
         setHasChanges(false);
@@ -162,11 +159,11 @@ function AvailabilityGrid({ lawyerId, onClose, onAvailabilityChange }) {
       
       let result;
       if (existingProfile) {
-        // Update existing profile
+        // Update existing profile: solo disponibilidad. El spread conserva
+        // todos los demás campos (incluido meet_link) sin tocarlos.
         const updateData = {
           ...existingProfile,
           availability: availability,
-          meet_link: meetLink.trim() || null,
           updated_at: new Date().toISOString()
         };
         
@@ -237,21 +234,6 @@ function AvailabilityGrid({ lawyerId, onClose, onAvailabilityChange }) {
 
   return (
     <div className="space-y-4">
-      {/* Google Meet link */}
-      <div className="space-y-1.5">
-        <Label htmlFor="manage_meet_link">Enlace de Google Meet</Label>
-        <Input
-          id="manage_meet_link"
-          type="url"
-          value={meetLink}
-          onChange={(e) => { setMeetLink(e.target.value); setHasChanges(true); }}
-          placeholder="https://meet.google.com/xxx-xxxx-xxx"
-        />
-        <p className="text-xs text-muted-foreground">
-          Los clientes usarán este link para unirse a la videollamada si la generación automática falla.
-        </p>
-      </div>
-
       <div className="grid grid-cols-8 gap-3 rounded-lg bg-white">
         <div></div>
         {DAYS.map((day) => (
