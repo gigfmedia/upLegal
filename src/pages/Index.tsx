@@ -672,7 +672,7 @@ const Index = () => {
           ) : (
             <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-6 sm:overflow-visible sm:pb-0" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
               {featuredLawyers.slice(0, 3).map((lawyer, idx) => (
-                <div key={lawyer.id} className="basis-[82%] snap-center shrink-0 sm:basis-auto">
+                <div key={lawyer.id} className="w-[82%] snap-center shrink-0 sm:w-auto">
                   <LawyerCard
                     lawyer={lawyer}
                     onContactClick={() => {

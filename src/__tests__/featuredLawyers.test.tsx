@@ -45,7 +45,7 @@ describe('FASE 5.18D swipe mobile + grid desktop', () => {
     expect(c).toContain('snap-x');
     expect(c).toContain('snap-mandatory');
     expect(c).toContain('scrollbar-hide');
-    expect(c).toContain('basis-[82%]');
+    expect(c).toContain('w-[82%]');
     expect(c).toContain('snap-center');
   });
 
