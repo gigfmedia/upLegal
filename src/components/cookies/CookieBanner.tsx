@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Cookie } from 'lucide-react';
 import { useCookieConsent } from '@/contexts/CookieConsentContext';
+import { useStickyBottomBar } from '@/contexts/StickyBottomBarContext';
+import { FLOATING_COOKIE_RAISED } from '@/lib/floatingOffsets';
 
 /**
  * Primera capa del Cookie Consent Manager: barra flotante oscura abajo.
@@ -11,15 +13,21 @@ import { useCookieConsent } from '@/contexts/CookieConsentContext';
  */
 export default function CookieBanner() {
   const { isBannerVisible, acceptAll, rejectOptional, openPreferences } = useCookieConsent();
+  // Misma fuente de verdad que el botón WhatsApp: visibilidad del sticky
+  // booking bar (un único IntersectionObserver en StickyBottomBar). Sin
+  // pathname como señal y sin observer duplicado.
+  const { isVisible: isStickyBarVisible } = useStickyBottomBar();
 
   if (!isBannerVisible) return null;
+
+  const bottomClass = isStickyBarVisible ? FLOATING_COOKIE_RAISED : 'bottom-0';
 
   return (
     <div
       role="dialog"
       aria-live="polite"
       aria-label="Aviso de cookies"
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-[1000] px-4 pb-5 sm:px-6 sm:pb-6 lg:px-8"
+      className={`pointer-events-none fixed inset-x-0 z-[1000] px-4 pb-5 transition-[bottom] duration-200 ease-out motion-reduce:transition-none sm:px-6 sm:pb-6 lg:px-8 ${bottomClass}`}
     >
       <div className="pointer-events-auto mx-auto w-full max-w-3xl">
         <div className="rounded-2xl border border-white/10 bg-[#101820]/95 shadow-2xl backdrop-blur">

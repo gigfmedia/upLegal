@@ -30,6 +30,15 @@ export default function BookingResumeBanner() {
   const visible =
     intent !== null && shouldShowBookingResumeBanner(pathname, intent.bookingUrl);
 
+  // Entrada animada solo al montar/aparecer: opacity 0→1, translateY 10px→0,
+  // 200ms ease-out, sin bounce ni scale. `motion-safe:` deja render inmediato
+  // con prefers-reduced-motion. No se reanima por re-render (flag estable).
+  const [entered, setEntered] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
   // booking_resume_banner_shown: una sola vez por visualización real.
   useEffect(() => {
     if (visible && intent && !shownRef.current) {
@@ -95,7 +104,11 @@ export default function BookingResumeBanner() {
   };
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-28 z-[900] px-4 sm:px-6 lg:px-8">
+    <div
+      className={`pointer-events-none fixed inset-x-0 top-28 z-[900] px-4 motion-safe:transition-all motion-safe:duration-200 motion-safe:ease-out sm:px-6 lg:px-8 ${
+        entered ? 'motion-safe:translate-y-0 motion-safe:opacity-100' : 'motion-safe:translate-y-[10px] motion-safe:opacity-0'
+      }`}
+    >
       <div className="pointer-events-auto mx-auto w-full max-w-3xl">
         <div
           role="dialog"

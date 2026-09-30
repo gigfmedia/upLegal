@@ -4,6 +4,7 @@ import { Scale } from 'lucide-react';
 import { useStickyBottomBar } from '@/contexts/StickyBottomBarContext';
 import { LEGAL_ENTITY_COPYRIGHT } from '@/lib/legalEntity';
 import { openCookiePreferences } from '@/lib/cookieConsent';
+import { FLOATING_BOTTOM_BASE, FLOATING_BOTTOM_RAISED } from '@/lib/floatingOffsets';
 import CountriesSection from './footer/CountriesSection';
 import { FOOTER_COUNTRIES_ENABLED } from './footer/footerConfig';
 
@@ -187,7 +188,7 @@ const Footer = () => {
   return (
     <div className="relative">
       {/* WhatsApp Button - Fixed at bottom right */}
-      <div className={`fixed right-6 z-50 group transition-all duration-300 ${isStickyBarVisible ? 'bottom-24' : 'bottom-6'} ${isPanel && isFooterVisible ? 'pointer-events-none opacity-0 translate-y-4' : ''} ${location.pathname === '/cae' ? 'hidden md:block' : ''} ${location.pathname === '/ai' ? 'hidden' : ''} ${location.pathname === '/legalup-empresas' ? 'hidden' : ''}`}>
+      <div className={`fixed right-6 z-50 group transition-all duration-300 ${isStickyBarVisible ? FLOATING_BOTTOM_RAISED : FLOATING_BOTTOM_BASE} ${isPanel && isFooterVisible ? 'pointer-events-none opacity-0 translate-y-4' : ''} ${location.pathname === '/cae' ? 'hidden md:block' : ''} ${location.pathname === '/ai' ? 'hidden' : ''} ${location.pathname === '/legalup-empresas' ? 'hidden' : ''}`}>
         <div className="hidden md:block absolute bottom-full right-0 mb-3 w-max max-w-[200px] bg-[#101820] text-white text-xs py-2 px-3 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none translate-y-2 group-hover:translate-y-0">
           <h3>¿No sabes qué abogado elegir? Te ayudamos</h3>
           <div className="absolute top-full right-5 -mt-1 border-4 border-transparent border-t-[#101820]"></div>
