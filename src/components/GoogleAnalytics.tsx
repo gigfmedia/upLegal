@@ -53,105 +53,110 @@ const GoogleAnalytics = () => {
     return unsubscribe;
   }, []);
 
-  // Generación: cancela envíos stale ante navegación rápida.
-  const generationRef = useRef(0);
+  // Estado vivo de la navegación en curso. El listener de commits y el loop
+  // de frames se montan UNA vez (nunca pierden commits por orden de efectos:
+  // los Helmet hijos commitean antes de que este efecto de ruta se ejecute).
+  // Cada navegación solo resetea este estado y sube la generación.
+  const navRef = useRef({
+    generation: 0,
+    key: null as string | null,
+    settled: true,
+    pendingTitle: undefined as string | undefined,
+    hasCommit: false,
+    debounceLeft: -1,
+    frames: 0,
+    stableCount: 0,
+    lastTitle: "",
+  });
   // Última ruta ya medida: evita duplicados (StrictMode, toggles de consent).
   const lastSentKeyRef = useRef<string | null>(null);
+
+  const doSend = (key: string, generation: number, title?: string) => {
+    const s = navRef.current;
+    if (s.settled) return;
+    s.settled = true;
+    if (generation !== s.generation) return; // navegación más nueva ganó
+    if (lastSentKeyRef.current === key) return;
+    lastSentKeyRef.current = key;
+    gtag("event", "page_view", {
+      // page_path desde la navegación (destino determinista; window.location
+      // no cambia en routers en memoria).
+      page_path: key,
+      page_title:
+        title ?? (typeof document !== "undefined" ? document.title : undefined),
+      page_location: typeof window !== "undefined" ? window.location.href : undefined,
+    });
+  };
+
+  useEffect(() => {
+    const onCommit = (e: Event) => {
+      const s = navRef.current;
+      if (s.settled) return;
+      s.hasCommit = true;
+      s.pendingTitle = (e as CustomEvent<{ title?: string }>)?.detail?.title;
+      if (typeof requestAnimationFrame === "function") {
+        s.debounceLeft = 5;
+      } else {
+        doSend(s.key ?? "", s.generation, s.pendingTitle || undefined);
+      }
+    };
+    window.addEventListener("legalup:helmet-commit", onCommit);
+    // RESPALDO: solo si Helmet ya habló (hasCommit) y el título se
+    // estabilizó —rutas sin título propio, ej. home— o tope absoluto
+    // MAX_FRAMES (consent tardío, rutas sin Helmet). Un chunk lento NO
+    // dispara el fallback: sin commit, se sigue esperando el título final.
+    const STABLE_FRAMES = 10;
+    const MAX_FRAMES = 300;
+    let rafId = 0;
+    const loop = () => {
+      const s = navRef.current;
+      if (!s.settled) {
+        if (s.debounceLeft >= 0) {
+          s.debounceLeft -= 1;
+          if (s.debounceLeft < 0 && s.pendingTitle) {
+            doSend(s.key ?? "", s.generation, s.pendingTitle);
+          }
+        } else {
+          const currentTitle = typeof document !== "undefined" ? document.title : "";
+          s.stableCount = currentTitle === s.lastTitle ? s.stableCount + 1 : 1;
+          s.lastTitle = currentTitle;
+          s.frames += 1;
+          if (
+            (s.hasCommit && s.stableCount >= STABLE_FRAMES) ||
+            s.frames >= MAX_FRAMES
+          ) {
+            doSend(s.key ?? "", s.generation);
+          }
+        }
+      }
+      if (typeof requestAnimationFrame === "function") {
+        rafId = requestAnimationFrame(loop);
+      }
+    };
+    if (typeof requestAnimationFrame === "function") {
+      rafId = requestAnimationFrame(loop);
+    }
+    return () => {
+      window.removeEventListener("legalup:helmet-commit", onCommit);
+      if (typeof cancelAnimationFrame === "function") cancelAnimationFrame(rafId);
+    };
+  }, []);
 
   useEffect(() => {
     if (!initialized || getStoredConsent()?.analytics !== true) return;
     // Clave solo por path+search: un cambio solo de hash no es page_view nuevo.
     const key = location.pathname + location.search;
     if (lastSentKeyRef.current === key) return;
-    const generation = ++generationRef.current;
-    let settled = false;
-    const send = (title?: string) => {
-      if (settled) return;
-      settled = true;
-      if (generation !== generationRef.current) return; // navegación más nueva ganó
-      if (lastSentKeyRef.current === key) return;
-      lastSentKeyRef.current = key;
-      gtag("event", "page_view", {
-        // page_path desde la navegación que disparó el efecto (destino
-        // determinista; window.location no cambia en routers en memoria).
-        page_path: key,
-        page_title:
-          title ?? (typeof document !== "undefined" ? document.title : undefined),
-        page_location: typeof window !== "undefined" ? window.location.href : undefined,
-      });
-    };
-    // PRIMARIO por eventos (determinista): el commit de Helmet de la ruta
-    // destino. Espera ilimitada hasta el commit — cubre chunks lazy lentos
-    // sin leer títulos intermedios. Debounce take-last de 5 frames: el
-    // desmontaje/montaje puede emitir más de un commit y gana el último.
-    // Sin rAF disponible, el primer commit envía directo.
-    let pendingTitle: string | undefined;
-    let debounceLeft = -1;
-    const onCommit = (e: Event) => {
-      if (settled || generation !== generationRef.current) return;
-      pendingTitle = (e as CustomEvent<{ title?: string }>)?.detail?.title;
-      if (typeof requestAnimationFrame === "function") {
-        debounceLeft = 5;
-      } else {
-        send(pendingTitle || undefined);
-      }
-    };
-    window.addEventListener("legalup:helmet-commit", onCommit);
-    // RESPALDO por frames (rutas sin título propio, ej. home): si no hay
-    // commit con título útil, se envía document.title tras estabilidad Y un
-    // mínimo de frames — así un chunk lazy lento (<~1s) aún alcanza a
-    // commitear por la vía primaria antes de que el fallback dispare.
-    // MAX_FRAMES acota el peor caso. Churn cancela por generación.
-    const STABLE_FRAMES = 10;
-    const MIN_FALLBACK_FRAMES = 60;
-    const MAX_FRAMES = 300;
-    let frames = 0;
-    let stableCount = 0;
-    let lastTitle = typeof document !== "undefined" ? document.title : "";
-    const tick = () => {
-      if (settled || generation !== generationRef.current) {
-        window.removeEventListener("legalup:helmet-commit", onCommit);
-        return;
-      }
-      if (debounceLeft >= 0) {
-        debounceLeft -= 1;
-        if (debounceLeft < 0) {
-          window.removeEventListener("legalup:helmet-commit", onCommit);
-          // Commit sin título útil (ruta sin Helmet title): cae al fallback.
-          if (pendingTitle) {
-            send(pendingTitle);
-            return;
-          }
-        }
-      }
-      const currentTitle = typeof document !== "undefined" ? document.title : "";
-      stableCount = currentTitle === lastTitle ? stableCount + 1 : 1;
-      lastTitle = currentTitle;
-      frames += 1;
-      if (
-        (stableCount >= STABLE_FRAMES && frames >= MIN_FALLBACK_FRAMES) ||
-        frames >= MAX_FRAMES
-      ) {
-        window.removeEventListener("legalup:helmet-commit", onCommit);
-        send();
-        return;
-      }
-      if (typeof requestAnimationFrame === "function") {
-        requestAnimationFrame(tick);
-      } else {
-        window.removeEventListener("legalup:helmet-commit", onCommit);
-        send();
-      }
-    };
-    if (typeof requestAnimationFrame === "function") {
-      requestAnimationFrame(tick);
-    } else {
-      window.removeEventListener("legalup:helmet-commit", onCommit);
-      send();
-    }
-    return () => {
-      window.removeEventListener("legalup:helmet-commit", onCommit);
-    };
+    const s = navRef.current;
+    s.generation += 1;
+    s.key = key;
+    s.settled = false;
+    s.pendingTitle = undefined;
+    s.hasCommit = false;
+    s.debounceLeft = -1;
+    s.frames = 0;
+    s.stableCount = 0;
+    s.lastTitle = typeof document !== "undefined" ? document.title : "";
   }, [initialized, location]);
 
   // FASE 5.18A: onChangeClientState se lee de los props de <Helmet>
