@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import posthog from 'posthog-js';
 import {
   AlertTriangle,
-  ArrowRight,
+  ArrowUp,
   FileUp,
   Loader2,
   MessageSquare,
@@ -486,7 +486,7 @@ function AIChatSession({ workspaceId, documents, documentId, onUploadClick, exte
               <ProPricingModal open={plusOpen} onOpenChange={setPlusOpen} triggerAction="ai_chat_limit" targetPlan="plus" />
             </div>
 
-            <div className="mt-4 flex items-center gap-2">
+            <div className="relative mt-4">
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -499,16 +499,16 @@ function AIChatSession({ workspaceId, documents, documentId, onUploadClick, exte
                 placeholder="Escribe una pregunta sobre el caso…"
                 disabled={sending || !conversationId}
                 aria-label="Pregunta para el asistente del caso"
-                className="flex-1"
+                className="w-full rounded-full py-6 pl-5 pr-14 focus-visible:ring-0 focus-visible:ring-offset-0"
               />
               <Button
                 type="button"
                 onClick={handleSend}
                 disabled={sending || !conversationId || input.trim().length === 0}
-                className="shrink-0 bg-green-900 text-white hover:bg-green-800"
+                className="absolute right-1.5 top-1/2 h-9 w-9 -translate-y-1/2 rounded-full bg-green-900 p-0 text-white hover:bg-green-800"
                 aria-label="Enviar pregunta"
               >
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                <ArrowUp className="h-4 w-4" aria-hidden="true" />
               </Button>
             </div>
           </div>
