@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { trackEvent } from "@/lib/track";
 import { X, SlidersHorizontal, Search } from "lucide-react";
 import { Helmet } from 'react-helmet-async';
-import { Lawyer } from "@/components/LawyerCard";
+import { Lawyer, lawyerNameSlug } from "@/components/LawyerCard";
 import { Button } from "@/components/ui/button";
 import { SearchBar } from "@/components/SearchBar";
 import { SearchFilters } from "@/components/SearchFilters";
@@ -53,7 +54,31 @@ const normalizeSpecialty = (s: string | null): string => {
 
 const SearchResults = () => {
   const { user } = useAuth() as AuthContextType;
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // FASE 5.18C: Agendar explícito → booking directo (misma ruta canónica
+  // que los booking CTA de perfil/related). Card y nombre/foto → perfil.
+  const handleSearchSchedule = useCallback((lawyer: Lawyer, cardPosition: number) => {
+    const displayName =
+      (lawyer as any).name ||
+      `${(lawyer as any).first_name || ''} ${(lawyer as any).last_name || ''}`.trim();
+    const slug = lawyerNameSlug(displayName);
+    try {
+      trackEvent('search_lawyer_booking_clicked', {
+        lawyer_id: (lawyer as any).user_id || (lawyer as any).id,
+        lawyer_slug: slug,
+        specialty: Array.isArray((lawyer as any).specialties)
+          ? (lawyer as any).specialties[0]
+          : (lawyer as any).specialties,
+        source: 'search',
+        destination: 'booking',
+        card_position: cardPosition,
+        page_path: typeof window !== 'undefined' ? window.location.pathname : '/search',
+      });
+    } catch {}
+    navigate(`/booking/${slug}-${(lawyer as any).user_id || (lawyer as any).id}`);
+  }, [navigate]);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
 
@@ -631,7 +656,7 @@ const SearchResults = () => {
           ) : filteredLawyers.length > 0 ? (
             <div className="w-full" id="lawyer-cards-section">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                {filteredLawyers.map((lawyer) => <LawyerCard key={lawyer.id} lawyer={lawyer} user={user} />)}
+                {filteredLawyers.map((lawyer, idx) => <LawyerCard key={lawyer.id} lawyer={lawyer} user={user} onScheduleClick={() => handleSearchSchedule(lawyer, idx)} />)}
               </div>
               {(loading || loadingMore) && <div className="flex justify-center py-8"><div className="h-8 w-8 border-2 border-black border-t-transparent rounded-full animate-spin"></div></div>}
               <div ref={loadMoreRef} className="h-1 w-full" />

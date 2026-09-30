@@ -72,7 +72,17 @@ interface LawyerCardProps {
 
 const formatCLP = (amount: number): string => {
   return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-}
+};
+
+// Slug canónico compartido (perfil y booking lo usan igual).
+export const lawyerNameSlug = (name: string) => {
+  return (name || 'abogado')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+};
 
 // Utility to optimize image URL for Supabase storage
 const getOptimizedImageUrl = (url: string, width = 256, quality = 80) => {
@@ -324,6 +334,13 @@ export function LawyerCard({
   // Handle schedule button click
   const handleScheduleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    // Override explícito (ej. /search → booking directo). Solo los callers
+    // que pasan el prop cambian de comportamiento; el default (perfil) intacto.
+    const scheduleOverride = onScheduleClick ?? onSchedule;
+    if (scheduleOverride) {
+      scheduleOverride();
+      return;
+    }
 
     // New flow: redirect to public profile, where the user reviews the lawyer
     // and selects the lawyer to continue to booking (select_lawyer fires there)
