@@ -6,6 +6,7 @@ import {
   clearBookingIntent,
   getBookingIntent,
   isBookingIntentExpired,
+  isBookingIntentPast,
   parseStoredIntent,
   saveBookingIntent,
   shouldShowBookingResumeBanner,
@@ -121,6 +122,44 @@ describe('bookingIntent — F. reemplazo', () => {
     });
     expect(getBookingIntent()?.lawyerId).toBe('lawyer-2');
     expect(getBookingIntent()).toEqual(second);
+  });
+});
+
+describe('bookingIntent — slot pasado invalida aunque el TTL siga vigente', () => {
+  it('intent de hace 1h con appointmentStart pasado → null y storage limpio', () => {
+    const now = Date.now();
+    window.localStorage.setItem(
+      BOOKING_INTENT_STORAGE_KEY,
+      JSON.stringify({
+        ...baseInput,
+        version: BOOKING_INTENT_VERSION,
+        createdAt: new Date(now - 3600 * 1000).toISOString(),
+        expiresAt: new Date(now + 23 * 3600 * 1000).toISOString(),
+        appointmentStart: new Date(now - 30 * 60 * 1000).toISOString(),
+      }),
+    );
+    expect(isBookingIntentPast({
+      appointmentStart: new Date(now - 30 * 60 * 1000).toISOString(),
+      appointmentDate: baseInput.appointmentDate,
+      appointmentTime: baseInput.appointmentTime,
+    })).toBe(true);
+    expect(getBookingIntent()).toBeNull();
+    expect(rawStored()).toBeNull();
+  });
+
+  it('slot futuro con TTL vigente sigue válido', () => {
+    const stored = saveBookingIntent({
+      ...baseInput,
+      appointmentStart: new Date(Date.now() + 3600 * 1000).toISOString(),
+    });
+    expect(isBookingIntentPast(stored!)).toBe(false);
+    expect(getBookingIntent()).toEqual(stored);
+  });
+
+  it('fecha/hora inválida se trata como pasada', () => {
+    expect(
+      isBookingIntentPast({ appointmentStart: null, appointmentDate: 'no-fecha', appointmentTime: 'xx' }),
+    ).toBe(true);
   });
 });
 

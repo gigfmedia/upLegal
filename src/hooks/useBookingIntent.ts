@@ -5,6 +5,7 @@ import {
   getBookingIntent,
   parseStoredIntent,
   isBookingIntentExpired,
+  isBookingIntentPast,
   saveBookingIntent as saveStoredIntent,
   subscribeBookingIntent,
   trackBookingIntentEvent,
@@ -32,7 +33,13 @@ export function useBookingIntent() {
     const parsed = parseStoredIntent(raw);
     if (parsed && isBookingIntentExpired(parsed)) {
       clearStoredIntent();
-      trackBookingIntentEvent('booking_intent_expired', parsed);
+      trackBookingIntentEvent('booking_intent_expired', parsed, { reason: 'ttl_expired' });
+      setIntent(null);
+      return;
+    }
+    if (parsed && isBookingIntentPast(parsed)) {
+      clearStoredIntent();
+      trackBookingIntentEvent('booking_intent_expired', parsed, { reason: 'past_slot' });
       setIntent(null);
       return;
     }

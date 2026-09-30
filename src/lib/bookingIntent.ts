@@ -96,6 +96,31 @@ export function isBookingIntentExpired(
   return expires <= now;
 }
 
+/** Inicio del slot en ms. Prefiere appointmentStart; si no, date+time. Null si inválido. */
+export function getBookingIntentStartMs(
+  intent: Pick<BookingIntent, 'appointmentStart' | 'appointmentDate' | 'appointmentTime'>,
+): number | null {
+  if (intent.appointmentStart) {
+    const ms = Date.parse(intent.appointmentStart);
+    if (!Number.isNaN(ms)) return ms;
+  }
+  const fallback = Date.parse(`${intent.appointmentDate}T${intent.appointmentTime}:00`);
+  return Number.isNaN(fallback) ? null : fallback;
+}
+
+/**
+ * `true` si la fecha/hora del slot ya pasó (o es inválida). El intent deja
+ * de ser válido inmediatamente, aunque el TTL de 24h siga vigente.
+ */
+export function isBookingIntentPast(
+  intent: Pick<BookingIntent, 'appointmentStart' | 'appointmentDate' | 'appointmentTime'>,
+  now: number = Date.now(),
+): boolean {
+  const start = getBookingIntentStartMs(intent);
+  if (start === null) return true;
+  return start <= now;
+}
+
 export function saveBookingIntent(input: BookingIntentInput): BookingIntent | null {
   const now = new Date();
   const intent: BookingIntent = {
@@ -117,8 +142,8 @@ export function saveBookingIntent(input: BookingIntentInput): BookingIntent | nu
 }
 
 /**
- * Intent válido o null. Limpia automáticamente expirados, versiones
- * inválidas y JSON corrupto (sin emitir analytics aquí).
+ * Intent válido o null. Limpia automáticamente expirados (TTL), slots cuya
+ * hora ya pasó, versiones inválidas y JSON corrupto (sin emitir analytics aquí).
  */
 export function getBookingIntent(): BookingIntent | null {
   const storage = safeStorage();
@@ -141,6 +166,10 @@ export function getBookingIntent(): BookingIntent | null {
     return null;
   }
   if (isBookingIntentExpired(intent)) {
+    clearBookingIntent();
+    return null;
+  }
+  if (isBookingIntentPast(intent)) {
     clearBookingIntent();
     return null;
   }
