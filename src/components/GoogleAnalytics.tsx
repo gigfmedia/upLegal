@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { getStoredConsent, subscribeConsent } from "@/lib/cookieConsent";
 import { ensureGa4Loaded, disableGa4 } from "@/lib/consentTrackers";
@@ -52,13 +52,39 @@ const GoogleAnalytics = () => {
     return unsubscribe;
   }, []);
 
+  // Generación: cancela envíos stale ante navegación rápida.
+  const generationRef = useRef(0);
+  // Última ruta ya medida: evita duplicados (StrictMode, toggles de consent).
+  const lastSentKeyRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (initialized && getStoredConsent()?.analytics === true) {
+    if (!initialized || getStoredConsent()?.analytics !== true) return;
+    // Clave solo por path+search: un cambio solo de hash no es page_view nuevo.
+    const key = location.pathname + location.search;
+    if (lastSentKeyRef.current === key) return;
+    const generation = ++generationRef.current;
+    // Doble rAF (no timeout arbitrario): react-helmet-async aplica el <title>
+    // de la ruta destino en la fase de efectos pasivos pre-pintado; leer
+    // document.title en el mismo flush compite con él (bug FASE 5.18: ~87% de
+    // page_views con título del shell). Tras dos frames, el commit de Helmet
+    // ya ocurrió y se lee el título FINAL. Sin rAF disponible (SSR/tests),
+    // se envía sincrónico.
+    const send = () => {
+      if (generation !== generationRef.current) return; // navegación más nueva ganó
+      if (lastSentKeyRef.current === key) return;
+      lastSentKeyRef.current = key;
       gtag("event", "page_view", {
-        page_path: location.pathname + location.search,
+        // page_path desde la navegación que disparó el efecto (destino
+        // determinista; window.location no cambia en routers en memoria).
+        page_path: key,
         page_title: typeof document !== "undefined" ? document.title : undefined,
         page_location: typeof window !== "undefined" ? window.location.href : undefined,
       });
+    };
+    if (typeof requestAnimationFrame === "function") {
+      requestAnimationFrame(() => requestAnimationFrame(send));
+    } else {
+      send();
     }
   }, [initialized, location]);
 

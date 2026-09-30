@@ -87,7 +87,11 @@ export function ensureGa4Loaded(): void {
       ad_user_data: 'granted',
       ad_personalization: 'granted',
     });
-    callGtag('config', GA_MEASUREMENT_ID);
+    // Fuente única de page_view: el evento manual de GoogleAnalytics.tsx
+    // (disparado post-Helmet con el título final). Se desactiva el page_view
+    // automático de gtag/enhanced-measurement para no duplicar ni titular
+    // con el shell. El resto de enhanced measurement (scroll, click…) intacto.
+    callGtag('config', GA_MEASUREMENT_ID, { send_page_view: false });
     ga4Loaded = true;
   } catch {
     // analytics nunca debe romper la app
