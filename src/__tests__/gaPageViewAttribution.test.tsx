@@ -26,10 +26,16 @@ let rafQueue: FrameRequestCallback[];
 function flushRaf() {
   act(() => {
     let guard = 0;
-    while (rafQueue.length && guard++ < 20) {
+    while (rafQueue.length && guard++ < 500) {
       const cbs = rafQueue.splice(0);
       cbs.forEach((cb) => cb(0));
     }
+  });
+}
+
+async function flushObserver() {
+  await act(async () => {
+    await new Promise((r) => setTimeout(r, 0));
   });
 }
 
@@ -164,6 +170,49 @@ describe('FASE 5.18A page_view con título final', () => {
     rerender(<App initial="/" />);
     flushRaf();
     expect(pageViews()).toHaveLength(1);
+  });
+
+  it('título tardío (chunk lazy): el observer envía el título final, no el intermedio', async () => {
+    const { getByText } = render(<App initial="/" />);
+    flushRaf();
+    expect(pageViews()).toHaveLength(1);
+    act(() => {
+      getByText('go-b').click();
+    });
+    // Simula Helmet tardío: el título conmuta DESPUÉS de la navegación
+    document.title = 'Still Old Title';
+    await act(async () => {
+      document.title = 'Article B Full Title';
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(pageViews()).toHaveLength(2);
+    expect(payload(1)).toMatchObject({ page_title: 'Article B Full Title', page_path: '/blog/b' });
+  });
+
+  it('títulos idénticos entre rutas: el fallback acotado envía una vez', () => {
+    function SameTitleApp() {
+      return (
+        <HelmetProvider>
+          <MemoryRouter initialEntries={['/blog/a']}>
+            <GoogleAnalytics />
+            <Routes>
+              <Route path="/blog/a" element={<Page title="Same Title" body="a" />} />
+              <Route path="/blog/b" element={<Page title="Same Title" body="b" />} />
+            </Routes>
+            <Navigator />
+          </MemoryRouter>
+        </HelmetProvider>
+      );
+    }
+    const { getByText } = render(<SameTitleApp />);
+    flushRaf();
+    expect(pageViews()).toHaveLength(1);
+    act(() => {
+      getByText('go-b').click();
+    });
+    flushRaf(); // agota el fallback de frames
+    expect(pageViews()).toHaveLength(2);
+    expect(payload(1)).toMatchObject({ page_title: 'Same Title', page_path: '/blog/b' });
   });
 
   it('sin consentimiento analytics no hay page_view', () => {

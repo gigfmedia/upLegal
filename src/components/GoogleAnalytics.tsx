@@ -63,13 +63,11 @@ const GoogleAnalytics = () => {
     const key = location.pathname + location.search;
     if (lastSentKeyRef.current === key) return;
     const generation = ++generationRef.current;
-    // Doble rAF (no timeout arbitrario): react-helmet-async aplica el <title>
-    // de la ruta destino en la fase de efectos pasivos pre-pintado; leer
-    // document.title en el mismo flush compite con él (bug FASE 5.18: ~87% de
-    // page_views con título del shell). Tras dos frames, el commit de Helmet
-    // ya ocurrió y se lee el título FINAL. Sin rAF disponible (SSR/tests),
-    // se envía sincrónico.
+    let settled = false;
     const send = () => {
+      if (settled) return;
+      settled = true;
+      observer?.disconnect();
       if (generation !== generationRef.current) return; // navegación más nueva ganó
       if (lastSentKeyRef.current === key) return;
       lastSentKeyRef.current = key;
@@ -81,11 +79,45 @@ const GoogleAnalytics = () => {
         page_location: typeof window !== "undefined" ? window.location.href : undefined,
       });
     };
+    // Primario por eventos (no timeout): Helmet conmuta document.title al
+    // commitear la ruta destino — también tras chunks lazy, por tarde que
+    // lleguen (bug FASE 5.18: rAF fijo pierde contra chunks lentos).
+    let observer: MutationObserver | null = null;
+    if (typeof MutationObserver !== "undefined" && typeof document !== "undefined") {
+      const titleEl = document.querySelector("title");
+      if (titleEl) {
+        observer = new MutationObserver(send);
+        observer.observe(titleEl, { childList: true, characterData: true, subtree: true });
+      }
+    }
+    // Respaldo acotado por frames (no timeout arbitrario): cubre rutas sin
+    // Helmet o con título idéntico al anterior (el observer jamás dispararía).
+    // Sin rAF disponible (SSR), envío sincrónico.
+    const MAX_FRAMES = 300;
+    let frames = 0;
+    const tick = () => {
+      if (settled || generation !== generationRef.current) {
+        observer?.disconnect();
+        return;
+      }
+      if (++frames >= MAX_FRAMES) {
+        send();
+        return;
+      }
+      if (typeof requestAnimationFrame === "function") {
+        requestAnimationFrame(tick);
+      } else {
+        send();
+      }
+    };
     if (typeof requestAnimationFrame === "function") {
-      requestAnimationFrame(() => requestAnimationFrame(send));
+      requestAnimationFrame(tick);
     } else {
       send();
     }
+    return () => {
+      observer?.disconnect();
+    };
   }, [initialized, location]);
 
   return null;
