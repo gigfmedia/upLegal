@@ -334,30 +334,22 @@ export function LawyerCard({
   // Handle schedule button click
   const handleScheduleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // Override explícito (ej. /search → booking directo). Solo los callers
-    // que pasan el prop cambian de comportamiento; el default (perfil) intacto.
+    // Override explícito (ej. /search y destacados emiten su propio evento
+    // y navegan). El default es booking directo canónico, igual para guest
+    // y cliente autenticado (FASE 5.18E): sin AuthModal, sin perfil intermedio.
     const scheduleOverride = onScheduleClick ?? onSchedule;
     if (scheduleOverride) {
       scheduleOverride();
       return;
     }
 
-    // New flow: redirect to public profile, where the user reviews the lawyer
-    // and selects the lawyer to continue to booking (select_lawyer fires there)
-    const lawyerNameForSlug = lawyer.name || `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim();
-    const lawyerSlug = lawyerNameForSlug ? createSlug(lawyerNameForSlug) : 'abogado';
-    window.gtag?.('event', 'lawyer_profile_viewed', {
-      lawyer_id: lawyer.user_id || lawyer.id,
-      lawyer_slug: lawyerSlug,
-      lawyer_name: displayName,
-      page_path: typeof window !== 'undefined' ? window.location.pathname : '',
-      referrer: typeof document !== 'undefined' ? document.referrer : '',
-      specialty: Array.isArray(lawyer.specialties) ? lawyer.specialties[0] : lawyer.specialties,
-    });
-
     const lawyerName = lawyer.name || `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim();
     const nameSlug = lawyerName ? createSlug(lawyerName) : 'abogado';
-    navigate(`/abogado/${nameSlug}-${lawyer.id}`);
+    const lawyerId = lawyer.user_id || lawyer.id;
+    // Intención explícita de booking (evento legacy preservado; el perfil
+    // tiene su propio lawyer_profile_viewed en el click de la card).
+    window.gtag?.('event', 'select_lawyer', { lawyer_id: lawyerId });
+    navigate(`/booking/${nameSlug}-${lawyerId}`);
   };
 
   return (

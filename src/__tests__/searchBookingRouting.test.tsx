@@ -50,7 +50,7 @@ function LocationProbe() {
   return <div data-testid="location">{location.pathname}</div>;
 }
 
-function renderCard(props: any = {}) {
+function renderCard(props: any = {}, user: any = null) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <HelmetProvider>
@@ -59,7 +59,7 @@ function renderCard(props: any = {}) {
           <Routes>
             <Route
               path="/search"
-              element={<LawyerCard lawyer={lawyer} user={null} {...props} />}
+              element={<LawyerCard lawyer={lawyer} user={user} {...props} />}
             />
             <Route path="/abogado/*" element={<div>PROFILE-PAGE</div>} />
             <Route path="/booking/*" element={<div>BOOKING-PAGE</div>} />
@@ -69,6 +69,12 @@ function renderCard(props: any = {}) {
       </QueryClientProvider>
     </HelmetProvider>
   );
+}
+
+function gtagEvents(name: string) {
+  return ((window as any).gtag as any).mock.calls
+    .map((c: any[]) => c[1])
+    .filter((n: string) => n === name);
 }
 
 beforeEach(() => {
@@ -85,13 +91,31 @@ describe('FASE 5.18C slug canónico', () => {
   });
 });
 
-describe('FASE 5.18C LawyerCard default (otras superficies intactas)', () => {
-  it('Agendar sin override → perfil', async () => {
-    renderCard();
+describe('FASE 5.18E default: Agendar → booking canónico, guest y cliente idéntico', () => {
+  it.each([{ label: 'guest', user: null }, { label: 'client', user: { id: 'client-1' } }])(
+    'Agendar sin override ($label) → booking, un evento, sin perfil',
+    async ({ user }) => {
+      renderCard({}, user);
+      const btn = await screen.findByText('Agenda consulta');
+      fireEvent.click(btn);
+      expect(await screen.findByText('BOOKING-PAGE')).toBeTruthy();
+      expect(screen.queryByText('PROFILE-PAGE')).toBeNull();
+      expect(
+        screen.getByTestId('location').textContent
+      ).toBe('/booking/maria-lopez-prueba-user-456');
+      expect(gtagEvents('select_lawyer')).toHaveLength(1);
+      expect(gtagEvents('lawyer_profile_viewed')).toHaveLength(0);
+    }
+  );
+
+  it('override /search emite su evento y no el default', async () => {
+    const override = vi.fn();
+    renderCard({ onScheduleClick: override });
     const btn = await screen.findByText('Agenda consulta');
     fireEvent.click(btn);
-    expect(await screen.findByText('PROFILE-PAGE')).toBeTruthy();
-    expect(screen.queryByText('BOOKING-PAGE')).toBeNull();
+    expect(override).toHaveBeenCalledTimes(1);
+    expect(gtagEvents('select_lawyer')).toHaveLength(0);
+    expect(screen.getByTestId('location').textContent).toBe('/search');
   });
 });
 

@@ -1,4 +1,5 @@
 import { bookingClientTotal } from '../../shared/bookingPricing.mjs';
+import { lawyerNameSlug } from '@/components/LawyerCard';
 import { useBookingPricing } from '@/hooks/useBookingPricing';
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -76,7 +77,7 @@ export function ServicesSection({
         });
         return;
       }
-      navigate(`/booking/${lawyerIdProp}`);
+      navigate(`/booking/${lawyerNameSlug(lawyerName)}-${lawyerIdProp}`);
       return;
     }
 

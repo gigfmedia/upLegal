@@ -119,7 +119,10 @@ const Index = () => {
   // Handle contact click - memoized to prevent re-renders
   const handleContactClick = useCallback((lawyer: Lawyer) => {
     const lawyerId = lawyer.user_id || lawyer.id;
-    navigate(`/booking/${lawyerId}`);
+    const displayName =
+      (lawyer as any).name ||
+      `${(lawyer as any).first_name || ''} ${(lawyer as any).last_name || ''}`.trim();
+    navigate(`/booking/${lawyerNameSlug(displayName)}-${lawyerId}`);
   }, [navigate]);
 
   // FASE 5.18D: Agendar explícito → booking directo (ruta canónica con slug).
