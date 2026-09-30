@@ -270,9 +270,12 @@ describe('4.34M legacy commercial UI removal', () => {
     expect(c).not.toContain('ai_subscription_success');
   });
 
-  it('legacy subscription backend and card remain for grandfathered users', () => {
-    const card = read('src/pages/lawyer/ProfilePage.tsx');
-    expect(card).toContain('legacyAISubscription');
-    expect(card).toContain('AISubscriptionCard');
+  it('profile has no standalone legacy AI subscription UI', () => {
+    const profile = read('src/pages/lawyer/ProfilePage.tsx');
+    expect(profile).not.toContain('legacyAISubscription');
+    expect(profile).not.toContain('AISubscriptionCard');
+    expect(profile).not.toContain('Mi suscripción de LegalUp AI');
+    expect(profile).not.toContain('Acceso histórico');
+    expect(profile).not.toContain('2099');
   });
 });

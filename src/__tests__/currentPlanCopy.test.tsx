@@ -3,9 +3,9 @@ import { render, screen, within, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { readFileSync } from 'node:fs';
-const state = vi.hoisted(() => ({ price: 19990, legacyActive: false }));
+const state = vi.hoisted(() => ({ price: 19990 }));
 vi.mock('@/hooks/useAISubscription', () => ({
-  useAISubscription: () => ({ status: state.legacyActive ? 'active' : 'none', isActive: state.legacyActive, hasAccess: state.legacyActive }),
+  useAISubscription: () => ({ status: 'none', isActive: false, hasAccess: false }),
   useCancelAISubscription: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 vi.mock('@/contexts/AuthContext/clean/useAuth', () => ({ useAuth: () => ({ user: null, loading: false }) }));
@@ -30,7 +30,6 @@ vi.mock('framer-motion', async () => {
 });
 import LegalUpPro from '@/pages/LegalUpPro';
 import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
-import { AISubscriptionCard } from '@/components/legalup-ai/AISubscriptionCard';
 import { AISubscriptionBanner } from '@/components/legalup-ai/AISubscriptionBanner';
 import { AIPricingModal } from '@/components/legalup-ai/AIPricingModal';
 afterEach(cleanup);
@@ -66,12 +65,11 @@ describe('4.56B current commercial contract', () => {
     render(<ProPricingModal open onOpenChange={() => {}} />);
     expect(screen.getByRole('dialog').textContent).not.toMatch(prohibited);
   });
-  it('legacy card retains cancellation without selling Essential or a new trial', () => {
-    state.legacyActive = true;
-    const { container } = render(<MemoryRouter><AISubscriptionCard /></MemoryRouter>);
-    expect(container.textContent).not.toMatch(prohibited);
-    expect(screen.getByRole('button', { name: 'Cancelar suscripción' })).toBeVisible();
-    state.legacyActive = false;
+  it('profile renders no standalone legacy AI subscription UI', () => {
+    const profile = readFileSync('src/pages/lawyer/ProfilePage.tsx', 'utf8');
+    for (const s of ['Mi suscripción de LegalUp AI', 'Suscripción histórica LegalUp AI', 'Acceso histórico temporal', 'Fin del acceso histórico', 'Ir a LegalUp AI', 'AISubscriptionCard', 'legacyAISubscription']) {
+      expect(profile).not.toContain(s);
+    }
   });
   it('banner offers Pro while acknowledging limited AI in first case', () => {
     render(<AISubscriptionBanner />);
