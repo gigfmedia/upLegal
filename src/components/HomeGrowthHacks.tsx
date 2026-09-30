@@ -58,6 +58,11 @@ export const HomeGrowthHacks = ({ faqs }: HomeGrowthHacksProps) => {
 
   return (
     <Helmet>
+      {/* FASE 5.18A: título explícito idéntico al del shell (index.html).
+          Sin esto, volver al home por navegación SPA deja el <title> del
+          artículo anterior y el page_view sale con título stale. El valor
+          servido no cambia: es byte-idéntico al shell. */}
+      <title>LegalUp — Consulta con abogados online en Chile</title>
       {/* Render schemas individually to avoid crashing crawler pixels expecting objects */}
       {structuredDataArray.map((data, index) => (
         <script key={index} type="application/ld+json">
