@@ -61,6 +61,8 @@ function Navigator() {
       <button onClick={() => navigate('/blog/a')}>go-a</button>
       <button onClick={() => navigate('/blog/b')}>go-b</button>
       <button onClick={() => navigate('/abogado-arriendo')}>go-arriendo</button>
+      <button onClick={() => navigate('/plain')}>go-plain</button>
+      <button onClick={() => navigate('/plain?x=1')}>go-plainx</button>
     </>
   );
 }
@@ -78,11 +80,18 @@ function App({ initial }: { initial: string }) {
             path="/abogado-arriendo"
             element={<Page title="Arriendo Landing Title" body="arriendo" />}
           />
+          <Route path="/plain" element={<div>sin helmet</div>} />
         </Routes>
         <Navigator />
       </MemoryRouter>
     </HelmetProvider>
   );
+}
+
+function commit(title: string) {
+  act(() => {
+    window.dispatchEvent(new CustomEvent('legalup:helmet-commit', { detail: { title } }));
+  });
 }
 
 function pageViews() {
@@ -175,23 +184,34 @@ describe('FASE 5.18A page_view con título final', () => {
     expect(pageViews()).toHaveLength(1);
   });
 
-  it('título tardío (chunk lazy): espera al título final, no envía el intermedio', () => {
+  it('commit path: envía rápido con el título commiteado, sin esperar el fallback', () => {
     const { getByText } = render(<App initial="/" />);
     flushRaf();
     expect(pageViews()).toHaveLength(1);
     act(() => {
       getByText('go-b').click();
     });
-    // Simula Helmet tardío: el título real conmuta varios frames después.
-    // Helmet de la ruta B ya puso su título al montar; lo sobrescribimos
-    // para simular el estado intermedio y luego el final.
-    document.title = 'Still Old Title';
-    flushRafFrames(3);
-    expect(pageViews()).toHaveLength(1); // aún inestable: no envía
-    document.title = 'Article B Full Title';
-    flushRaf();
+    flushRafFrames(12); // muy por debajo del gate de fallback (60): solo commit envía
     expect(pageViews()).toHaveLength(2);
     expect(payload(1)).toMatchObject({ page_title: 'Article B Full Title', page_path: '/blog/b' });
+  });
+
+  it('take-last: múltiples commits en una navegación sin Helmet, gana el último', () => {
+    const { getByText } = render(<App initial="/plain" />);
+    flushRaf();
+    expect(pageViews()).toHaveLength(1);
+    act(() => {
+      getByText('go-plainx').click();
+    });
+    // /plain?x=1 no tiene Helmet: no hay commits reales que interfieran
+    commit('Stale Intermediate Title');
+    commit('Final Committed Title');
+    flushRaf();
+    expect(pageViews()).toHaveLength(2);
+    expect(payload(1)).toMatchObject({
+      page_title: 'Final Committed Title',
+      page_path: '/plain?x=1',
+    });
   });
 
   it('títulos idénticos entre rutas: el fallback acotado envía una vez', () => {

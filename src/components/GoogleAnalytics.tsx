@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { getStoredConsent, subscribeConsent } from "@/lib/cookieConsent";
 import { ensureGa4Loaded, disableGa4 } from "@/lib/consentTrackers";
 
@@ -64,7 +65,7 @@ const GoogleAnalytics = () => {
     if (lastSentKeyRef.current === key) return;
     const generation = ++generationRef.current;
     let settled = false;
-    const send = () => {
+    const send = (title?: string) => {
       if (settled) return;
       settled = true;
       if (generation !== generationRef.current) return; // navegación más nueva ganó
@@ -74,45 +75,100 @@ const GoogleAnalytics = () => {
         // page_path desde la navegación que disparó el efecto (destino
         // determinista; window.location no cambia en routers en memoria).
         page_path: key,
-        page_title: typeof document !== "undefined" ? document.title : undefined,
+        page_title:
+          title ?? (typeof document !== "undefined" ? document.title : undefined),
         page_location: typeof window !== "undefined" ? window.location.href : undefined,
       });
     };
-    // Estabilidad del título por frames (no timeout arbitrario): se envía
-    // cuando document.title lleva STABLE_FRAMES frames sin cambiar — sea
-    // commit inmediato de Helmet, chunk lazy tardío o título idéntico entre
-    // rutas. MAX_FRAMES acota el peor caso. Sin rAF (SSR), envío sincrónico.
-    // Esto además evita el mismatch título/path: solo se lee el título
-    // cuando dejó de moverse (navegación churn reinicia el conteo).
+    // PRIMARIO por eventos (determinista): el commit de Helmet de la ruta
+    // destino. Espera ilimitada hasta el commit — cubre chunks lazy lentos
+    // sin leer títulos intermedios. Debounce take-last de 5 frames: el
+    // desmontaje/montaje puede emitir más de un commit y gana el último.
+    // Sin rAF disponible, el primer commit envía directo.
+    let pendingTitle: string | undefined;
+    let debounceLeft = -1;
+    const onCommit = (e: Event) => {
+      if (settled || generation !== generationRef.current) return;
+      pendingTitle = (e as CustomEvent<{ title?: string }>)?.detail?.title;
+      if (typeof requestAnimationFrame === "function") {
+        debounceLeft = 5;
+      } else {
+        send(pendingTitle || undefined);
+      }
+    };
+    window.addEventListener("legalup:helmet-commit", onCommit);
+    // RESPALDO por frames (rutas sin título propio, ej. home): si no hay
+    // commit con título útil, se envía document.title tras estabilidad Y un
+    // mínimo de frames — así un chunk lazy lento (<~1s) aún alcanza a
+    // commitear por la vía primaria antes de que el fallback dispare.
+    // MAX_FRAMES acota el peor caso. Churn cancela por generación.
     const STABLE_FRAMES = 10;
-    const MAX_FRAMES = 120;
+    const MIN_FALLBACK_FRAMES = 60;
+    const MAX_FRAMES = 300;
     let frames = 0;
     let stableCount = 0;
     let lastTitle = typeof document !== "undefined" ? document.title : "";
     const tick = () => {
-      if (settled || generation !== generationRef.current) return;
+      if (settled || generation !== generationRef.current) {
+        window.removeEventListener("legalup:helmet-commit", onCommit);
+        return;
+      }
+      if (debounceLeft >= 0) {
+        debounceLeft -= 1;
+        if (debounceLeft < 0) {
+          window.removeEventListener("legalup:helmet-commit", onCommit);
+          // Commit sin título útil (ruta sin Helmet title): cae al fallback.
+          if (pendingTitle) {
+            send(pendingTitle);
+            return;
+          }
+        }
+      }
       const currentTitle = typeof document !== "undefined" ? document.title : "";
       stableCount = currentTitle === lastTitle ? stableCount + 1 : 1;
       lastTitle = currentTitle;
       frames += 1;
-      if (stableCount >= STABLE_FRAMES || frames >= MAX_FRAMES) {
+      if (
+        (stableCount >= STABLE_FRAMES && frames >= MIN_FALLBACK_FRAMES) ||
+        frames >= MAX_FRAMES
+      ) {
+        window.removeEventListener("legalup:helmet-commit", onCommit);
         send();
         return;
       }
       if (typeof requestAnimationFrame === "function") {
         requestAnimationFrame(tick);
       } else {
+        window.removeEventListener("legalup:helmet-commit", onCommit);
         send();
       }
     };
     if (typeof requestAnimationFrame === "function") {
       requestAnimationFrame(tick);
     } else {
+      window.removeEventListener("legalup:helmet-commit", onCommit);
       send();
     }
+    return () => {
+      window.removeEventListener("legalup:helmet-commit", onCommit);
+    };
   }, [initialized, location]);
 
-  return null;
+  // FASE 5.18A: onChangeClientState se lee de los props de <Helmet>
+  // (el más interno gana), NO del Provider. Este Helmet raíz —sin título
+  // propio— recibe el callback global porque ningún Helmet de página lo
+  // define. Reemite el commit como evento DOM con el título FINAL.
+  const handleHelmetCommit = useCallback((newState: { title?: string }) => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("legalup:helmet-commit", { detail: { title: newState?.title } })
+      );
+    }
+  }, []);
+
+  return (
+    <Helmet onChangeClientState={handleHelmetCommit} />
+  );
 };
 
 export default GoogleAnalytics;
