@@ -67,7 +67,6 @@ const GoogleAnalytics = () => {
     const send = () => {
       if (settled) return;
       settled = true;
-      observer?.disconnect();
       if (generation !== generationRef.current) return; // navegación más nueva ganó
       if (lastSentKeyRef.current === key) return;
       lastSentKeyRef.current = key;
@@ -79,28 +78,24 @@ const GoogleAnalytics = () => {
         page_location: typeof window !== "undefined" ? window.location.href : undefined,
       });
     };
-    // Primario por eventos (no timeout): Helmet conmuta document.title al
-    // commitear la ruta destino — también tras chunks lazy, por tarde que
-    // lleguen (bug FASE 5.18: rAF fijo pierde contra chunks lentos).
-    let observer: MutationObserver | null = null;
-    if (typeof MutationObserver !== "undefined" && typeof document !== "undefined") {
-      const titleEl = document.querySelector("title");
-      if (titleEl) {
-        observer = new MutationObserver(send);
-        observer.observe(titleEl, { childList: true, characterData: true, subtree: true });
-      }
-    }
-    // Respaldo acotado por frames (no timeout arbitrario): cubre rutas sin
-    // Helmet o con título idéntico al anterior (el observer jamás dispararía).
-    // Sin rAF disponible (SSR), envío sincrónico.
-    const MAX_FRAMES = 300;
+    // Estabilidad del título por frames (no timeout arbitrario): se envía
+    // cuando document.title lleva STABLE_FRAMES frames sin cambiar — sea
+    // commit inmediato de Helmet, chunk lazy tardío o título idéntico entre
+    // rutas. MAX_FRAMES acota el peor caso. Sin rAF (SSR), envío sincrónico.
+    // Esto además evita el mismatch título/path: solo se lee el título
+    // cuando dejó de moverse (navegación churn reinicia el conteo).
+    const STABLE_FRAMES = 10;
+    const MAX_FRAMES = 120;
     let frames = 0;
+    let stableCount = 0;
+    let lastTitle = typeof document !== "undefined" ? document.title : "";
     const tick = () => {
-      if (settled || generation !== generationRef.current) {
-        observer?.disconnect();
-        return;
-      }
-      if (++frames >= MAX_FRAMES) {
+      if (settled || generation !== generationRef.current) return;
+      const currentTitle = typeof document !== "undefined" ? document.title : "";
+      stableCount = currentTitle === lastTitle ? stableCount + 1 : 1;
+      lastTitle = currentTitle;
+      frames += 1;
+      if (stableCount >= STABLE_FRAMES || frames >= MAX_FRAMES) {
         send();
         return;
       }
@@ -115,9 +110,6 @@ const GoogleAnalytics = () => {
     } else {
       send();
     }
-    return () => {
-      observer?.disconnect();
-    };
   }, [initialized, location]);
 
   return null;

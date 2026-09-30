@@ -33,9 +33,12 @@ function flushRaf() {
   });
 }
 
-async function flushObserver() {
-  await act(async () => {
-    await new Promise((r) => setTimeout(r, 0));
+function flushRafFrames(n: number) {
+  act(() => {
+    for (let i = 0; i < n && rafQueue.length; i++) {
+      const cbs = rafQueue.splice(0);
+      cbs.forEach((cb) => cb(0));
+    }
   });
 }
 
@@ -172,19 +175,21 @@ describe('FASE 5.18A page_view con título final', () => {
     expect(pageViews()).toHaveLength(1);
   });
 
-  it('título tardío (chunk lazy): el observer envía el título final, no el intermedio', async () => {
+  it('título tardío (chunk lazy): espera al título final, no envía el intermedio', () => {
     const { getByText } = render(<App initial="/" />);
     flushRaf();
     expect(pageViews()).toHaveLength(1);
     act(() => {
       getByText('go-b').click();
     });
-    // Simula Helmet tardío: el título conmuta DESPUÉS de la navegación
+    // Simula Helmet tardío: el título real conmuta varios frames después.
+    // Helmet de la ruta B ya puso su título al montar; lo sobrescribimos
+    // para simular el estado intermedio y luego el final.
     document.title = 'Still Old Title';
-    await act(async () => {
-      document.title = 'Article B Full Title';
-      await new Promise((r) => setTimeout(r, 0));
-    });
+    flushRafFrames(3);
+    expect(pageViews()).toHaveLength(1); // aún inestable: no envía
+    document.title = 'Article B Full Title';
+    flushRaf();
     expect(pageViews()).toHaveLength(2);
     expect(payload(1)).toMatchObject({ page_title: 'Article B Full Title', page_path: '/blog/b' });
   });
