@@ -8142,6 +8142,25 @@ const getAIDocumentOwned = async (documentId, userId) => {
   return hasCanonicalDocumentReference(data, userId, workspace) ? data : null;
 };
 
+// 4.56I: linked lawyer_case for notification metadata (owner-scoped; null
+// when orphan/unlinked). Lets notification links target the canonical Case
+// route instead of overloading `case_id` with a workspace id.
+const resolveDocLinkedCaseId = async (userId, workspaceId) => {
+  try {
+    if (!userId || !workspaceId) return null;
+    const { data } = await supabase
+      .from('lawyer_cases')
+      .select('id')
+      .eq('lawyer_id', userId)
+      .eq('ai_workspace_id', workspaceId)
+      .limit(1)
+      .maybeSingle();
+    return data?.id ?? null;
+  } catch {
+    return null;
+  }
+};
+
 // Captura de eventos en PostHog (server-side, sin datos jurídicos sensibles).
 const capturePostHog = async (event, distinctId, properties = {}) => {
   try {
@@ -9429,7 +9448,7 @@ app.post('/api/ai/documents/:id/process', async (req, res) => {
       message: `El documento "${doc.original_filename}" ya está disponible para análisis.`,
       entityType: 'ai_document',
       entityId: doc.id,
-      metadata: { case_id: doc.workspace_id },
+      metadata: { case_id: doc.workspace_id, workspace_id: doc.workspace_id, document_id: doc.id, lawyer_case_id: await resolveDocLinkedCaseId(userId, doc.workspace_id) },
       eventId: `ai_process:${doc.id}`,
     });
 
@@ -9449,7 +9468,7 @@ app.post('/api/ai/documents/:id/process', async (req, res) => {
           message: 'Intenta nuevamente desde tu caso en LegalUp AI.',
           entityType: 'ai_document',
           entityId: doc?.id || req.params.id,
-          metadata: { case_id: doc?.workspace_id },
+          metadata: { case_id: doc?.workspace_id, workspace_id: doc?.workspace_id ?? null, document_id: doc?.id || req.params.id, lawyer_case_id: await resolveDocLinkedCaseId(userId, doc?.workspace_id) },
           eventId: `ai_process_failed:${req.params.id}`,
         });
       } catch { /* la notificación no debe romper la respuesta */ }
@@ -9632,7 +9651,7 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
       message: `El análisis de "${doc.original_filename}" está listo.`,
       entityType: 'ai_document',
       entityId: doc.id,
-      metadata: { case_id: doc.workspace_id },
+      metadata: { case_id: doc.workspace_id, workspace_id: doc.workspace_id, document_id: doc.id, lawyer_case_id: await resolveDocLinkedCaseId(userId, doc.workspace_id) },
       eventId: `ai_analysis:${doc.id}`,
     });
 
@@ -9655,7 +9674,7 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
           message: `No pudimos analizar "${doc?.original_filename || 'tu documento'}". Intenta nuevamente.`,
           entityType: 'ai_document',
           entityId: doc?.id || req.params.id,
-          metadata: { case_id: doc?.workspace_id },
+          metadata: { case_id: doc?.workspace_id, workspace_id: doc?.workspace_id ?? null, document_id: doc?.id || req.params.id, lawyer_case_id: await resolveDocLinkedCaseId(userId, doc?.workspace_id) },
           eventId: `ai_analysis_failed:${req.params.id}`,
         });
       } catch { /* la notificación no debe romper la respuesta */ }

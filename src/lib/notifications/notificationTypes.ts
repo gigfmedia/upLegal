@@ -87,6 +87,20 @@ export type NotificationLinkInput = {
   role?: Role;
 };
 
+/** 4.56I: explicit ai_document metadata (forward shape). Historical rows
+ * carry only `case_id` (= ai_workspaces.id, kept readable below). */
+export type AIDocumentNotificationMetadata = {
+  lawyer_case_id?: string | null;
+  workspace_id?: string | null;
+  document_id?: string | null;
+  /** Legacy overloaded key: always an ai_workspaces.id in practice. */
+  case_id?: string | null;
+};
+
+function asId(value: unknown): string | null {
+  return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
 /**
  * Resuelve el destino (deep link) de una notificación según su entidad.
  * Solo navega con ids; nunca guarda objetos completos ni datos sensibles.
@@ -95,8 +109,17 @@ export function getNotificationLink(input: NotificationLinkInput): string | unde
   const { entityType, entityId, metadata, type } = input;
 
   if (entityType === 'ai_document') {
-    const caseId = metadata?.case_id;
-    return caseId ? `/lawyer/ai/cases/${caseId}` : undefined;
+    // 4.56I: explicit identifiers win. Linked current Case → canonical
+    // documents tab (never the legacy route). Orphan workspace → legacy
+    // detail (preserved). Legacy `case_id` holds a workspace id in every
+    // known producer → legacy route, which self-redirects when linked.
+    // Missing/stale identifiers → safe fallback, never an invalid detail.
+    const meta = (metadata ?? {}) as AIDocumentNotificationMetadata;
+    const linkedCaseId = asId(meta.lawyer_case_id);
+    if (linkedCaseId) return `/lawyer/cases/${linkedCaseId}?tab=documents`;
+    const workspaceId = asId(meta.workspace_id) ?? asId(meta.case_id);
+    if (workspaceId) return `/lawyer/ai/cases/${workspaceId}`;
+    return '/lawyer/cases';
   }
 
   if (entityType === 'request' && entityId) {

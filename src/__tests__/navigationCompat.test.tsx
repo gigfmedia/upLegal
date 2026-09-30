@@ -208,7 +208,10 @@ describe('4.34H standalone shell retirement', () => {
 
   it('notification ai_document links preserved via compatibility route', () => {
     const c = read('src/lib/notifications/notificationTypes.ts');
-    expect(c).toContain('/lawyer/ai/cases/${caseId}');
+    // 4.56I: linked Cases resolve canonical; orphan/legacy workspace ids
+    // keep the compatibility route (self-redirects when linked).
+    expect(c).toContain('/lawyer/cases/${linkedCaseId}?tab=documents');
+    expect(c).toContain('/lawyer/ai/cases/${workspaceId}');
   });
 });
 

@@ -129,7 +129,7 @@ export default function AICaseDetail() {
         >
           <Link to="/lawyer/ai">
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            Volver a LegalUp AI
+            Volver a Historial de casos
           </Link>
         </Button>
 
@@ -164,7 +164,7 @@ export default function AICaseDetail() {
                 Este caso no existe o no tienes acceso a él.
               </p>
               <Button asChild className="mt-2 bg-green-900 text-white hover:bg-green-800">
-                <Link to="/lawyer/ai">Ir a Mis casos</Link>
+                <Link to="/lawyer/ai">Ir a Historial de casos</Link>
               </Button>
             </CardContent>
           </Card>
