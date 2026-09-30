@@ -21,7 +21,8 @@ import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
 import ChevronRight from "lucide-react/dist/esm/icons/chevron-right";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { Lawyer, LawyerCard } from "@/components/LawyerCard";
+import { Lawyer, LawyerCard, lawyerNameSlug } from "@/components/LawyerCard";
+import { trackEvent } from "@/lib/track";
 import Header from "@/components/Header";
 import { getVerifiedLawyersCount } from "@/lib/verifiedLawyers";
 import { getCompletedCasesCount } from "@/lib/caseServiceCounter";
@@ -32,7 +33,6 @@ import { useLegalCategoryClassifier } from "@/hooks/useLegalCategoryClassifier";
 import { PaymentMethods as MPbadge } from '@/components/MercadoPagoBadge';
 
 const AuthModal = lazy(() => import("@/components/AuthModal").then(m => ({ default: m.AuthModal })));
-const ScheduleModal = lazy(() => import("@/components/ScheduleModal").then(m => ({ default: m.ScheduleModal })));
 const TestimonialsSection = lazy(() => import("@/components/TestimonialsSection").then(m => ({ default: m.TestimonialsSection })));
 
 const Index = () => {
@@ -40,8 +40,6 @@ const Index = () => {
 
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [selectedLawyer, setSelectedLawyer] = useState<Lawyer | null>(null);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [pendingRedirect, setPendingRedirect] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -124,11 +122,30 @@ const Index = () => {
     navigate(`/booking/${lawyerId}`);
   }, [navigate]);
 
-  // Handle schedule click - memoized to prevent re-renders
-  const handleScheduleClick = useCallback((lawyer: Lawyer) => {
-    setSelectedLawyer(lawyer);
-    setShowScheduleModal(true);
-  }, []);
+  // FASE 5.18D: Agendar explícito → booking directo (ruta canónica con slug).
+  // Sin intercepción de AuthModal: el flujo de booking ya opera sin login
+  // (modal de datos + pago invitado verificados en QA 5.16). Card → perfil.
+  const handleFeaturedSchedule = useCallback((lawyer: Lawyer, cardPosition: number) => {
+    const displayName =
+      (lawyer as any).name ||
+      `${(lawyer as any).first_name || ''} ${(lawyer as any).last_name || ''}`.trim();
+    const slug = lawyerNameSlug(displayName);
+    const lawyerId = (lawyer as any).user_id || (lawyer as any).id;
+    try {
+      trackEvent('featured_lawyer_booking_clicked', {
+        lawyer_id: lawyerId,
+        lawyer_slug: slug,
+        specialty: Array.isArray((lawyer as any).specialties)
+          ? (lawyer as any).specialties[0]
+          : (lawyer as any).specialties,
+        source: 'featured_lawyers',
+        destination: 'booking',
+        card_position: cardPosition,
+        page_path: '/',
+      });
+    } catch {}
+    navigate(`/booking/${slug}-${lawyerId}`);
+  }, [navigate]);
 
   // Efecto para cargar los contadores (sin suscripciones en tiempo real para mejor performance)
   useEffect(() => {
@@ -653,29 +670,23 @@ const Index = () => {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredLawyers.slice(0, 3).map((lawyer) => (
-                <LawyerCard
-                  key={lawyer.id}
-                  lawyer={lawyer}
-                  onContactClick={() => {
-                    if (!user) {
-                      setAuthMode('login');
-                      setShowAuthModal(true);
-                      return;
-                    }
-                    handleContactClick(lawyer);
-                  }}
-                  onScheduleClick={() => {
-                    if (!user) {
-                      setAuthMode('login');
-                      setShowAuthModal(true);
-                      return;
-                    }
-                    handleScheduleClick(lawyer);
-                  }}
-                  user={user}
-                />
+            <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-6 sm:overflow-visible sm:pb-0" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+              {featuredLawyers.slice(0, 3).map((lawyer, idx) => (
+                <div key={lawyer.id} className="min-w-[82%] snap-center shrink-0 sm:min-w-0 sm:snap-align-none">
+                  <LawyerCard
+                    lawyer={lawyer}
+                    onContactClick={() => {
+                      if (!user) {
+                        setAuthMode('login');
+                        setShowAuthModal(true);
+                        return;
+                      }
+                      handleContactClick(lawyer);
+                    }}
+                    onScheduleClick={() => handleFeaturedSchedule(lawyer, idx)}
+                    user={user}
+                  />
+                </div>
               ))}
             </div>
           )}
@@ -1226,17 +1237,6 @@ const Index = () => {
         </Suspense>
       )}
 
-      {selectedLawyer && showScheduleModal && (
-        <Suspense fallback={null}>
-          <ScheduleModal
-            isOpen={showScheduleModal}
-            onClose={() => setShowScheduleModal(false)}
-            lawyerName={selectedLawyer.name}
-            hourlyRate={selectedLawyer.hourlyRate}
-            lawyerId={selectedLawyer.id || ""}
-          />
-        </Suspense>
-      )}
     </div>
   );
 };
