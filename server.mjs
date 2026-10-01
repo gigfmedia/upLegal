@@ -8235,6 +8235,32 @@ const getFreeCaseAccess = async (userId) => {
 };
 
 const getAILawyerAccess = async (userId) => {
+  // 4.58A.5 canonical precedence: PLUS > PRO > LEGACY > FREE. Current paid
+  // SaaS (lawyer_subscriptions authority) dominates legacy ai_subscriptions
+  // rows; legacy preserves historical compatibility only without paid access.
+  // Founder is pricing/badge only and never changes this resolution.
+  const proAccess = await getProLawyerAccess(userId);
+  if (proAccess.hasAccess) {
+    // 4.57D: Plus keeps the paid-tier path (isProLimited) but carries its
+    // own plan so quotas/features resolve to Plus allowances, never Pro.
+    // Stored Plus rows carry plan='plus' literally (direct comparison:
+    // no module import, vm-harness safe).
+    const paidPlan = proAccess.subscription?.plan === 'plus' ? 'plus' : 'pro_limited';
+    return {
+      subscription: proAccess.subscription,
+      hasAccess: true,
+      status: paidPlan,
+      plan: paidPlan,
+      isTrialing: false,
+      isActive: false,
+      isProLimited: true,
+      trialDaysRemaining: 0,
+      trialEndsAt: null,
+      currentPeriodEnd: proAccess.currentPeriodEnd,
+      cancelAtPeriodEnd: false,
+    };
+  }
+
   const subscription = await getAILawyerSubscription(userId);
   const now = Date.now();
   let hasAccess = false;
@@ -8286,32 +8312,8 @@ const getAILawyerAccess = async (userId) => {
     }
   }
 
-  // Pro Limited precedence: if no AI access, check Pro (no new ai_subscriptions row needed)
-  if (!hasAccess) {
-    const proAccess = await getProLawyerAccess(userId);
-    if (proAccess.hasAccess) {
-      // 4.57D: Plus keeps the paid-tier path (isProLimited) but carries its
-      // own plan so quotas/features resolve to Plus allowances, never Pro.
-      // Stored Plus rows carry plan='plus' literally (direct comparison:
-      // no module import, vm-harness safe).
-      const paidPlan = proAccess.subscription?.plan === 'plus' ? 'plus' : 'pro_limited';
-      return {
-        subscription: proAccess.subscription,
-        hasAccess: true,
-        status: paidPlan,
-        plan: paidPlan,
-        isTrialing: false,
-        isActive: false,
-        isProLimited: true,
-        trialDaysRemaining: 0,
-        trialEndsAt: null,
-        currentPeriodEnd: proAccess.currentPeriodEnd,
-        cancelAtPeriodEnd: false,
-      };
-    }
-  }
-
-  // 4.44A: free first-Case lifetime plan (after legacy AI and Pro).
+  // 4.44A: free first-Case lifetime plan (after legacy AI; paid SaaS resolved
+  // first at the top of this function).
   // Identity = pro_free_case_grants.case_id (durable ledger); NULL or
   // missing workspace = consumed-but-unidentified = no free AI (fail-closed).
   if (!hasAccess) {
