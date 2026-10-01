@@ -1,7 +1,8 @@
 import { useCallback, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import posthog from 'posthog-js';
-import { FileText, Loader2 } from 'lucide-react';
+import { FileText, Loader2, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
@@ -14,16 +15,18 @@ type AIDocumentUploadProps = {
   workspaceId?: string;
   ensureWorkspace?: () => Promise<string>;
   onUploaded: (doc: AIDocument) => void;
+  compact?: boolean;
+  disabled?: boolean;
 };
 
-export function AIDocumentUpload({ workspaceId, ensureWorkspace, onUploaded }: AIDocumentUploadProps) {
+export function AIDocumentUpload({ workspaceId, ensureWorkspace, onUploaded, compact = false, disabled = false }: AIDocumentUploadProps) {
   const upload = useUploadAIDocument(workspaceId || ensureWorkspace);
   const busy = useRef(false);
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
       const file = acceptedFiles[0];
-      if (!file || busy.current) return;
+      if (!file || busy.current || disabled) return;
 
       if (file.type !== 'application/pdf') {
         toast.error('Solo se permiten archivos PDF.');
@@ -53,15 +56,25 @@ export function AIDocumentUpload({ workspaceId, ensureWorkspace, onUploaded }: A
         },
       });
     },
-    [upload, onUploaded]
+    [upload, onUploaded, disabled]
   );
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     accept: { 'application/pdf': ['.pdf'] },
     multiple: false,
-    disabled: upload.isPending,
+    disabled: upload.isPending || disabled,
   });
+
+  if (compact) return (
+    <div>
+      <input {...getInputProps({ 'aria-label': 'Seleccionar PDF del caso' })} />
+      <Button type="button" onClick={open} disabled={upload.isPending || disabled}>
+        {upload.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : <Plus className="mr-2 h-4 w-4" aria-hidden="true" />}
+        {upload.isPending ? 'Preparando y subiendo…' : 'Subir documento'}
+      </Button>
+    </div>
+  );
 
   return (
     <div

@@ -11,6 +11,7 @@ vi.mock('@/hooks/useLawyerCases', () => ({
   useLawyerCases: () => ({updateCase:state.update,deleteCase:state.delete}),
   useProvisionAIWorkspace: () => ({provision:state.provision}),
 }));
+vi.mock('@/hooks/useAIUsage', () => ({ AI_USAGE_QUERY_KEY: ['ai-usage'], useAIUsage: () => ({ data: { allowance: { plan: 'pro', documents: { used: state.docs.length, limit: 50 } } }, isLoading: false, refetch: vi.fn() }) }));
 vi.mock('@/hooks/useLawyerClients', () => ({useLawyerClients:()=>({clients:[]})}));
 vi.mock('@/hooks/useAISubscription', () => ({useAIFeatureAccess:()=>({canUse:()=>state.allowed,isLoading:false})}));
 vi.mock('@/contexts/AuthContext/clean/useAuth', () => ({useAuth:()=>({user:{id:'L1'}})}));
@@ -23,7 +24,7 @@ vi.mock('@/lib/supabaseClient',()=>({supabase:{
   from:(table:string)=>{
     let payload:Record<string,unknown>|undefined;
     const q={select:()=>q,eq:()=>q,order:()=>q,delete:()=>q,insert:(p:Record<string,unknown>)=>{payload=p;return q;},
-      single:async()=>{ const doc={...payload};state.docs.push(doc);return {data:doc,error:null};},
+      single:async()=>{ const doc={...payload,status:'ready',created_at:'2026-01-01'};state.docs=[...state.docs,doc];return {data:doc,error:null};},
       then:(resolve:(v:unknown)=>void)=>Promise.resolve({data:table==='bookings'?[]:state.docs,count:state.docs.length,error:null}).then(resolve)};
     return q;
   },
@@ -61,18 +62,19 @@ beforeEach(()=>{cleanup();vi.clearAllMocks();state.docs=[];state.allowed=true;st
 describe('4.30B case documents',()=>{
  it('first file provisions once and uploads automatically; subsequent files reuse workspace',async()=>{
   const view=renderCase();expect(state.provision).not.toHaveBeenCalled();
-  drop(view.container);await screen.findByText('one.pdf');
+  drop(view.container);await screen.findAllByText('one.pdf');
   expect(state.provision).toHaveBeenCalledExactlyOnceWith('C1');expect(state.upload).toHaveBeenCalledTimes(1);
   expect(state.upload.mock.calls[0][0]).toMatch(/^L1\/W1\//);expect(state.docs[0].workspace_id).toBe('W1');expect(state.analyze).not.toHaveBeenCalled();
-  drop(view.container,'two.pdf');await screen.findByText('two.pdf');drop(view.container,'three.pdf');await screen.findByText('three.pdf');
+  drop(view.container,'two.pdf');await screen.findAllByText('two.pdf');drop(view.container,'three.pdf');await screen.findAllByText('three.pdf');
   expect(state.provision).toHaveBeenCalledTimes(1);expect(state.upload).toHaveBeenCalledTimes(3);
   fireEvent.click(screen.getByText('Analizar'));expect(state.analyze).toHaveBeenCalledTimes(1);
  });
- it('existing workspace skips provisioning',async()=>{state.caseData!.ai_workspace_id='OLD';const v=renderCase();drop(v.container);await screen.findByText('one.pdf');expect(state.provision).not.toHaveBeenCalled();expect(state.docs[0].workspace_id).toBe('OLD');});
- it('failure prevents upload and next attempt retries',async()=>{state.provision.mockRejectedValueOnce(new Error('offline'));const v=renderCase();drop(v.container);await waitFor(()=>expect(state.toast).toHaveBeenCalled());expect(state.upload).not.toHaveBeenCalled();expect(state.docs).toHaveLength(0);drop(v.container);await screen.findByText('one.pdf');expect(state.provision).toHaveBeenCalledTimes(2);expect(state.upload).toHaveBeenCalledTimes(1);});
- it('duplicate file selection while provisioning uploads only once',async()=>{let finish:(v:unknown)=>void=()=>{};state.provision.mockImplementation(()=>new Promise(r=>{finish=r;}));const v=renderCase();drop(v.container);await waitFor(()=>expect(state.provision).toHaveBeenCalledTimes(1));drop(v.container);finish({workspace:{id:'W1'}});await screen.findByText('one.pdf');expect(state.provision).toHaveBeenCalledTimes(1);expect(state.upload).toHaveBeenCalledTimes(1);});
- it('Pro no workspace: document-first CTA switches outer tab without provisioning',async()=>{renderCase('intelligence');expect(screen.queryByText(/Activar IA/i)).not.toBeInTheDocument();fireEvent.click(screen.getAllByText('Ir a Documentos')[0]);await screen.findByText('Agrega documentos a este caso');expect(state.provision).not.toHaveBeenCalled();});
- it.each(['LAWYER_DIRECT','LEGALUP_MARKETPLACE'])('%s without access: paywall before provisioning; documents still upload',async source=>{state.allowed=false;state.caseData!.source=source;const v=renderCase('intelligence');fireEvent.click(screen.getByText('Ver LegalUp Pro'));expect(screen.getByText('Planes Pro')).toBeInTheDocument();expect(state.provision).not.toHaveBeenCalled();fireEvent.mouseDown(screen.getByRole('tab',{name:'Documentos y análisis'}),{button:0,ctrlKey:false});await screen.findByText('Agrega documentos a este caso');drop(v.container);await screen.findByText('one.pdf');expect(state.upload).toHaveBeenCalledTimes(1);expect(screen.queryByText('Analizar')).not.toBeInTheDocument();expect(state.analyze).not.toHaveBeenCalled();});
+ it('existing workspace skips provisioning',async()=>{state.caseData!.ai_workspace_id='OLD';const v=renderCase();drop(v.container);await screen.findAllByText('one.pdf');expect(state.provision).not.toHaveBeenCalled();expect(state.docs[0].workspace_id).toBe('OLD');});
+ it('failure prevents upload and next attempt retries',async()=>{state.provision.mockRejectedValueOnce(new Error('offline'));const v=renderCase();drop(v.container);await waitFor(()=>expect(state.toast).toHaveBeenCalled());expect(state.upload).not.toHaveBeenCalled();expect(state.docs).toHaveLength(0);drop(v.container);await screen.findAllByText('one.pdf');expect(state.provision).toHaveBeenCalledTimes(2);expect(state.upload).toHaveBeenCalledTimes(1);});
+ it('duplicate file selection while provisioning uploads only once',async()=>{let finish:(v:unknown)=>void=()=>{};state.provision.mockImplementation(()=>new Promise(r=>{finish=r;}));const v=renderCase();drop(v.container);await waitFor(()=>expect(state.provision).toHaveBeenCalledTimes(1));drop(v.container);finish({workspace:{id:'W1'}});await screen.findAllByText('one.pdf');expect(state.provision).toHaveBeenCalledTimes(1);expect(state.upload).toHaveBeenCalledTimes(1);});
+ it('Pro no workspace: document-first CTA switches outer tab without provisioning',async()=>{renderCase('intelligence');expect(screen.queryByText(/Activar IA/i)).not.toBeInTheDocument();fireEvent.click(screen.getAllByText('Ir a Documentos')[0]);await screen.findByText('Aún no hay documentos');expect(state.provision).not.toHaveBeenCalled();});
+ it.each(['LAWYER_DIRECT','LEGALUP_MARKETPLACE'])('%s without access: paywall before provisioning; documents still upload',async source=>{state.allowed=false;state.caseData!.source=source;const v=renderCase('intelligence');fireEvent.click(screen.getByText('Ver LegalUp Pro'));expect(screen.getByText('Planes Pro')).toBeInTheDocument();expect(state.provision).not.toHaveBeenCalled();fireEvent.mouseDown(screen.getByRole('tab',{name:'Documentos y análisis'}),{button:0,ctrlKey:false});await screen.findByText('Aún no hay documentos');drop(v.container);await screen.findAllByText('one.pdf');expect(state.upload).toHaveBeenCalledTimes(1);expect(screen.queryByText('Analizar')).not.toBeInTheDocument();expect(state.analyze).not.toHaveBeenCalled();});
+ it('closed case keeps documents readable and the same upload capacity',()=>{state.caseData!.status='closed';state.docs=[{id:'D1',original_filename:'historico.pdf',status:'ready',analysis_status:'ready',created_at:'2026-01-01'}];renderCase();expect(screen.getAllByText('historico.pdf').length).toBeGreaterThan(0);expect(screen.getByRole('button',{name:'Subir documento'})).toBeEnabled();});
  it('workspace alone does not unlock IA',()=>{state.allowed=false;state.caseData!.ai_workspace_id='W1';renderCase('intelligence');expect(screen.getByText('Ver LegalUp Pro')).toBeInTheDocument();expect(screen.queryByTestId('intel')).not.toBeInTheDocument();expect(state.provision).not.toHaveBeenCalled();});
  it('existing entitled workspace renders intelligence directly',()=>{state.caseData!.ai_workspace_id='W1';renderCase('intelligence');expect(screen.getByTestId('intel')).toHaveTextContent('W1');expect(state.provision).not.toHaveBeenCalled();});
  it('legacy ?tab=ai maps to overview (backward compat)',()=>{state.caseData!.ai_workspace_id='W1';renderCase('ai');expect(screen.getByTestId('cc')).toHaveTextContent('W1');expect(state.provision).not.toHaveBeenCalled();});

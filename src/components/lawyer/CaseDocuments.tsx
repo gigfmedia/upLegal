@@ -25,12 +25,9 @@ export function CaseDocuments({ workspaceId, ensureWorkspace, canAnalyze, canCha
 
   return (
     <div className="space-y-4">
-      {!documentsQuery.data?.length && <div>
-        <p className="text-sm">Agrega documentos a este caso</p>
-        <p className="text-sm text-muted-foreground">Sube contratos, escritos, resoluciones u otros antecedentes para mantenerlos asociados al caso y analizarlos cuando lo necesites.</p>
-      </div>}
       {/* Keep mounted when provisioning changes the document query's loading state. */}
       <AICaseDocumentsWorkspace
+        presentation="case"
         workspaceId={workspaceId || undefined}
         ensureWorkspace={ensureWorkspace}
         canAnalyze={canAnalyze}

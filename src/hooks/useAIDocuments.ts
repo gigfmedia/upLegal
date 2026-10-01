@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import posthog from 'posthog-js';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
-import { useAIUsage } from '@/hooks/useAIUsage';
+import { useAIUsage, AI_USAGE_QUERY_KEY } from '@/hooks/useAIUsage';
+import { AI_LATEST_ANALYSIS_QUERY_KEY } from '@/hooks/useLatestCaseAnalysis';
 import type { Database } from '@/types/supabase';
 import {
   MAX_DOCUMENT_SIZE_BYTES,
@@ -252,6 +253,7 @@ export function useUploadAIDocument(workspace: string | undefined | (() => Promi
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: AI_DOCUMENTS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: AI_USAGE_QUERY_KEY });
     },
   });
 }
@@ -275,6 +277,10 @@ export function useDeleteAIDocument() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: AI_DOCUMENTS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: AI_USAGE_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: AI_ANALYSIS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: AI_CASE_INTELLIGENCE_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: AI_LATEST_ANALYSIS_QUERY_KEY });
     },
   });
 }

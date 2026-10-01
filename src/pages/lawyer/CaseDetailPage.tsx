@@ -310,16 +310,10 @@ function CaseDetailContent() {
         </TabsContent>
 
         <TabsContent value="documents" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Documentos del caso</CardTitle></CardHeader>
-            <CardContent>
-              <CaseDocuments key={caseId} workspaceId={effectiveWorkspaceId} ensureWorkspace={ensureWorkspace}
+          <CaseDocuments key={caseId} workspaceId={effectiveWorkspaceId} ensureWorkspace={ensureWorkspace}
                 canAnalyze={canUse('document_analysis')} canChat={canUse('case_chat')} accessLoading={accessLoading}
                 selectedDocId={overviewDocId} onSelectDocument={setOverviewDocId}
                 onUpgrade={() => setProOpen(true)} />
-            </CardContent>
-          </Card>
         </TabsContent>
 
         <TabsContent value="intelligence" className="mt-4">

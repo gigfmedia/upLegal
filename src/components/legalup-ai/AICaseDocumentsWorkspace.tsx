@@ -12,6 +12,7 @@ import {
   type AIDocument,
 } from '@/hooks/useAIDocuments';
 import { AIDocumentUpload } from '@/components/legalup-ai/AIDocumentUpload';
+import { CaseDocumentCollection } from '@/components/lawyer/CaseDocumentCollection';
 import { AIDocumentList } from '@/components/legalup-ai/AIDocumentList';
 import { AIAnalysisView } from '@/components/legalup-ai/AIAnalysisView';
 import { AIChat } from '@/components/legalup-ai/AIChat';
@@ -23,6 +24,7 @@ import { analysisLimitMessage, upgradeTargetForPlan } from '@/lib/planDisplay';
 
 export type AICaseDocumentsWorkspaceProps = {
   workspaceId: string | null | undefined;
+  presentation?: 'legacy' | 'case';
   /** Canonical lazy provisioning. Legacy passes a resolved id instead. */
   ensureWorkspace?: () => Promise<string>;
   canAnalyze: boolean;
@@ -58,6 +60,7 @@ export type AICaseDocumentsWorkspaceProps = {
  */
 export function AICaseDocumentsWorkspace({
   workspaceId,
+  presentation = 'legacy',
   ensureWorkspace,
   canAnalyze,
   canChat,
@@ -137,7 +140,7 @@ export function AICaseDocumentsWorkspace({
   };
 
   const handleAnalyze = () => {
-    if (!selectedDoc || !canAnalyze || accessLoading || analyzeMutation.isPending || selectedDoc.analysis_status === 'processing' || busy.current) return;
+    if (!selectedDoc || selectedDoc.status !== 'ready' || !canAnalyze || accessLoading || analyzeMutation.isPending || selectedDoc.analysis_status === 'processing' || busy.current) return;
     busy.current = true;
     posthog.capture('ai_document_analysis_started', { model, source: analyticsSource });
     analyzeMutation.mutate(
@@ -238,9 +241,23 @@ export function AICaseDocumentsWorkspace({
   ) : null;
 
   return (
+    <div className="min-w-0 space-y-6">
+      {presentation === 'case' && <CaseDocumentCollection
+        documents={documents} workspaceId={workspaceId} ensureWorkspace={ensureWorkspace}
+        selectedId={selectedDoc?.id ?? null}
+        onSelect={(id) => {
+          setSelectedDocId(id);
+          document.getElementById('case-document-analysis')?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+        }}
+        onUploaded={handleUploaded} onAskDocument={handleAskDocument}
+        onRetryProcess={handleProcess} processPending={processMutation.isPending}
+        canChat={canChat} onUpgrade={onUpgrade}
+        loading={!!workspaceId && documentsQuery.isLoading} failed={documentsQuery.isError}
+        onReload={() => { void documentsQuery.refetch(); }}
+      />}
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:min-w-0">
       <section className="min-w-0 space-y-4">
-        <Card id="ai-documents-section">
+        {presentation === 'legacy' && <Card id="ai-documents-section">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <FileText className="h-4 w-4 text-green-700" aria-hidden="true" />
@@ -254,7 +271,8 @@ export function AICaseDocumentsWorkspace({
           <CardContent>
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-1">
               <AIDocumentUpload
-                workspaceId={workspaceId || ensureWorkspace}
+                workspaceId={workspaceId || undefined}
+                ensureWorkspace={ensureWorkspace}
                 onUploaded={handleUploaded}
               />
 
@@ -278,7 +296,7 @@ export function AICaseDocumentsWorkspace({
               )}
             </div>
           </CardContent>
-        </Card>
+        </Card>}
 
         <section className="lg:sticky lg:top-[calc(4rem+2.75rem)]">
           {!canChat ? (
@@ -318,7 +336,7 @@ export function AICaseDocumentsWorkspace({
         </section>
       </section>
 
-      <section className="min-w-0 space-y-4">
+      <section id="case-document-analysis" className="min-w-0 scroll-mt-24 space-y-4">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -358,6 +376,10 @@ export function AICaseDocumentsWorkspace({
                 <p className="text-sm text-muted-foreground">
                   Selecciona un documento para analizarlo.
                 </p>
+              </div>
+            ) : selectedDoc.status !== 'ready' ? (
+              <div className="py-8 text-center text-sm text-muted-foreground">
+                {selectedDoc.status === 'failed' ? 'No se pudo procesar el documento. Puedes reintentar desde su menú de acciones.' : 'El documento estará disponible para analizar cuando termine el procesamiento.'}
               </div>
             ) : selectedDoc.analysis_status === 'processing' ? (
               <div className="flex flex-col items-center gap-3 py-10 text-center">
@@ -421,6 +443,7 @@ export function AICaseDocumentsWorkspace({
           </CardContent>
         </Card>
       </section>
+    </div>
     </div>
   );
 }
