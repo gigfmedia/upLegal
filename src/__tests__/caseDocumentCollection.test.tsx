@@ -25,6 +25,14 @@ describe('Case document collection', () => {
   });
   it('Plus at capacity has no higher tier CTA',()=>{Object.assign(state,{plan:'plus',used:150,limit:150});view();expect(screen.getByRole('button',{name:'Subir documento'})).toBeDisabled();expect(screen.queryByText(/Ver LegalUp/)).not.toBeInTheDocument();expect(screen.getByText(/150 documentos actuales/)).toBeInTheDocument();});
   it('shows global paid usage even with only eight case documents',()=>{view(Array.from({length:8},(_,i)=>doc(`doc${i}`)));expect(screen.getByText('32 de 50 documentos utilizados')).toBeInTheDocument();expect(screen.getByText('Incluye los documentos de todos tus casos.')).toBeInTheDocument();});
+  it('4.58A.7 toolbar orders upload before capacity and keeps single upload CTA', () => {
+    view();
+    const upload = screen.getByRole('button', { name: 'Subir documento' });
+    const capacity = screen.getByText('32 de 50 documentos utilizados');
+    expect(upload.compareDocumentPosition(capacity) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: 'Subir documento' })).toHaveLength(1);
+    expect(screen.getByRole('textbox', { name: 'Buscar documentos del caso' })).toBeInTheDocument();
+  });
   it('4.58A.2 Pro usage 5/50 renders authoritative global count', () => {
     Object.assign(state, { plan: 'pro_limited', used: 5, limit: 50 });
     view(Array.from({ length: 2 }, (_, i) => doc(`doc${i}`)));

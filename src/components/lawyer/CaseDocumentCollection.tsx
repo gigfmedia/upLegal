@@ -73,21 +73,40 @@ export function CaseDocumentCollection(props: Props) {
     </DropdownMenuContent>
   </DropdownMenu>;
 
+  const uploadCta = atLimit
+    ? target
+      ? <Button onClick={props.onUpgrade}>Ver LegalUp {target === 'plus' ? 'Plus' : 'Pro'}</Button>
+      : <Button disabled>Subir documento</Button>
+    : <AIDocumentUpload compact workspaceId={props.workspaceId || undefined} ensureWorkspace={props.ensureWorkspace} onUploaded={props.onUploaded} disabled={usage.isLoading} />;
+  const quotaBlock = usage.isLoading
+    ? <Skeleton className="h-5 w-44" />
+    : knownCapacity
+      ? <div aria-live="polite"><p className="text-sm font-medium">{pool.used}{pool.limit !== null ? ` de ${pool.limit}` : ''} documentos utilizados</p><p className="text-xs text-muted-foreground">{free ? 'Capacidad de tu primer caso.' : 'Incluye los documentos de todos tus casos.'}</p></div>
+      : <div className="text-xs text-muted-foreground">No pudimos consultar la capacidad. <button type="button" className="underline" onClick={() => usage.refetch()}>Reintentar</button></div>;
+
   return <section id="ai-documents-section" className="min-w-0" aria-label="Documentos del caso">
     <Card>
       <CardContent className="space-y-4 p-4 sm:p-6">
-    <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <header>
       <div><h2 className="text-lg font-semibold">Documentos</h2><p className="mt-1 text-sm text-muted-foreground">Centraliza los antecedentes de este caso y trabaja con LegalUp AI sobre ellos.</p></div>
-      <div className="space-y-2 sm:max-w-xs sm:text-right">
-        {usage.isLoading ? <Skeleton className="h-5 w-44" /> : knownCapacity ? <div aria-live="polite"><p className="text-sm font-medium">{pool.used}{pool.limit !== null ? ` de ${pool.limit}` : ''} documentos utilizados</p><p className="text-xs text-muted-foreground">{free ? 'Capacidad de tu primer caso.' : 'Incluye los documentos de todos tus casos.'}</p></div> : <div className="text-xs text-muted-foreground">No pudimos consultar la capacidad. <button type="button" className="underline" onClick={() => usage.refetch()}>Reintentar</button></div>}
-        {atLimit ? target ? <Button onClick={props.onUpgrade}>Ver LegalUp {target === 'plus' ? 'Plus' : 'Pro'}</Button> : <Button disabled>Subir documento</Button> : <AIDocumentUpload compact workspaceId={props.workspaceId || undefined} ensureWorkspace={props.ensureWorkspace} onUploaded={props.onUploaded} disabled={usage.isLoading} />}
-      </div>
     </header>
     {atLimit && <div role="status" className="rounded-md border bg-muted/30 p-3 text-sm"><p>{free ? 'Has alcanzado el límite de documentos de tu primer caso.' : target ? 'Has alcanzado el límite de documentos de tu plan.' : `Has alcanzado el límite de ${pool.limit} documentos actuales.`}</p><p className="text-muted-foreground">{free ? 'Este límite corresponde a tu primer caso.' : 'El límite considera los documentos de todos tus casos.'}</p></div>}
-    {props.loading ? <div aria-label="Cargando documentos" className="space-y-2">{[0,1,2].map(i => <Skeleton key={i} className="h-14 w-full" />)}</div> : props.failed ? <div role="alert"><p>No se pudieron cargar los documentos.</p><Button variant="outline" onClick={props.onReload}>Reintentar</Button></div> : documents.length === 0 ? <div className="rounded-lg border border-dashed px-4 py-10 text-center"><h3 className="font-medium">Aún no hay documentos</h3><p className="mx-auto mt-2 max-w-lg text-sm text-muted-foreground">Sube contratos, escritos u otros antecedentes para mantener la información del caso centralizada y trabajar con LegalUp AI.</p><p className="mt-3 text-xs text-muted-foreground">Usa Subir documento para agregar tu primer PDF · máx. 20 MB</p></div> : <>
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <div className="relative flex-1 sm:max-w-md"><Search aria-hidden="true" className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input aria-label="Buscar documentos del caso" placeholder="Buscar documentos..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" /></div>
-        <select aria-label="Filtrar por análisis" className="h-10 rounded-md border bg-background px-3 text-sm" value={filter} onChange={e => setFilter(e.target.value)}><option value="all">Todos</option><option value="ready">Analizados</option><option value="none">Sin analizar</option><option value="failed">Con error de análisis</option></select>
+    {props.loading ? <div aria-label="Cargando documentos" className="space-y-2">{[0,1,2].map(i => <Skeleton key={i} className="h-14 w-full" />)}</div> : props.failed ? <div role="alert"><p>No se pudieron cargar los documentos.</p><Button variant="outline" onClick={props.onReload}>Reintentar</Button></div> : documents.length === 0 ? <>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+        {uploadCta}
+        {quotaBlock}
+      </div>
+      <div className="rounded-lg border border-dashed px-4 py-10 text-center"><h3 className="font-medium">Aún no hay documentos</h3><p className="mx-auto mt-2 max-w-lg text-sm text-muted-foreground">Sube contratos, escritos u otros antecedentes para mantener la información del caso centralizada y trabajar con LegalUp AI.</p><p className="mt-3 text-xs text-muted-foreground">Usa Subir documento para agregar tu primer PDF · máx. 20 MB</p></div>
+    </> : <>
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="order-2 flex flex-col gap-2 sm:flex-row lg:order-1 lg:flex-1">
+          <div className="relative flex-1 lg:max-w-[520px]"><Search aria-hidden="true" className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input aria-label="Buscar documentos del caso" placeholder="Buscar documentos..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" /></div>
+          <select aria-label="Filtrar por análisis" className="h-10 rounded-md border bg-background px-3 text-sm sm:w-48" value={filter} onChange={e => setFilter(e.target.value)}><option value="all">Todos</option><option value="ready">Analizados</option><option value="none">Sin analizar</option><option value="failed">Con error de análisis</option></select>
+        </div>
+        <div className="order-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 lg:order-2">
+          {uploadCta}
+          {quotaBlock}
+        </div>
       </div>
       {filtered.length === 0 ? <div className="rounded-lg border p-8 text-center"><p>No encontramos documentos con esos criterios.</p><Button variant="link" onClick={() => { setSearch(''); setFilter('all'); }}>Limpiar filtros</Button></div> : <>
         <div className="hidden rounded-lg border lg:block" data-testid="desktop-document-table"><table className="w-full table-fixed text-sm"><caption className="sr-only">Documentos de este caso</caption><thead className="border-b bg-muted/30 text-left text-xs text-muted-foreground"><tr><th className="w-[36%] p-3">Documento</th><th className="w-[13%] p-3">Estado</th><th className="w-[15%] p-3">Análisis IA</th><th className="w-[16%] p-3">Subido</th><th className="w-[12%] p-3">Tamaño</th><th className="w-[8%] p-3 font-medium">Acciones</th></tr></thead><tbody>{filtered.map(doc => <tr key={doc.id} onClick={() => onSelect(doc.id)} className={cn('cursor-pointer border-b last:border-0 hover:bg-muted/30', selectedId === doc.id && 'bg-green-50/60')}><td className="p-3" onClick={e => e.stopPropagation()}>{name(doc)}</td><td className="p-3">{status(doc)}</td><td className="p-3">{analysis(doc)}</td><td className="p-3 text-xs text-muted-foreground">{dateLabel(doc.created_at)}</td><td className="p-3 text-xs text-muted-foreground">{doc.file_size_bytes != null ? formatFileSize(doc.file_size_bytes) : '—'}</td><td className="p-2" onClick={e => e.stopPropagation()}>{actions(doc)}</td></tr>)}</tbody></table></div>
