@@ -182,7 +182,7 @@ export default function QuoteRequestsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen p-8">
+      <div className="p-8">
         <div className="max-w-4xl mx-auto flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
         </div>
@@ -192,7 +192,7 @@ export default function QuoteRequestsPage() {
 
   if (!quoteRequest) {
     return (
-      <div className="min-h-screen p-8">
+      <div className="p-8">
         <div className="max-w-4xl mx-auto">
           <Button onClick={() => navigate('/lawyer/dashboard')} variant="ghost">
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -209,7 +209,7 @@ export default function QuoteRequestsPage() {
   const isPaid = quoteRequest.status === 'paid';
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="p-8">
       <div className="max-w-4xl mx-auto">
         <Button onClick={() => navigate('/lawyer/jobs')} variant="ghost" className="mb-6">
           <ArrowLeft className="mr-2 h-4 w-4" />

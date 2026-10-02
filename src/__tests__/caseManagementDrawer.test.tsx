@@ -22,6 +22,18 @@ const tasksState = vi.hoisted(() => {
   };
 });
 
+vi.mock('@/hooks/useClientCommunications', () => ({
+  useClientCommunications: () => ({
+    comms: [],
+    loading: false,
+    error: null,
+    refetch: vi.fn(),
+    registerComm: vi.fn(),
+  }),
+  useAllCommunications: () => ({ comms: [], loading: false, refetch: vi.fn() }),
+  useClientFollowUpOverview: () => ({ lastByClient: new Map(), overdueClientIds: new Set(), loading: false }),
+}));
+
 vi.mock('@/hooks/useCaseTasks', () => ({
   useCaseTasks: () => ({
     tasks: tasksState.tasks,

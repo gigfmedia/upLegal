@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useLawyerClients } from '@/hooks/useLawyerClients';
+import { useClientFollowUpOverview } from '@/hooks/useClientCommunications';
+import { formatLastContact } from '@/lib/followUp';
 import { useToast } from '@/hooks/use-toast';
 import { Search, Loader2, User, Mail, Phone, Plus, Eye } from 'lucide-react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
@@ -25,6 +27,8 @@ export default function ClientsPage() {
   const [saving, setSaving] = useState(false);
   const { hasProAccess } = useProSubscription();
   const [proPaywallOpen, setProPaywallOpen] = useState(false);
+  // FASE 5.4 — último contacto + seguimiento vencido (2 queries agrupadas).
+  const { lastByClient, overdueClientIds } = useClientFollowUpOverview();
 
   const filtered = useMemo(
     () =>
@@ -135,6 +139,17 @@ export default function ClientsPage() {
                         Creado {formatDistanceToNow(parseISO(c.created_at), { addSuffix: true, locale: es })}
                         {c.source && c.source !== 'UNKNOWN' && ` · ${c.source === 'LAWYER_DIRECT' ? 'Directo' : c.source === 'LEGALUP_MARKETPLACE' ? 'Marketplace' : c.source}`}
                       </div>
+                      {(() => {
+                        const last = lastByClient.get(c.id);
+                        const overdue = overdueClientIds.has(c.id);
+                        if (overdue) {
+                          return <div className="text-xs font-medium text-amber-700">Actualizar cliente</div>;
+                        }
+                        if (last) {
+                          return <div className="text-xs text-gray-500">Último contacto: {formatLastContact(last.communicated_at).toLowerCase()}</div>;
+                        }
+                        return null;
+                      })()}
                     </div>
                   </div>
                   <Link to={`/lawyer/clients/${c.id}`}>

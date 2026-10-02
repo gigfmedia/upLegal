@@ -79,7 +79,7 @@ function ItemRow({
           <span className="flex items-center gap-1.5">
             <span className="truncate text-xs font-medium text-gray-500">{item.caseTitle}</span>
             <span className="shrink-0 rounded-full bg-gray-100 px-1.5 py-px text-[10px] font-medium text-gray-500">
-              {item.kind === 'task' ? 'Pendiente' : 'Próxima gestión'}
+              {item.kind === 'task' ? 'Pendiente' : item.kind === 'follow_up' ? 'Actualizar cliente' : 'Próxima gestión'}
             </span>
           </span>
           <span className="mt-0.5 block truncate text-sm font-medium text-gray-900">{item.title}</span>

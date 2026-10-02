@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/lib/supabaseClient';
 import { useLawyerClient, useLawyerClients } from '@/hooks/useLawyerClients';
+import { useClientCommunications } from '@/hooks/useClientCommunications';
+import { formatCommLine, formatLastContact } from '@/lib/followUp';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowLeft, Save, Trash2 } from 'lucide-react';
@@ -39,6 +41,8 @@ export default function ClientDetailPage() {
   const [cases, setCases] = useState<any[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
   const { user } = useAuth();
+  // FASE 5.4 — historial de comunicaciones del cliente (máx 5).
+  const { comms, loading: commsLoading } = useClientCommunications({ clientId });
 
   useEffect(() => {
     if (client) {
@@ -138,6 +142,30 @@ export default function ClientDetailPage() {
               <Trash2 className="h-4 w-4 mr-1" /> Eliminar
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">
+            Último contacto{comms.length > 0 ? `: ${formatLastContact(comms[0].communicated_at).toLowerCase()}` : ''}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {commsLoading ? (
+            <p className="text-sm text-gray-500">Cargando…</p>
+          ) : comms.length === 0 ? (
+            <p className="text-sm text-gray-500">Sin comunicaciones registradas.</p>
+          ) : (
+            <ul className="space-y-2">
+              {comms.slice(0, 5).map((c) => (
+                <li key={c.id} className="text-sm">
+                  <span className="font-medium text-gray-900">{formatCommLine(c)}</span>
+                  {c.note && <span className="block truncate text-xs text-gray-500">{c.note}</span>}
+                </li>
+              ))}
+            </ul>
+          )}
         </CardContent>
       </Card>
 

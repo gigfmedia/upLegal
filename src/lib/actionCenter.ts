@@ -11,6 +11,9 @@ export type ActionCaseLike = {
   next_action_due_at?: string | null;
   next_action_completed_at?: string | null;
   updated_at: string;
+  // FASE 5.4 — seguimiento al cliente
+  client_follow_up_due_at?: string | null;
+  client?: { name: string } | null;
 };
 
 export type ActionTaskLike = {
@@ -23,7 +26,8 @@ export type ActionTaskLike = {
 
 export type ActionItem =
   | { kind: 'next_action'; key: string; caseId: string; caseTitle: string; title: string; dueAt: string }
-  | { kind: 'task'; key: string; taskId: string; caseId: string; caseTitle: string; title: string; dueAt: string };
+  | { kind: 'task'; key: string; taskId: string; caseId: string; caseTitle: string; title: string; dueAt: string }
+  | { kind: 'follow_up'; key: string; caseId: string; caseTitle: string; title: string; dueAt: string };
 
 export type NoActionCase = { id: string; title: string; updatedAt: string };
 
@@ -71,6 +75,20 @@ export function buildActionCenter(
           caseTitle: c.title,
           title: visibleNextAction(c) as string,
           dueAt: c.next_action_due_at,
+        });
+      }
+    }
+    // FASE 5.4 — seguimiento al cliente (recordatorio del abogado).
+    if (c.client_follow_up_due_at) {
+      const t = parseDue(c.client_follow_up_due_at);
+      if (!Number.isNaN(t)) {
+        dated.push({
+          kind: 'follow_up',
+          key: `fu:${c.id}`,
+          caseId: c.id,
+          caseTitle: c.title,
+          title: c.client?.name ? `Actualizar a ${c.client.name}` : 'Actualizar al cliente',
+          dueAt: c.client_follow_up_due_at,
         });
       }
     }

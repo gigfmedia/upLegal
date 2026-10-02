@@ -662,8 +662,16 @@ function DashboardLayout() {
             )}
 
             {/* Main content */}
-            <main className="flex-1 min-w-0 w-full">
-              <div className="min-h-screen">
+            {/* 5.5: main flex-col con min-h exacta (viewport − header fijo).
+                En página corta ocupa justo el viewport (footer abajo, sin
+                scroll fantasma); en página larga crece con el documento.
+                Scroll owner = documento. */}
+            <main className="flex min-h-[calc(100vh-4rem)] min-w-0 w-full flex-col">
+              {/* 5.5: SIN min-h-screen aquí — el header es fixed h-16 con
+                  pt-16 de offset; un min-h-screen interno forzaba
+                  viewport+64px y scroll fantasma en páginas cortas.
+                  Scroll owner = documento; altura natural del contenido. */}
+              <div className="flex-1">
                 {/* Suspense interno: el layout (header/sidebar) queda montado
                     mientras carga el chunk lazy de la ruta hija. Así no se
                     "corta" la pantalla ni vuelve el spinner full-screen del

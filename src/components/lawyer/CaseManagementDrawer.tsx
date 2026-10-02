@@ -12,6 +12,7 @@ import { CASE_STATUS_COLORS, CASE_STATUS_LABELS } from '@/lib/caseStatus';
 import { normalizeStage, stageLabel } from '@/lib/portfolio';
 import { CaseNextActionSection, fmtShortDate } from '@/components/lawyer/CaseNextActionSection';
 import { CaseTasksSection } from '@/components/lawyer/CaseTasksSection';
+import { CaseClientSection } from '@/components/lawyer/CaseClientSection';
 
 type Props = {
   /** Caso a gestionar. Reusable: basta case + callbacks (futuro: Dashboard, CasesPage). */
@@ -176,6 +177,10 @@ export function CaseManagementDrawer({ caseData, open, onOpenChange, onCaseUpdat
               <Separator />
 
               <CaseTasksSection caseId={caseData.id} />
+
+              <Separator />
+
+              <CaseClientSection caseData={caseData} onSaved={onCaseUpdated} />
 
               <Separator />
 
