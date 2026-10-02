@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useProSubscription } from '@/hooks/useProSubscription';
 import { useCaseEntitlement } from '@/hooks/useCaseEntitlement';
 import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
+import { ProPaymentHistory } from '@/components/lawyer/ProPaymentHistory';
 
 /**
  * FASE 5.2E — /lawyer/plan representa EXCLUSIVAMENTE LegalUp Pro.
@@ -72,7 +72,8 @@ export default function PlanPage() {
                   {entitlement.freeCaseConsumed ? 'Consumido' : 'Disponible'}
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground">
+
+      <p className="text-xs text-muted-foreground">
                 Tu primer caso directo no requiere suscripción. Las funciones de IA están incluidas con LegalUp Pro.
               </p>
               <Button onClick={() => setProOpen(true)} className="w-full bg-gray-900 hover:bg-green-900 sm:w-auto">
@@ -83,13 +84,7 @@ export default function PlanPage() {
         </CardContent>
       </Card>
 
-      <p className="text-xs text-muted-foreground">
-        Cómo recibes pagos de tus clientes se configura en{' '}
-        <Link to="/dashboard/payment-settings" className="font-medium text-green-700 hover:underline">
-          Configuración de pagos
-        </Link>
-        .
-      </p>
+      <ProPaymentHistory />
 
       <ProPricingModal open={proOpen} onOpenChange={setProOpen} triggerAction="plan_page" />
     </div>

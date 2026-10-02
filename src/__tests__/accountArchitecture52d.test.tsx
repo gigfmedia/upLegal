@@ -21,6 +21,9 @@ vi.mock('@/hooks/useCaseEntitlement', () => ({
 vi.mock('@/components/legalup-pro/ProPricingModal', () => ({
   ProPricingModal: () => null,
 }));
+vi.mock('@/hooks/useProPaymentHistory', () => ({
+  useProPaymentHistory: () => ({ payments: [], loading: false, error: null, initialLimit: 10 }),
+}));
 vi.mock('@/lib/supabaseClient', () => ({
   supabase: {
     auth: { getUser: async () => ({ data: { user: { id: 'L1' } } }) },
@@ -84,7 +87,8 @@ describe('FASE 5.2D — integraciones', () => {
 describe('FASE 5.2D — plan y facturación', () => {
   it('6/7. FREE: LegalUp Gratis + caso disponible + CTA Pro', () => {
     renderWithRouter(<PlanPage />);
-    expect(screen.getByText(/Plan actual:.*LegalUp Gratis/i)).toBeInTheDocument();
+    expect(screen.getByText(/Plan actual:/)).toBeInTheDocument();
+    expect(screen.getByText(/LegalUp Gratis/)).toBeInTheDocument();
     expect(screen.getByText('Disponible')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Ver LegalUp Pro' })).toBeInTheDocument();
   });
@@ -113,9 +117,10 @@ describe('FASE 5.2D — plan y facturación', () => {
     renderWithRouter(<PlanPage />);
     expect(screen.queryByText('LegalUp AI')).not.toBeInTheDocument();
   });
-  it('14. pagos del abogado separados (link, sin fusionar)', () => {
-    renderWithRouter(<PlanPage />);
-    expect(screen.getByRole('link', { name: 'Configuración de pagos' })).toHaveAttribute('href', '/dashboard/payment-settings');
+  it('14. pagos del abogado no se mezclan: Plan no enlaza flujos no operativos', () => {
+    const src = read('src/pages/lawyer/PlanPage.tsx');
+    expect(src).not.toContain('payment-settings');
+    expect(src).not.toMatch(/Cómo recibes pagos/i);
     const layout = read('src/components/dashboard/DashboardLayout.tsx');
     expect(layout).toContain('/dashboard/payment-settings');
     expect(layout).toContain('/lawyer/plan');
