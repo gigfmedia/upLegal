@@ -25,7 +25,9 @@ import { SharedCaseCard } from '@/components/legalup-ai/SharedCaseCard';
 import { CASE_STATUS_COLORS, CASE_STATUS_LABELS, isActiveCaseStatus } from '@/lib/caseStatus';
 import { decideCreateCaseAction } from '@/lib/caseCreateGate';
 import { CaseEditDialog } from '@/components/lawyer/CaseEditDialog';
+import { PortfolioView } from '@/components/lawyer/PortfolioView';
 import { isNextActionOverdue } from '@/lib/caseControl';
+import { activePortfolioCases, distinctStages, groupByStage, groupByStatus, normalizeStage, stageLabel } from '@/lib/portfolio';
 import { supabase } from '@/lib/supabaseClient';
 import posthog from 'posthog-js';
 
@@ -49,6 +51,9 @@ export default function CasesPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  // FASE 5.3 — vista Casos/Cartera + filtro por etapa (combinable).
+  const [view, setView] = useState<'casos' | 'cartera'>('casos');
+  const [stageFilter, setStageFilter] = useState('all');
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -161,10 +166,27 @@ export default function CasesPage() {
           : statusFilter === 'active' ? isActiveCaseStatus(c.status)
           : statusFilter === 'history' ? !isActiveCaseStatus(c.status)
           : c.status === statusFilter;
-        return matchesSearch && matchesStatus;
+        // 5.3 — etapa combinable con estado.
+        const matchesStage =
+          stageFilter === 'all' ? true
+          : stageFilter === '__none__' ? !normalizeStage(c.stage)
+          : normalizeStage(c.stage) === stageFilter;
+        return matchesSearch && matchesStatus && matchesStage;
       }),
-    [cases, search, statusFilter]
+    [cases, search, statusFilter, stageFilter]
   );
+
+  // 5.3 — cartera derivada de los mismos casos (1 query, sin N+1).
+  const stages = useMemo(() => distinctStages(cases), [cases]);
+  const activeCases = useMemo(() => activePortfolioCases(cases), [cases]);
+  const stageGroups = useMemo(() => groupByStage(cases), [cases]);
+  const statusGroups = useMemo(() => groupByStatus(cases), [cases]);
+  const maxStageCount = stageGroups.length > 0 ? stageGroups[0].count : 0;
+
+  const openStageInList = (stage: string | null) => {
+    setStageFilter(stage === null ? '__none__' : stage);
+    setView('casos');
+  };
 
   // 4.36D — lifetime authority comes from the server (get_my_case_entitlement).
   // Never infer consumption from visible rows: deleted cases stay consumed.
@@ -330,13 +352,29 @@ export default function CasesPage() {
         </Button>
       </div>
 
+      {/* 5.3 — Casos / Cartera (misma fuente, sin queries extra). */}
+      <div className="flex gap-1 rounded-lg border bg-white p-1 shadow-sm w-fit" role="tablist" aria-label="Vista de casos">
+        {(['casos', 'cartera'] as const).map((v) => (
+          <button
+            key={v}
+            type="button"
+            role="tab"
+            aria-selected={view === v}
+            onClick={() => setView(v)}
+            className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 ${view === v ? 'bg-gray-900 text-white' : 'text-muted-foreground hover:text-gray-900'}`}
+          >
+            {v === 'casos' ? 'Casos' : 'Cartera'}
+          </button>
+        ))}
+      </div>
+
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Buscar por título o cliente..." className="pl-8" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px]" aria-label="Filtrar por estado">
             <SelectValue placeholder="Estado" />
           </SelectTrigger>
           <SelectContent>
@@ -352,7 +390,29 @@ export default function CasesPage() {
             <SelectItem value="cancelled">Cancelado</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={stageFilter} onValueChange={setStageFilter}>
+          <SelectTrigger className="w-[180px]" aria-label="Filtrar por etapa">
+            <SelectValue placeholder="Etapa" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas las etapas</SelectItem>
+            {stages.map((s) => (
+              <SelectItem key={s} value={s}>{s}</SelectItem>
+            ))}
+            <SelectItem value="__none__">Sin etapa</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
+
+      {view === 'cartera' && !error ? (
+        <PortfolioView
+          activeCount={activeCases.length}
+          stageGroups={stageGroups}
+          statusGroups={statusGroups}
+          maxStageCount={maxStageCount}
+          onSelectStage={openStageInList}
+        />
+      ) : null}
 
       {error && (
         <Card>
@@ -365,7 +425,7 @@ export default function CasesPage() {
         </Card>
       )}
 
-      {!error && filtered.length === 0 ? (        <Card>
+      {!error && view === 'casos' && filtered.length === 0 ? (        <Card>
           <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
             <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-green-50 text-green-700"><FolderOpen className="h-7 w-7" /></span>
             <p className="text-lg font-medium text-gray-900">No hay casos</p>
@@ -378,7 +438,7 @@ export default function CasesPage() {
             }} className="mt-2 bg-green-900 text-white hover:bg-green-800"><Plus className="h-4 w-4 mr-1" /> Crear mi primer caso</Button>
           </CardContent>
         </Card>
-      ) : !error && (
+      ) : !error && view === 'casos' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filtered.map((c) => (
             <SharedCaseCard
@@ -394,6 +454,11 @@ export default function CasesPage() {
                   <Badge className={`${CASE_STATUS_COLORS[c.status] || 'bg-gray-100 text-gray-800'} border-0 text-xs`}>
                     {CASE_STATUS_LABELS[c.status] || c.status}
                   </Badge>
+                  {normalizeStage(c.stage) ? (
+                    <Badge variant="secondary" className="text-xs font-normal">
+                      {normalizeStage(c.stage)}
+                    </Badge>
+                  ) : null}
                   {/* FASE 5.1 — próxima gestión escaneable */}
                   {c.next_action && !c.next_action_completed_at ? (
                     <Badge variant={isNextActionOverdue(c) ? 'destructive' : 'outline'} className="inline-flex items-center gap-1 text-xs font-normal">
@@ -495,6 +560,7 @@ export default function CasesPage() {
           onOpenChange={(open) => { if (!open) setEditCaseId(null); }}
           caseData={cases.find((c) => c.id === editCaseId)!}
           clients={clients}
+          stageSuggestions={stages}
           onDeleted={() => {
             setEditCaseId(null);
             void refetchCases();

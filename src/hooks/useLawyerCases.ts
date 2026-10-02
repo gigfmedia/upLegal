@@ -26,6 +26,8 @@ export interface LawyerCase {
   next_action_due_at: string | null;
   next_action_completed_at: string | null;
   priority: 'high' | 'medium' | 'low';
+  // FASE 5.3 — etapa jurídica (texto libre, null = sin etapa)
+  stage: string | null;
   // joined
   client?: { id: string; name: string; email: string | null } | null;
   booking?: { id: string; user_name: string; service_title: string | null; status: string } | null;
@@ -74,6 +76,7 @@ export function useLawyerCases() {
       status?: CaseStatus;
       source?: string;
       price_clp?: number | null;
+      stage?: string | null;
     }): Promise<LawyerCase> => {
       if (!user?.id) throw new Error('No autenticado');
       const payload: Record<string, unknown> = {
@@ -87,6 +90,7 @@ export function useLawyerCases() {
         status: input.status || 'new',
         source: input.source || 'LAWYER_DIRECT',
         price_clp: input.price_clp ?? null,
+        stage: input.stage?.trim() || null,
       };
       const { data, error } = await supabase.from('lawyer_cases').insert(payload).select('*, client:lawyer_clients(id,name,email), booking:bookings!lawyer_cases_booking_id_fkey(id,user_name,service_title,status)').single();
       if (error) throw error;
@@ -98,7 +102,7 @@ export function useLawyerCases() {
     [user?.id]
   );
 
-  const updateCase = useCallback(async (id: string, patch: Partial<Pick<LawyerCase, 'title' | 'description' | 'practice_area' | 'status' | 'client_id' | 'booking_id' | 'price_clp' | 'next_action' | 'next_action_due_at' | 'next_action_completed_at' | 'priority'>>) => {
+  const updateCase = useCallback(async (id: string, patch: Partial<Pick<LawyerCase, 'title' | 'description' | 'practice_area' | 'status' | 'client_id' | 'booking_id' | 'price_clp' | 'next_action' | 'next_action_due_at' | 'next_action_completed_at' | 'priority' | 'stage'>>) => {
     const payload: Record<string, unknown> = {};
     if (patch.title !== undefined) payload.title = patch.title.trim();
     if (patch.description !== undefined) payload.description = patch.description?.trim() || null;
@@ -111,6 +115,7 @@ export function useLawyerCases() {
     if (patch.next_action_due_at !== undefined) payload.next_action_due_at = patch.next_action_due_at;
     if (patch.next_action_completed_at !== undefined) payload.next_action_completed_at = patch.next_action_completed_at;
     if (patch.priority !== undefined) payload.priority = patch.priority;
+    if (patch.stage !== undefined) payload.stage = patch.stage?.trim() || null;
     const { data, error } = await supabase.from('lawyer_cases').update(payload).eq('id', id).select('*, client:lawyer_clients(id,name,email), booking:bookings!lawyer_cases_booking_id_fkey(id,user_name,service_title,status)').single();
     if (error) throw error;
     setCases((prev) => prev.map((c) => (c.id === id ? (data as unknown as LawyerCase) : c)));

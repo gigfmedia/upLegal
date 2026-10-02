@@ -203,6 +203,7 @@ function CaseDetailContent() {
               </Link>
             )}
             {viewCase.practice_area && <Badge variant="secondary">{viewCase.practice_area}</Badge>}
+            {viewCase.stage && <Badge variant="outline">Etapa: {viewCase.stage}</Badge>}
             {caseBookings.some((b) => b.status === 'confirmed') && (
               <Link to="/lawyer/citas" className="hover:underline">Reserva confirmada</Link>
             )}

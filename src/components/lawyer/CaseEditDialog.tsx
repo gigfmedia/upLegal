@@ -39,16 +39,19 @@ type Props = {
   clients: LawyerClientLike[];
   onSaved: (row: Partial<LawyerCase>) => void;
   onDeleted?: () => void;
+  /** Etapas existentes para sugerir (datalist). Opcional. */
+  stageSuggestions?: string[];
 };
 
 /** Edición administrativa del caso. Reutiliza updateCase/deleteCase existentes. */
-export function CaseEditDialog({ open, onOpenChange, caseData, clients, onSaved, onDeleted }: Props) {
+export function CaseEditDialog({ open, onOpenChange, caseData, clients, onSaved, onDeleted, stageSuggestions = [] }: Props) {
   const { updateCase, deleteCase } = useLawyerCases();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<CaseStatus>('new');
+  const [stage, setStage] = useState('');
   const [clientId, setClientId] = useState('none');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -61,6 +64,7 @@ export function CaseEditDialog({ open, onOpenChange, caseData, clients, onSaved,
       setTitle(caseData.title ?? '');
       setDescription(caseData.description ?? '');
       setStatus(caseData.status);
+      setStage(caseData.stage ?? '');
       setClientId(caseData.client_id || 'none');
     }
   }, [open, caseData]);
@@ -73,6 +77,7 @@ export function CaseEditDialog({ open, onOpenChange, caseData, clients, onSaved,
         title,
         description: description || null,
         status,
+        stage: stage.trim() || null,
         client_id: clientId === 'none' ? null : clientId,
       });
       toast({ title: 'Caso actualizado' });
@@ -150,6 +155,24 @@ export function CaseEditDialog({ open, onOpenChange, caseData, clients, onSaved,
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Etapa</Label>
+              <Input
+                value={stage}
+                onChange={(e) => setStage(e.target.value)}
+                placeholder="Ej: Embargo (opcional)"
+                aria-label="Etapa del caso"
+                list="case-stage-suggestions"
+                maxLength={80}
+              />
+              {stageSuggestions.length > 0 && (
+                <datalist id="case-stage-suggestions">
+                  {stageSuggestions.map((s) => (
+                    <option key={s} value={s} />
+                  ))}
+                </datalist>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Solicitud / cita de origen</Label>
