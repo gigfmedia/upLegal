@@ -109,13 +109,13 @@ describe('4.34L case first-view hierarchy',()=>{
  });
 it('client name links to client without email in header',()=>{
   const cd = state.caseData as unknown as Record<string, unknown>;
-  cd.client_id='CL1';cd.client={name:'Juan'};
+  cd.client_id='CL1';cd.client={name:'Juan'};cd.price_clp=200000;
   renderCase('overview');
-  // 4.47A: header link preserved; Resumen del caso card links the same client.
+  // 5.1 dedup: header link owns the client; no redundant Resumen card.
   const links=screen.getAllByRole('link',{name:'Juan'});
   expect(links.length).toBeGreaterThanOrEqual(1);
   for (const link of links) expect(link.getAttribute('href')).toBe('/lawyer/clients/CL1');
-  expect(screen.getByText('Resumen del caso')).toBeInTheDocument();
+  expect(screen.queryByText('Resumen del caso')).not.toBeInTheDocument();
   expect(screen.queryByText(/@/)).not.toBeInTheDocument();
 });
  it('save uses existing mutation and refreshes header; failure stays honest',async()=>{

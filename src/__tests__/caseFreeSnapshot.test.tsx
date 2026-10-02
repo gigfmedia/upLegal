@@ -111,7 +111,6 @@ describe('4.48B overview wiring contracts', () => {
     const src = read('src/pages/lawyer/CaseDetailPage.tsx');
     const overview = src.slice(src.indexOf('<TabsContent value="overview"'));
     const order = [
-      '<CaseOverviewSummary',
       '<AICaseFreeSnapshot',
       '<AICaseLatestAnalysis',
       '<AICaseCommandCenter',

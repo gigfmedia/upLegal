@@ -21,6 +21,11 @@ export interface LawyerCase {
   currency: string;
   created_at: string;
   updated_at: string;
+  // FASE 5.1 — control del caso
+  next_action: string | null;
+  next_action_due_at: string | null;
+  next_action_completed_at: string | null;
+  priority: 'high' | 'medium' | 'low';
   // joined
   client?: { id: string; name: string; email: string | null } | null;
   booking?: { id: string; user_name: string; service_title: string | null; status: string } | null;
@@ -93,7 +98,7 @@ export function useLawyerCases() {
     [user?.id]
   );
 
-  const updateCase = useCallback(async (id: string, patch: Partial<Pick<LawyerCase, 'title' | 'description' | 'practice_area' | 'status' | 'client_id' | 'booking_id' | 'price_clp'>>) => {
+  const updateCase = useCallback(async (id: string, patch: Partial<Pick<LawyerCase, 'title' | 'description' | 'practice_area' | 'status' | 'client_id' | 'booking_id' | 'price_clp' | 'next_action' | 'next_action_due_at' | 'next_action_completed_at' | 'priority'>>) => {
     const payload: Record<string, unknown> = {};
     if (patch.title !== undefined) payload.title = patch.title.trim();
     if (patch.description !== undefined) payload.description = patch.description?.trim() || null;
@@ -102,6 +107,10 @@ export function useLawyerCases() {
     if (patch.client_id !== undefined) payload.client_id = patch.client_id;
     if (patch.booking_id !== undefined) payload.booking_id = patch.booking_id;
     if (patch.price_clp !== undefined) payload.price_clp = patch.price_clp;
+    if (patch.next_action !== undefined) payload.next_action = patch.next_action?.trim() || null;
+    if (patch.next_action_due_at !== undefined) payload.next_action_due_at = patch.next_action_due_at;
+    if (patch.next_action_completed_at !== undefined) payload.next_action_completed_at = patch.next_action_completed_at;
+    if (patch.priority !== undefined) payload.priority = patch.priority;
     const { data, error } = await supabase.from('lawyer_cases').update(payload).eq('id', id).select('*, client:lawyer_clients(id,name,email), booking:bookings!lawyer_cases_booking_id_fkey(id,user_name,service_title,status)').single();
     if (error) throw error;
     setCases((prev) => prev.map((c) => (c.id === id ? (data as unknown as LawyerCase) : c)));

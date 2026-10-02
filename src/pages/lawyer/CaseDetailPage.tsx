@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useLawyerCase, useLawyerCases, type CaseStatus, type LawyerCase } from '@/hooks/useLawyerCases';
 import { useLawyerClients } from '@/hooks/useLawyerClients';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowLeft, Calendar, CalendarDays, Clock, Plus, Sparkles, AlertTriangle } from 'lucide-react';
+import { Loader2, ArrowLeft, Calendar, CalendarDays, Clock, ListChecks, Plus, Sparkles, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { format } from 'date-fns';
@@ -28,10 +28,11 @@ import { useCaseDocumentWorkspace } from '@/hooks/useCaseDocumentWorkspace';
 import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
 import { CaseDocuments } from '@/components/lawyer/CaseDocuments';
 import { CaseEditDialog } from '@/components/lawyer/CaseEditDialog';
-import { CaseOverviewSummary } from '@/components/lawyer/CaseOverviewSummary';
 import { CaseDescriptionCard } from '@/components/legalup-ai/CaseDescriptionCard';
+import { CaseManagementDrawer } from '@/components/lawyer/CaseManagementDrawer';
+import { useCaseControlSummary } from '@/hooks/useCaseTasks';
 import { CASE_STATUS_COLORS } from '@/lib/caseStatus';
-import { BOOKING_STATUS_LABELS as bookingStatusLabels, CASE_STATUS_LABELS as statusLabels } from '@/lib/caseLabels';
+import { BOOKING_STATUS_LABELS as bookingStatusLabels, CASE_SOURCE_LABELS as sourceLabels, CASE_STATUS_LABELS as statusLabels } from '@/lib/caseLabels';
 
 export default function CaseDetailPage() {
   const { caseId } = useParams();
@@ -54,6 +55,24 @@ function CaseDetailContent() {
   // reflects saves without reload (useLawyerCase fetches once per case).
   useEffect(() => { setPatched(null); }, [caseId]);
   const viewCase = useMemo(() => caseData ? { ...caseData, ...patched } : null, [caseData, patched]);
+  // 5.1B — resumen liviano para el trigger "Gestionar caso" (sin detalle inline).
+  const controlSummary = useCaseControlSummary(
+    viewCase?.id,
+    viewCase ? { next_action_due_at: viewCase.next_action_due_at ?? null, next_action_completed_at: viewCase.next_action_completed_at ?? null } : null
+  );
+  const [manageOpen, setManageOpen] = useState(false);
+  // Al cerrar el drawer, el resumen del trigger se refresca (ej: 4→3 pendientes).
+  const manageOpenRef = useRef(manageOpen);
+  useEffect(() => {
+    if (manageOpenRef.current && !manageOpen) controlSummary.refetch();
+    manageOpenRef.current = manageOpen;
+  }, [manageOpen]);
+  const manageLabel = controlSummary.overdueCount > 0
+    ? `Gestionar caso · ${controlSummary.overdueCount} vencido${controlSummary.overdueCount === 1 ? '' : 's'}`
+    : controlSummary.pendingCount > 0
+      ? `Gestionar caso · ${controlSummary.pendingCount} pendiente${controlSummary.pendingCount === 1 ? '' : 's'}`
+      : 'Gestionar caso';
+  const manageAlert = controlSummary.overdueCount > 0;
   const [searchParams, setSearchParams] = useSearchParams();
   // 4.34K: direct capability tabs. Backward compat: legacy ?tab=ai[&view=]
   // maps to the equivalent direct tab (4.34J deep links keep working).
@@ -189,9 +208,16 @@ function CaseDetailContent() {
             )}
           </div>
         </div>
-        <Button type="button" variant="outline" onClick={() => setEditOpen(true)}>
-          Editar caso
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" onClick={() => setManageOpen(true)} aria-label="Gestionar caso">
+            {manageAlert
+              ? <AlertTriangle className="h-4 w-4 mr-1" aria-hidden="true" />
+              : <ListChecks className="h-4 w-4 mr-1" aria-hidden="true" />} {manageLabel}
+          </Button>
+          <Button type="button" variant="outline" onClick={() => setEditOpen(true)}>
+            Editar caso
+          </Button>
+        </div>
       </div>
       {caseData && (
         <CaseEditDialog
@@ -203,7 +229,9 @@ function CaseDetailContent() {
         />
       )}
 
-      {/* 4.34Q: persistent Case context above tabs (legacy hierarchy). */}
+      {/* 4.34Q: persistent Case context above tabs (legacy hierarchy).
+          5.1C: origen + monto como metadata secundaria read-only (solo con
+          valor; la edición vive en "Editar caso", nunca en el drawer). */}
       <div className="my-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
           <CalendarDays className="h-4 w-4" aria-hidden="true" />
@@ -213,9 +241,29 @@ function CaseDetailContent() {
           <Clock className="h-4 w-4" aria-hidden="true" />
           Actualizado: {format(new Date(viewCase.updated_at), "d 'de' MMMM yyyy", { locale: es })}
         </span>
+        {viewCase.source && viewCase.source !== 'UNKNOWN' && (
+          <span className="inline-flex items-center gap-1.5">
+            Origen: {sourceLabels[viewCase.source] || viewCase.source}
+          </span>
+        )}
+        {viewCase.price_clp != null && (
+          <span className="inline-flex items-center gap-1.5">
+            Monto: ${Number(viewCase.price_clp).toLocaleString('es-CL')}
+          </span>
+        )}
       </div>
 
       <CaseDescriptionCard description={viewCase.description} />
+
+      {/* 5.1B — gestión operativa en drawer (detalle limpio, sin banda inline). */}
+      {viewCase && (
+        <CaseManagementDrawer
+          caseData={viewCase}
+          open={manageOpen}
+          onOpenChange={setManageOpen}
+          onCaseUpdated={(row) => setPatched(row)}
+        />
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
         <TabsList className="sticky top-16 z-10 mb-4 flex h-auto w-full flex-wrap justify-start gap-0 border border-gray-200 bg-white shadow-sm p-0">
@@ -227,10 +275,8 @@ function CaseDetailContent() {
         </TabsList>
 
         <TabsContent value="overview" className="mt-4 space-y-4">
-          {/* 4.47A: main operational summary first (canonical lawyer_cases
-              metadata, every plan). Then the persisted document insight,
-              then derived intelligence, then operational cards. */}
-          <CaseOverviewSummary caseData={viewCase} />
+          {/* 5.1B: el drawer lateral es la ficha operativa; el tab
+              Resumen solo muestra insight documental, inteligencia y citas. */}
           {/* 4.48B: compact deterministic snapshot for free_case only.
               Separate limited layer (never the full Command Center, no
               case_analysis change). Read-only: 0 provider, 0 quota. */}

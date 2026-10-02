@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,8 @@ import { SharedCaseCard } from '@/components/legalup-ai/SharedCaseCard';
 import { CASE_STATUS_COLORS, CASE_STATUS_LABELS, isActiveCaseStatus } from '@/lib/caseStatus';
 import { decideCreateCaseAction } from '@/lib/caseCreateGate';
 import { CaseEditDialog } from '@/components/lawyer/CaseEditDialog';
+import { isNextActionOverdue } from '@/lib/caseControl';
+import { supabase } from '@/lib/supabaseClient';
 import posthog from 'posthog-js';
 
 function CaseCardSkeleton() {
@@ -70,6 +72,30 @@ export default function CasesPage() {
   const [editCaseId, setEditCaseId] = useState<string | null>(null);
   const [editDialogKey, setEditDialogKey] = useState(0);
   const [actingCaseId, setActingCaseId] = useState<string | null>(null);
+  // FASE 5.1 — conteo de pendientes por caso (1 query, sin N+1).
+  // Sin useAuth directo: deriva el lawyer del hook (mockeable en tests).
+  // RLS ya aísla por lawyer_id en el servidor.
+  const [pendingByCase, setPendingByCase] = useState<Record<string, number>>({});
+  const lawyerIdForTasks = cases.length > 0 ? cases[0].lawyer_id : null;
+  useEffect(() => {
+    if (cases.length === 0) return;
+    const ids = cases.map((c) => c.id);
+    let cancelled = false;
+    supabase
+      .from('lawyer_case_tasks')
+      .select('case_id')
+      .in('case_id', ids)
+      .eq('completed', false)
+      .then(({ data }) => {
+        if (cancelled) return;
+        const map: Record<string, number> = {};
+        for (const row of (data || []) as { case_id: string }[]) {
+          map[row.case_id] = (map[row.case_id] || 0) + 1;
+        }
+        setPendingByCase(map);
+      });
+    return () => { cancelled = true; };
+  }, [cases.length, lawyerIdForTasks]);
 
   // 4.36D — capacity reached for an already-paying Pro lawyer (never the
   // subscription paywall). Fail-closed: unknown limit never reports full.
@@ -364,9 +390,25 @@ export default function CasesPage() {
               updatedAt={c.updated_at}
               workspaceId={c.ai_workspace_id}
               statusBadge={
-                <Badge className={`${CASE_STATUS_COLORS[c.status] || 'bg-gray-100 text-gray-800'} border-0 text-xs`}>
-                  {CASE_STATUS_LABELS[c.status] || c.status}
-                </Badge>
+                <span className="flex flex-wrap items-center gap-1.5">
+                  <Badge className={`${CASE_STATUS_COLORS[c.status] || 'bg-gray-100 text-gray-800'} border-0 text-xs`}>
+                    {CASE_STATUS_LABELS[c.status] || c.status}
+                  </Badge>
+                  {/* FASE 5.1 — próxima gestión escaneable */}
+                  {c.next_action && !c.next_action_completed_at ? (
+                    <Badge variant={isNextActionOverdue(c) ? 'destructive' : 'outline'} className="inline-flex items-center gap-1 text-xs font-normal">
+                      {isNextActionOverdue(c) ? <AlertTriangle className="h-3 w-3" aria-hidden="true" /> : null}
+                      {isNextActionOverdue(c) ? 'Vencida: ' : '→ '}
+                      {c.next_action.length > 40 ? `${c.next_action.slice(0, 40)}…` : c.next_action}
+                      {c.next_action_due_at ? ` · ${new Date(c.next_action_due_at).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })}` : ''}
+                    </Badge>
+                  ) : null}
+                  {(pendingByCase[c.id] || 0) > 0 ? (
+                    <Badge variant="secondary" className="text-xs font-normal">
+                      {pendingByCase[c.id]} pendiente{pendingByCase[c.id] === 1 ? '' : 's'}
+                    </Badge>
+                  ) : null}
+                </span>
               }
               onOpen={() => navigate(`/lawyer/cases/${c.id}`)}
               onTimeline={() => navigate(`/lawyer/cases/${c.id}?tab=activity`)}
