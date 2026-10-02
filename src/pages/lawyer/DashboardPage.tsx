@@ -1,18 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
-import { useProfile } from '@/hooks/useProfile';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { User, Calendar, Briefcase, FileText, Clock, ArrowRight, Loader2, Inbox, DollarSign, Users, Scale } from 'lucide-react';
-import { ProfileCompletion } from '@/components/dashboard/ProfileCompletion';
+import { Calendar, Briefcase, ArrowRight, Loader2, Inbox, DollarSign, Users } from 'lucide-react';
 import { useProSubscription } from '@/hooks/useProSubscription';
 import { useCaseEntitlement } from '@/hooks/useCaseEntitlement';
-import { GoogleCalendarConnect } from '@/components/dashboard/GoogleCalendarConnect';
 
 const statusLabels: Record<string, string> = {
   pending: 'Pendiente',
@@ -38,21 +35,20 @@ import { ActionCenter } from '@/components/lawyer/ActionCenter';
 import { CaseManagementDrawer } from '@/components/lawyer/CaseManagementDrawer';
 import { useLawyerCases } from '@/hooks/useLawyerCases';
 import { useAllCaseTasks } from '@/hooks/useCaseTasks';
+import { formatStaleLabel } from '@/lib/actionCenter';
 import { isBookingDeniedError } from '@/lib/appointmentEntitlement';
 import posthog from 'posthog-js';
 
 export default function LawyerDashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { profile, services, completionPercentage } = useProfile(user?.id);
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(true);
-  const [kpis, setKpis] = useState({ pendingRequests: 0, todayCount: 0, activeCases: 0, revenueMonth: 0, directCases: 0 });
+  const [kpis, setKpis] = useState({ pendingRequests: 0, todayCount: 0, activeCases: 0, revenueMonth: 0 });
   const [nextAppointments, setNextAppointments] = useState<any[]>([]);
-  const [attention, setAttention] = useState<{ title: string; desc: string; cta: string; href: string } | null>(null);
-  const [stats, setStats] = useState({ clients: 0, cases: 0, services: 0 });
+  const [stats, setStats] = useState({ clients: 0, cases: 0 });
   const [showNewAppointment, setShowNewAppointment] = useState(false);
   const { findOrCreateClient } = useLawyerClients();
   // FASE 5.2 — Action Center: 1 query de casos (hook existente) + 1 query
@@ -163,16 +159,15 @@ export default function LawyerDashboardPage() {
         startOfMonth.setDate(1);
         startOfMonth.setHours(0, 0, 0, 0);
 
-        const [pendingRes, todayRes, casesRes, directCasesRes, paymentsRes, clientsRes, servicesRes, nextRes, bookingsForAttention] = await Promise.all([
+        // 5.2C — solo lo que el layout usa: conteos para KPIs/alerta,
+        // próximas 3 citas e ingresos del mes. Sin queries de secciones eliminadas.
+        const [pendingRes, todayRes, casesRes, paymentsRes, clientsRes, nextRes] = await Promise.all([
           supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('lawyer_id', user.id).in('status', ['pending', 'pending_payment']),
           supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('lawyer_id', user.id).eq('booking_type', 'appointment').eq('scheduled_date', todayStr).neq('status', 'cancelled'),
           supabase.from('lawyer_cases').select('id', { count: 'exact', head: true }).eq('lawyer_id', user.id).not('status', 'in', '("closed","cancelled")'),
-          supabase.from('lawyer_cases').select('id', { count: 'exact', head: true }).eq('lawyer_id', user.id).eq('source', 'LAWYER_DIRECT'),
           supabase.from('payments').select('lawyer_amount').eq('lawyer_id', user.id).gte('created_at', startOfMonth.toISOString()),
           supabase.from('lawyer_clients').select('id', { count: 'exact', head: true }).eq('lawyer_id', user.id),
-          supabase.from('lawyer_services').select('id', { count: 'exact', head: true }).eq('lawyer_user_id', user.id),
           supabase.from('bookings').select('id, user_name, service_title, scheduled_date, scheduled_time, status').eq('lawyer_id', user.id).eq('booking_type', 'appointment').neq('status', 'cancelled').gte('scheduled_date', todayStr).order('scheduled_date', { ascending: true }).order('scheduled_time', { ascending: true }).limit(3),
-          supabase.from('bookings').select('id, user_name, service_title, created_at').eq('lawyer_id', user.id).in('status', ['pending', 'pending_payment']).order('created_at', { ascending: false }).limit(1),
         ]);
 
         const pendingRequests = pendingRes.count ?? 0;
@@ -180,22 +175,9 @@ export default function LawyerDashboardPage() {
         const activeCases = casesRes.count ?? 0;
         const revenueMonth = (paymentsRes.data || []).reduce((s: number, p: any) => s + (p.lawyer_amount ?? 0), 0);
 
-        setKpis({ pendingRequests, todayCount, activeCases, revenueMonth, directCases: directCasesRes.count ?? 0 });
+        setKpis({ pendingRequests, todayCount, activeCases, revenueMonth });
         setNextAppointments(nextRes.data || []);
-        setStats({ clients: clientsRes.count ?? 0, cases: activeCases, services: servicesRes.count ?? 0 });
-
-        // REQUIERE TU ATENCIÓN logic: pending request > next appointment > active case
-        if (pendingRequests > 0 && bookingsForAttention.data && bookingsForAttention.data.length > 0) {
-          const r: any = bookingsForAttention.data[0];
-          setAttention({ title: 'Nueva solicitud', desc: `${r.user_name || 'Cliente'} solicita ${r.service_title || 'asesoría'}`, cta: 'Revisar solicitud', href: '/lawyer/requests' });
-        } else if ((nextRes.data || []).length > 0) {
-          const n: any = nextRes.data![0];
-          setAttention({ title: 'Próxima cita', desc: `${n.scheduled_time?.slice(0,5) || ''} · ${n.user_name || 'Cliente'} · ${n.service_title || 'Cita'}`, cta: 'Ver cita', href: '/lawyer/citas' });
-        } else if (activeCases > 0) {
-          setAttention({ title: 'Caso sin gestionar', desc: `Tienes ${activeCases} caso${activeCases>1?'s':''} activo${activeCases>1?'s':''} pendiente${activeCases>1?'s':''} de revisión.`, cta: 'Ver caso', href: '/lawyer/cases' });
-        } else {
-          setAttention(null);
-        }
+        setStats({ clients: clientsRes.count ?? 0, cases: activeCases });
       } catch (e) {
         console.error(e);
       } finally {
@@ -205,40 +187,12 @@ export default function LawyerDashboardPage() {
     fetch();
   }, [user?.id]);
 
-  // 4.30D: Cases is the primary product entry. The AI card guides to
-  // Cases, where AI works contextually inside each case.
-  // 4.31B F3: one paid product. Users without legacy AI history never see
-  // standalone AI purchase; AI is presented as a Pro capability in Cases.
-  // 4.41A (rev): LegalUp Pro NO tiene trial. La tarjeta es promo estática de
-  // Pro para no-Pro; Pro activo conserva navegación a sus casos. Sin copy de
-  // prueba/expiración, sin precio en tarjeta.
-  const handleLegalUpAIClick = () => {
-    if (hasProAccess) {
-      navigate('/lawyer/cases');
-      return;
-    }
-    setProPaywallOpen(true);
-  };
-
-  let aiBadgeText: string;
-  let aiCtaText: string;
-  let aiSecondaryText: string | null = null;
-  if (hasProAccess) {
-    aiBadgeText =
-      'La IA trabaja dentro de tus casos: analiza documentos, detecta riesgos y conversa con el contexto de cada caso.';
-    aiCtaText = 'Ir a mis casos';
-  } else {
-    aiBadgeText = 'Gestiona clientes, casos, citas y documentos con LegalUp AI integrado.';
-    aiSecondaryText = 'Incluye consultas IA, análisis de documentos e investigación jurídica.';
-    aiCtaText = 'Ver LegalUp Pro';
-  }
-
   return (
     <div className="space-y-6 px-4 sm:px-6 lg:px-8 py-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Inicio</h1>
-        <p className="text-muted-foreground">Gestiona tus clientes, casos, citas y oportunidades desde un solo lugar.</p>
+        <p className="text-muted-foreground">Gestiona lo que requiere tu atención y mantén tus asuntos al día.</p>
       </div>
 
       <OnboardingCard />
@@ -372,86 +326,55 @@ export default function LawyerDashboardPage() {
         onCompleteTask={completeActionTask}
       />
 
-      {/* HOY */}
-      <div>
-        <h2 className="text-xs font-semibold tracking-widest text-gray-500 uppercase mb-3">Hoy</h2>
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-          <Card className="hover:shadow-sm transition-shadow">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-600">Solicitudes pendientes</span>
-                <Inbox className="h-4 w-4 text-gray-400" />
-              </div>
-              {loading ? <div className="h-7 w-12 bg-gray-100 animate-pulse rounded" /> : <div className="text-2xl font-bold">{kpis.pendingRequests}</div>}
-              <p className="text-xs text-gray-500 mt-1">{kpis.pendingRequests === 0 ? 'No tienes solicitudes nuevas.' : 'Por procesar'}</p>
-              <Link to="/lawyer/requests" className="inline-flex items-center gap-1 text-xs font-medium text-green-600 hover:text-green-700 mt-3">Ver solicitudes <ArrowRight className="h-3 w-3" /></Link>
-            </CardContent>
-          </Card>
+      {/* 5.2C — KPIs compactos: una superficie, 4 métricas, click navega. */}
+      <Card className="overflow-hidden">
+        <CardContent className="grid grid-cols-2 gap-px bg-gray-100 p-0 lg:grid-cols-4">
+          <Link to="/lawyer/clients" className="flex items-center gap-3 bg-white p-4 hover:bg-gray-50">
+            <Users className="h-5 w-5 shrink-0 text-gray-400" aria-hidden="true" />
+            <span className="min-w-0">
+              <span className="block text-xl font-bold leading-none">{loading ? '…' : stats.clients}</span>
+              <span className="mt-1 block text-xs text-muted-foreground">Clientes</span>
+            </span>
+          </Link>
+          <Link to="/lawyer/cases" className="flex items-center gap-3 bg-white p-4 hover:bg-gray-50">
+            <Briefcase className="h-5 w-5 shrink-0 text-gray-400" aria-hidden="true" />
+            <span className="min-w-0">
+              <span className="block text-xl font-bold leading-none">{loading ? '…' : kpis.activeCases}</span>
+              <span className="mt-1 block text-xs text-muted-foreground">Casos activos</span>
+            </span>
+          </Link>
+          <Link to="/lawyer/citas" className="flex items-center gap-3 bg-white p-4 hover:bg-gray-50">
+            <Calendar className="h-5 w-5 shrink-0 text-gray-400" aria-hidden="true" />
+            <span className="min-w-0">
+              <span className="block text-xl font-bold leading-none">{loading ? '…' : kpis.todayCount}</span>
+              <span className="mt-1 block text-xs text-muted-foreground">Citas hoy</span>
+            </span>
+          </Link>
+          <Link to="/lawyer/earnings" className="flex items-center gap-3 bg-white p-4 hover:bg-gray-50">
+            <DollarSign className="h-5 w-5 shrink-0 text-gray-400" aria-hidden="true" />
+            <span className="min-w-0">
+              <span className="block truncate text-xl font-bold leading-none">{loading ? '…' : `$${kpis.revenueMonth.toLocaleString('es-CL')}`}</span>
+              <span className="mt-1 block text-xs text-muted-foreground">Ingresos mes</span>
+            </span>
+          </Link>
+        </CardContent>
+      </Card>
 
-          <Card className="hover:shadow-sm transition-shadow">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-600">Citas hoy</span>
-                <Calendar className="h-4 w-4 text-gray-400" />
-              </div>
-              {loading ? <div className="h-7 w-12 bg-gray-100 animate-pulse rounded" /> : <div className="text-2xl font-bold">{kpis.todayCount}</div>}
-              <p className="text-xs text-gray-500 mt-1">{kpis.todayCount === 0 ? 'Tu agenda está libre hoy.' : 'En tu agenda'}</p>
-              <Link to="/lawyer/citas" className="inline-flex items-center gap-1 text-xs font-medium text-green-600 hover:text-green-700 mt-3">Ver agenda <ArrowRight className="h-3 w-3" /></Link>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-sm transition-shadow">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-600">Casos activos</span>
-                <Briefcase className="h-4 w-4 text-gray-400" />
-              </div>
-              {loading ? <div className="h-7 w-12 bg-gray-100 animate-pulse rounded" /> : <div className="text-2xl font-bold">{kpis.activeCases}</div>}
-              <p className="text-xs text-gray-500 mt-1">{kpis.activeCases === 0 ? 'Cuando proceses una solicitud, podrás gestionarla como caso.' : 'En gestión'}</p>
-              <Link to="/lawyer/cases" className="inline-flex items-center gap-1 text-xs font-medium text-green-600 hover:text-green-700 mt-3">Ver casos <ArrowRight className="h-3 w-3" /></Link>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-sm transition-shadow">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-600">Ingresos del mes</span>
-                <DollarSign className="h-4 w-4 text-gray-400" />
-              </div>
-              {loading ? <div className="h-7 w-20 bg-gray-100 animate-pulse rounded" /> : <div className="text-2xl font-bold">${kpis.revenueMonth.toLocaleString('es-CL')}</div>}
-              <p className="text-xs text-gray-500 mt-1">{kpis.revenueMonth === 0 ? 'Aún no tienes ingresos registrados este mes.' : 'Este mes'}</p>
-              <Link to="/lawyer/earnings" className="inline-flex items-center gap-1 text-xs font-medium text-green-600 hover:text-green-700 mt-3">Ver ingresos <ArrowRight className="h-3 w-3" /></Link>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* REQUIERE TU ATENCIÓN */}
-      <div>
-        <h2 className="text-xs font-semibold tracking-widest text-gray-500 uppercase mb-3">Requiere tu atención</h2>
-        <Card>
-          <CardContent className="p-5">
-            {loading ? (
-              <div className="flex items-center gap-2 text-sm text-gray-500"><Loader2 className="h-4 w-4 animate-spin" /> Cargando...</div>
-            ) : attention ? (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <div className="font-medium">{attention.title}</div>
-                  <div className="text-sm text-gray-600">{attention.desc}</div>
-                </div>
-                <Button asChild className="bg-gray-900 hover:bg-green-900 shrink-0">
-                  <Link to={attention.href}>{attention.cta} <ArrowRight className="ml-2 h-4 w-4" /></Link>
-                </Button>
-              </div>
-            ) : (
-              <div className="text-center py-2">
-                <div className="font-medium">Todo al día</div>
-                <div className="text-sm text-gray-500">No tienes tareas pendientes por ahora.</div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      {/* 5.2C — solicitudes: solo aviso compacto si hay pendientes. */}
+      {!loading && kpis.pendingRequests > 0 && (
+        <Link
+          to="/lawyer/requests"
+          className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm hover:bg-amber-100/60"
+        >
+          <span className="inline-flex min-w-0 items-center gap-2 font-medium text-amber-900">
+            <Inbox className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="truncate">{kpis.pendingRequests} solicitud{kpis.pendingRequests === 1 ? '' : 'es'} nueva{kpis.pendingRequests === 1 ? '' : 's'}</span>
+          </span>
+          <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-amber-800">
+            Ver solicitudes <ArrowRight className="h-3 w-3" aria-hidden="true" />
+          </span>
+        </Link>
+      )}
 
       {/* PRÓXIMAS CITAS */}
       <div>
@@ -464,11 +387,9 @@ export default function LawyerDashboardPage() {
             {loading ? (
               <div className="flex items-center gap-2 text-sm text-gray-500"><Loader2 className="h-4 w-4 animate-spin" /> Cargando...</div>
             ) : nextAppointments.length === 0 ? (
-              <div className="text-center py-6">
-                <Calendar className="mx-auto h-8 w-8 text-gray-300" />
-                <p className="text-sm font-medium mt-2">No tienes citas próximas.</p>
-                <p className="text-xs text-gray-500">Cuando agendes una cita aparecerá aquí.</p>
-                <Button variant="outline" size="sm" className="mt-3" onClick={() => {
+              <div className="flex flex-col gap-2 py-1 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-muted-foreground">No tienes citas próximas.</p>
+                <Button variant="outline" size="sm" className="shrink-0 self-start sm:self-auto" onClick={() => {
                   // 4.37B — manual creation requires active Pro; never open a
                   // dead form for non-Pro (RLS would reject with a generic error).
                   if (!hasProAccess) {
@@ -498,86 +419,34 @@ export default function LawyerDashboardPage() {
         </Card>
       </div>
 
-      {/* RESUMEN */}
-      <div>
-        <h2 className="text-xs font-semibold tracking-widest text-gray-500 uppercase mb-3">Resumen</h2>
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Clientes</span>
-                <Users className="h-4 w-4 text-gray-400" />
-              </div>
-              <div className="text-xl font-bold mt-1">{stats.clients}</div>
-              <Link to="/lawyer/clients" className="text-xs text-green-600 hover:underline">Ver clientes</Link>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Casos</span>
-                <Briefcase className="h-4 w-4 text-gray-400" />
-              </div>
-              <div className="text-xl font-bold mt-1">{stats.cases}</div>
-              <Link to="/lawyer/cases" className="text-xs text-green-600 hover:underline">Ver casos</Link>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Servicios publicados</span>
-                <FileText className="h-4 w-4 text-gray-400" />
-              </div>
-              <div className="text-xl font-bold mt-1">{stats.services}</div>
-              <Link to="/lawyer/services" className="text-xs text-green-600 hover:underline">Administrar servicios</Link>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Tu perfil</span>
-                <User className="h-4 w-4 text-gray-400" />
-              </div>
-              <div className="text-xl font-bold mt-1">{completionPercentage}%</div>
-              <div className="text-xs text-gray-500">completo</div>
-              <Link to="/lawyer/profile" className="text-xs text-green-600 hover:underline">Completar perfil</Link>
-            </CardContent>
-          </Card>
+      {/* 5.2C — Actividad reciente: solo casos actualizados (datos ya
+          cargados por el Action Center). Sin tabla/event bus nuevos. */}
+      {!actionCasesLoading && actionCases.length > 0 && (
+        <div>
+          <h2 className="text-xs font-semibold tracking-widest text-gray-500 uppercase mb-3">Actividad reciente</h2>
+          <ul className="space-y-0.5">
+            {[...actionCases]
+              .sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at))
+              .slice(0, 4)
+              .map((c) => (
+                <li key={c.id}>
+                  <button
+                    type="button"
+                    onClick={() => setManageCaseId(c.id)}
+                    className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium text-gray-900">{c.title}</span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">
+                        {formatStaleLabel(c.updated_at)}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+          </ul>
         </div>
-      </div>
-
-      {/* LegalUp AI + Google Calendar — 2 col, misma altura */}
-      <div className="grid gap-6 md:grid-cols-2 items-stretch">
-        <div
-          onClick={handleLegalUpAIClick}
-          className="rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-white to-white p-6 cursor-pointer hover:shadow-lg hover:shadow-green-500/20 transition-all duration-300 group h-full flex flex-col"
-        >
-          <div>
-            <h3 className="flex items-center gap-2 text-xl font-bold text-gray-900">
-              <Scale className="h-5 w-5 text-green-900" />
-              <span>LegalUp</span>
-              <span className="inline-flex h-[18.4px] items-center rounded-[5px] border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-px text-[0.6rem] font-semibold leading-none tracking-[0.14em] text-emerald-700">PRO</span>
-            </h3>
-            <p className="mt-2 text-sm text-gray-600">{aiBadgeText}</p>
-          </div>
-          <div className="flex-1" />
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            {aiSecondaryText ? (
-              <p className="text-xs text-gray-500">{aiSecondaryText}</p>
-            ) : (
-              <span />
-            )}
-            <div className="flex items-center justify-center gap-2 self-stretch rounded-lg bg-gray-900 px-4 py-2 text-white group-hover:bg-green-900 transition-colors sm:self-auto">
-              <span className="text-white font-medium text-sm">{aiCtaText}</span>
-              <ArrowRight className="h-4 w-4 text-white group-hover:translate-x-1 transition-transform" />
-            </div>
-          </div>
-        </div>
-
-        <div className="h-full">
-          <GoogleCalendarConnect />
-        </div>
-      </div>
+      )}
 
       <Dialog open={showNewAppointment} onOpenChange={setShowNewAppointment}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">

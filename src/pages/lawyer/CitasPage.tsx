@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
+import { GoogleCalendarNotice } from '@/components/dashboard/GoogleCalendarNotice';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AppointmentForm } from '@/components/appointments/AppointmentForm';
@@ -332,6 +333,9 @@ export default function CitasPage() {
           <Plus className="h-4 w-4 mr-1" /> Nueva cita
         </Button>
       </div>
+
+      {/* 5.2D — aviso compacto Google Calendar (detalle en Integraciones). */}
+      <GoogleCalendarNotice />
 
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />

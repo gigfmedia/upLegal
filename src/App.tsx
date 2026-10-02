@@ -98,6 +98,8 @@ const ClientDetailPage = lazy(() => import('./pages/lawyer/ClientDetailPage'));
 const CasesPage = lazy(() => import('./pages/lawyer/CasesPage'));
 const CaseDetailPage = lazy(() => import('./pages/lawyer/CaseDetailPage'));
 const LawyerSettingsPage = lazy(() => import('./pages/lawyer/SettingsPage'));
+const PlanPage = lazy(() => import('./pages/lawyer/PlanPage'));
+const IntegrationsPage = lazy(() => import('./pages/lawyer/IntegrationsPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const HowItWorksPage = lazy(() => import('./pages/HowItWorksPage'));
 const PaymentSettings = lazy(() => import('./pages/PaymentSettings'));
@@ -621,6 +623,8 @@ const AppContent = () => {
                 <Route path="cases" element={<CasesPage />} />
                 <Route path="cases/:caseId" element={<CaseDetailPage />} />
                 <Route path="settings" element={<LawyerSettingsPage />} />
+                <Route path="plan" element={<PlanPage />} />
+                <Route path="integrations" element={<IntegrationsPage />} />
                 <Route path="earnings" element={<EarningsPage />} />
                 <Route path="favorites" element={<DashboardFavorites />} />
                 <Route path="quotes/:quoteRequestId" element={<QuoteRequestsPage />} />

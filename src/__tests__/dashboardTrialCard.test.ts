@@ -3,93 +3,26 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const read = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf8');
-// Solo el bloque de la tarjeta promo (handler + copy + JSX), no todo el dashboard.
-const cardBlock = () => {
-  const c = read('src/pages/lawyer/DashboardPage.tsx');
-  const start = c.indexOf('const handleLegalUpAIClick');
-  const end = c.indexOf('GoogleCalendarConnect', start);
-  return c.slice(start, end);
-};
 const dashboard = () => read('src/pages/lawyer/DashboardPage.tsx');
 
-describe('4.41A dashboard card: Pro has no trial (rev)', () => {
-  it('badge "Nuevo" eliminado del bloque', () => {
+// 4.41A (superseded por 5.2C/5.2D): la tarjeta promo salió del dashboard.
+// El estado del plan vive en /lawyer/plan. Este archivo conserva la
+// garantía original —cero copy trial/promo en Inicio— como ausencia.
+describe('4.41A dashboard card: Pro has no trial (rev) → sin tarjeta en Inicio', () => {
+  it('sin tarjeta promo ni copy trial en el dashboard', () => {
     const c = dashboard();
-    expect(c).not.toMatch(/uppercase tracking-wider">Nuevo</);
-    expect(c).not.toContain('>Nuevo</span>');
-  });
-
-  it('cero copy de prueba/trial/expiración en la tarjeta', () => {
-    const c = cardBlock();
-    expect(c.toLowerCase()).not.toContain('prueba');
-    expect(c.toLowerCase()).not.toContain('trial');
-    expect(c).not.toContain('termina pronto');
-    expect(c).not.toContain('no perder el acceso');
-    expect(c).not.toContain('Reanudar suscripción');
+    expect(c).not.toContain('handleLegalUpAIClick');
+    expect(c).not.toContain('aiBadgeText');
     expect(c).not.toContain('Empezar prueba gratis');
     expect(c).not.toContain('Suscribirme');
-  });
-
-  it('bloque estático Pro: título + copies exactos', () => {
-    const c = cardBlock();
-    expect(c).toContain('LegalUp Pro');
-    expect(c).toContain('Gestiona clientes, casos, citas y documentos con LegalUp AI integrado.');
-    expect(c).toContain('Incluye consultas IA, análisis de documentos e investigación jurídica.');
-    expect(c).toContain("'Ver LegalUp Pro'");
-  });
-
-  it('sin precio en la tarjeta', () => {
-    const c = dashboard();
+    expect(c).not.toContain('Reanudar suscripción');
     expect(c).not.toContain('$49.900');
     expect(c).not.toContain('49.900');
   });
 
-  it('CTA promo abre el flujo comercial existente (paywall modal)', () => {
-    const c = dashboard();
-    const handler = c.slice(c.indexOf('const handleLegalUpAIClick'), c.indexOf('let aiBadgeText'));
-    expect(handler).toContain('setProPaywallOpen(true)');
-    expect(handler).not.toContain('/lawyer/ai');
-    expect(c).toContain('triggerAction="dashboard_get_started"');
-  });
-
-  it('solo dos estados: Pro activo navega a casos, resto ve promo (sin ramas trial)', () => {
-    const c = cardBlock();
-    expect(c).toContain("'Ir a mis casos'");
-    expect(c).toContain("navigate('/lawyer/cases')");
-    expect(c).not.toContain('isTrialPromo');
-    expect(c).not.toContain('aiTrialText');
-    expect(c).not.toContain('aiSub.status');
-    expect(c).not.toContain('isTrialing');
-    expect(c).not.toContain('(aiSub as');
-  });
-
-  it('lockup como header landing: Scale + LegalUp + pill PRO, sin Sparkles', () => {
-    const c = cardBlock();
-    expect(c).not.toContain('Sparkles');
-    expect(c).toContain('Scale');
-    expect(c).toContain('>PRO<');
-    expect(c).toContain('border-emerald-500/30');
-  });
-
-  it('estructura espejo Google Calendar: header, descripción, spacer, footer', () => {
-    const c = cardBlock();
-    // Contenedor en columna a alto completo (misma altura por grid stretch).
-    expect(c).toMatch(/h-full flex flex-col/);
-    // Spacer flexible empuja el footer abajo (sin absolute ni offsets).
-    const spacerIdx = c.indexOf('flex-1');
-    expect(spacerIdx).toBeGreaterThan(-1);
-    expect(c).not.toContain('position:absolute');
-    expect(c).not.toContain('absolute ');
-    // Footer: secundaria izquierda + CTA derecha, apilable en mobile.
-    expect(c).toMatch(/justify-between/);
-    expect(c).toContain('sm:flex-row');
-    // El footer va después del spacer en el markup.
-    const footerIdx = c.indexOf('justify-between', spacerIdx);
-    expect(footerIdx).toBeGreaterThan(spacerIdx);
-  });
-  it('sin lógica legacy-AI en este bloque (hook removido si quedó sin uso)', () => {
-    const c = dashboard();
-    expect(c).not.toContain('hasLegacyAI');
-    expect(c).not.toContain('useAISubscription');
+  it('el CTA comercial vive en /lawyer/plan con el modal existente', () => {
+    const p = read('src/pages/lawyer/PlanPage.tsx');
+    expect(p).toContain('ProPricingModal');
+    expect(p).toContain('Ver LegalUp Pro');
   });
 });

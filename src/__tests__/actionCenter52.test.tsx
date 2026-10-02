@@ -176,7 +176,7 @@ describe('FASE 5.2 — dashboard, tenant, performance, free', () => {
     expect(src).toContain('<ActionCenter');
     expect(src).toContain('<CaseManagementDrawer');
     expect(src).toContain('onOpenCase={setManageCaseId}');
-    expect(src.indexOf('<ActionCenter')).toBeLessThan(src.indexOf('{/* HOY */}'));
+    expect(src.indexOf('<ActionCenter')).toBeLessThan(src.indexOf('Próximas citas'));
   });
   it('12. sin gates: ActionCenter no consulta entitlement ni planes', () => {
     const src = read('src/components/lawyer/ActionCenter.tsx');
