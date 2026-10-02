@@ -34,6 +34,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { AppointmentForm } from '@/components/appointments/AppointmentForm';
 import { useLawyerClients } from '@/hooks/useLawyerClients';
 import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
+import { ActionCenter } from '@/components/lawyer/ActionCenter';
+import { CaseManagementDrawer } from '@/components/lawyer/CaseManagementDrawer';
+import { useLawyerCases } from '@/hooks/useLawyerCases';
+import { useAllCaseTasks } from '@/hooks/useCaseTasks';
 import { isBookingDeniedError } from '@/lib/appointmentEntitlement';
 import posthog from 'posthog-js';
 
@@ -51,6 +55,12 @@ export default function LawyerDashboardPage() {
   const [stats, setStats] = useState({ clients: 0, cases: 0, services: 0 });
   const [showNewAppointment, setShowNewAppointment] = useState(false);
   const { findOrCreateClient } = useLawyerClients();
+  // FASE 5.2 — Action Center: 1 query de casos (hook existente) + 1 query
+  // de tareas. Sin gates: el caso gratuito participa igual.
+  const { cases: actionCases, loading: actionCasesLoading, applyPatch: applyActionPatch } = useLawyerCases();
+  const { tasks: actionTasks, loading: actionTasksLoading, refetch: refetchActionTasks, completeTask: completeActionTask } = useAllCaseTasks();
+  const [manageCaseId, setManageCaseId] = useState<string | null>(null);
+  const manageCase = manageCaseId ? actionCases.find((c) => c.id === manageCaseId) ?? null : null;
 
   useEffect(() => {
     if (searchParams.get('google_auth') === 'success') {
@@ -353,6 +363,15 @@ export default function LawyerDashboardPage() {
         </Card>
       )}
 
+      {/* FASE 5.2 — Action Center primero: lo accionable antes que las métricas. */}
+      <ActionCenter
+        cases={actionCases}
+        tasks={actionTasks}
+        loading={actionCasesLoading || actionTasksLoading}
+        onOpenCase={setManageCaseId}
+        onCompleteTask={completeActionTask}
+      />
+
       {/* HOY */}
       <div>
         <h2 className="text-xs font-semibold tracking-widest text-gray-500 uppercase mb-3">Hoy</h2>
@@ -627,6 +646,22 @@ export default function LawyerDashboardPage() {
         </DialogContent>
       </Dialog>
       <ProPricingModal open={proPaywallOpen} onOpenChange={setProPaywallOpen} triggerAction="dashboard_get_started" targetPlan={dashboardPaywallTarget} />
+      {/* FASE 5.2 — drawer reusable: click en un item abre la gestión sin navegar. */}
+      {manageCase && (
+        <CaseManagementDrawer
+          caseData={manageCase}
+          open={manageCaseId !== null}
+          onOpenChange={(o) => {
+            if (!o) {
+              setManageCaseId(null);
+              void refetchActionTasks();
+            }
+          }}
+          onCaseUpdated={(patch) => {
+            if (manageCaseId) applyActionPatch(manageCaseId, patch);
+          }}
+        />
+      )}
       <ProPricingModal open={apptPaywallOpen} onOpenChange={setApptPaywallOpen} triggerAction="create_appointment" />
     </div>
   );

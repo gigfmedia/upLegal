@@ -124,7 +124,13 @@ export function useLawyerCases() {
     setCases((prev) => prev.filter((c) => c.id !== id));
   }, []);
 
-  return { cases, loading, error, refetch: fetchCases, createCase, updateCase, deleteCase };
+  // 5.2 — fusiona un patch ya persistido (ej: drawer desde Dashboard)
+  // sin refetch ni escritura.
+  const applyPatch = useCallback((id: string, patch: Partial<LawyerCase>) => {
+    setCases((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  }, []);
+
+  return { cases, loading, error, refetch: fetchCases, createCase, updateCase, deleteCase, applyPatch };
 }
 
 export function useLawyerCase(caseId: string | undefined) {

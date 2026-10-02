@@ -101,6 +101,60 @@ export function useCaseTasks(caseId: string | undefined) {
   return { tasks, loading, error, refetch: fetchTasks, createTask, completeTask, reopenTask };
 }
 
+/**
+ * FASE 5.2 — todos los pendientes del abogado en UNA query (sin N+1).
+ * Fuente del Action Center junto a useLawyerCases. Sin gates de plan:
+ * el caso gratuito participa igual que cualquier caso.
+ */
+export function useAllCaseTasks() {
+  const { user } = useAuth();
+  const [tasks, setTasks] = useState<CaseTask[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchAll = useCallback(async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase
+        .from('lawyer_case_tasks')
+        .select('*')
+        .eq('lawyer_id', user.id)
+        .order('completed', { ascending: true })
+        .order('due_at', { ascending: true, nullsFirst: false });
+      if (error) throw error;
+      setTasks((data || []) as CaseTask[]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al cargar pendientes');
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
+
+  const completeTask = useCallback(async (id: string) => {
+    const now = new Date().toISOString();
+    const { data, error } = await supabase
+      .from('lawyer_case_tasks')
+      .update({ completed: true, completed_at: now })
+      .eq('id', id)
+      .select('*')
+      .single();
+    if (error) throw error;
+    setTasks((prev) => prev.map((t) => (t.id === id ? (data as CaseTask) : t)));
+    return data as CaseTask;
+  }, []);
+
+  return { tasks, loading, error, refetch: fetchAll, completeTask };
+}
+
 export type CaseControlSummary = {
   pendingCount: number;
   overdueCount: number;
