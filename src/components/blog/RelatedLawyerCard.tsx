@@ -209,13 +209,8 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact, articleSlug, ca
           </div>
 
           <div className="flex items-center gap-2 mb-2 text-xs text-gray-700">
-            <small className="text-gray-500 text-xs block mt-1">Videollamada · Respuesta hoy · Sin compromisos adicionales</small>
+            <small className="text-gray-500 text-xs block mt-1">Videollamada · Sin compromisos adicionales</small>
           </div>
-
-          <p className="text-xs text-green-700 font-medium mb-2 flex items-center gap-1 mb-4">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            Disponible hoy
-          </p>
 
           <Button
             size="lg"
@@ -225,6 +220,17 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact, articleSlug, ca
           >
             Agenda consulta →
           </Button>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClick();
+            }}
+            className="w-full text-center text-sm text-gray-500 hover:text-gray-900 hover:underline mt-2"
+          >
+            Ver perfil
+          </button>
 
           <p className="text-center text-xs text-gray-700 mt-3">
             <Lock className="h-3 w-3 inline-block mr-1 -mt-1" />

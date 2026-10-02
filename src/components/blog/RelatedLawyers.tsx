@@ -5,13 +5,41 @@ import { searchLawyers } from '@/pages/api/search-lawyers';
 import { trackEvent } from '@/lib/track';
 import { Loader2 } from 'lucide-react';
 import { useInView } from 'react-intersection-observer';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious
-} from '@/components/ui/carousel';
+
+// FASE 5.19 — framing contextual por problema del artículo.
+// UN solo mapa slug→pregunta (sin condicionales de pathname dispersos).
+// articleSlug es metadata existente; sin nueva taxonomía ni copy inventado.
+const ARTICLE_QUESTIONS: { match: string[]; question: string }[] = [
+  { match: ['garantia'], question: '¿No te devolvieron la garantía?' },
+  { match: ['desalojo', 'desalojar', 'lanzamiento', 'devuelveme-mi-casa'], question: '¿Te están pidiendo dejar la propiedad?' },
+  { match: ['reajuste', 'ipc'], question: '¿Tienes dudas sobre el reajuste de tu arriendo?' },
+  { match: ['sin-contrato', 'no-tengo-contrato'], question: '¿Tienes un problema de arriendo sin contrato escrito?' },
+  { match: ['dicom', 'deuda-arriendo', 'demandar-por-no-pagar', 'cobranza', 'embargo', 'ejecutivo', 'no-me-pagan'], question: '¿Tienes una deuda de arriendo encima?' },
+  { match: ['cerradura'], question: '¿Tu arrendador te cambió la cerradura?' },
+  { match: ['tacita'], question: '¿Tu contrato venció y sigues arrendando?' },
+  { match: ['contrato', 'compraventa', 'cesion'], question: '¿Vas a firmar un contrato?' },
+  { match: ['cuantos-meses'], question: '¿Llevas meses sin pagar el arriendo?' },
+];
+
+const ARRIENDO_KEYWORDS = [
+  'arriendo', 'desalojo', 'desalojar', 'garantia', 'ipc', 'cerradura',
+  'tacita', 'contrato', 'dicom', 'lanzamiento', 'devuelveme', 'deuda',
+  'embargo', 'ejecutivo', 'cobranza', 'cuantos-meses',
+];
+
+const SUPPORTING_SENTENCE =
+  'Consulta con un abogado para revisar tu situación y entender qué alternativas tienes según tu caso.';
+
+export function resolveRelatedContext(articleSlug: string): { question: string | null; audience: 'arriendo' | 'civil' } {
+  const slug = (articleSlug || '').toLowerCase();
+  for (const entry of ARTICLE_QUESTIONS) {
+    if (entry.match.some((k) => slug.includes(k))) return { question: entry.question, audience: 'arriendo' };
+  }
+  if (ARRIENDO_KEYWORDS.some((k) => slug.includes(k))) {
+    return { question: '¿Necesitas revisar tu caso de arriendo?', audience: 'arriendo' };
+  }
+  return { question: null, audience: 'civil' };
+}
 
 interface RelatedLawyersProps {
   category: string;
@@ -19,17 +47,9 @@ interface RelatedLawyersProps {
   articleId?: string;
 }
 
-export const RelatedLawyers = ({ category, title = "¿Necesitas resolver este problema hoy?", articleId }: RelatedLawyersProps) => {
+export const RelatedLawyers = ({ category, title, articleId }: RelatedLawyersProps) => {
   const [lawyers, setLawyers] = useState<Lawyer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [slidesToScroll, setSlidesToScroll] = useState(1);
-
-  useEffect(() => {
-    const update = () => setSlidesToScroll(window.innerWidth >= 1024 ? 2 : 1);
-    update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, []);
 
   const { ref, inView } = useInView({
     triggerOnce: true,
@@ -199,66 +219,43 @@ export const RelatedLawyers = ({ category, title = "¿Necesitas resolver este pr
 
   if (lawyers.length === 0) return null;
 
-  const showCarousel = lawyers.length >= 2;
+  const pagePathForSlug = typeof window !== 'undefined' ? window.location.pathname : '';
+  const resolvedSlug = articleId || pagePathForSlug.split('/').pop() || '';
+  const context = resolveRelatedContext(resolvedSlug);
+  const heading = title || context.question || '¿Necesitas revisar tu caso?';
+  const audienceLine =
+    context.audience === 'arriendo'
+      ? 'Abogados que atienden casos de arriendo y propiedad'
+      : 'Abogados disponibles para consultas de Derecho Civil';
 
   return (
     <section ref={ref} className="w-full mb-12">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{heading}</h2>
+          <p className="text-gray-600 mt-2 leading-relaxed">{SUPPORTING_SENTENCE}</p>
+          <p className="text-sm text-gray-500 mt-1">{audienceLine}</p>
           <div className="flex flex-wrap gap-x-6 gap-y-2 mt-3">
-            <span className="flex items-center gap-1.5 text-sm text-gray-700"><span className="text-green-600 font-bold">✓</span> Respuesta hoy</span>
             <span className="flex items-center gap-1.5 text-sm text-gray-700"><span className="text-green-600 font-bold">✓</span> Consulta online</span>
             <span className="flex items-center gap-1.5 text-sm text-gray-700"><span className="text-green-600 font-bold">✓</span> 60 minutos</span>
             <span className="flex items-center gap-1.5 text-sm text-gray-700"><span className="text-green-600 font-bold">✓</span> Precio fijo</span>
           </div>
         </div>
 
-        {showCarousel ? (
-          <Carousel
-            opts={{
-              align: "start",
-              loop: false,
-              slidesToScroll,
-            }}
-            className="w-full"
-          >
-            <CarouselContent className="-ml-4">
-              {lawyers.map((lawyer, idx) => {
-                const pagePath = typeof window !== 'undefined' ? window.location.pathname : '';
-                const articleSlugForCard = articleId || pagePath.split('/').pop() || '';
-                return (
-                <CarouselItem key={lawyer.id} className="pl-4 md:basis-1/2 lg:basis-1/2">
-                  <div className="h-full" onClickCapture={(e) => handleLawyerClick(lawyer.id, idx, e)}>
-                    <RelatedLawyerCard lawyer={lawyer} category={category} articleSlug={articleSlugForCard} cardPosition={idx} />
-                  </div>
-                </CarouselItem>
-                );
-              })}
-            </CarouselContent>
-            <div className="hidden md:block">
-              <CarouselPrevious className="-left-12 bg-white" />
-              <CarouselNext className="-right-12 bg-white" />
+        <div
+          className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:pb-0"
+          style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
+        >
+          {lawyers.map((lawyer, idx) => (
+            <div
+              key={lawyer.id}
+              className="w-[82%] shrink-0 snap-center sm:w-auto"
+              onClickCapture={(e) => handleLawyerClick(lawyer.id, idx, e)}
+            >
+              <RelatedLawyerCard lawyer={lawyer} category={category} articleSlug={resolvedSlug} cardPosition={idx} />
             </div>
-            {/* Mobile Controls */}
-            <div className="flex justify-center gap-4 mt-8 md:hidden">
-              <CarouselPrevious className="static translate-y-0 bg-white" />
-              <CarouselNext className="static translate-y-0 bg-white" />
-            </div>
-          </Carousel>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {lawyers.map((lawyer, idx) => {
-                const pagePathGrid = typeof window !== 'undefined' ? window.location.pathname : '';
-                const articleSlugForCardGrid = articleId || pagePathGrid.split('/').pop() || '';
-                return (
-              <div key={lawyer.id} className="h-full" onClickCapture={(e) => handleLawyerClick(lawyer.id, idx, e)}>
-                <RelatedLawyerCard lawyer={lawyer} category={category} articleSlug={articleSlugForCardGrid} cardPosition={idx} />
-              </div>
-                );
-              })}
-          </div>
-        )}
+          ))}
+        </div>
       </div>
     </section>
   );
