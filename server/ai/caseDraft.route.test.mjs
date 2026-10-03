@@ -107,7 +107,7 @@ function harness({ plan = 'pro' } = {}) {
   } };
   const routes = {};
   const quiet = { log() {}, warn() {}, error() {} };
-  const ctx = vm.createContext({ console: quiet, z, Buffer, process: { env: {} }, supabase,
+  const ctx = vm.createContext({ console: quiet, z, Buffer, process: { env: { AI_DRAFTING_ENABLED: '1' } }, supabase,
     createAIMetering: (options) => createAIMetering({ ...options, log: () => {} }),
     commercialQuotaForPlan,
     buildDraftSystemPrompt, buildDraftContext, selectDraftEvidence, validateDraftSources, DRAFT_LIMITS,

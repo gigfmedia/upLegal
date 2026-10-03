@@ -16,13 +16,15 @@ describe('4.38C-B commercial Pro AI allowance authority', () => {
       chatPerMonth: 300,
       analysisPerMonth: 40,
       researchPerMonth: 10,
+      // 4.59E commercial contract: 30 successful drafts/month UTC.
+      draftsPerMonth: 30,
       storedDocuments: 50,
     });
     expect(Object.isFrozen(PRO_AI_ALLOWANCE)).toBe(true);
   });
 
   it('pro_limited gets the full allowance; every other plan gets none', () => {
-    expect(commercialQuotaForPlan('pro_limited')).toEqual({ chat: 300, analysis: 40, research: 10 });
+    expect(commercialQuotaForPlan('pro_limited')).toEqual({ chat: 300, analysis: 40, research: 10, drafting: 30 });
     for (const plan of ['free', 'essential', 'trial', 'unknown', '', null, undefined]) {
       expect(commercialQuotaForPlan(plan)).toBeNull();
     }

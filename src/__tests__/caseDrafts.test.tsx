@@ -25,8 +25,13 @@ const DRAFT = {
 };
 
 let fetchMock: ReturnType<typeof vi.fn>;
+let usageAllowance: unknown = { plan: 'pro_limited', drafting: { used: 12, limit: 30 } };
 beforeEach(() => {
+  usageAllowance = { plan: 'pro_limited', drafting: { used: 12, limit: 30 } };
   fetchMock = vi.fn(async (url: string, opts?: RequestInit) => {
+    if (url.includes('/api/ai/usage')) {
+      return { ok: true, json: async () => ({ allowance: usageAllowance }) } as Response;
+    }
     if (opts?.method === 'POST') {
       return { ok: true, json: async () => ({ draft: DRAFT, snapshot: { version: 1 } }) } as Response;
     }
@@ -40,6 +45,23 @@ beforeEach(() => {
   });
   (globalThis as unknown as { fetch: typeof fetch }).fetch = fetchMock as unknown as typeof fetch;
 });
+
+  it('muestra uso Pro y gating al límite', async () => {
+    renderDrafts();
+    expect(await screen.findByText('12 de 30 este mes')).toBeTruthy();
+    usageAllowance = { plan: 'pro_limited', drafting: { used: 30, limit: 30 } };
+    cleanup();
+    renderDrafts();
+    expect(await screen.findByText(/Has utilizado los 30 borradores/)).toBeTruthy();
+    expect(screen.getByText('Ver LegalUp Plus')).toBeTruthy();
+  });
+
+  it('free muestra gating Pro sin contador', async () => {
+    usageAllowance = { plan: 'free_case', drafting: { used: 0, limit: 0 } };
+    renderDrafts();
+    expect(await screen.findByText('Ver LegalUp Pro')).toBeTruthy();
+    expect(screen.queryByText(/de 30 este mes/)).toBeNull();
+  });
 
 afterEach(cleanup);
 

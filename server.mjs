@@ -11211,6 +11211,11 @@ app.post('/api/ai/cases/:caseId/drafts', async (req, res) => {
 
     const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
     if (entitlement.res) return entitlement.res;
+    // 4.59E kill switch (server-side, default OFF): bloquea NUEVA generación;
+    // lectura/edición de borradores viven en rutas separadas sin este gate.
+    if (process.env.AI_DRAFTING_ENABLED !== '1') {
+      return res.status(403).json({ error: 'La generación de borradores no está disponible por ahora.', code: 'AI_DRAFTING_DISABLED' });
+    }
     if (!DRAFTING_ALLOWED_PLANS.includes(entitlement.plan)) {
       return res.status(403).json({ error: 'La generación de borradores requiere un plan de pago.', code: 'AI_FEATURE_NOT_AVAILABLE' });
     }
@@ -11657,6 +11662,8 @@ app.get('/api/ai/usage', async (req, res) => {
             chat: lifetime(chatUsed, FREE_CASE_ALLOWANCE.chatLifetime),
             analysis: lifetime(analysisUsed, FREE_CASE_ALLOWANCE.analysisLifetime),
             research: lifetime(researchUsed, FREE_CASE_ALLOWANCE.researchLifetime),
+            // 4.59E: drafting excluido de Free (límite 0; la UI muestra gating Pro).
+            drafting: lifetime(0, 0),
             documents: lifetime(freeDocs, FREE_CASE_ALLOWANCE.storedDocuments),
           };
         }
@@ -11667,12 +11674,30 @@ app.get('/api/ai/usage', async (req, res) => {
           .from('ai_documents')
           .select('id', { count: 'exact', head: true })
           .eq('lawyer_id', userId);
+        // 4.59E: drafting usado = operaciones case_drafting exitosas del mes
+        // UTC vigente (autoridad ai_operations vía period_start, no conteo
+        // de filas draft ni contador mensual dedicado).
+        let draftingUsed = 0;
+        try {
+          const monthStartIso = periodStart.toISOString().slice(0, 10);
+          const { data: draftOps } = await supabase
+            .from('ai_operations')
+            .select('id')
+            .eq('lawyer_id', userId)
+            .eq('capability', 'case_drafting')
+            .eq('status', 'succeeded')
+            .gte('period_start', monthStartIso);
+          draftingUsed = (draftOps || []).length;
+        } catch (e) {
+          console.error('[LegalUpAI] drafting usage failed (reporting 0)', e?.message || e);
+        }
         const withLimit = (used, limit) => ({ used: used || 0, limit: limit ?? null, reset: 'monthly', available: true });
         allowance = {
           plan,
           chat: withLimit(usage.chat_message_count, quota?.chat),
           analysis: withLimit(usage.document_analysis_count, quota?.analysis),
           research: withLimit(usage.jurisprudence_research_count, quota?.research),
+          drafting: withLimit(draftingUsed, quota?.drafting),
           documents: withLimit(storedDocuments, plan === 'plus' ? PLUS_AI_ALLOWANCE.storedDocuments : plan === 'pro_limited' ? PRO_AI_ALLOWANCE.storedDocuments : null),
         };
       }

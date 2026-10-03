@@ -46,15 +46,17 @@ describe('4.57D canonical plans — Plus v1 contract', () => {
     expect(resolvePlanAllowance('plus', 'chat')).toEqual({ limit: 750, period: 'calendar_month_utc', scope: 'shared_pool' });
     expect(resolvePlanAllowance('plus', 'analysis')).toEqual({ limit: 100, period: 'calendar_month_utc', scope: 'monthly' });
     expect(resolvePlanAllowance('plus', 'research')).toEqual({ limit: 25, period: 'calendar_month_utc', scope: 'monthly' });
+    expect(resolvePlanAllowance('plus', 'drafting')).toEqual({ limit: 75, period: 'calendar_month_utc', scope: 'monthly' });
     expect(resolvePlanAllowance('plus', 'nonexistent')).toBeNull();
   });
 
-  it('Pro contract unchanged: 20 / 50 / 300 / 40 / 10', () => {
+  it('Pro contract unchanged: 20 / 50 / 300 / 40 / 10 + drafting 30 (4.59E)', () => {
     expect(resolvePlanAllowance('pro', 'activeCases')).toEqual({ limit: 20, period: 'current', scope: 'lawyer_direct_active' });
     expect(resolvePlanAllowance('pro', 'documents')).toEqual({ limit: 50, period: 'current', scope: 'lawyer' });
     expect(resolvePlanAllowance('pro', 'chat')).toEqual({ limit: 300, period: 'calendar_month_utc', scope: 'shared_pool' });
     expect(resolvePlanAllowance('pro', 'analysis')).toEqual({ limit: 40, period: 'calendar_month_utc', scope: 'monthly' });
     expect(resolvePlanAllowance('pro', 'research')).toEqual({ limit: 10, period: 'calendar_month_utc', scope: 'monthly' });
+    expect(resolvePlanAllowance('pro', 'drafting')).toEqual({ limit: 30, period: 'calendar_month_utc', scope: 'monthly' });
   });
 
   it('Free contract unchanged: 1 / 2 / 3 / 1 / 1', () => {

@@ -47,6 +47,29 @@ const DRAFT_TYPE_OPTIONS = [
 
 export const AI_CASE_DRAFTS_QUERY_KEY = ['ai-case-drafts'] as const;
 
+type DraftingAllowance = {
+  plan?: string;
+  drafting?: { used?: number; limit?: number | null } | null;
+};
+
+function useDraftingUsage() {
+  const { data } = useQuery<{ allowance?: DraftingAllowance | null }>({
+    queryKey: ['ai-usage-drafting'],
+    queryFn: async () => {
+      const token = await getAccessToken();
+      if (!token) return {};
+      const res = await fetch(`${getApiBaseUrl()}/api/ai/usage`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const body = await res.json().catch(() => ({}));
+      return body ?? {};
+    },
+    staleTime: 60_000,
+    retry: false,
+  });
+  return data?.allowance ?? null;
+}
+
 export function useCaseDrafts(workspaceId: string | undefined) {
   const { data, ...rest } = useQuery<CaseDraftListItem[]>({
     queryKey: [...AI_CASE_DRAFTS_QUERY_KEY, workspaceId],
@@ -68,6 +91,12 @@ export function useCaseDrafts(workspaceId: string | undefined) {
 export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   const queryClient = useQueryClient();
   const { drafts, isLoading } = useCaseDrafts(workspaceId);
+  const allowance = useDraftingUsage();
+  const draftLimit = allowance?.drafting?.limit ?? null;
+  const draftUsed = allowance?.drafting?.used ?? 0;
+  const isPlus = allowance?.plan === 'plus';
+  const atLimit = draftLimit != null && draftLimit > 0 && draftUsed >= draftLimit;
+  const noAccess = draftLimit != null && draftLimit <= 0;
   const [creating, setCreating] = useState(false);
   const [draftType, setDraftType] = useState('escrito');
   const [instruction, setInstruction] = useState('');
@@ -134,7 +163,19 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
       setCreating(false);
       if (body?.draft?.id) void openDraftById(body.draft.id);
     },
-    onError: (e) => setError(e instanceof Error ? e.message : 'No se pudo generar el borrador.'),
+    onError: (e) => {
+      const code = (e as { code?: string })?.code;
+      if (code === 'AI_MONTHLY_LIMIT_REACHED' || code === 'AI_DRAFTING_LIMIT_REACHED') {
+        queryClient.invalidateQueries({ queryKey: ['ai-usage-drafting'] });
+        setError(
+          isPlus
+            ? 'Has utilizado los 75 borradores incluidos este mes. Tu disponibilidad se renueva el próximo mes.'
+            : 'Has utilizado los 30 borradores incluidos este mes.'
+        );
+        return;
+      }
+      setError(e instanceof Error ? e.message : 'No se pudo generar el borrador.');
+    },
   });
 
   const saveEdit = useMutation({
@@ -182,12 +223,38 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
         <p className="text-sm text-muted-foreground">
           Convierte el contexto de este caso en un primer borrador para revisar y editar.
         </p>
+        {draftLimit != null && draftLimit > 0 ? (
+          <p className="text-xs text-muted-foreground">
+            {draftUsed} de {draftLimit} este mes
+          </p>
+        ) : null}
       </CardHeader>
       <CardContent className="space-y-3">
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        {noAccess ? (
+          <div className="rounded border p-3 space-y-2">
+            <p className="text-sm">La generación de borradores está incluida en los planes de pago.</p>
+            <Button size="sm" asChild>
+              <a href="/pro">Ver LegalUp Pro</a>
+            </Button>
+          </div>
+        ) : atLimit ? (
+          <div className="rounded border p-3 space-y-2">
+            <p className="text-sm">
+              Has utilizado los {draftLimit} borradores incluidos este mes.
+            </p>
+            {isPlus ? (
+              <p className="text-xs text-muted-foreground">Tu disponibilidad se renueva el próximo mes.</p>
+            ) : (
+              <Button size="sm" asChild>
+                <a href="/pro">Ver LegalUp Plus</a>
+              </Button>
+            )}
+          </div>
+        ) : null}
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Cargando borradores…</p>
-        ) : drafts.length === 0 && !creating && !openDraft ? (
+        ) : !noAccess && !atLimit && drafts.length === 0 && !creating && !openDraft ? (
           <Button size="sm" onClick={() => setCreating(true)}>
             <Plus className="h-4 w-4 mr-1" /> Crear borrador
           </Button>
@@ -264,7 +331,7 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
           </div>
         ) : null}
 
-        {drafts.length > 0 && !openDraft ? (
+        {!noAccess && !atLimit && drafts.length > 0 && !openDraft ? (
           <div className="space-y-2">
             {drafts.map((d) => (
               <button

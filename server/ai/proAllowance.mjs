@@ -21,6 +21,8 @@ export const PRO_AI_ALLOWANCE = Object.freeze({
   analysisPerMonth: 40,
   /** Successful research/jurisprudence operations per UTC month. */
   researchPerMonth: 10,
+  /** Successful case drafts per UTC month (4.59E commercial contract). */
+  draftsPerMonth: 30,
   /** Current stored ai_documents rows per lawyer (deleting frees a slot). */
   storedDocuments: 50,
 });
@@ -33,6 +35,8 @@ export const PLUS_AI_ALLOWANCE = Object.freeze({
   analysisPerMonth: 100,
   /** Successful research/jurisprudence operations per UTC month. */
   researchPerMonth: 25,
+  /** Successful case drafts per UTC month (4.59E commercial contract). */
+  draftsPerMonth: 75,
   /** Current stored ai_documents rows per lawyer (deleting frees a slot). */
   storedDocuments: 150,
 });
@@ -90,6 +94,7 @@ export function commercialQuotaForPlan(plan) {
       chat: PLUS_AI_ALLOWANCE.chatPerMonth,
       analysis: PLUS_AI_ALLOWANCE.analysisPerMonth,
       research: PLUS_AI_ALLOWANCE.researchPerMonth,
+      drafting: PLUS_AI_ALLOWANCE.draftsPerMonth,
     };
   }
   if (plan !== 'pro_limited') return null;
@@ -97,6 +102,7 @@ export function commercialQuotaForPlan(plan) {
     chat: PRO_AI_ALLOWANCE.chatPerMonth,
     analysis: PRO_AI_ALLOWANCE.analysisPerMonth,
     research: PRO_AI_ALLOWANCE.researchPerMonth,
+    drafting: PRO_AI_ALLOWANCE.draftsPerMonth,
   };
 }
 
