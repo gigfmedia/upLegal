@@ -48,6 +48,10 @@ import {
 } from './server/ai/legalChatPrompt.mjs';
 import { getProCaseHeader, formatProCaseBlock } from './server/ai/proCaseContext.mjs';
 import {
+  selectRelevantResearch,
+  formatResearchLegalContext,
+} from './server/ai/researchMemory.mjs';
+import {
   searchJurisprudence,
   validateResearchQuery,
   classifyLegalQuery,
@@ -9894,17 +9898,30 @@ const getOrCreateAIConversation = async (workspaceId, userId) => {
 };
 
 // Esquema de la respuesta del modelo para el chat.
+// FASE 4.59B: unión discriminada — citas de documento (contrato previo
+// intacto: sin document_id/file_name la respuesta cae a fallback igual que
+// antes) o citas de research (research_id requerido; la validación real
+// contra la memoria del caso ocurre después, o se descarta).
 const AIChatResponseSchema = z.object({
   answer: z.string().min(1),
   sources: z
     .array(
-      z.object({
-        document_id: z.string(),
-        file_name: z.string(),
-        fragment_id: z.string().optional(),
-        page_number: z.number().int().optional(),
-        evidence: z.string().optional(),
-      })
+      z.union([
+        z.object({
+          document_id: z.string(),
+          file_name: z.string(),
+          fragment_id: z.string().optional(),
+          page_number: z.number().int().optional(),
+          evidence: z.string().optional(),
+        }),
+        z.object({
+          research_id: z.string(),
+          research_query: z.string().optional(),
+          research_date: z.string().optional(),
+          title: z.string().optional(),
+          url: z.string().optional(),
+        }),
+      ])
     )
     .default([]),
 });
@@ -10049,6 +10066,27 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
     const analyses = {};
     for (const row of analysisRows || []) analyses[row.document_id] = row;
 
+    // FASE 4.59B: memoria de investigación del caso (solo Case Chat; la
+    // tabla solo contiene research exitoso —el insert ocurre únicamente tras
+    // pipeline ok—. Scope estricto workspace+lawyer, igual que analyses).
+    let researchRows = [];
+    if (!prioritizedDocumentId) {
+      try {
+        const { data: memRows, error: memError } = await supabase
+          .from('ai_research_requests')
+          .select('id, query, answer, sources, created_at')
+          .eq('workspace_id', workspace.id)
+          .eq('lawyer_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(10);
+        if (memError) throw memError;
+        researchRows = memRows || [];
+      } catch (e) {
+        console.error('[LegalUpAI] research memory load failed (continuing without it)', e?.message || e);
+        researchRows = [];
+      }
+    }
+
     // FASE 4.33B: encabezado en vivo del caso Pro (runtime composition, sin
     // writes). Legacy (sin link) y ambigüedad → contexto workspace sin cambios.
     let proCase = null;
@@ -10063,13 +10101,14 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
     // descartar documentos: informar al usuario.
     // 4.39B: Document Chat declara el documento seleccionado como autoridad
     // primaria (presupuesto reservado); Case Chat mantiene contexto amplio.
-    const { context, tooLarge } = buildChatContext({
+    const { context, tooLarge, researchSelected } = buildChatContext({
       workspace,
       documents: readyDocs,
       analyses,
       question: message,
       proCase,
       selectedDocumentId: prioritizedDocumentId || null,
+      researchList: researchRows,
     });
     if (tooLarge) {
       return await metering.respond(res, 422, {
@@ -10162,13 +10201,42 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
 
     // Solo se aceptan fuentes que correspondan a documentos reales del contexto.
     // Fase 4.9: si la fuente trae fragment_id/evidence, se valida contra el documento y se conserva page_number.
+    // FASE 4.59B: además se aceptan citas de memoria de investigación SOLO si
+    // el research_id estuvo efectivamente en el contexto (researchSelected) y
+    // la URL —si trae— coincide con las fuentes de esa investigación. Nunca
+    // se inventan citas: lo no validable se descarta en silencio.
     const docMapForChat = new Map(readyDocs.map((doc) => [doc.id, doc]));
+    const researchUrlSetById = new Map(
+      (researchSelected || []).map((r) => [
+        String(r.id),
+        {
+          urls: new Set((r.sources || []).map((s) => s.url).filter(Boolean)),
+          query: r.query,
+          created_at: r.created_at,
+        },
+      ])
+    );
     let sources = (validated.sources || [])
       .filter((source) => {
+        if (source && typeof source.research_id === 'string' && researchUrlSetById.has(source.research_id)) {
+          return true;
+        }
         const doc = docMapForChat.get(source.document_id);
         return doc && doc.original_filename === source.file_name;
       })
       .map((source) => {
+        // FASE 4.59B: normaliza citas de memoria (solo ids/urls validados).
+        if (source && typeof source.research_id === 'string' && researchUrlSetById.has(source.research_id)) {
+          const allowed = researchUrlSetById.get(source.research_id);
+          const out = {
+            research_id: source.research_id,
+            research_query: allowed.query,
+            research_date: allowed.created_at || undefined,
+          };
+          if (typeof source.title === 'string' && source.title) out.title = String(source.title).slice(0, 300);
+          if (typeof source.url === 'string' && allowed.urls.has(source.url)) out.url = source.url;
+          return out;
+        }
         const doc = docMapForChat.get(source.document_id);
         if (!doc || !source.fragment_id || !source.evidence) return { document_id: source.document_id, file_name: source.file_name };
         try {
@@ -10626,6 +10694,57 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
             lawyerId: userId,
           });
 
+    // FASE 4.59B: análisis VERIFICADOS de los documentos seleccionados como
+    // hechos del caso (partes, puntos clave, obligaciones, plazos, claims con
+    // evidencia). Explícitamente EXCLUIDOS: risks/recommendations/summary
+    // (no verificados — nunca como autoridad factual). Acotado y etiquetado.
+    if (documentMode !== 'none' && Array.isArray(documentEvidence.selected) && documentEvidence.selected.length) {
+      try {
+        const selectedDocIds = [];
+        for (const ch of documentEvidence.selected) {
+          if (ch && ch.document_id && !selectedDocIds.includes(ch.document_id)) selectedDocIds.push(ch.document_id);
+          if (selectedDocIds.length >= 4) break;
+        }
+        if (selectedDocIds.length) {
+          const { data: verRows } = await supabase
+            .from('ai_document_analyses')
+            .select('document_id, document_type, parties, key_points, obligations, deadlines')
+            .in('document_id', selectedDocIds)
+            .eq('workspace_id', workspace.id)
+            .eq('lawyer_id', userId);
+          const fileById = new Map((documentEvidence.docsById ? Array.from(documentEvidence.docsById.values()) : caseDocuments).map((d) => [d.id || d.document_id, d.original_filename]));
+          const parts = [];
+          for (const row of verRows || []) {
+            const join = (v, n) => (Array.isArray(v) ? v.filter((x) => typeof x === 'string' && x.trim()).slice(0, n).join(' | ') : '');
+            const dl = (Array.isArray(row.deadlines) ? row.deadlines : []).slice(0, 6).map((d) => {
+              const o = typeof d === 'string' ? { description: d } : d || {};
+              return `${o.description || ''}${o.date ? ` (${o.date})` : ''}`;
+            }).filter(Boolean).join(' | ');
+            const block = [
+              `Documento: ${fileById.get(row.document_id) || row.document_id}`,
+              row.document_type ? `Tipo: ${row.document_type}` : '',
+              join(row.parties, 6) ? `Partes: ${join(row.parties, 6)}` : '',
+              join(row.key_points, 6) ? `Puntos clave: ${join(row.key_points, 6)}` : '',
+              join(row.obligations, 6) ? `Obligaciones: ${join(row.obligations, 6)}` : '',
+              dl ? `Plazos: ${dl}` : '',
+            ].filter(Boolean).join('\n');
+            if (block) parts.push(block);
+            if (parts.join('\n\n').length >= 3000) break;
+          }
+          const verifiedBlock = parts.join('\n\n').slice(0, 3000);
+          if (verifiedBlock.trim()) {
+            documentEvidence.context = [
+              documentEvidence.context,
+              'ANÁLISIS VERIFICADOS DE LOS DOCUMENTOS SELECCIONADOS (hechos del caso; riesgos/recomendaciones excluidos por no verificados):',
+              verifiedBlock,
+            ].filter(Boolean).join('\n\n');
+          }
+        }
+      } catch (e) {
+        console.error('[LegalUpAI] research verified-analyses failed (continuing without it)', e?.message || e);
+      }
+    }
+
     // FASE 4.34D: encabezado en vivo del caso Pro (runtime, sin writes).
     // Legacy (sin link) y ambigüedad → contexto workspace sin cambios.
     let proCaseBlock = '';
@@ -11054,6 +11173,28 @@ app.get('/api/ai/cases/:caseId/intelligence', async (req, res) => {
       console.error('[LegalUpAI] pro case header failed (intelligence continues without it)', e?.message || e);
     }
 
+    // FASE 4.59B: contexto legal desde investigaciones exitosas del caso.
+    // Explícitamente NO hechos del caso: va en `legalContext` separado para
+    // no mezclarse con facts/parties/obligations/deadlines evidenciados.
+    // Lectura acotada, sin writes, sin provider calls, sin cuota.
+    let legalContext = [];
+    try {
+      const { data: intelResearchRows, error: intelResearchError } = await supabase
+        .from('ai_research_requests')
+        .select('id, query, answer, sources, created_at')
+        .eq('workspace_id', workspace.id)
+        .eq('lawyer_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (intelResearchError) throw intelResearchError;
+      legalContext = formatResearchLegalContext(
+        selectRelevantResearch({ researchList: intelResearchRows || [], question: '', maxItems: 5, maxChars: 8000 })
+      );
+    } catch (e) {
+      console.error('[LegalUpAI] intelligence legalContext failed (continuing without it)', e?.message || e);
+      legalContext = [];
+    }
+
     res.json({
       workspace_id: workspace.id,
       proCase,
@@ -11072,6 +11213,7 @@ app.get('/api/ai/cases/:caseId/intelligence', async (req, res) => {
       missingInformation,
       caseSummary: caseSummary || 'No hay información suficiente en los documentos para generar un resumen del caso.',
       attributionCoverage: allClaims.length > 0 ? 1 : 1,
+      legalContext,
     });
   } catch (error) {
     console.error('[LegalUpAI] case intelligence error:', error);

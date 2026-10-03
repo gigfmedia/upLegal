@@ -2,8 +2,11 @@
 // LegalUp AI — Fase 3: Chat contextual del caso.
 // Prompt del sistema, construcción del contexto privado del caso y límites
 // configurables. El contexto se construye únicamente con documentos y
-// análisis del workspace (nunca con fuentes externas).
+// análisis del workspace (nunca con fuentes externas), más —solo en Case
+// Chat— memoria acotada de investigaciones previas del mismo caso (4.59B).
 // ---------------------------------------------------------------------------
+
+import { selectRelevantResearch, formatResearchMemory } from './researchMemory.mjs';
 
 export const CHAT_LIMITS = {
   // Límite total de caracteres del contexto enviado al modelo (caso + docs + análisis).
@@ -19,6 +22,10 @@ export const CHAT_LIMITS = {
   CHUNK_OVERLAP: 300,
   // Máximo de chunks considerados por documento.
   MAX_CHUNKS_PER_DOC: 30,
+  // FASE 4.59B: memoria de investigación (solo Case Chat, tras la evidencia
+  // documental; nunca la desplaza).
+  MAX_RESEARCH_MEMORY_CHARS: 6000,
+  MAX_RESEARCH_MEMORY_ITEMS: 3,
 };
 
 /** Tokeniza un texto a minúsculas (palabras alfanuméricas de ≥3 caracteres). */
@@ -160,11 +167,15 @@ Debes responder ÚNICAMENTE con un objeto JSON válido con esta forma exacta:
 {
   "answer": string,
   "sources": [{ "document_id": string, "file_name": string, "fragment_id"?: string, "evidence"?: string }]
+  // FASE 4.59B (solo Case Chat, solo si el contexto trae MEMORIA DE
+  // INVESTIGACIÓN): también se acepta
+  // [{ "research_id": string, "research_query": string, "research_date"?: string, "title"?: string, "url"?: string }]
+  // usando EXCLUSIVAMENTE research_id y URLs presentes en la memoria.
 }
 
 Donde:
 - answer: tu respuesta, en Markdown básico (listas, negrita, encabezados pequeños).
-- sources: los documentos que sustentan tu respuesta. Usa EXCLUSIVAMENTE los document_id y file_name que aparecen en el contexto del caso. Si dispones del fragmento exacto que respalda tu respuesta (ver CONTENIDO del documento), incluye también "fragment_id" (el ID del fragmento, ej. "document::xyz::0") y "evidence" (el texto literal del fragmento, copiado exactamente). Si ninguna afirmación se basa en un documento, devuelve un arreglo vacío.
+- sources: los documentos que sustentan tu respuesta. Usa EXCLUSIVAMENTE los document_id y file_name que aparecen en el contexto del caso. Si dispones del fragmento exacto que respalda tu respuesta (ver CONTENIDO del documento), incluye también "fragment_id" (el ID del fragmento, ej. "document::xyz::0") y "evidence" (el texto literal del fragmento, copiado exactamente). Si además usaste la MEMORIA DE INVESTIGACIÓN, puedes agregar entradas de research con su research_id, pregunta original, fecha y URL tal como aparecen en el bloque (nunca inventadas). Si ninguna afirmación se basa en un documento ni en la memoria, devuelve un arreglo vacío.
 - No agregues texto, comentarios ni bloques markdown fuera del JSON.`;
   // 4.39B: autoridad del documento seleccionado (solo Document Chat). El modo
   // caso (default) queda byte-idéntico para no alterar Case Chat.
@@ -176,7 +187,14 @@ DOCUMENTO SELECCIONADO (autoridad primaria):
 22. No sustituyas información de OTROS DOCUMENTOS DEL CASO (contexto secundario). Si la respuesta no está en el documento seleccionado, dilo claramente en lugar de responder con otro documento.
 23. Usa los otros documentos solo como contexto secundario o cuando el usuario pida explícitamente una comparación.`;
   }
-  return base;
+  // FASE 4.59B: memoria de investigación (solo Case Chat; Document Chat no la
+  // recibe y su contrato queda intacto).
+  return `${base}
+
+MEMORIA DE INVESTIGACIÓN (contexto legal secundario, solo si aparece en el contexto):
+21. Orden de autoridad: (1) evidencia documental del caso y análisis verificados, (2) MEMORIA DE INVESTIGACIÓN previa, (3) historial de conversación. La memoria nunca prevalece sobre documentos contradictorios: si hay contradicción, prima el documento y señálalo.
+22. La memoria son síntesis de investigaciones anteriores de ESTE caso, con fecha y fuentes propias. Decláralas como tales ("según una investigación previa del [fecha]..."). Nunca las presentes como hechos del caso ni como legislación vigente sin verificar vigencia.
+23. Citas: puedes citar una fuente de la memoria usando research_id, fecha de la investigación y URL exactamente como aparecen en el bloque. Jamás inventes URLs ni research_id.`;
 }
 
 /** Formatea un análisis IA a texto breve para el contexto. */
@@ -225,7 +243,7 @@ function formatAnalysis(analysis) {
  *    acotado a MAX_CHAT_CONTEXT_CHARS mediante recuperación por relevancia.
  *  - tooLarge: siempre false (el chunking garantiza contexto que cabe en la consulta).
  */
-export function buildChatContext({ workspace, documents = [], analyses = {}, question = '', proCase = null, selectedDocumentId = null }) {
+export function buildChatContext({ workspace, documents = [], analyses = {}, question = '', proCase = null, selectedDocumentId = null, researchList = [] }) {
   // FASE 4.33B: datos en vivo del caso Pro ganan a la copia de provisioning.
   const live = proCase && typeof proCase === 'object' ? proCase : null;
   const caseLines = [`Nombre: ${(live && live.title) || workspace.name || 'Sin nombre'}`];
@@ -313,6 +331,27 @@ export function buildChatContext({ workspace, documents = [], analyses = {}, que
     );
   }
 
+  // FASE 4.59B: memoria de investigación SOLO en Case Chat (sin
+  // selectedDocumentId). Va DESPUÉS de la evidencia documental y solo usa
+  // el remanente del presupuesto: jamás recorta documentos ni análisis.
+  let researchSelected = [];
+  if (!selectedDocumentId && Array.isArray(researchList) && researchList.length) {
+    const picked = selectRelevantResearch({
+      researchList,
+      question,
+      maxItems: CHAT_LIMITS.MAX_RESEARCH_MEMORY_ITEMS,
+      maxChars: CHAT_LIMITS.MAX_RESEARCH_MEMORY_CHARS,
+    });
+    const room = CHAT_LIMITS.MAX_CHAT_CONTEXT_CHARS - blocks.join('\n\n').length;
+    if (picked.length && room > 500) {
+      const memText = formatResearchMemory(picked).slice(0, Math.min(room, CHAT_LIMITS.MAX_RESEARCH_MEMORY_CHARS));
+      if (memText.trim()) {
+        blocks.push(memText);
+        researchSelected = picked;
+      }
+    }
+  }
+
   let context = blocks.join('\n\n');
   // Truncado de seguridad: nunca debe superar el límite.
   if (context.length > CHAT_LIMITS.MAX_CHAT_CONTEXT_CHARS) {
@@ -324,6 +363,9 @@ export function buildChatContext({ workspace, documents = [], analyses = {}, que
     // tooLarge siempre false: la recuperación por relevancia garantiza un
     // contexto acotado que cabe en la consulta.
     tooLarge: false,
+    // FASE 4.59B: items de memoria efectivamente incluidos (para validar
+    // citas de research en la ruta). Vacío en Document Chat y sin research.
+    researchSelected,
   };
 }
 
