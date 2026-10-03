@@ -10,7 +10,6 @@ import { useAICaseIntelligence } from '@/hooks/useAIDocuments';
 import { useAICaseWorkflow, useSyncAICaseWorkflow, useUpdateAICaseWorkflow } from '@/hooks/useAICaseWorkflow';
 import { EvidenceNavigator, type EvidenceReference } from './EvidenceNavigator';
 import { fragmentLabelFromId } from '@/lib/evidenceLocation';
-import { AICaseDrafts } from './AICaseDrafts';
 import { AICaseWorkflowActionDrawer } from './AICaseWorkflowActionDrawer';
 import { deriveCaseActions } from '@/lib/caseActions';
 
@@ -177,7 +176,6 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToD
   ];
 
   return (
-    <>
     <Card className="mt-4">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
@@ -358,8 +356,5 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToD
         />
         </CardContent>
       </Card>
-      {/* FASE 4.59D: Borradores del caso (sin nuevo tab). */}
-      <AICaseDrafts workspaceId={workspaceId} />
-    </>
   );
 }

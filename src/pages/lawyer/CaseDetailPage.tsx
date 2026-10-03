@@ -18,6 +18,7 @@ import { AICaseCommandCenter } from '@/components/legalup-ai/AICaseCommandCenter
 import { AICaseFreeSnapshot } from '@/components/legalup-ai/AICaseFreeSnapshot';
 import { AICaseLatestAnalysis } from '@/components/legalup-ai/AICaseLatestAnalysis';
 import { AICaseIntelligence } from '@/components/legalup-ai/AICaseIntelligence';
+import { AICaseDrafts } from '@/components/legalup-ai/AICaseDrafts';
 import { AIResearchPanel } from '@/components/legalup-ai/AIResearchPanel';
 import { AICaseChatDrawer } from '@/components/legalup-ai/AICaseChatDrawer';
 import { CaseActivity } from '@/components/lawyer/CaseActivity';
@@ -76,7 +77,7 @@ function CaseDetailContent() {
   const [searchParams, setSearchParams] = useSearchParams();
   // 4.34K: direct capability tabs. Backward compat: legacy ?tab=ai[&view=]
   // maps to the equivalent direct tab (4.34J deep links keep working).
-  const CASE_TABS = ['overview', 'documents', 'intelligence', 'research', 'activity'] as const;
+  const CASE_TABS = ['overview', 'documents', 'research', 'intelligence', 'drafts', 'activity'] as const;
   const rawTab = (searchParams.get('tab') as string) || 'overview';
   const rawView = searchParams.get('view');
   const activeTab: string = rawTab === 'ai'
@@ -272,6 +273,7 @@ function CaseDetailContent() {
           <TabsTrigger value="documents" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Documentos y análisis</TabsTrigger>
           <TabsTrigger value="research" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Investigar jurisprudencia</TabsTrigger>
           <TabsTrigger value="intelligence" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Inteligencia del caso</TabsTrigger>
+          <TabsTrigger value="drafts" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Borradores</TabsTrigger>
           <TabsTrigger value="activity" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Timeline del caso</TabsTrigger>
         </TabsList>
 
@@ -405,6 +407,25 @@ function CaseDetailContent() {
               <Button onClick={() => setActiveTab('documents')}>Ir a Documentos</Button>
             </CardContent></Card>
           )}
+        </TabsContent>
+
+        {/* 4.59D.1: Borradores — trabajo jurídico generado desde el contexto.
+            Sin workspace aún: mismo patrón que intelligence (ir a Documentos). */}
+        <TabsContent value="drafts" className="mt-4">
+          <div className="max-w-4xl mx-auto">
+            <p className="text-sm text-muted-foreground mb-4">
+              Genera y revisa borradores utilizando la información, documentos e investigación de este caso.
+            </p>
+            {!effectiveWorkspaceId ? (
+              <Card><CardContent className="py-10 text-center space-y-4">
+                <p className="font-medium">Aún no hay caso inteligente.</p>
+                <p className="text-sm text-muted-foreground">Agrega un documento en la pestaña Documentos para habilitar los borradores de este caso.</p>
+                <Button onClick={() => setActiveTab('documents')}>Ir a Documentos</Button>
+              </CardContent></Card>
+            ) : (
+              <AICaseDrafts workspaceId={effectiveWorkspaceId} />
+            )}
+          </div>
         </TabsContent>
 
         <TabsContent value="activity" className="mt-4">
