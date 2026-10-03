@@ -11,6 +11,7 @@ import { useAICaseWorkflow, useSyncAICaseWorkflow, useUpdateAICaseWorkflow } fro
 import { EvidenceNavigator, type EvidenceReference } from './EvidenceNavigator';
 import { fragmentLabelFromId } from '@/lib/evidenceLocation';
 import { AICaseWorkflowActionDrawer } from './AICaseWorkflowActionDrawer';
+import { DeadlinePromoteDialog, IntelligenceDeadlineRow, type IntelligenceDeadline } from './DeadlinePromoteDialog';
 import { deriveCaseActions } from '@/lib/caseActions';
 
 function getCaseStatus(data: { contradictions: unknown[]; risks: unknown[]; missingInformation: unknown[]; document_count: number }) {
@@ -26,7 +27,7 @@ type CaseActionExecution = {
   status: 'idle' | 'running' | 'completed' | 'error';
 };
 
-export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToDocuments, onOpenChat, onWorkflowAsk, externalWorkflowActionId, onExternalWorkflowActionHandled }: { workspaceId: string; onQuestionClick?: (q: string) => void; onNavigateToDocuments?: () => void; onOpenChat?: () => void; onWorkflowAsk?: (q: string, actionId: string) => void; externalWorkflowActionId?: string | null; onExternalWorkflowActionHandled?: () => void }) {
+export function AICaseIntelligence({ workspaceId, caseId, onQuestionClick, onNavigateToDocuments, onOpenChat, onWorkflowAsk, externalWorkflowActionId, onExternalWorkflowActionHandled }: { workspaceId: string; caseId?: string; onQuestionClick?: (q: string) => void; onNavigateToDocuments?: () => void; onOpenChat?: () => void; onWorkflowAsk?: (q: string, actionId: string) => void; externalWorkflowActionId?: string | null; onExternalWorkflowActionHandled?: () => void }) {
   const { data, isLoading, isError, error, refetch } = useAICaseIntelligence(workspaceId, true);
   const workflowQuery = useAICaseWorkflow(workspaceId);
   const syncWorkflow = useSyncAICaseWorkflow(workspaceId);
@@ -37,6 +38,8 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToD
   const [activeQuickQuestion, setActiveQuickQuestion] = useState<string | null>(null);
   const [selectedWorkflowItem, setSelectedWorkflowItem] = useState<import('@/hooks/useAICaseWorkflow').AICaseWorkflowItem | null>(null);
   const [workflowDrawerOpen, setWorkflowDrawerOpen] = useState(false);
+  // FASE 4.60B: plazo de Inteligencia seleccionado para promover a pendiente.
+  const [promoteDeadline, setPromoteDeadline] = useState<IntelligenceDeadline | null>(null);
 
   useEffect(() => {
     if (data) posthog.capture('ai_case_intelligence_viewed', { case_id: workspaceId, documents_ready: data.document_count });
@@ -280,6 +283,7 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToD
               <ul className="space-y-2">
                 {data.deadlines.map((d,i) =>
                 <li key={i} className="text-sm flex flex-wrap items-center gap-2 text-sm text-gray-700">{d.date && <Badge variant="secondary" className="mr-2 bg-blue-100 text-blue-800">{d.date}</Badge>}{d.description}.
+                <IntelligenceDeadlineRow deadline={d} caseId={caseId} onPromote={setPromoteDeadline} />
                 </li>
                 )}
               </ul>
@@ -354,6 +358,15 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToD
           onDismiss={async () => { if (!selectedWorkflowItem) return; if (!window.confirm('¿Quieres descartar esta acción?\n\nPodrás reabrirla más adelante.')) return; try { await updateWorkflow.mutateAsync({ itemId: selectedWorkflowItem.id, status: 'dismissed' }); } catch (e) { toast.error(e instanceof Error ? e.message : 'Error.'); } }}
           onReopen={async () => { if (!selectedWorkflowItem) return; try { await updateWorkflow.mutateAsync({ itemId: selectedWorkflowItem.id, status: 'pending' }); } catch (e) { toast.error(e instanceof Error ? e.message : 'Error.'); } }}
         />
+        {/* FASE 4.60B: confirmación humana Inteligencia → pendiente. Solo con caso canónico. */}
+        {caseId && promoteDeadline && (
+          <DeadlinePromoteDialog
+            open={!!promoteDeadline}
+            onClose={() => setPromoteDeadline(null)}
+            caseId={caseId}
+            deadline={promoteDeadline}
+          />
+        )}
         </CardContent>
       </Card>
   );

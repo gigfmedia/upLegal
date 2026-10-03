@@ -380,6 +380,7 @@ function CaseDetailContent() {
           ) : (
             <AICaseIntelligence
               workspaceId={effectiveWorkspaceId}
+              caseId={caseId}
               externalWorkflowActionId={briefWorkflowActionId}
               onExternalWorkflowActionHandled={() => setBriefWorkflowActionId(null)}
               onQuestionClick={(q) => openCaseChat(q, null, 'case_intelligence')}
