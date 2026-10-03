@@ -37,7 +37,7 @@ import {
   AI_TRIAL_MAX_DOCUMENTS,
   normalizeAIEmail,
 } from './server/ai/trialIdentity.mjs';
-import pdfParse from 'pdf-parse/lib/pdf-parse.js';
+import { extractPdfText } from './server/ai/pdfText.mjs';
 import { chatCompletion, isAIProviderConfigured, createLlmCallBudget } from './server/ai/provider.mjs';
 import { buildAnalysisSystemPrompt, buildAnalysisUserPrompt } from './server/ai/legalPrompt.mjs';
 import {
@@ -9428,12 +9428,28 @@ const extractTextFromStoredPdf = async (doc, userId) => {
     throw new Error('No se pudo descargar el PDF desde el almacenamiento.');
   }
   const buffer = Buffer.from(await file.arrayBuffer());
-  const parsed = await pdfParse(buffer);
+  // FASE 4.59F.1: extracción con pdf.js mantenido (ver server/ai/pdfText.mjs).
+  // pdf-parse empaquetaba pdf.js 2019 y rechazaba PDFs válidos modernos.
+  let parsed;
+  try {
+    parsed = await extractPdfText(buffer, { maxChars: MAX_EXTRACTED_TEXT_CHARS });
+  } catch (e) {
+    // 4.59F.1: observabilidad mínima sin contenido (id, etapa, clase, páginas).
+    console.error('[LegalUpAI] pdf extract failed', {
+      document_id: doc.id,
+      stage: 'extract',
+      parser: 'pdfjs-dist',
+      error_class: e?.name || 'unknown',
+      message: String(e?.message || e).slice(0, 160),
+    });
+    if (e && (e.name === 'PdfPasswordError' || e.name === 'PdfEmptyError')) throw e;
+    throw new Error('No se pudo procesar el documento.');
+  }
   const text = (parsed.text || '').trim();
   if (text.length < 20) {
     throw new Error('No se pudo extraer texto del PDF. Asegúrate de que sea un PDF textual (no escaneado).');
   }
-  return { text: text.slice(0, MAX_EXTRACTED_TEXT_CHARS), pageCount: parsed.numpages || null };
+  return { text: text.slice(0, MAX_EXTRACTED_TEXT_CHARS), pageCount: parsed.pageCount || null };
 };
 
 // POST /api/ai/documents/:id/process — extrae el texto del PDF y lo guarda.
