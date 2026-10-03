@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Copy, Check, Pencil } from 'lucide-react';
+import { Copy, Check, Pencil, FilePenLine } from 'lucide-react';
 import { aiOperationIdentity } from '@/lib/aiOperationIdentity';
 import { pollTerminalResult } from '@/lib/aiInProgressPoll';
 
@@ -216,31 +216,28 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">Redacción asistida</h2>
-        <p className="text-sm text-muted-foreground mt-1">
+    <Card className="mt-4">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <FilePenLine className="h-4 w-4 text-green-700" aria-hidden="true" />
+          Redacción asistida
+        </CardTitle>
+        <p className="text-sm text-muted-foreground">
           Genera borradores utilizando la información, documentos e investigación de este caso.
         </p>
-      </div>
-
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
-
-      {noAccess ? (
-        <Card>
-          <CardContent className="py-6 space-y-3">
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        {noAccess ? (
+          <div className="space-y-2">
             <p className="text-sm">La generación de borradores está incluida en los planes de pago.</p>
             <Button size="sm" asChild>
               <a href="/pro">Ver LegalUp Pro</a>
             </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Nuevo borrador</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+          </div>
+        ) : (
+          <>
+            <p className="text-sm font-medium">Nuevo borrador</p>
             <div>
               <Label className="text-sm font-medium mb-2 block">Tipo de documento</Label>
               <div className="flex flex-wrap gap-2">
@@ -297,13 +294,11 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                 )}
               </div>
             ) : null}
-          </CardContent>
-        </Card>
-      )}
+          </>
+        )}
 
-      {openDraft ? (
-        <Card>
-          <CardContent className="space-y-3 pt-6">
+        {openDraft ? (
+          <div className="space-y-3 border-t pt-4">
             <div className="flex items-center justify-between gap-2">
               <p className="font-medium text-sm">{openDraft.title}</p>
               <Button size="sm" variant="outline" onClick={() => { setOpenDraft(null); setOpenId(null); }}>
@@ -335,35 +330,35 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                 </Button>
               )}
             </div>
-          </CardContent>
-        </Card>
-      ) : null}
+          </div>
+        ) : null}
 
-      {!openDraft ? (
-        <div>
-          <h3 className="text-lg font-bold text-gray-900 mb-3">Borradores anteriores</h3>
-          {isLoading ? (
-            <p className="text-sm text-muted-foreground">Cargando borradores…</p>
-          ) : drafts.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Aún no hay borradores anteriores.</p>
-          ) : (
-            <div className="space-y-2">
-              {drafts.map((d) => (
-                <button
-                  key={d.id}
-                  onClick={() => void openDraftById(d.id)}
-                  className="w-full text-left rounded border px-3 py-2 hover:bg-gray-50"
-                >
-                  <span className="text-sm font-medium">{d.title}</span>
-                  <span className="text-xs text-muted-foreground ml-2">
-                    {new Date(d.created_at).toLocaleString('es-CL', { day: 'numeric', month: 'short' })}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      ) : null}
-    </div>
+        {!openDraft ? (
+          <div className="border-t pt-4">
+            <p className="text-sm font-medium mb-3">Borradores anteriores</p>
+            {isLoading ? (
+              <p className="text-sm text-muted-foreground">Cargando borradores…</p>
+            ) : drafts.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aún no hay borradores anteriores.</p>
+            ) : (
+              <div className="space-y-2">
+                {drafts.map((d) => (
+                  <button
+                    key={d.id}
+                    onClick={() => void openDraftById(d.id)}
+                    className="w-full text-left rounded border px-3 py-2 hover:bg-gray-50"
+                  >
+                    <span className="text-sm font-medium">{d.title}</span>
+                    <span className="text-xs text-muted-foreground ml-2">
+                      {new Date(d.created_at).toLocaleString('es-CL', { day: 'numeric', month: 'short' })}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }

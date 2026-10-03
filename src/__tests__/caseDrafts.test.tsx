@@ -74,6 +74,15 @@ function renderDrafts() {
   );
 }
 
+describe('FASE 4.59D.3 contenedor único Research-like', () => {
+  it('título una vez, dentro del contenedor, con icono y sin duplicados', async () => {
+    const { container } = renderDrafts();
+    expect(screen.getAllByText('Redacción asistida')).toHaveLength(1);
+    expect(container.querySelector('svg.lucide')).toBeTruthy();
+    expect(await screen.findByText('Borrador de contestación')).toBeTruthy();
+  });
+});
+
 describe('FASE 4.59D.2 workspace directo', () => {
   it('título canónico + formulario visible sin click intermedio', async () => {
     renderDrafts();
