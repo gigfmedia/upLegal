@@ -17,6 +17,8 @@ import {
   readLatestSnapshot,
   persistSnapshotIfNew,
   resolveSnapshotCase,
+  computeCaseIntelligence,
+  assembleIntelligencePayload,
 } from './caseSnapshots.mjs';
 
 const src = readFileSync(new URL('../../server.mjs', import.meta.url), 'utf8');
@@ -73,6 +75,7 @@ function harness() {
   const ctx = vm.createContext({ console: quiet, z, Buffer, process: { env: {} }, supabase,
     selectRelevantResearch, formatResearchLegalContext, getProCaseHeader,
     buildSourceManifest, fingerprintManifest, readLatestSnapshot, persistSnapshotIfNew, resolveSnapshotCase,
+    computeCaseIntelligence, assembleIntelligencePayload,
     app: { get: (p, h) => { routes[`get ${p}`] = h; } },
     getUserIdFromToken: async () => tokenUser,
     requireAILawyer: async (_req, res) => { if (!tokenUser) { res.status(401).json({ error: 'x' }); return null; } return tokenUser; },

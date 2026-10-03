@@ -52,12 +52,21 @@ import {
   formatResearchLegalContext,
 } from './server/ai/researchMemory.mjs';
 import {
+  buildDraftSystemPrompt,
+  buildDraftContext,
+  selectDraftEvidence,
+  validateDraftSources,
+  DRAFT_LIMITS,
+} from './server/ai/caseDrafting.mjs';
+import {
   buildSourceManifest,
   fingerprintManifest,
   readLatestSnapshot,
   persistSnapshotIfNew,
   resolveSnapshotCase,
   formatSnapshotBlock,
+  computeCaseIntelligence,
+  assembleIntelligencePayload,
 } from './server/ai/caseSnapshots.mjs';
 import {
   searchJurisprudence,
@@ -11105,153 +11114,11 @@ app.get('/api/ai/cases/:caseId/intelligence', async (req, res) => {
     }
     const snapshotCaseRow = snapshotCase.caseRow;
 
-    // Documentos del workspace (todos, para contar pendientes)
-    const { data: allDocs, error: allDocsError } = await supabase
-      .from('ai_documents')
-      .select('id, original_filename, file_path, file_size_bytes, mime_type, status, page_count, created_at')
-      .eq('workspace_id', workspace.id)
-      .eq('lawyer_id', userId)
-      .order('created_at', { ascending: true });
-    if (allDocsError) throw allDocsError;
-    const docs = (allDocs || []).filter((d) => d.status === 'ready');
-    const pendingDocs = (allDocs || []).filter((d) => d.status === 'pending' || d.status === 'processing');
-    const failedDocs = (allDocs || []).filter((d) => d.status === 'failed');
+    // FASE 4.59C: agregación canónica (ver server/ai/caseSnapshots.mjs).
+    const agg = await computeCaseIntelligence({ supabase, workspace, userId });
+    const { allDocs, analyses, intelResearchRows } = agg;
 
-    const { data: analyses, error: analysesError } = await supabase
-      .from('ai_document_analyses')
-      .select('id, document_id, summary, document_type, parties, key_points, obligations, deadlines, risks, recommendations, claims, model, created_at, updated_at')
-      .eq('workspace_id', workspace.id)
-      .eq('lawyer_id', userId)
-      .order('created_at', { ascending: true });
-    if (analysesError) throw analysesError;
-
-    // Mapa document_id → documento para page_number y filename
-    const docById = new Map((docs || []).map((d) => [d.id, d]));
-    const analysesByDoc = new Map((analyses || []).map((a) => [a.document_id, a]));
-
-    // Agregación de claims verificados (de analyses[].claims, ya verificados en 4.5)
-    const allClaims = [];
-    for (const a of analyses || []) {
-      const claims = Array.isArray(a.claims) ? a.claims : [];
-      for (const c of claims) {
-        const doc = docById.get(c.source_id);
-        allClaims.push({
-          text: c.text,
-          source_id: c.source_id,
-          fragment_id: c.fragment_id || null,
-          evidence: c.evidence || '',
-          ...honestEvidenceLocation(c.fragment_id),
-          document_filename: doc?.original_filename || c.source_id,
-        });
-      }
-    }
-
-    // Deduplicación por texto normalizado (conserva source_ids)
-    const deduped = new Map();
-    for (const c of allClaims) {
-      const key = String(c.text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
-      if (!key) continue;
-      if (!deduped.has(key)) deduped.set(key, { ...c, source_ids: [c.source_id], evidences: [c] });
-      else {
-        const existing = deduped.get(key);
-        if (!existing.source_ids.includes(c.source_id)) {
-          existing.source_ids.push(c.source_id);
-          existing.evidences.push(c);
-        }
-      }
-    }
-    const facts = Array.from(deduped.values());
-
-    // Partes, obligaciones, fechas, riesgos consolidados (desde analyses, ya verificados)
-    const parties = Array.from(new Set((analyses || []).flatMap((a) => Array.isArray(a.parties) ? a.parties : []))).slice(0, 50);
-    const obligations = Array.from(new Set((analyses || []).flatMap((a) => Array.isArray(a.obligations) ? a.obligations : []))).slice(0, 50);
-    const deadlines = (analyses || []).flatMap((a) => Array.isArray(a.deadlines) ? a.deadlines : []).slice(0, 50);
-    const risks = Array.from(new Set((analyses || []).flatMap((a) => Array.isArray(a.risks) ? a.risks : []))).slice(0, 50);
-
-    // Contradicciones: detecta hechos con mismo tema pero valores distintos (ej. fechas/montos)
-    // Minimal: busca claims con mismo prefijo (primeras 3 palabras) pero texto distinto
-    const contradictions = [];
-    const byPrefix = new Map();
-    for (const f of facts) {
-      const prefix = String(f.text || '').split(/\s+/).slice(0, 3).join(' ').toLowerCase();
-      if (!byPrefix.has(prefix)) byPrefix.set(prefix, []);
-      byPrefix.get(prefix).push(f);
-    }
-    for (const [prefix, group] of byPrefix) {
-      if (group.length > 1) {
-        const texts = new Set(group.map((g) => g.text));
-        if (texts.size > 1) {
-          contradictions.push({ topic: prefix, versions: group.map((g) => ({ text: g.text, source_id: g.source_id, document_filename: g.document_filename, evidence: g.evidence })) });
-        }
-      }
-    }
-
-    // Información faltante: si no hay claims para una categoría esperada, se reporta como no encontrada (no se inventa)
-    const missingInformation = [];
-    if (facts.length === 0) missingInformation.push('No se encontraron hechos verificados en los documentos disponibles.');
-    if (parties.length === 0) missingInformation.push('No se encontraron partes intervinientes en los documentos.');
-    if (obligations.length === 0) missingInformation.push('No se encontraron obligaciones explícitas en los documentos.');
-    if (deadlines.length === 0) missingInformation.push('No se encontraron fechas o plazos explícitos en los documentos.');
-
-    // Resumen del caso: concatenación de summaries verificados (sin LLM)
-    const caseSummary = (analyses || []).map((a) => String(a.summary || '').trim()).filter(Boolean).join('\n\n');
-
-    // FASE 4.33B: mismo encabezado en vivo para que el Command Center refleje
-    // el encuadre actual del caso Pro. Determinista, sin provider calls.
-    let proCase = null;
-    try {
-      const resolved = await getProCaseHeader(supabase, { workspaceId: workspace.id, lawyerId: userId });
-      if (resolved.status === 'linked') proCase = resolved.header;
-    } catch (e) {
-      console.error('[LegalUpAI] pro case header failed (intelligence continues without it)', e?.message || e);
-    }
-
-    // FASE 4.59B: contexto legal desde investigaciones exitosas del caso.
-    // Explícitamente NO hechos del caso: va en `legalContext` separado para
-    // no mezclarse con facts/parties/obligations/deadlines evidenciados.
-    // Lectura acotada, sin writes, sin provider calls, sin cuota.
-    // (Las filas se reutilizan abajo para el fingerprint del snapshot.)
-    let intelResearchRows = [];
-    let legalContext = [];
-    try {
-      const { data: rows, error: intelResearchError } = await supabase
-        .from('ai_research_requests')
-        .select('id, query, answer, sources, created_at')
-        .eq('workspace_id', workspace.id)
-        .eq('lawyer_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(10);
-      if (intelResearchError) throw intelResearchError;
-      intelResearchRows = rows || [];
-      legalContext = formatResearchLegalContext(
-        selectRelevantResearch({ researchList: intelResearchRows, question: '', maxItems: 5, maxChars: 8000 })
-      );
-    } catch (e) {
-      console.error('[LegalUpAI] intelligence legalContext failed (continuing without it)', e?.message || e);
-      intelResearchRows = [];
-      legalContext = [];
-    }
-
-    const intelligencePayload = {
-      workspace_id: workspace.id,
-      proCase,
-      document_count: (docs || []).length,
-      documents: docs || [],
-      pending_count: pendingDocs.length,
-      failed_count: failedDocs.length,
-      total_documents: (allDocs || []).length,
-      analyses: analyses || [],
-      facts,
-      parties,
-      obligations,
-      deadlines,
-      risks,
-      contradictions,
-      missingInformation,
-      caseSummary: caseSummary || 'No hay información suficiente en los documentos para generar un resumen del caso.',
-      attributionCoverage: allClaims.length > 0 ? 1 : 1,
-      legalContext,
-    };
+    const intelligencePayload = assembleIntelligencePayload(agg, workspace.id);
 
     // FASE 4.59C: snapshot versionado. Legacy (sin caso) responde sin
     // persistir. Mismo fingerprint → se retorna la versión vigente sin
@@ -11285,6 +11152,307 @@ app.get('/api/ai/cases/:caseId/intelligence', async (req, res) => {
   } catch (error) {
     console.error('[LegalUpAI] case intelligence error:', error);
     res.status(500).json({ error: 'No se pudo cargar la inteligencia del caso.' });
+  }
+});
+
+// — FASE 4.59D: Draft from Case V1 —
+const AIDraftRequestSchema = z.object({
+  draft_type: z.enum(['escrito', 'informe', 'carta', 'otro']),
+  instruction: z.string().trim().min(10).max(2000),
+});
+const AIDraftResponseSchema = z.object({
+  title: z.string().min(1),
+  content: z.string().min(1),
+  sources: z
+    .array(
+      z.union([
+        z.object({
+          kind: z.literal('document').optional(),
+          document_id: z.string(),
+          file_name: z.string(),
+          fragment_id: z.string().optional(),
+          evidence: z.string().optional(),
+        }),
+        z.object({
+          kind: z.literal('research').optional(),
+          research_id: z.string(),
+          research_query: z.string().optional(),
+          research_date: z.string().optional(),
+          title: z.string().optional(),
+          url: z.string().optional(),
+        }),
+      ])
+    )
+    .default([]),
+  missing_info: z.array(z.string()).default([]),
+  warnings: z.array(z.string()).default([]),
+});
+// V1 controlled gate: planes pagados con misma semántica (Plus difiere solo
+// por volumen futuro, nunca por funcionalidad). Free/free_case/legacy: 403.
+// Sin cuota certificada: p_drafting_limit NULL + topes globales. La activación
+// productiva requiere decisión comercial (reporte 4.59D).
+const DRAFTING_ALLOWED_PLANS = ['essential', 'pro_limited', 'pro', 'plus'];
+
+app.post('/api/ai/cases/:caseId/drafts', async (req, res) => {
+  let userId = null;
+  const metering = createAIMetering({ supabase, tokenLimit: AI_PROTECT_MAX_MONTHLY_TOKENS, operationLimit: AI_PROTECT_MAX_MONTHLY_REQUESTS });
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+
+    const parsed = AIDraftRequestSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Solicitud inválida: tipo de borrador e instrucción (10-2000 caracteres).', code: 'INVALID_REQUEST' });
+    }
+    const { draft_type, instruction } = parsed.data;
+
+    const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
+    if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
+
+    const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
+    if (entitlement.res) return entitlement.res;
+    if (!DRAFTING_ALLOWED_PLANS.includes(entitlement.plan)) {
+      return res.status(403).json({ error: 'La generación de borradores requiere un plan de pago.', code: 'AI_FEATURE_NOT_AVAILABLE' });
+    }
+
+    // Caso canónico: los borradores exigen lawyer_case_id (FK) y snapshot.
+    const link = await resolveSnapshotCase(supabase, { lawyerId: userId, workspaceId: workspace.id });
+    if (link.status === 'ambiguous') {
+      return res.status(409).json({ error: 'El workspace está vinculado a más de un caso.', code: 'AI_CASE_LINK_AMBIGUOUS' });
+    }
+    if (link.status !== 'linked') {
+      return res.status(404).json({ error: 'Se requiere un caso vinculado para generar borradores.', code: 'CASE_REQUIRED' });
+    }
+
+    // Snapshot vigente (refresca si stale; crea v1 si ausente).
+    const agg = await computeCaseIntelligence({ supabase, workspace, userId });
+    const manifest = buildSourceManifest({
+      caseRow: link.caseRow,
+      docs: agg.allDocs,
+      analyses: agg.analyses,
+      researchRows: agg.intelResearchRows,
+    });
+    const fingerprint = fingerprintManifest(manifest);
+    const { snapshot: snapRow } = await persistSnapshotIfNew(supabase, {
+      lawyerId: userId,
+      caseId: link.caseRow.id,
+      workspaceId: workspace.id,
+      fingerprint,
+      manifest,
+      payload: assembleIntelligencePayload(agg, workspace.id),
+    });
+    const snapPayload = snapRow.snapshot || {};
+
+    // Evidencia primaria acotada por relevancia (reutiliza document grounding).
+    const { data: readyDocs } = await supabase
+      .from('ai_documents')
+      .select('id, original_filename, extracted_text, workspace_id, lawyer_id')
+      .eq('workspace_id', workspace.id)
+      .eq('lawyer_id', userId)
+      .eq('status', 'ready');
+    const factTexts = Array.isArray(snapPayload.facts)
+      ? snapPayload.facts.slice(0, 10).map((f) => (typeof f === 'string' ? f : f.text || ''))
+      : [];
+    const { context: evidenceContext, docMap } = selectDraftEvidence({
+      documents: readyDocs || [],
+      instruction,
+      snapshotFacts: factTexts,
+      workspaceId: workspace.id,
+      lawyerId: userId,
+    });
+    const researchMap = new Map(
+      (Array.isArray(snapPayload.legalContext) ? snapPayload.legalContext : []).map((l) => [
+        String(l.research_id),
+        { query: l.query, created_at: l.created_at, urls: new Set((l.source_urls || []).filter(Boolean)) },
+      ])
+    );
+    const researchBlocks = (Array.isArray(snapPayload.legalContext) ? snapPayload.legalContext : [])
+      .slice(0, 5)
+      .map((l, i) => `Contexto legal ${i + 1} (investigación del ${l.created_at || 'fecha no registrada'}${l.query ? ` sobre: ${l.query}` : ''}): ${String(l.synthesis || '').slice(0, 600)}`)
+      .join('\n');
+
+    let proCaseBlock = '';
+    try {
+      const resolved = await getProCaseHeader(supabase, { workspaceId: workspace.id, lawyerId: userId });
+      if (resolved.status === 'linked') proCaseBlock = formatProCaseBlock(resolved.header);
+    } catch (e) {
+      console.error('[LegalUpAI] draft pro case header failed (continuing without it)', e?.message || e);
+    }
+    const draftContext = buildDraftContext({
+      instruction,
+      draftType: draft_type,
+      caseHeader: proCaseBlock,
+      snapshot: snapPayload,
+      researchBlocks,
+    });
+    const fullContext = [draftContext, evidenceContext ? `EVIDENCIA PRIMARIA DEL CASO (fragmentos relevantes):\n${evidenceContext}` : '']
+      .filter(Boolean)
+      .join('\n\n')
+      .slice(0, DRAFT_LIMITS.MAX_CONTEXT_CHARS);
+
+    if (!isAIProviderConfigured()) {
+      return res.status(500).json({ error: 'El servicio de IA no está configurado.', code: 'AI_NOT_CONFIGURED' });
+    }
+
+    if (!await metering.begin(req, res, { lawyerId: userId, workspaceId: workspace.id, capability: 'case_drafting', resourceId: snapRow.id, input: { draft_type, instruction, snapshot_id: snapRow.id, model: AI_DEFAULT_MODEL }, commercialLimits: commercialQuotaForPlan(entitlement.plan), freeQuota: freeQuotaForEntitlement(entitlement) })) return;
+
+    const { data: raw } = await chatCompletion({
+      model: AI_DEFAULT_MODEL,
+      metering,
+      system: buildDraftSystemPrompt({ draftType: draft_type }),
+      messages: [{ role: 'user', content: `Contexto del caso:\n${fullContext}` }],
+      maxTokens: DRAFT_LIMITS.MAX_OUTPUT_TOKENS,
+      temperature: 0.2,
+    });
+    const validated = AIDraftResponseSchema.safeParse(typeof raw === 'string' ? JSON.parse(raw) : raw);
+    if (!validated.success) {
+      return await metering.respond(res, 502, {
+        error: 'El modelo no devolvió un borrador válido. Intenta nuevamente.',
+        code: 'AI_PROVIDER_INVALID_RESPONSE',
+      });
+    }
+    const checked = validateDraftSources(validated.data.sources, { docMap, researchMap });
+    const warnings = [...(validated.data.warnings || []), ...checked.warnings];
+    const content = String(validated.data.content || '').slice(0, 60000);
+    if (!content.trim()) {
+      return await metering.respond(res, 502, {
+        error: 'El modelo no devolvió contenido. Intenta nuevamente.',
+        code: 'AI_PROVIDER_INVALID_RESPONSE',
+      });
+    }
+
+    const { data: saved, error: saveError } = await supabase
+      .from('ai_case_drafts')
+      .insert({
+        lawyer_id: userId,
+        lawyer_case_id: link.caseRow.id,
+        workspace_id: workspace.id,
+        intelligence_snapshot_id: snapRow.id,
+        draft_type,
+        instruction,
+        title: String(validated.data.title).slice(0, 300),
+        content,
+        sources: checked.sources,
+        model: AI_DEFAULT_MODEL,
+        status: 'completed',
+      })
+      .select()
+      .single();
+    if (saveError) throw saveError;
+
+    try {
+      await capturePostHog('ai_case_draft_generated', userId, {
+        case_id: link.caseRow.id,
+        draft_type,
+        snapshot_version: snapRow.version,
+        sources_kept: checked.sources.length,
+        sources_dropped: checked.dropped,
+      });
+    } catch (e) {
+      console.error('[LegalUpAI] draft analytics failed (continuing)', e?.message || e);
+    }
+
+    await metering.respond(res, 200, {
+      draft: saved,
+      snapshot: { version: snapRow.version, generated_at: snapRow.created_at },
+      warnings,
+    });
+  } catch (error) {
+    console.error('[LegalUpAI] draft error:', error);
+    const code =
+      error?.code?.startsWith('AI_') ? error.code : 'PROVIDER_ERROR';
+    await metering.respond(res, error?.status || 500, {
+      error: error.message || 'No se pudo generar el borrador.',
+      code,
+    });
+  }
+});
+
+app.get('/api/ai/cases/:caseId/drafts', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
+    if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
+    const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
+    if (entitlement.res) return entitlement.res;
+    const link = await resolveSnapshotCase(supabase, { lawyerId: userId, workspaceId: workspace.id });
+    if (link.status !== 'linked') return res.json({ drafts: [] });
+    const { data, error } = await supabase
+      .from('ai_case_drafts')
+      .select('id, draft_type, title, status, created_at, updated_at, intelligence_snapshot_id')
+      .eq('lawyer_id', userId)
+      .eq('lawyer_case_id', link.caseRow.id)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (error) throw error;
+    res.json({ drafts: data || [] });
+  } catch (error) {
+    console.error('[LegalUpAI] drafts list error:', error);
+    res.status(500).json({ error: 'No se pudieron cargar los borradores.' });
+  }
+});
+
+app.get('/api/ai/cases/:caseId/drafts/:draftId', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
+    if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
+    const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
+    if (entitlement.res) return entitlement.res;
+    const { data, error } = await supabase
+      .from('ai_case_drafts')
+      .select('*')
+      .eq('id', req.params.draftId)
+      .eq('lawyer_id', userId)
+      .eq('workspace_id', workspace.id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Borrador no encontrado.' });
+    res.json({ draft: data });
+  } catch (error) {
+    console.error('[LegalUpAI] draft open error:', error);
+    res.status(500).json({ error: 'No se pudo abrir el borrador.' });
+  }
+});
+
+app.put('/api/ai/cases/:caseId/drafts/:draftId', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
+    if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
+    const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
+    if (entitlement.res) return entitlement.res;
+    const content = typeof req.body?.content === 'string' ? req.body.content : '';
+    if (!content.trim() || content.length > 200000) {
+      return res.status(400).json({ error: 'Contenido inválido.', code: 'INVALID_REQUEST' });
+    }
+    const { data: existing, error: fetchError } = await supabase
+      .from('ai_case_drafts')
+      .select('id')
+      .eq('id', req.params.draftId)
+      .eq('lawyer_id', userId)
+      .eq('workspace_id', workspace.id)
+      .maybeSingle();
+    if (fetchError) throw fetchError;
+    if (!existing) return res.status(404).json({ error: 'Borrador no encontrado.' });
+    const { data, error } = await supabase
+      .from('ai_case_drafts')
+      .update({ content, updated_at: new Date().toISOString() })
+      .eq('id', req.params.draftId)
+      .eq('lawyer_id', userId)
+      .select()
+      .single();
+    if (error) throw error;
+    res.json({ draft: data });
+  } catch (error) {
+    console.error('[LegalUpAI] draft update error:', error);
+    res.status(500).json({ error: 'No se pudo guardar el borrador.' });
   }
 });
 

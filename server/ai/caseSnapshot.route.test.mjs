@@ -14,6 +14,8 @@ import {
   readLatestSnapshot,
   persistSnapshotIfNew,
   resolveSnapshotCase,
+  computeCaseIntelligence,
+  assembleIntelligencePayload,
 } from './caseSnapshots.mjs';
 import {
   selectRelevantResearch,
@@ -85,7 +87,7 @@ function harness() {
   const routes = {};
   const quiet = { log() {}, warn() {}, error() {} };
   const ctx = vm.createContext({ console: quiet, z, Buffer, process: { env: {} }, supabase,
-    buildSourceManifest, fingerprintManifest,
+    buildSourceManifest, fingerprintManifest, computeCaseIntelligence, assembleIntelligencePayload,
     app: { get: (p, h) => { routes[`get ${p}`] = h; } },
     getUserIdFromToken: async () => tokenUser,
     requireAILawyer: async (_req, res) => { if (!tokenUser) { res.status(401).json({ error: 'x' }); return null; } return tokenUser; },

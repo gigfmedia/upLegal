@@ -6,6 +6,9 @@
  * versionado race-safe. Determinista, 0 provider, 0 cuota.
  */
 import { createHash } from 'node:crypto';
+import { getProCaseHeader } from './proCaseContext.mjs';
+import { selectRelevantResearch, formatResearchLegalContext } from './researchMemory.mjs';
+import { honestEvidenceLocation } from './coreAuthority.mjs';
 
 function stableStringify(value) {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
@@ -133,6 +136,33 @@ export async function persistSnapshotIfNew(supabase, { lawyerId, caseId, workspa
 }
 
 /**
+ * Ensambla el payload de intelligence desde la agregación (misma forma que
+ * sirve GET .../intelligence). Un solo lugar para payload: ruta y snapshots.
+ */
+export function assembleIntelligencePayload(agg, workspaceId) {
+  return {
+    workspace_id: workspaceId,
+    proCase: agg.proCase,
+    document_count: (agg.docs || []).length,
+    documents: agg.docs || [],
+    pending_count: (agg.pendingDocs || []).length,
+    failed_count: (agg.failedDocs || []).length,
+    total_documents: (agg.allDocs || []).length,
+    analyses: agg.analyses || [],
+    facts: agg.facts,
+    parties: agg.parties,
+    obligations: agg.obligations,
+    deadlines: agg.deadlines,
+    risks: agg.risks,
+    contradictions: agg.contradictions,
+    missingInformation: agg.missingInformation,
+    caseSummary: agg.caseSummary || 'No hay información suficiente en los documentos para generar un resumen del caso.',
+    attributionCoverage: (agg.allClaims || []).length > 0 ? 1 : 1,
+    legalContext: agg.legalContext || [],
+  };
+}
+
+/**
  * Bloque de snapshot para Case Chat (memoria derivada acotada).
  * Orden: resumen + hechos top + contexto legal (síntesis). Nunca evidencia
  * cruda: el snapshot no trae extracted_text. Ante conflicto, el documento
@@ -178,4 +208,141 @@ export async function resolveSnapshotCase(supabase, { lawyerId, workspaceId }) {
   if (rows.length === 0) return { status: 'legacy', caseRow: null };
   if (rows.length > 1) return { status: 'ambiguous', caseRow: null };
   return { status: 'linked', caseRow: rows[0] };
+}
+
+/**
+ * FASE 4.59C — agregación canónica de Case Intelligence (extraída de la ruta
+ * GET sin cambios de lógica). Determinista, 0 provider. La usan la ruta
+ * intelligence, snapshots y drafting: un solo lugar para la agregación.
+ * Retorna todo lo que la ruta necesita para payload + fingerprint.
+ */
+export async function computeCaseIntelligence({ supabase, workspace, userId }) {
+// Documentos del workspace (todos, para contar pendientes)
+const { data: allDocs, error: allDocsError } = await supabase
+  .from('ai_documents')
+  .select('id, original_filename, file_path, file_size_bytes, mime_type, status, page_count, created_at')
+  .eq('workspace_id', workspace.id)
+  .eq('lawyer_id', userId)
+  .order('created_at', { ascending: true });
+if (allDocsError) throw allDocsError;
+const docs = (allDocs || []).filter((d) => d.status === 'ready');
+const pendingDocs = (allDocs || []).filter((d) => d.status === 'pending' || d.status === 'processing');
+const failedDocs = (allDocs || []).filter((d) => d.status === 'failed');
+
+const { data: analyses, error: analysesError } = await supabase
+  .from('ai_document_analyses')
+  .select('id, document_id, summary, document_type, parties, key_points, obligations, deadlines, risks, recommendations, claims, model, created_at, updated_at')
+  .eq('workspace_id', workspace.id)
+  .eq('lawyer_id', userId)
+  .order('created_at', { ascending: true });
+if (analysesError) throw analysesError;
+
+// Mapa document_id → documento para page_number y filename
+const docById = new Map((docs || []).map((d) => [d.id, d]));
+const analysesByDoc = new Map((analyses || []).map((a) => [a.document_id, a]));
+
+// Agregación de claims verificados (de analyses[].claims, ya verificados en 4.5)
+const allClaims = [];
+for (const a of analyses || []) {
+  const claims = Array.isArray(a.claims) ? a.claims : [];
+  for (const c of claims) {
+    const doc = docById.get(c.source_id);
+    allClaims.push({
+      text: c.text,
+      source_id: c.source_id,
+      fragment_id: c.fragment_id || null,
+      evidence: c.evidence || '',
+      ...honestEvidenceLocation(c.fragment_id),
+      document_filename: doc?.original_filename || c.source_id,
+    });
+  }
+}
+
+// Deduplicación por texto normalizado (conserva source_ids)
+const deduped = new Map();
+for (const c of allClaims) {
+  const key = String(c.text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+  if (!key) continue;
+  if (!deduped.has(key)) deduped.set(key, { ...c, source_ids: [c.source_id], evidences: [c] });
+  else {
+    const existing = deduped.get(key);
+    if (!existing.source_ids.includes(c.source_id)) {
+      existing.source_ids.push(c.source_id);
+      existing.evidences.push(c);
+    }
+  }
+}
+const facts = Array.from(deduped.values());
+
+// Partes, obligaciones, fechas, riesgos consolidados (desde analyses, ya verificados)
+const parties = Array.from(new Set((analyses || []).flatMap((a) => Array.isArray(a.parties) ? a.parties : []))).slice(0, 50);
+const obligations = Array.from(new Set((analyses || []).flatMap((a) => Array.isArray(a.obligations) ? a.obligations : []))).slice(0, 50);
+const deadlines = (analyses || []).flatMap((a) => Array.isArray(a.deadlines) ? a.deadlines : []).slice(0, 50);
+const risks = Array.from(new Set((analyses || []).flatMap((a) => Array.isArray(a.risks) ? a.risks : []))).slice(0, 50);
+
+// Contradicciones: detecta hechos con mismo tema pero valores distintos (ej. fechas/montos)
+// Minimal: busca claims con mismo prefijo (primeras 3 palabras) pero texto distinto
+const contradictions = [];
+const byPrefix = new Map();
+for (const f of facts) {
+  const prefix = String(f.text || '').split(/\s+/).slice(0, 3).join(' ').toLowerCase();
+  if (!byPrefix.has(prefix)) byPrefix.set(prefix, []);
+  byPrefix.get(prefix).push(f);
+}
+for (const [prefix, group] of byPrefix) {
+  if (group.length > 1) {
+    const texts = new Set(group.map((g) => g.text));
+    if (texts.size > 1) {
+      contradictions.push({ topic: prefix, versions: group.map((g) => ({ text: g.text, source_id: g.source_id, document_filename: g.document_filename, evidence: g.evidence })) });
+    }
+  }
+}
+
+// Información faltante: si no hay claims para una categoría esperada, se reporta como no encontrada (no se inventa)
+const missingInformation = [];
+if (facts.length === 0) missingInformation.push('No se encontraron hechos verificados en los documentos disponibles.');
+if (parties.length === 0) missingInformation.push('No se encontraron partes intervinientes en los documentos.');
+if (obligations.length === 0) missingInformation.push('No se encontraron obligaciones explícitas en los documentos.');
+if (deadlines.length === 0) missingInformation.push('No se encontraron fechas o plazos explícitos en los documentos.');
+
+// Resumen del caso: concatenación de summaries verificados (sin LLM)
+const caseSummary = (analyses || []).map((a) => String(a.summary || '').trim()).filter(Boolean).join('\n\n');
+
+// FASE 4.33B: mismo encabezado en vivo para que el Command Center refleje
+// el encuadre actual del caso Pro. Determinista, sin provider calls.
+let proCase = null;
+try {
+  const resolved = await getProCaseHeader(supabase, { workspaceId: workspace.id, lawyerId: userId });
+  if (resolved.status === 'linked') proCase = resolved.header;
+} catch (e) {
+  console.error('[LegalUpAI] pro case header failed (intelligence continues without it)', e?.message || e);
+}
+
+// FASE 4.59B: contexto legal desde investigaciones exitosas del caso.
+// Explícitamente NO hechos del caso: va en `legalContext` separado para
+// no mezclarse con facts/parties/obligations/deadlines evidenciados.
+// Lectura acotada, sin writes, sin provider calls, sin cuota.
+// (Las filas se reutilizan abajo para el fingerprint del snapshot.)
+let intelResearchRows = [];
+let legalContext = [];
+try {
+  const { data: rows, error: intelResearchError } = await supabase
+    .from('ai_research_requests')
+    .select('id, query, answer, sources, created_at')
+    .eq('workspace_id', workspace.id)
+    .eq('lawyer_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(10);
+  if (intelResearchError) throw intelResearchError;
+  intelResearchRows = rows || [];
+  legalContext = formatResearchLegalContext(
+    selectRelevantResearch({ researchList: intelResearchRows, question: '', maxItems: 5, maxChars: 8000 })
+  );
+} catch (e) {
+  console.error('[LegalUpAI] intelligence legalContext failed (continuing without it)', e?.message || e);
+  intelResearchRows = [];
+  legalContext = [];
+}
+
+  return { allDocs, docs, pendingDocs, failedDocs, analyses, allClaims, facts, parties, obligations, deadlines, risks, contradictions, missingInformation, caseSummary, proCase, intelResearchRows, legalContext };
 }

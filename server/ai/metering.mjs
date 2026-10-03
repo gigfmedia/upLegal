@@ -54,6 +54,9 @@ export function createAIMetering({ supabase, tokenLimit, operationLimit, log = c
         p_chat_limit: commercialLimits?.chat ?? null,
         p_analysis_limit: commercialLimits?.analysis ?? null,
         p_research_limit: commercialLimits?.research ?? null,
+        // 4.59D drafting quota (null = sin tope por capacidad en V1; rigen
+        // topes de protección globales hasta decisión comercial).
+        p_drafting_limit: commercialLimits?.drafting ?? null,
         // 4.44A lifetime free-Case quotas, scoped by free case id (null disables).
         // 4.49A adds the research pool (same lifetime semantics).
         p_free_case_id: freeQuota?.caseId ?? null,
