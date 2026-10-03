@@ -61,7 +61,7 @@ export function PortfolioView({ activeCount, stageGroups, statusGroups, maxStage
                 </div>
                 <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-100" aria-hidden="true">
                   <div
-                    className={`h-full rounded-full ${g.stage === null ? 'bg-gray-300' : 'bg-green-700'}`}
+                    className={`h-full rounded-full ${g.stage === null ? 'bg-gray-300' : 'bg-green-300'}`}
                     style={{ width: `${maxStageCount > 0 ? Math.round((g.count / maxStageCount) * 100) : 0}%` }}
                   />
                 </div>
