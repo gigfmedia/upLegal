@@ -26,6 +26,9 @@ export const CHAT_LIMITS = {
   // documental; nunca la desplaza).
   MAX_RESEARCH_MEMORY_CHARS: 6000,
   MAX_RESEARCH_MEMORY_ITEMS: 3,
+  // FASE 4.59C: bloque de snapshot (resumen derivado) en Case Chat cuando
+  // existe snapshot vigente. Acotado; jamás reemplaza evidencia primaria.
+  MAX_SNAPSHOT_CHARS: 5000,
 };
 
 /** Tokeniza un texto a minúsculas (palabras alfanuméricas de ≥3 caracteres). */
@@ -192,7 +195,7 @@ DOCUMENTO SELECCIONADO (autoridad primaria):
   return `${base}
 
 MEMORIA DE INVESTIGACIÓN (contexto legal secundario, solo si aparece en el contexto):
-21. Orden de autoridad: (1) evidencia documental del caso y análisis verificados, (2) MEMORIA DE INVESTIGACIÓN previa, (3) historial de conversación. La memoria nunca prevalece sobre documentos contradictorios: si hay contradicción, prima el documento y señálalo.
+21. Orden de autoridad: (1) evidencia documental del caso y análisis verificados, (2) RESUMEN DE INTELIGENCIA DEL CASO si aparece (memoria derivada: útil como síntesis, nunca como prueba), (3) MEMORIA DE INVESTIGACIÓN previa, (4) historial de conversación. Nada derivado prevalece sobre documentos contradictorios: si hay contradicción, prima el documento y señálalo.
 22. La memoria son síntesis de investigaciones anteriores de ESTE caso, con fecha y fuentes propias. Decláralas como tales ("según una investigación previa del [fecha]..."). Nunca las presentes como hechos del caso ni como legislación vigente sin verificar vigencia.
 23. Citas: puedes citar una fuente de la memoria usando research_id, fecha de la investigación y URL exactamente como aparecen en el bloque. Jamás inventes URLs ni research_id.`;
 }
@@ -243,7 +246,7 @@ function formatAnalysis(analysis) {
  *    acotado a MAX_CHAT_CONTEXT_CHARS mediante recuperación por relevancia.
  *  - tooLarge: siempre false (el chunking garantiza contexto que cabe en la consulta).
  */
-export function buildChatContext({ workspace, documents = [], analyses = {}, question = '', proCase = null, selectedDocumentId = null, researchList = [] }) {
+export function buildChatContext({ workspace, documents = [], analyses = {}, question = '', proCase = null, selectedDocumentId = null, researchList = [], snapshotBlock = '' }) {
   // FASE 4.33B: datos en vivo del caso Pro ganan a la copia de provisioning.
   const live = proCase && typeof proCase === 'object' ? proCase : null;
   const caseLines = [`Nombre: ${(live && live.title) || workspace.name || 'Sin nombre'}`];
@@ -331,11 +334,15 @@ export function buildChatContext({ workspace, documents = [], analyses = {}, que
     );
   }
 
+  // FASE 4.59C: si hay bloque de snapshot vigente, este REEMPLAZA la
+  // memoria cruda de research (un solo camino canónico, §26): el snapshot ya
+  // contiene legalContext acotado. Sin snapshot, rige 4.59B sin cambios.
   // FASE 4.59B: memoria de investigación SOLO en Case Chat (sin
   // selectedDocumentId). Va DESPUÉS de la evidencia documental y solo usa
   // el remanente del presupuesto: jamás recorta documentos ni análisis.
   let researchSelected = [];
-  if (!selectedDocumentId && Array.isArray(researchList) && researchList.length) {
+  const snapshotText = !selectedDocumentId && typeof snapshotBlock === 'string' ? snapshotBlock.slice(0, CHAT_LIMITS.MAX_SNAPSHOT_CHARS) : '';
+  if (!selectedDocumentId && !snapshotText && Array.isArray(researchList) && researchList.length) {
     const picked = selectRelevantResearch({
       researchList,
       question,
@@ -350,6 +357,11 @@ export function buildChatContext({ workspace, documents = [], analyses = {}, que
         researchSelected = picked;
       }
     }
+  }
+
+  if (snapshotText.trim()) {
+    const room = CHAT_LIMITS.MAX_CHAT_CONTEXT_CHARS - blocks.join('\n\n').length;
+    if (room > 500) blocks.push(snapshotText.slice(0, room));
   }
 
   let context = blocks.join('\n\n');

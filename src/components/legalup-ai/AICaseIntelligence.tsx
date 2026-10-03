@@ -185,6 +185,9 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToD
         <p className="text-sm text-muted-foreground">
           Análisis estructurado de tus documentos con IA para identificar hechos,
           obligaciones, riesgos y contradicciones del caso.
+          {data?.snapshot?.generated_at ? (
+            <> Actualizado el {new Date(data.snapshot.generated_at).toLocaleString('es-CL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}.</>
+          ) : null}
         </p>
       </CardHeader>
       <CardContent className="space-y-4">

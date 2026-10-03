@@ -304,6 +304,8 @@ export function useProcessAIDocument() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: AI_DOCUMENTS_QUERY_KEY });
+      // FASE 4.59C: extracción completa cambia conteos (pending→ready).
+      queryClient.invalidateQueries({ queryKey: AI_CASE_INTELLIGENCE_QUERY_KEY });
     },
   });
 }
@@ -346,6 +348,9 @@ export function useAnalyzeAIDocument() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: AI_DOCUMENTS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: AI_ANALYSIS_QUERY_KEY });
+      // FASE 4.59C: el análisis completo cambia el fingerprint → refetch
+      // trae la nueva versión del snapshot (el servidor es la autoridad).
+      queryClient.invalidateQueries({ queryKey: AI_CASE_INTELLIGENCE_QUERY_KEY });
     },
   });
 }
@@ -385,6 +390,8 @@ export type AICaseIntelligence = {
   missingInformation: string[];
   caseSummary: string;
   attributionCoverage: number;
+  // FASE 4.59C: metadatos del snapshot vigente (opcional; la UI solo muestra fecha).
+  snapshot?: { version: number; generated_at: string; is_stale: boolean } | null;
 };
 
 export const AI_CASE_INTELLIGENCE_QUERY_KEY = ['ai-case-intelligence'] as const;
@@ -416,6 +423,7 @@ export function normalizeCaseIntelligence(raw: unknown): AICaseIntelligence {
     missingInformation: arr(r.missingInformation),
     caseSummary: str(r.caseSummary),
     attributionCoverage: typeof r.attributionCoverage === 'number' ? r.attributionCoverage : 1,
+    snapshot: r.snapshot && typeof r.snapshot === 'object' ? (r.snapshot as AICaseIntelligence['snapshot']) : null,
   } as AICaseIntelligence;
 }
 

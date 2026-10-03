@@ -11,6 +11,13 @@ import {
   formatResearchLegalContext,
 } from './researchMemory.mjs';
 import { getProCaseHeader } from './proCaseContext.mjs';
+import {
+  buildSourceManifest,
+  fingerprintManifest,
+  readLatestSnapshot,
+  persistSnapshotIfNew,
+  resolveSnapshotCase,
+} from './caseSnapshots.mjs';
 
 const src = readFileSync(new URL('../../server.mjs', import.meta.url), 'utf8');
 const ast = ts.createSourceFile('server.mjs', src, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
@@ -40,18 +47,23 @@ function harness() {
     }],
   };
   const supabase = { rpc: async () => ({ data: null, error: null }), storage: { from: () => ({}) }, from(table) {
-    let filters = [], orderKey = null, limit = Infinity;
+    let action = 'select', payload, filters = [], orderKey = null, limit = Infinity;
     const run = (single = false) => {
-      const list = rows[table] ?? [];
+      const list = rows[table] ?? (rows[table] = []);
       let found = list.filter((r) => filters.every((f) => f(r)));
       if (orderKey) found = [...found].sort((a, b) => String(a[orderKey] ?? '').localeCompare(String(b[orderKey] ?? '')));
       found = found.slice(0, limit);
+      if (action === 'insert') {
+        const values = (Array.isArray(payload) ? payload : [payload]).map((p) => ({ ...p }));
+        list.push(...values); found = values;
+      }
       return { data: single ? (found[0] || null) : found.map((r) => ({ ...r })), error: null };
     };
     const q = { select: () => q,
       eq: (k, v) => { filters.push((r) => r[k] === v); return q; },
       order: (k) => { orderKey = k; return q; },
       limit: (n) => { limit = n; return q; },
+      insert: (p) => { action = 'insert'; payload = p; return q; },
       single: async () => run(true), maybeSingle: async () => run(true),
       then: (a, b) => Promise.resolve(run()).then(a, b) };
     return q;
@@ -60,6 +72,7 @@ function harness() {
   const quiet = { log() {}, warn() {}, error() {} };
   const ctx = vm.createContext({ console: quiet, z, Buffer, process: { env: {} }, supabase,
     selectRelevantResearch, formatResearchLegalContext, getProCaseHeader,
+    buildSourceManifest, fingerprintManifest, readLatestSnapshot, persistSnapshotIfNew, resolveSnapshotCase,
     app: { get: (p, h) => { routes[`get ${p}`] = h; } },
     getUserIdFromToken: async () => tokenUser,
     requireAILawyer: async (_req, res) => { if (!tokenUser) { res.status(401).json({ error: 'x' }); return null; } return tokenUser; },

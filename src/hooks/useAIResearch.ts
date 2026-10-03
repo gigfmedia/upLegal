@@ -2,6 +2,7 @@ import { aiOperationIdentity } from '@/lib/aiOperationIdentity';
 import { pollTerminalResult } from '@/lib/aiInProgressPoll';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
+import { AI_CASE_INTELLIGENCE_QUERY_KEY } from '@/hooks/useAIDocuments';
 
 export type AIResearchClaim = {
   source_id: string;
@@ -210,6 +211,8 @@ export function useRunAIResearch(workspaceId: string | undefined) {
         return [data.research, ...current];
       });
       queryClient.invalidateQueries({ queryKey });
+      // FASE 4.59C: nuevo research cambia legalContext → refetch snapshot.
+      queryClient.invalidateQueries({ queryKey: AI_CASE_INTELLIGENCE_QUERY_KEY });
     },
     onError: () => {
       queryClient.invalidateQueries({ queryKey: [...AI_RESEARCH_QUERY_KEY, workspaceId] });

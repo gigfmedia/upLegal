@@ -52,6 +52,14 @@ import {
   formatResearchLegalContext,
 } from './server/ai/researchMemory.mjs';
 import {
+  buildSourceManifest,
+  fingerprintManifest,
+  readLatestSnapshot,
+  persistSnapshotIfNew,
+  resolveSnapshotCase,
+  formatSnapshotBlock,
+} from './server/ai/caseSnapshots.mjs';
+import {
   searchJurisprudence,
   validateResearchQuery,
   classifyLegalQuery,
@@ -10101,6 +10109,22 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
     // descartar documentos: informar al usuario.
     // 4.39B: Document Chat declara el documento seleccionado como autoridad
     // primaria (presupuesto reservado); Case Chat mantiene contexto amplio.
+    // FASE 4.59C: snapshot vigente como memoria resumida (solo lectura,
+    // nunca se crea desde chat). Si existe, reemplaza la memoria cruda de
+    // research (un camino canónico); si no, rige 4.59B sin cambios.
+    let snapshotBlock = '';
+    if (!prioritizedDocumentId) {
+      try {
+        const link = await resolveSnapshotCase(supabase, { lawyerId: userId, workspaceId: workspace.id });
+        if (link.status === 'linked') {
+          const latest = await readLatestSnapshot(supabase, { lawyerId: userId, caseId: link.caseRow.id });
+          if (latest && latest.snapshot) snapshotBlock = formatSnapshotBlock(latest);
+        }
+      } catch (e) {
+        console.error('[LegalUpAI] snapshot read failed (continuing without it)', e?.message || e);
+        snapshotBlock = '';
+      }
+    }
     const { context, tooLarge, researchSelected } = buildChatContext({
       workspace,
       documents: readyDocs,
@@ -10109,6 +10133,7 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       proCase,
       selectedDocumentId: prioritizedDocumentId || null,
       researchList: researchRows,
+      snapshotBlock,
     });
     if (tooLarge) {
       return await metering.respond(res, 422, {
@@ -11072,6 +11097,14 @@ app.get('/api/ai/cases/:caseId/intelligence', async (req, res) => {
     const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
     if (entitlement.res) return entitlement.res;
 
+    // FASE 4.59C: resolución del caso canónico para snapshots. 0 filas =
+    // legacy (sin snapshot, comportamiento actual). >1 = ambiguo: no persistir.
+    const snapshotCase = await resolveSnapshotCase(supabase, { lawyerId: userId, workspaceId: workspace.id });
+    if (snapshotCase.status === 'ambiguous') {
+      return res.status(409).json({ error: 'El workspace está vinculado a más de un caso.', code: 'AI_CASE_LINK_AMBIGUOUS' });
+    }
+    const snapshotCaseRow = snapshotCase.caseRow;
+
     // Documentos del workspace (todos, para contar pendientes)
     const { data: allDocs, error: allDocsError } = await supabase
       .from('ai_documents')
@@ -11086,7 +11119,7 @@ app.get('/api/ai/cases/:caseId/intelligence', async (req, res) => {
 
     const { data: analyses, error: analysesError } = await supabase
       .from('ai_document_analyses')
-      .select('document_id, summary, document_type, parties, key_points, obligations, deadlines, risks, recommendations, claims, model, created_at')
+      .select('id, document_id, summary, document_type, parties, key_points, obligations, deadlines, risks, recommendations, claims, model, created_at, updated_at')
       .eq('workspace_id', workspace.id)
       .eq('lawyer_id', userId)
       .order('created_at', { ascending: true });
@@ -11177,9 +11210,11 @@ app.get('/api/ai/cases/:caseId/intelligence', async (req, res) => {
     // Explícitamente NO hechos del caso: va en `legalContext` separado para
     // no mezclarse con facts/parties/obligations/deadlines evidenciados.
     // Lectura acotada, sin writes, sin provider calls, sin cuota.
+    // (Las filas se reutilizan abajo para el fingerprint del snapshot.)
+    let intelResearchRows = [];
     let legalContext = [];
     try {
-      const { data: intelResearchRows, error: intelResearchError } = await supabase
+      const { data: rows, error: intelResearchError } = await supabase
         .from('ai_research_requests')
         .select('id, query, answer, sources, created_at')
         .eq('workspace_id', workspace.id)
@@ -11187,15 +11222,17 @@ app.get('/api/ai/cases/:caseId/intelligence', async (req, res) => {
         .order('created_at', { ascending: false })
         .limit(10);
       if (intelResearchError) throw intelResearchError;
+      intelResearchRows = rows || [];
       legalContext = formatResearchLegalContext(
-        selectRelevantResearch({ researchList: intelResearchRows || [], question: '', maxItems: 5, maxChars: 8000 })
+        selectRelevantResearch({ researchList: intelResearchRows, question: '', maxItems: 5, maxChars: 8000 })
       );
     } catch (e) {
       console.error('[LegalUpAI] intelligence legalContext failed (continuing without it)', e?.message || e);
+      intelResearchRows = [];
       legalContext = [];
     }
 
-    res.json({
+    const intelligencePayload = {
       workspace_id: workspace.id,
       proCase,
       document_count: (docs || []).length,
@@ -11214,7 +11251,37 @@ app.get('/api/ai/cases/:caseId/intelligence', async (req, res) => {
       caseSummary: caseSummary || 'No hay información suficiente en los documentos para generar un resumen del caso.',
       attributionCoverage: allClaims.length > 0 ? 1 : 1,
       legalContext,
-    });
+    };
+
+    // FASE 4.59C: snapshot versionado. Legacy (sin caso) responde sin
+    // persistir. Mismo fingerprint → se retorna la versión vigente sin
+    // duplicar. Determinista, 0 provider, 0 cuota.
+    let snapshotMeta = null;
+    if (snapshotCaseRow) {
+      const manifest = buildSourceManifest({
+        caseRow: snapshotCaseRow,
+        docs: allDocs || [],
+        analyses: analyses || [],
+        researchRows: intelResearchRows,
+      });
+      const fingerprint = fingerprintManifest(manifest);
+      const { snapshot: row } = await persistSnapshotIfNew(supabase, {
+        lawyerId: userId,
+        caseId: snapshotCaseRow.id,
+        workspaceId: workspace.id,
+        fingerprint,
+        manifest,
+        payload: intelligencePayload,
+      });
+      snapshotMeta = {
+        version: row.version,
+        generated_at: row.created_at,
+        is_stale: false,
+        source_fingerprint: row.source_fingerprint,
+      };
+    }
+
+    res.json({ ...intelligencePayload, snapshot: snapshotMeta });
   } catch (error) {
     console.error('[LegalUpAI] case intelligence error:', error);
     res.status(500).json({ error: 'No se pudo cargar la inteligencia del caso.' });

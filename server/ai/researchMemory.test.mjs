@@ -134,11 +134,57 @@ describe('buildChatContext con memoria (§30/31/32/52)', () => {
   });
 });
 
+describe('4.59C snapshot en chat: un camino, sin duplicar research', () => {
+  const SNAP = 'RESUMEN DE INTELIGENCIA DEL CASO (memoria derivada): Resumen breve. Contexto legal 1: síntesis.';
+  it('con snapshot: incluye resumen y omite memoria cruda aunque haya research', () => {
+    const { context, researchSelected } = buildChatContext({
+      workspace: { name: 'caso' },
+      documents: [DOC()],
+      analyses: {},
+      question: 'pregunta sobre datos',
+      researchList: [R()],
+      snapshotBlock: SNAP,
+    });
+    expect(context).toContain('RESUMEN DE INTELIGENCIA');
+    expect(context).not.toContain('MEMORIA DE INVESTIGACIÓN');
+    expect(researchSelected).toEqual([]);
+    // evidencia primaria intacta y antes que el resumen
+    expect(context.indexOf('contrato.pdf')).toBeLessThan(context.indexOf('RESUMEN DE INTELIGENCIA'));
+  });
+
+  it('sin snapshot: rige 4.59B (memoria cruda)', () => {
+    const { context } = buildChatContext({
+      workspace: { name: 'caso' },
+      documents: [DOC()],
+      analyses: {},
+      question: 'protección de datos personales',
+      researchList: [R()],
+      snapshotBlock: '',
+    });
+    expect(context).toContain('MEMORIA DE INVESTIGACIÓN');
+  });
+
+  it('Document Chat: ni snapshot ni memoria', () => {
+    const { context } = buildChatContext({
+      workspace: { name: 'caso' },
+      documents: [DOC()],
+      analyses: {},
+      question: 'pregunta',
+      selectedDocumentId: 'd1',
+      researchList: [R()],
+      snapshotBlock: SNAP,
+    });
+    expect(context).not.toContain('RESUMEN DE INTELIGENCIA');
+    expect(context).not.toContain('MEMORIA DE INVESTIGACIÓN');
+  });
+});
+
 describe('system prompt: autoridad y modo documento intacto', () => {
   it('modo caso incluye orden de autoridad con memoria secundaria', () => {
     const sys = buildChatSystemPrompt({ mode: 'case' });
     expect(sys).toContain('MEMORIA DE INVESTIGACIÓN');
-    expect(sys).toContain('nunca prevalece');
+    expect(sys).toContain('RESUMEN DE INTELIGENCIA DEL CASO');
+    expect(sys).toContain('prima el documento');
     expect(sys).toContain('research_id');
   });
 
