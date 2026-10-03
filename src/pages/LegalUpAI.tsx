@@ -902,9 +902,9 @@ const FEATURES = [
     icon: BarChart3,
     title: "Redacción Asistida",
     description:
-      "Borradores de escritos y documentos jurídicos. Próximamente.",
+      "Genera borradores jurídicos utilizando la información, documentos e investigación de cada caso.",
     visual: "alerts" as const,
-    available: false,
+    available: true,
   },
 ];
 
@@ -1367,8 +1367,7 @@ const VS_GENERAL_ROWS: VSRow[] = [
   {
     feature: "Redacción jurídica",
     general: "✓",
-    ai: "Próximamente",
-    aiSoon: true,
+    ai: "✓",
   },
 ];
 

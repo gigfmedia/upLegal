@@ -27,6 +27,7 @@ const PERKS = [
   '300 consultas IA / mes (caso y documentos)',
   '40 análisis de documentos / mes',
   '10 investigaciones jurídicas / mes',
+  '30 redacciones asistidas / mes',
   'Command Center: vista avanzada de hechos, riesgos y pendientes',
 ];
 
@@ -47,6 +48,7 @@ const PLUS_PERKS = [
   '750 consultas IA / mes (caso y documentos)',
   '100 análisis de documentos / mes',
   '25 investigaciones jurídicas / mes',
+  '75 redacciones asistidas / mes',
   'Citas con tus clientes',
   'Command Center: vista avanzada de hechos, riesgos y pendientes',
 ];

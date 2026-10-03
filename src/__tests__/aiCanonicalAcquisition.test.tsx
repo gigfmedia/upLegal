@@ -104,17 +104,17 @@ describe('4.33D canonical acquisition and legacy compatibility', () => {
     expect(screen.getByTestId('destination')).toHaveTextContent('/pro');
     expect(state.trial).not.toHaveBeenCalled(); expect(state.subscribe).not.toHaveBeenCalled(); expect(state.create).not.toHaveBeenCalled();
   }, 15000);
-  it('4.56E feature grid renders 6 cards with research Disponible and drafting upcoming', () => {
+  it('4.56E feature grid renders 6 cards with research Disponible and drafting available (4.59G)', () => {
     mount(<LegalUpAI />, '/ai');
     for (const title of ['Análisis de Documentos', 'Resumen de Casos', 'Chat Contextual', 'Contexto privado del caso', 'Investigación de Jurisprudencia', 'Redacción Asistida']) {
       expect(screen.getByText(title)).toBeInTheDocument();
     }
     expect(screen.getByText('Búsqueda de jurisprudencia y normativa chilena con fuentes verificables.')).toBeInTheDocument();
-    // 5 Disponible badges (research included) + Redacción Asistida stays upcoming.
-    expect(screen.getAllByText('Disponible').length).toBe(5);
+    // 6 Disponible badges (research + drafting included).
+    expect(screen.getAllByText('Disponible').length).toBe(6);
     const draftingCard = screen.getByText('Redacción Asistida').closest('div.group');
     expect(draftingCard).not.toBeNull();
-    expect(within(draftingCard as HTMLElement).getByText('Próximamente')).toBeInTheDocument();
+    expect(within(draftingCard as HTMLElement).queryByText('Próximamente')).toBeNull();
   });
   it('old pending trial does not start a trial and UTM attribution survives CTA', () => {
     localStorage.setItem('aiPendingTrial', '1');

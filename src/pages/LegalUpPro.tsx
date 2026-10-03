@@ -340,7 +340,7 @@ const AI_CAPABILITIES = [
   { icon: FileText, title: "Análisis de documentos", desc: "Estructura, puntos clave y riesgos dentro del caso." },
   { icon: MessageSquare, title: "Chat del caso", desc: "Preguntas sobre el contenido de tus casos y documentos." },
   { icon: Search, title: "Investigación jurídica", desc: "Fuentes del Tribunal Constitucional, BCN / LeyChile y OpenAlex." },
-  { icon: Clock, title: "Uso mensual incluido", desc: "300 consultas, 40 análisis y 10 investigaciones al mes." },
+  { icon: Clock, title: "Uso mensual incluido", desc: "300 consultas, 40 análisis, 10 investigaciones y 30 redacciones asistidas al mes." },
 ];
 
 const FAQS = [
@@ -348,11 +348,11 @@ const FAQS = [
   { q: "¿Qué es LegalUp Pro?", a: "Es el espacio de trabajo para abogados dentro de LegalUp: solicitudes, clientes, casos, citas e ingresos en un solo lugar, con IA integrada en tus casos." },
   { q: "¿Para quién es?", a: "Para abogados, estudios jurídicos y equipos legales que gestionan su práctica y quieren centralizarla sin depender de planillas, mensajes y herramientas separadas." },
   { q: "¿Qué puedo gestionar?", a: "Clientes con su historial, casos con su trabajo asociado, solicitudes desde un inbox centralizado, agenda de citas, los servicios que ofreces y los ingresos de tu actividad en la plataforma." },
-  { q: "¿LegalUp Pro incluye LegalUp AI?", a: "Sí, LegalUp AI viene integrado en tus casos: análisis de documentos, chat sobre casos e investigación jurídica, con uso mensual incluido." },
+  { q: "¿LegalUp Pro incluye LegalUp AI?", a: "Sí, LegalUp AI viene integrado en tus casos: análisis de documentos, chat sobre casos, investigación jurídica y redacción asistida, con uso mensual incluido." },
   { q: "¿Necesito usar el marketplace?", a: "No es obligatorio. Pro organiza tu práctica actual y además centraliza las solicitudes que recibas desde LegalUp." },
   { q: "¿Mis datos están separados de otros abogados?", a: "Sí. Cada abogado solo accede a su propia información: clientes, casos, documentos e ingresos están separados por cuenta." },
   { q: "¿Cuánto cuesta?", a: "LegalUp Pro cuesta $49.990/mes. Para los primeros 15 abogados con pago exitoso, el precio Founder es $19.990/mes durante los primeros 3 cobros exitosos y luego $49.990/mes." },
-  { q: "¿Qué es LegalUp Plus?", a: "Es el mismo producto Pro con mayor capacidad: hasta 40 casos activos, 150 documentos actuales, 750 consultas IA, 100 análisis y 25 investigaciones jurídicas al mes, por $79.990/mes. Sin equipos ni funciones exclusivas: capacidad operativa para mayor volumen." },
+  { q: "¿Qué es LegalUp Plus?", a: "Es el mismo producto Pro con mayor capacidad: hasta 40 casos activos, 150 documentos actuales, 750 consultas IA, 100 análisis, 25 investigaciones jurídicas y 75 redacciones asistidas al mes, por $79.990/mes. Sin equipos ni funciones exclusivas: capacidad operativa para mayor volumen." },
   { q: "¿Qué pasa después de los 3 meses?", a: "Los primeros 3 cobros son de $19.990/mes. Desde el cuarto cobro, el precio es $49.990/mes. Si cancelas y vuelves, tus cobros anteriores se mantienen y el conteo no se reinicia." },
   { q: "¿Puedo cancelar?", a: "Sí. Puedes cancelar tu suscripción en cualquier momento desde el dashboard. El acceso se mantiene hasta el fin del período ya pagado. Si necesitas ayuda, escríbenos a través de los canales de soporte de LegalUp." },
 ];
@@ -1049,6 +1049,7 @@ export default function LegalUpPro() {
                     <PlanRow included label="300 consultas IA / mes (caso y documentos)" />
                     <PlanRow included label="40 análisis de documentos / mes" />
                     <PlanRow included label="10 investigaciones jurídicas / mes" />
+                    <PlanRow included label="30 redacciones asistidas / mes" />
                     <PlanRow included label="Estado del caso y cronología" />
                     <PlanRow included label="Command Center: vista avanzada de hechos, riesgos y pendientes" />
                   </ul>
@@ -1090,6 +1091,7 @@ export default function LegalUpPro() {
                     <PlanRow included label="750 consultas IA / mes (caso y documentos)" />
                     <PlanRow included label="100 análisis de documentos / mes" />
                     <PlanRow included label="25 investigaciones jurídicas / mes" />
+                    <PlanRow included label="75 redacciones asistidas / mes" />
                     <PlanRow included label="Citas con tus clientes" />
                     <PlanRow included label="Command Center avanzado" />
                   </ul>
