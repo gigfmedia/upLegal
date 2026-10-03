@@ -4,12 +4,14 @@ import { supabase } from '@/lib/supabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { FileText, Plus, Copy, Check, RefreshCw, Pencil } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Copy, Check, Pencil } from 'lucide-react';
 import { aiOperationIdentity } from '@/lib/aiOperationIdentity';
 import { pollTerminalResult } from '@/lib/aiInProgressPoll';
 
-// FASE 4.59D — Borradores del caso (V1). Sección dentro de Inteligencia,
-// sin nuevo tab. Solo lectura/creación contra rutas con ownership server-side.
+// FASE 4.59D/4.59D.2 — Redacción asistida: workspace directo de creación.
+// Sin landing intermedia: el formulario siempre visible; historial debajo.
+// Solo lectura/creación contra rutas con ownership server-side.
 
 const getApiBaseUrl = (): string => {
   const base = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
@@ -97,7 +99,7 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   const isPlus = allowance?.plan === 'plus';
   const atLimit = draftLimit != null && draftLimit > 0 && draftUsed >= draftLimit;
   const noAccess = draftLimit != null && draftLimit <= 0;
-  const [creating, setCreating] = useState(false);
+  const formLocked = noAccess || atLimit;
   const [draftType, setDraftType] = useState('escrito');
   const [instruction, setInstruction] = useState('');
   const [openId, setOpenId] = useState<string | null>(null);
@@ -159,8 +161,8 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
     },
     onSuccess: (body) => {
       queryClient.invalidateQueries({ queryKey: [...AI_CASE_DRAFTS_QUERY_KEY, workspaceId] });
+      queryClient.invalidateQueries({ queryKey: ['ai-usage-drafting'] });
       setInstruction('');
-      setCreating(false);
       if (body?.draft?.id) void openDraftById(body.draft.id);
     },
     onError: (e) => {
@@ -214,89 +216,94 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   };
 
   return (
-    <Card className="mt-4">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <FileText className="h-4 w-4 text-green-700" aria-hidden="true" />
-          Borradores
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Convierte el contexto de este caso en un primer borrador para revisar y editar.
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">Redacción asistida</h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          Genera borradores utilizando la información, documentos e investigación de este caso.
         </p>
-        {draftLimit != null && draftLimit > 0 ? (
-          <p className="text-xs text-muted-foreground">
-            {draftUsed} de {draftLimit} este mes
-          </p>
-        ) : null}
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
-        {noAccess ? (
-          <div className="rounded border p-3 space-y-2">
+      </div>
+
+      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+
+      {noAccess ? (
+        <Card>
+          <CardContent className="py-6 space-y-3">
             <p className="text-sm">La generación de borradores está incluida en los planes de pago.</p>
             <Button size="sm" asChild>
               <a href="/pro">Ver LegalUp Pro</a>
             </Button>
-          </div>
-        ) : atLimit ? (
-          <div className="rounded border p-3 space-y-2">
-            <p className="text-sm">
-              Has utilizado los {draftLimit} borradores incluidos este mes.
-            </p>
-            {isPlus ? (
-              <p className="text-xs text-muted-foreground">Tu disponibilidad se renueva el próximo mes.</p>
-            ) : (
-              <Button size="sm" asChild>
-                <a href="/pro">Ver LegalUp Plus</a>
-              </Button>
-            )}
-          </div>
-        ) : null}
-        {isLoading ? (
-          <p className="text-sm text-muted-foreground">Cargando borradores…</p>
-        ) : !noAccess && !atLimit && drafts.length === 0 && !creating && !openDraft ? (
-          <Button size="sm" onClick={() => setCreating(true)}>
-            <Plus className="h-4 w-4 mr-1" /> Crear borrador
-          </Button>
-        ) : null}
-
-        {creating ? (
-          <div className="space-y-3 rounded border p-3">
-            <div className="flex flex-wrap gap-2">
-              {DRAFT_TYPE_OPTIONS.map((o) => (
-                <Button
-                  key={o.value}
-                  size="sm"
-                  variant={draftType === o.value ? 'default' : 'outline'}
-                  onClick={() => setDraftType(o.value)}
-                >
-                  {o.label}
-                </Button>
-              ))}
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Nuevo borrador</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label className="text-sm font-medium mb-2 block">Tipo de documento</Label>
+              <div className="flex flex-wrap gap-2">
+                {DRAFT_TYPE_OPTIONS.map((o) => (
+                  <Button
+                    key={o.value}
+                    size="sm"
+                    variant={draftType === o.value ? 'default' : 'outline'}
+                    onClick={() => setDraftType(o.value)}
+                  >
+                    {o.label}
+                  </Button>
+                ))}
+              </div>
             </div>
-            <Textarea
-              value={instruction}
-              onChange={(e) => setInstruction(e.target.value)}
-              placeholder="¿Qué quieres preparar? Ej: borrador de contestación centrado en la falta de requerimiento previo…"
-              rows={3}
-            />
-            <div className="flex gap-2">
+            <div>
+              <Label htmlFor="draft-instruction" className="text-sm font-medium mb-2 block">
+                ¿Qué necesitas preparar?
+              </Label>
+              <Textarea
+                id="draft-instruction"
+                value={instruction}
+                onChange={(e) => setInstruction(e.target.value)}
+                placeholder="Ej: borrador de contestación centrado en la falta de requerimiento previo…"
+                rows={4}
+                className="w-full"
+              />
+            </div>
+            <div className="flex items-center gap-3">
               <Button
                 size="sm"
-                disabled={instruction.trim().length < 10 || generate.isPending}
+                disabled={formLocked || instruction.trim().length < 10 || generate.isPending}
                 onClick={() => generate.mutate()}
               >
                 {generate.isPending ? 'Generando…' : 'Generar borrador'}
               </Button>
-              <Button size="sm" variant="outline" onClick={() => { setCreating(false); setInstruction(''); }}>
-                Cancelar
-              </Button>
+              {draftLimit != null && draftLimit > 0 ? (
+                <span className="text-xs text-muted-foreground">
+                  {draftUsed} de {draftLimit} este mes
+                </span>
+              ) : null}
             </div>
-          </div>
-        ) : null}
+            {atLimit ? (
+              <div className="rounded border p-3 space-y-2">
+                <p className="text-sm">
+                  Has utilizado los {draftLimit} borradores incluidos este mes.
+                </p>
+                {isPlus ? (
+                  <p className="text-xs text-muted-foreground">Tu disponibilidad se renueva el próximo mes.</p>
+                ) : (
+                  <Button size="sm" asChild>
+                    <a href="/pro">Ver LegalUp Plus</a>
+                  </Button>
+                )}
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+      )}
 
-        {openDraft ? (
-          <div className="space-y-3 rounded border p-3">
+      {openDraft ? (
+        <Card>
+          <CardContent className="space-y-3 pt-6">
             <div className="flex items-center justify-between gap-2">
               <p className="font-medium text-sm">{openDraft.title}</p>
               <Button size="sm" variant="outline" onClick={() => { setOpenDraft(null); setOpenId(null); }}>
@@ -308,7 +315,7 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
                 rows={12}
-                className="font-mono text-sm"
+                className="font-mono text-sm w-full"
               />
             ) : (
               <pre className="whitespace-pre-wrap text-sm text-gray-800 max-h-96 overflow-y-auto">{openDraft.content}</pre>
@@ -328,31 +335,35 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                 </Button>
               )}
             </div>
-          </div>
-        ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
 
-        {!noAccess && !atLimit && drafts.length > 0 && !openDraft ? (
-          <div className="space-y-2">
-            {drafts.map((d) => (
-              <button
-                key={d.id}
-                onClick={() => void openDraftById(d.id)}
-                className="w-full text-left rounded border px-3 py-2 hover:bg-gray-50"
-              >
-                <span className="text-sm font-medium">{d.title}</span>
-                <span className="text-xs text-muted-foreground ml-2">
-                  {new Date(d.created_at).toLocaleString('es-CL', { day: 'numeric', month: 'short' })}
-                </span>
-              </button>
-            ))}
-            {!creating ? (
-              <Button size="sm" variant="outline" onClick={() => setCreating(true)}>
-                <RefreshCw className="h-4 w-4 mr-1" /> Nueva versión
-              </Button>
-            ) : null}
-          </div>
-        ) : null}
-      </CardContent>
-    </Card>
+      {!openDraft ? (
+        <div>
+          <h3 className="text-lg font-bold text-gray-900 mb-3">Borradores anteriores</h3>
+          {isLoading ? (
+            <p className="text-sm text-muted-foreground">Cargando borradores…</p>
+          ) : drafts.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Aún no hay borradores anteriores.</p>
+          ) : (
+            <div className="space-y-2">
+              {drafts.map((d) => (
+                <button
+                  key={d.id}
+                  onClick={() => void openDraftById(d.id)}
+                  className="w-full text-left rounded border px-3 py-2 hover:bg-gray-50"
+                >
+                  <span className="text-sm font-medium">{d.title}</span>
+                  <span className="text-xs text-muted-foreground ml-2">
+                    {new Date(d.created_at).toLocaleString('es-CL', { day: 'numeric', month: 'short' })}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : null}
+    </div>
   );
 }

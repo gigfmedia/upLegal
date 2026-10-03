@@ -64,7 +64,7 @@ function renderCase(tab: string) {
 beforeEach(cleanup);
 
 describe('FASE 4.59D.1 orden de tabs', () => {
-  it('triggers en orden canónico con Borradores antes de Timeline', () => {
+  it('triggers en orden canónico con Redacción asistida antes de Timeline', () => {
     renderCase('overview');
     const triggers = Array.from(document.querySelectorAll('[role="tab"]')).map((t) => t.textContent);
     expect(triggers).toEqual([
@@ -72,9 +72,10 @@ describe('FASE 4.59D.1 orden de tabs', () => {
       'Documentos y análisis',
       'Investigar jurisprudencia',
       'Inteligencia del caso',
-      'Borradores',
+      'Redacción asistida',
       'Timeline del caso',
     ]);
+    expect(triggers).not.toContain('Borradores');
   });
 });
 
@@ -82,7 +83,7 @@ describe('FASE 4.59D.1 tab drafts', () => {
   it('?tab=drafts renderiza el workspace de borradores con el workspace', async () => {
     renderCase('drafts');
     expect(await screen.findByText('DRAFTS-MARKER:W1')).toBeTruthy();
-    expect(screen.getByText(/Genera y revisa borradores/)).toBeTruthy();
+    expect(screen.queryByText('Borradores')).toBeNull();
   });
 
   it('?tab=intelligence NO renderiza borradores', async () => {
@@ -91,9 +92,9 @@ describe('FASE 4.59D.1 tab drafts', () => {
     expect(screen.queryByText('DRAFTS-MARKER:W1')).toBeNull();
   });
 
-  it('activar Borradores navega por query param y preserva refresh', async () => {
+  it('activar Redacción asistida navega por query param y preserva refresh', async () => {
     renderCase('overview');
-    const trigger = screen.getByText('Borradores');
+    const trigger = screen.getByText('Redacción asistida');
     trigger.focus();
     fireEvent.keyDown(trigger, { key: 'Enter', code: 'Enter' });
     if (!screen.queryByText('DRAFTS-MARKER:W1')) {
@@ -113,6 +114,12 @@ describe('FASE 4.59D.1 fuente: CASE_TABS incluye drafts', () => {
     const src = readFileSync('src/pages/lawyer/CaseDetailPage.tsx', 'utf-8');
     expect(src).toContain("'drafts'");
     expect(src).toContain("import { AICaseDrafts } from '@/components/legalup-ai/AICaseDrafts'");
+  });
+
+  it('tab drafts sin wrapper angosto max-w-4xl', () => {
+    const src = readFileSync('src/pages/lawyer/CaseDetailPage.tsx', 'utf-8');
+    const tabBlock = src.slice(src.indexOf('<TabsContent value="drafts"'));
+    expect(tabBlock.slice(0, 800)).not.toContain('max-w-4xl');
   });
 
   it('AICaseIntelligence ya no importa borradores', () => {

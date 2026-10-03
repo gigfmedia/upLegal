@@ -273,7 +273,7 @@ function CaseDetailContent() {
           <TabsTrigger value="documents" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Documentos y análisis</TabsTrigger>
           <TabsTrigger value="research" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Investigar jurisprudencia</TabsTrigger>
           <TabsTrigger value="intelligence" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Inteligencia del caso</TabsTrigger>
-          <TabsTrigger value="drafts" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Borradores</TabsTrigger>
+          <TabsTrigger value="drafts" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Redacción asistida</TabsTrigger>
           <TabsTrigger value="activity" className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900">Timeline del caso</TabsTrigger>
         </TabsList>
 
@@ -412,20 +412,15 @@ function CaseDetailContent() {
         {/* 4.59D.1: Borradores — trabajo jurídico generado desde el contexto.
             Sin workspace aún: mismo patrón que intelligence (ir a Documentos). */}
         <TabsContent value="drafts" className="mt-4">
-          <div className="max-w-4xl mx-auto">
-            <p className="text-sm text-muted-foreground mb-4">
-              Genera y revisa borradores utilizando la información, documentos e investigación de este caso.
-            </p>
-            {!effectiveWorkspaceId ? (
-              <Card><CardContent className="py-10 text-center space-y-4">
-                <p className="font-medium">Aún no hay caso inteligente.</p>
-                <p className="text-sm text-muted-foreground">Agrega un documento en la pestaña Documentos para habilitar los borradores de este caso.</p>
-                <Button onClick={() => setActiveTab('documents')}>Ir a Documentos</Button>
-              </CardContent></Card>
-            ) : (
-              <AICaseDrafts workspaceId={effectiveWorkspaceId} />
-            )}
-          </div>
+          {!effectiveWorkspaceId ? (
+            <Card><CardContent className="py-10 text-center space-y-4">
+              <p className="font-medium">Aún no hay caso inteligente.</p>
+              <p className="text-sm text-muted-foreground">Agrega un documento en la pestaña Documentos para habilitar la redacción de este caso.</p>
+              <Button onClick={() => setActiveTab('documents')}>Ir a Documentos</Button>
+            </CardContent></Card>
+          ) : (
+            <AICaseDrafts workspaceId={effectiveWorkspaceId} />
+          )}
         </TabsContent>
 
         <TabsContent value="activity" className="mt-4">

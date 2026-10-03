@@ -74,18 +74,26 @@ function renderDrafts() {
   );
 }
 
-describe('FASE 4.59D UI Borradores', () => {
-  it('lista borradores con título y fecha', async () => {
+describe('FASE 4.59D.2 workspace directo', () => {
+  it('título canónico + formulario visible sin click intermedio', async () => {
     renderDrafts();
+    expect(screen.getByText('Redacción asistida')).toBeTruthy();
+    expect(screen.getByText('¿Qué necesitas preparar?')).toBeTruthy();
+    expect(screen.getByText('Generar borrador')).toBeTruthy();
+    expect(screen.queryByText('Crear borrador')).toBeNull();
     expect(await screen.findByText('Borrador de contestación')).toBeTruthy();
-    expect(screen.getByText('Borradores')).toBeTruthy();
+  });
+
+  it('sin "Crear borrador": el formulario ya está expuesto', () => {
+    renderDrafts();
+    expect(screen.queryByText(/^Crear borrador$/)).toBeNull();
+    expect(screen.getByPlaceholderText(/Ej: borrador/)).toBeTruthy();
   });
 
   it('crear exige instrucción ≥10 y genera', async () => {
     renderDrafts();
     await screen.findByText('Borrador de contestación');
-    fireEvent.click(screen.getByText('Nueva versión'));
-    const area = screen.getByPlaceholderText(/¿Qué quieres preparar?/);
+    const area = screen.getByPlaceholderText(/Ej: borrador/);
     fireEvent.change(area, { target: { value: 'corto' } });
     expect((screen.getByText('Generar borrador') as HTMLButtonElement).disabled).toBe(true);
     fireEvent.change(area, { target: { value: 'Preparar contestación centrada en el requerimiento previo' } });
