@@ -102,6 +102,7 @@ function SectionCard({
   emptyIcon,
   items,
   renderItem,
+  limit = VISIBLE_LIMIT,
 }: {
   title: string;
   microcopy: string;
@@ -112,9 +113,10 @@ function SectionCard({
   emptyIcon: React.ReactNode;
   items: { key: string }[];
   renderItem: (key: string) => React.ReactNode;
+  limit?: number;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const visible = expanded ? items : items.slice(0, VISIBLE_LIMIT);
+  const visible = expanded ? items : items.slice(0, limit);
   return (
     <div className={cn('flex flex-col rounded-lg border p-5 shadow-sm transition-shadow hover:shadow', tone)}>
       <div className="flex items-center justify-between gap-2">
@@ -135,7 +137,7 @@ function SectionCard({
       ) : (
         <>
           <ul className="mt-3 space-y-2">{visible.map((i) => renderItem(i.key))}</ul>
-          {items.length > VISIBLE_LIMIT && (
+          {items.length > limit && (
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}
@@ -211,6 +213,7 @@ export function ActionCenter({ cases, tasks, loading, onOpenCase, onCompleteTask
             empty="No hay gestiones próximas."
             emptyIcon={<CalendarDays className="h-4 w-4 shrink-0 text-blue-400" aria-hidden="true" />}
             items={data.next7}
+            limit={3}
             renderItem={(k) => row(data.next7.find((i) => i.key === k)!)}
           />
           <div className="flex flex-col rounded-lg border border-slate-200 bg-slate-50 p-5 shadow-sm transition-shadow hover:shadow">
