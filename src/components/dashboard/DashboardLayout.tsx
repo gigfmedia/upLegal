@@ -516,7 +516,7 @@ function DashboardLayout() {
 
             {/* Mobile drawer */}
             <aside
-              className={`fixed top-16 bottom-0 z-50 w-72 bg-white border-r border-gray-200 flex flex-col lg:hidden ${
+              className={`fixed top-16 bottom-0 z-50 w-[90%] max-w-sm bg-white border-r border-gray-200 flex flex-col lg:hidden ${
                 isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
               } transition-transform duration-200 ease-in-out`}
             >
