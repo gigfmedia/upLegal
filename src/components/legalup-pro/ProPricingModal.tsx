@@ -167,7 +167,7 @@ export function ProPricingModal({ open, onOpenChange, triggerAction, targetPlan 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="h-[100dvh] max-h-[100dvh] overflow-y-auto sm:h-auto sm:max-w-3xl sm:max-h-[90vh] lg:max-w-4xl">
-        <DialogHeader>
+        <DialogHeader className="text-left">
           <DialogTitle>Elige tu plan LegalUp</DialogTitle>
           <DialogDescription>Elige el plan que mejor se adapta a tu práctica.</DialogDescription>
         </DialogHeader>
