@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Loader2, Trash2 } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useLawyerCases, type CaseStatus, type LawyerCase } from '@/hooks/useLawyerCases';
 import { useToast } from '@/hooks/use-toast';
 import { useCaseDeleteEligibility, isCaseNotDeletable } from '@/hooks/useCaseDeleteEligibility';
@@ -55,6 +56,7 @@ export function CaseEditDialog({ open, onOpenChange, caseData, clients, onSaved,
   const [clientId, setClientId] = useState('none');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const deletePending = useRef(false);
   const { canDelete, loading: checkingDelete } = useCaseDeleteEligibility(caseData.id, open);
 
@@ -92,7 +94,7 @@ export function CaseEditDialog({ open, onOpenChange, caseData, clients, onSaved,
 
   const handleDelete = async () => {
     if (!caseData?.id || !canDelete || saving || deletePending.current) return;
-    if (!confirm('¿Eliminar este caso vacío? Esta acción es permanente y no restituye el caso gratuito. Para conservarlo, cambia su estado a Cerrado.')) return;
+    setConfirmDeleteOpen(false);
     deletePending.current = true;
     setDeleting(true);
     try {
@@ -201,7 +203,7 @@ export function CaseEditDialog({ open, onOpenChange, caseData, clients, onSaved,
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null} Guardar
             </Button>
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            {canDelete && <Button disabled={deleting || saving} variant="outline" onClick={handleDelete} className="ml-auto text-red-600 border-red-200 hover:bg-red-50">
+            {canDelete && <Button disabled={deleting || saving} variant="outline" onClick={() => setConfirmDeleteOpen(true)} className="ml-auto text-red-600 border-red-200 hover:bg-red-50">
               <Trash2 className="h-4 w-4 mr-1" /> {deleting ? 'Eliminando…' : 'Eliminar caso vacío'}
             </Button>}
           </div>
@@ -211,5 +213,14 @@ export function CaseEditDialog({ open, onOpenChange, caseData, clients, onSaved,
         </div>
       </DialogContent>
     </Dialog>
+    <ConfirmDialog
+      open={confirmDeleteOpen}
+      onOpenChange={setConfirmDeleteOpen}
+      onConfirm={handleDelete}
+      title="¿Eliminar este caso vacío?"
+      description="Esta acción es permanente y no restituye el caso gratuito. Para conservarlo, cambia su estado a Cerrado."
+      confirmText="Eliminar caso"
+      isDeleting={deleting}
+    />
   );
 }

@@ -80,7 +80,8 @@ describe('4.34L — case first-view hierarchy', () => {
     expect(c).not.toContain('Eliminar caso?');
     const d = read('src/components/lawyer/CaseEditDialog.tsx');
     expect(d).toContain('Eliminar caso');
-    expect(d).toContain("confirm('¿Eliminar caso?')");
+    expect(d).toContain('ConfirmDialog');
+    expect(d).not.toMatch(/[^a-zA-Z]confirm\(/);
   });
 
   it('header links client by name only; no associated-client card', () => {
