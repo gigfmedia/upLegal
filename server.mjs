@@ -40,6 +40,7 @@ import {
 import { extractPdfText } from './server/ai/pdfText.mjs';
 import { chatCompletion, isAIProviderConfigured, createLlmCallBudget } from './server/ai/provider.mjs';
 import { buildAnalysisSystemPrompt, buildAnalysisUserPrompt } from './server/ai/legalPrompt.mjs';
+import { normalizeDeadlineItem } from './server/ai/deadlineDates.mjs';
 import {
   buildChatSystemPrompt,
   buildChatContext,
@@ -605,9 +606,10 @@ const AIDocumentAnalysisSchema = z.object({
   recommendations: z.array(z.string()),
 }).transform((data) => ({
   ...data,
-  deadlines: data.deadlines.map((item) =>
-    typeof item === 'string' ? { date: '', description: item } : item
-  ),
+  // FASE 4.60B.2: normaliza fechas calendario explícitas a AAAA-MM-DD;
+  // texto relativo/ambiguo se preserva verbatim (la promoción 4.60B solo
+  // pre-rellena AAAA-MM-DD estricto).
+  deadlines: data.deadlines.map((item) => normalizeDeadlineItem(item)),
 }));
 
 // Profile management endpoint used during signup to ensure profiles are created
@@ -9629,11 +9631,17 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
     const verifiedObligations = obligationsRes.verified;
     const verifiedRisks = Array.isArray(validated.risks) ? validated.risks : [];
     const verifiedRecommendations = Array.isArray(validated.recommendations) ? validated.recommendations : [];
-    // Deadlines: verifica solo la descripción, preserva date si la descripción es válida
+    // Deadlines: verifica solo la descripción, preserva date si la descripción es válida.
+    // FASE 4.60B.2: NO pasar la descripción como `fragmento` citado. La puerta
+    // anti-alucinación exige cita literal (>=25 chars) y las descripciones del
+    // modelo son paráfrasis por diseño: pasarlas como fragmento las descartaba
+    // sistemáticamente aunque el plazo fuera correcto. Sin `fragmento`, el
+    // alineamiento por contenido (Nivel 1 + Nivel 2) valida la paráfrasis
+    // contra el texto real sin inventar evidencia.
     const verifiedDeadlines = Array.isArray(validated.deadlines) ? validated.deadlines.filter((d) => {
       const desc = typeof d === 'string' ? d : String(d?.description || '');
       if (!desc.trim()) return false;
-      const { kept } = verifyDocumentClaims([{ document_id: doc.id, afirmacion: desc, fragmento: desc }], docsByIdForAnalysis, doc.workspace_id, doc.lawyer_id);
+      const { kept } = verifyDocumentClaims([{ document_id: doc.id, afirmacion: desc }], docsByIdForAnalysis, doc.workspace_id, doc.lawyer_id);
       return kept.length > 0;
     }) : [];
     const allClaimsEvidence = [...partiesRes.claims, ...keyPointsRes.claims, ...obligationsRes.claims];

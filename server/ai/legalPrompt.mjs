@@ -24,7 +24,7 @@ Donde:
 - parties: partes intervinientes (nombres o roles, por ejemplo "A. Pérez (demandante)").
 - key_points: puntos clave o cláusulas relevantes.
 - obligations: obligaciones identificadas para cada parte.
-- deadlines: plazos, fechas de vencimiento o hitos temporales. Si no hay una fecha cierta, usa una cadena vacía en "date".
+- deadlines: TODA obligación con fecha o plazo explícito en el documento: fecha de vencimiento de pago, inicio/vigencia o término de contrato, plazo para responder, contestar o presentar escritos, fecha de audiencia o comparendo, hito temporal con fecha. Incluye también plazos relativos ("dentro de quinto día desde la notificación", "dentro de los primeros cinco días de cada mes"): en ese caso copia el plazo en "date" TAL CUAL aparece, SIN calcular ninguna fecha calendario. Si no hay una fecha cierta, usa una cadena vacía en "date" solo cuando tampoco haya texto de plazo que citar.
 - risks: riesgos, vacíos o cláusulas que podrían ser desfavorables. Cada elemento debe redactarse distinguiendo el hecho documental, la inferencia o riesgo y, cuando exista, la consecuencia documental, indicando su nivel de certeza (Alta, Media o Baja).
 - recommendations: recomendaciones prácticas para el abogado.
 
