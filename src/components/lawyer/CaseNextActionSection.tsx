@@ -125,7 +125,7 @@ export function CaseNextActionSection({ caseData, onSaved }: Props) {
         </div>
       ) : nextVisible ? (
         <div className="mt-2">
-          <p className="font-medium leading-snug text-gray-900">“{nextVisible}”</p>
+          <p className="font-medium leading-relaxed text-gray-900">“{nextVisible}”</p>
           <div className="mt-1.5 flex flex-wrap items-center gap-2 text-sm">
             <span className="inline-flex items-center gap-1.5 text-muted-foreground">
               <CalendarIcon className="h-4 w-4 shrink-0 opacity-60" aria-hidden="true" /> {fmtShortDate(caseData.next_action_due_at)}

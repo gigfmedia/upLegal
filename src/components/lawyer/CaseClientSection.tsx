@@ -104,7 +104,7 @@ export function CaseClientSection({ caseData, onSaved }: Props) {
           {loading ? (
             <p className="mt-1 text-xs text-muted-foreground">Cargando seguimiento…</p>
           ) : last ? (
-            <div className="mt-1 text-xs">
+            <div className="mt-1 text-sm">
               <span className="text-muted-foreground">Última actualización · </span>
               <span className="font-medium text-gray-800">
                 {formatCommShort(last.communicated_at)} · {COMM_CHANNEL_LABELS[last.channel as CommChannel] ?? last.channel}
@@ -114,10 +114,10 @@ export function CaseClientSection({ caseData, onSaved }: Props) {
               </span>
             </div>
           ) : (
-            <p className="mt-1 text-xs text-muted-foreground">Cliente aún no actualizado.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Cliente aún no actualizado.</p>
           )}
           {hasFollowUp && caseData.client_follow_up_due_at && (
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground">
               Próxima actualización ·{' '}
               <span className="font-medium text-gray-800">{formatCommShort(caseData.client_follow_up_due_at)}</span>
             </p>
@@ -204,7 +204,7 @@ export function CaseClientSection({ caseData, onSaved }: Props) {
                 {(showAll ? comms : comms.slice(0, 3)).map((c) => {
                   const Icon = CHANNEL_ICONS[c.channel as CommChannel] ?? MoreHorizontal;
                   return (
-                    <li key={c.id} className="flex items-start gap-2 text-xs">
+                    <li key={c.id} className="flex items-start gap-2 text-sm leading-relaxed">
                       <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400" aria-hidden="true" />
                       <span className="min-w-0">
                         <span className="font-medium text-gray-800">{formatCommLine(c)}</span>

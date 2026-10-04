@@ -144,7 +144,7 @@ export function CaseManagementDrawer({ caseData, open, onOpenChange, onCaseUpdat
               <SheetPrimitive.Title className="text-base font-semibold text-gray-900">
                 Gestión del caso
               </SheetPrimitive.Title>
-              <p className="mt-0.5 truncate text-sm text-muted-foreground">{caseData.title}</p>
+              <p className="mt-0.5 truncate text-sm font-medium text-gray-900">{caseData.title}</p>
             </div>
             <SheetPrimitive.Close
               aria-label="Cerrar gestión del caso"
