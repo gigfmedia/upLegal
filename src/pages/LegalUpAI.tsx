@@ -708,7 +708,7 @@ const EXTRACTED = [
   { label: "Riesgos", value: "Carta de aviso fuera de plazo" },
   { label: "Plazos", value: "Contestación: 5 días hábiles" },
   {
-    label: "Próximos pasos",
+    label: "Recomendaciones",
     value: "Preparar contestación y prueba documental",
   },
 ];
