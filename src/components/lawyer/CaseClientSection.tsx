@@ -168,7 +168,7 @@ export function CaseClientSection({ caseData, onSaved }: Props) {
                     aria-label="Marcar seguimiento actual como cumplido"
                     className="mt-0.5"
                   />
-                  <span>Marcar seguimiento actual como cumplido</span>
+                  <span className="text-sm">Marcar seguimiento actual como cumplido</span>
                 </label>
               )}
               <div>
