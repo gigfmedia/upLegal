@@ -31,6 +31,7 @@ import Header from '@/components/Header';
 import { GlobalSearch } from '@/components/lawyer/GlobalSearch';
 import { useLegacyAICompat } from '@/hooks/useLegacyAICompat';
 import { useProSubscription } from '@/hooks/useProSubscription';
+import { useNotifications } from '@/contexts/NotificationContext';
 
 type NavItem = {
   href: string;
@@ -52,6 +53,20 @@ function DashboardLayout() {
   const [userRole, setUserRole] = useState<UserRole>('client');
   const [showServicesBadge, setShowServicesBadge] = useState(false);
   const [navCounts, setNavCounts] = useState<Record<string, number>>({});
+  // 4.59C.1: unread notification count from canonical source (same query as
+  // the header bell). No badge until resolved; errors resolve to no badge.
+  const { unreadCount: notifUnread, isLoading: notifLoading } = useNotifications();
+  const notifBadgeFor = (href: string): number | null => {
+    if (notifLoading) return null;
+    if (
+      href !== '/lawyer/notificaciones' &&
+      href !== '/dashboard/notificaciones' &&
+      href !== '/admin/notifications'
+    ) {
+      return null;
+    }
+    return notifUnread > 0 ? notifUnread : null;
+  };
   // 4.34H: standalone /lawyer/ai retired from normal navigation. A narrow
   // compatibility entry remains ONLY for owners of orphan legacy workspaces
   // (no linked Case); linked history is reachable canonically via Cases.
@@ -426,6 +441,15 @@ function DashboardLayout() {
                                     {navCounts[href]}
                                   </span>
                                 )}
+                                {navCounts[href] === undefined && notifBadgeFor(href) !== null && (
+                                  <span
+                                    role="status"
+                                    aria-label={`Notificaciones, ${notifBadgeFor(href)} sin leer`}
+                                    className="ml-auto bg-gray-100 text-gray-600 text-xs font-medium px-2 py-0.5 rounded-full"
+                                  >
+                                    {(notifBadgeFor(href) as number) > 99 ? '99+' : notifBadgeFor(href)}
+                                  </span>
+                                )}
                                 {badge && navCounts[href] === undefined && (
                                   <span className="ml-auto flex-shrink-0 w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm" />
                                 )}
@@ -470,6 +494,15 @@ function DashboardLayout() {
                           {navCounts[href] !== undefined && (
                             <span className="ml-auto bg-gray-100 text-gray-600 text-xs font-medium px-2 py-0.5 rounded-full">
                               {navCounts[href]}
+                            </span>
+                          )}
+                          {navCounts[href] === undefined && notifBadgeFor(href) !== null && (
+                            <span
+                              role="status"
+                              aria-label={`Notificaciones, ${notifBadgeFor(href)} sin leer`}
+                              className="ml-auto bg-gray-100 text-gray-600 text-xs font-medium px-2 py-0.5 rounded-full"
+                            >
+                              {(notifBadgeFor(href) as number) > 99 ? '99+' : notifBadgeFor(href)}
                             </span>
                           )}
                           {badge && navCounts[href] === undefined && (
@@ -566,6 +599,15 @@ function DashboardLayout() {
                                       {navCounts[href]}
                                     </span>
                                   )}
+                                  {navCounts[href] === undefined && notifBadgeFor(href) !== null && (
+                                    <span
+                                      role="status"
+                                      aria-label={`Notificaciones, ${notifBadgeFor(href)} sin leer`}
+                                      className="ml-auto bg-gray-100 text-gray-600 text-xs font-medium px-2 py-0.5 rounded-full"
+                                    >
+                                      {(notifBadgeFor(href) as number) > 99 ? '99+' : notifBadgeFor(href)}
+                                    </span>
+                                  )}
                                   {badge && navCounts[href] === undefined && (
                                     <span className="ml-auto flex-shrink-0 w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm" />
                                   )}
@@ -610,6 +652,15 @@ function DashboardLayout() {
                             {navCounts[href] !== undefined && (
                               <span className="ml-auto bg-gray-100 text-gray-600 text-xs font-medium px-2 py-0.5 rounded-full">
                                 {navCounts[href]}
+                              </span>
+                            )}
+                            {navCounts[href] === undefined && notifBadgeFor(href) !== null && (
+                              <span
+                                role="status"
+                                aria-label={`Notificaciones, ${notifBadgeFor(href)} sin leer`}
+                                className="ml-auto bg-gray-100 text-gray-600 text-xs font-medium px-2 py-0.5 rounded-full"
+                              >
+                                {(notifBadgeFor(href) as number) > 99 ? '99+' : notifBadgeFor(href)}
                               </span>
                             )}
                             {badge && navCounts[href] === undefined && (
