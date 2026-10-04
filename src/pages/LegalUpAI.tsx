@@ -904,7 +904,7 @@ const FEATURES = [
     description:
       "Genera borradores jurídicos utilizando la información, documentos e investigación de cada caso.",
     visual: "alerts" as const,
-    available: false,
+    available: true,
   },
 ];
 
@@ -1367,8 +1367,7 @@ const VS_GENERAL_ROWS: VSRow[] = [
   {
     feature: "Redacción jurídica",
     general: "✓",
-    ai: "",
-    aiSoon: true,
+    ai: "✓",
   },
 ];
 

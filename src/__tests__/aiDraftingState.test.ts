@@ -4,7 +4,13 @@ import { resolve } from 'node:path';
 
 const read = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf-8');
 
-describe('FASE 4.59C.5 — drafting B: implementado + kill switch OFF', () => {
+describe('FASE 4.59C.6 — drafting A: implementado + habilitado en prod', () => {
+  it('kill switch preservado (revisión separada si se apaga)', () => {
+    const server = read('server.mjs');
+    expect(server).toContain("process.env.AI_DRAFTING_ENABLED !== '1'");
+    expect(server).toContain('AI_DRAFTING_DISABLED');
+    expect(server).toContain('/api/ai/cases/:caseId/drafts');
+  });
   it('kill switch default OFF bloquea generación (lectura/edición separadas)', () => {
     const server = read('server.mjs');
     expect(server).toContain("process.env.AI_DRAFTING_ENABLED !== '1'");
@@ -16,11 +22,11 @@ describe('FASE 4.59C.5 — drafting B: implementado + kill switch OFF', () => {
     const server = read('server.mjs');
     expect(server).toContain("capability: 'case_drafting'");
   });
-  it('UI expone pestaña pero generación depende del flag → landing en Próximamente', () => {
+  it('marketing refleja disponibilidad (prod AI_DRAFTING_ENABLED=1)', () => {
     expect(read('src/pages/lawyer/CaseDetailPage.tsx')).toContain('Redacción asistida');
     const landing = read('src/pages/LegalUpAI.tsx');
     const idx = landing.indexOf('"Redacción jurídica"');
-    expect(landing.slice(idx, idx + 200)).toContain('aiSoon: true');
+    expect(landing.slice(idx, idx + 200)).not.toContain('aiSoon');
   });
   it('planes con acceso: pago AI, no free', () => {
     const server = read('server.mjs');

@@ -6,19 +6,19 @@ const read = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf-8');
 const landing = () => read('src/pages/LegalUpAI.tsx');
 
 describe('FASE 4.59C.4 — comparativa sigue al producto', () => {
-  it('Redacción jurídica NO checkeada: badge Próximamente', () => {
+  it('Redacción jurídica disponible (flag prod ON): check, sin Próximamente', () => {
     const src = landing();
     const idx = src.indexOf('"Redacción jurídica"');
     expect(idx).toBeGreaterThan(-1);
     const rowBlock = src.slice(idx, idx + 200);
-    expect(rowBlock).toContain('aiSoon: true');
-    expect(rowBlock).not.toContain('ai: "✓"');
+    expect(rowBlock).toContain('ai: "✓"');
+    expect(rowBlock).not.toContain('aiSoon');
   });
-  it('card Redacción Asistida marcada no disponible', () => {
+  it('card Redacción Asistida disponible', () => {
     const src = landing();
     const idx = src.indexOf('"Redacción Asistida"');
     expect(idx).toBeGreaterThan(-1);
-    expect(src.slice(idx, idx + 400)).toContain('available: false');
+    expect(src.slice(idx, idx + 400)).toContain('available: true');
   });
   it('sin pretensiones ni PJUD inventados en la comparativa', () => {
     const src = landing();
