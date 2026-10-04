@@ -489,7 +489,7 @@ export default function EarningsPage() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         {/* Monthly Earnings Chart */}
-        <Card className="col-span-4">
+        <Card className="col-span-1 md:col-span-2 lg:col-span-4">
           <CardHeader>
             <CardTitle>Resumen de Ingresos</CardTitle>
             <CardDescription>
@@ -523,7 +523,7 @@ export default function EarningsPage() {
         </Card>
 
         {/* Top Services */}
-        <Card className="col-span-3">
+        <Card className="col-span-1 md:col-span-2 lg:col-span-3">
           <CardHeader>
             <CardTitle>Servicios Populares</CardTitle>
             <CardDescription>
