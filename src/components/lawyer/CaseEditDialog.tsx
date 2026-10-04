@@ -115,6 +115,7 @@ export function CaseEditDialog({ open, onOpenChange, caseData, clients, onSaved,
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
@@ -222,5 +223,6 @@ export function CaseEditDialog({ open, onOpenChange, caseData, clients, onSaved,
       confirmText="Eliminar caso"
       isDeleting={deleting}
     />
+    </>
   );
 }
