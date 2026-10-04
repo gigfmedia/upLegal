@@ -176,7 +176,15 @@ export function CaseManagementDrawer({ caseData, open, onOpenChange, onCaseUpdat
 
               <Separator />
 
-              <CaseTasksSection caseId={caseData.id} />
+              <CaseTasksSection
+                caseId={caseData.id}
+                currentNextAction={{
+                  next_action: caseData.next_action ?? null,
+                  next_action_due_at: caseData.next_action_due_at ?? null,
+                  next_action_completed_at: caseData.next_action_completed_at ?? null,
+                }}
+                onPromoted={onCaseUpdated}
+              />
 
               <Separator />
 

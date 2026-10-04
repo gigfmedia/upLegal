@@ -4,22 +4,33 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { AlertTriangle, Plus } from 'lucide-react';
 import { useCaseTasks } from '@/hooks/useCaseTasks';
+import type { LawyerCase } from '@/hooks/useLawyerCases';
 import { dateToNoonIso, isOverdue } from '@/lib/caseControl';
 import { CaseDatePicker } from '@/components/lawyer/CaseDatePicker';
 import { fmtShortDate } from '@/components/lawyer/CaseNextActionSection';
+import { PromoteTaskDialog } from '@/components/lawyer/PromoteTaskDialog';
 
 type Props = {
   caseId: string;
+  /** Estado actual de próxima gestión (para advertir reemplazo). */
+  currentNextAction?: {
+    next_action: string | null;
+    next_action_due_at: string | null;
+    next_action_completed_at: string | null;
+  } | null;
+  onPromoted?: (row: Partial<LawyerCase>) => void;
 };
 
 /** FASE 5.1B — lista vertical de pendientes + creación inline en el drawer. */
-export function CaseTasksSection({ caseId }: Props) {
+export function CaseTasksSection({ caseId, currentNextAction = null, onPromoted }: Props) {
   const { tasks, loading, createTask, completeTask, reopenTask } = useCaseTasks(caseId);
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState('');
   const [due, setDue] = useState<Date | undefined>(undefined);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // FASE 4.60E: tarea seleccionada para promover a próxima gestión (copia).
+  const [promoteTask, setPromoteTask] = useState<{ id: string; title: string; due_at: string | null } | null>(null);
 
   const pendingCount = tasks.filter((t) => !t.completed).length;
 
@@ -97,6 +108,16 @@ export function CaseTasksSection({ caseId }: Props) {
                     ) : !t.completed ? (
                       <span className="mt-0.5 block text-xs text-muted-foreground">Sin fecha</span>
                     ) : null}
+                    {/* FASE 4.60E: solo pendientes activos; acción secundaria compacta. */}
+                    {!t.completed && (
+                      <button
+                        type="button"
+                        onClick={() => setPromoteTask({ id: t.id, title: t.title, due_at: t.due_at })}
+                        className="mt-1 block text-xs text-muted-foreground underline-offset-4 hover:text-gray-900 hover:underline"
+                      >
+                        Usar como próxima gestión
+                      </button>
+                    )}
                   </span>
                 </li>
               );
@@ -146,6 +167,18 @@ export function CaseTasksSection({ caseId }: Props) {
         </form>
       )}
       {error && <p role="alert" className="mt-2 text-xs text-red-600">{error}</p>}
+
+      {/* FASE 4.60E: confirmación de copia pendiente → próxima gestión. */}
+      {promoteTask && (
+        <PromoteTaskDialog
+          open={!!promoteTask}
+          onClose={() => setPromoteTask(null)}
+          caseId={caseId}
+          task={promoteTask}
+          current={currentNextAction}
+          onPromoted={(row) => { onPromoted?.(row); }}
+        />
+      )}
     </section>
   );
 }
