@@ -1366,8 +1366,8 @@ const VS_GENERAL_ROWS: VSRow[] = [
   },
   {
     feature: "Redacción jurídica",
-    general: "✓",
-    ai: "✓",
+    general: "Depende del contexto que le entregues",
+    ai: "✓ Borradores basados en el caso, sus documentos e investigación",
   },
 ];
 

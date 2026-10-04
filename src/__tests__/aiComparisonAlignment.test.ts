@@ -6,12 +6,13 @@ const read = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf-8');
 const landing = () => read('src/pages/LegalUpAI.tsx');
 
 describe('FASE 4.59C.4 — comparativa sigue al producto', () => {
-  it('Redacción jurídica disponible (flag prod ON): check, sin Próximamente', () => {
+  it('Redacción jurídica disponible (flag prod ON): check + copy de valor', () => {
     const src = landing();
     const idx = src.indexOf('"Redacción jurídica"');
     expect(idx).toBeGreaterThan(-1);
-    const rowBlock = src.slice(idx, idx + 200);
-    expect(rowBlock).toContain('ai: "✓"');
+    const rowBlock = src.slice(idx, idx + 300);
+    expect(rowBlock).toContain('Depende del contexto que le entregues');
+    expect(rowBlock).toContain('Borradores basados en el caso, sus documentos e investigación');
     expect(rowBlock).not.toContain('aiSoon');
   });
   it('card Redacción Asistida disponible', () => {

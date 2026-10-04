@@ -26,7 +26,8 @@ describe('FASE 4.59C.6 — drafting A: implementado + habilitado en prod', () =>
     expect(read('src/pages/lawyer/CaseDetailPage.tsx')).toContain('Redacción asistida');
     const landing = read('src/pages/LegalUpAI.tsx');
     const idx = landing.indexOf('"Redacción jurídica"');
-    expect(landing.slice(idx, idx + 200)).not.toContain('aiSoon');
+    expect(landing.slice(idx, idx + 300)).not.toContain('aiSoon');
+    expect(landing.slice(idx, idx + 300)).toContain('Borradores basados en el caso');
   });
   it('planes con acceso: pago AI, no free', () => {
     const server = read('server.mjs');
