@@ -21,7 +21,7 @@ import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { toast } from 'sonner';
 import { TimelinePanel, type TimelinePanelItem } from './TimelinePanel';
 import { timelineEventTime, timelineGroupLabel } from './timelineDates';
-import { EVENT_META } from './timelineMeta';
+import { EVENT_META, UNKNOWN_EVENT_META } from './timelineMeta';
 import {
   useAICaseTimeline,
   useCreateAITimelineNote,
@@ -120,7 +120,10 @@ export function AICaseTimeline({ workspaceId }: AICaseTimelineProps) {
   const groups = useMemo(() => {
     const map = new Map<string, TimelinePanelItem[]>();
     for (const event of events) {
-      const meta = EVENT_META[event.event_type];
+      // FASE 4.60C: los eventos operativos del sistema usan el mismo panel
+      // pero sin acciones (actions solo para notas manuales). Fallback neutro
+      // ante tipos desconocidos para no romper el Timeline.
+      const meta = EVENT_META[event.event_type] ?? UNKNOWN_EVENT_META;
       const isNote = event.event_type === 'note';
       const item: TimelinePanelItem = {
         id: event.id,

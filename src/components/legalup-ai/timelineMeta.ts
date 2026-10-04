@@ -1,8 +1,11 @@
 import {
   AlertTriangle,
+  Archive,
   CalendarClock,
+  CheckCircle2,
   FileText,
   FolderPlus,
+  ListChecks,
   MessageSquarePlus,
   Sparkles,
 } from 'lucide-react';
@@ -42,4 +45,27 @@ export const EVENT_META: Record<
     icon: MessageSquarePlus,
     className: 'bg-gray-100 text-gray-700',
   },
+  // FASE 4.60C — eventos operativos del sistema (solo lectura en UI).
+  task_completed: {
+    label: 'Pendiente completado',
+    icon: CheckCircle2,
+    className: 'bg-green-100 text-green-700',
+  },
+  next_action_completed: {
+    label: 'Próxima gestión completada',
+    icon: ListChecks,
+    className: 'bg-emerald-100 text-emerald-700',
+  },
+  case_closed: {
+    label: 'Caso cerrado',
+    icon: Archive,
+    className: 'bg-slate-200 text-slate-700',
+  },
+};
+
+/** Fallback neutro: un tipo desconocido jamás debe romper el Timeline. */
+export const UNKNOWN_EVENT_META = {
+  label: 'Evento',
+  icon: FileText,
+  className: 'bg-gray-100 text-gray-700',
 };
