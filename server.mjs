@@ -9647,34 +9647,74 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
     const allClaimsEvidence = [...partiesRes.claims, ...keyPointsRes.claims, ...obligationsRes.claims];
     // Reanalizar reemplaza el análisis anterior SOLO si el nuevo persiste (4.34C):
     // el análisis bueno sigue disponible hasta que el reemplazo esté validado y guardado.
-    const { data: saved, error: insertError } = await supabase
+    // FASE 4.60B.3: UNIQUE(document_id) — un documento tiene un único análisis
+    // vigente. El INSERT incondicional violaba esa unicidad en cada re-análisis
+    // (AI_ANALYSIS_FAILED con provider OK). UPDATE de la fila existente cuando
+    // la hay (contenido ya validado/grounded en memoria), INSERT solo sin fila.
+    // UPDATE es atómico: si falla, la fila anterior sigue intacta (4.34C).
+    // La concurrencia ya está serializada por el lock 4.29E de este endpoint.
+    const analysisPayload = {
+      summary: validated.summary,
+      document_type: validated.document_type,
+      parties: verifiedParties,
+      key_points: verifiedKeyPoints,
+      obligations: verifiedObligations,
+      deadlines: verifiedDeadlines,
+      risks: verifiedRisks,
+      recommendations: verifiedRecommendations,
+      claims: allClaimsEvidence,
+      evidence_sources: allClaimsEvidence,
+      model,
+    };
+    const { data: existingAnalysis } = await supabase
       .from('ai_document_analyses')
-      .insert({
-        document_id: doc.id,
-        lawyer_id: doc.lawyer_id,
-        workspace_id: doc.workspace_id,
-        summary: validated.summary,
-        document_type: validated.document_type,
-        parties: verifiedParties,
-        key_points: verifiedKeyPoints,
-        obligations: verifiedObligations,
-        deadlines: verifiedDeadlines,
-        risks: verifiedRisks,
-        recommendations: verifiedRecommendations,
-        claims: allClaimsEvidence,
-        evidence_sources: allClaimsEvidence,
-        model,
-      })
-      .select()
-      .single();
-
-    if (insertError) {
-      console.error('[LegalUpAI] Error guardando análisis:', insertError);
-      throw new Error('No se pudo guardar el análisis.');
+      .select('id')
+      .eq('document_id', doc.id)
+      .maybeSingle();
+    let saved = null;
+    let saveError = null;
+    if (existingAnalysis) {
+      const { data, error } = await supabase
+        .from('ai_document_analyses')
+        .update({ ...analysisPayload, updated_at: nowIso })
+        .eq('id', existingAnalysis.id)
+        .select()
+        .single();
+      saved = data;
+      saveError = error;
+    } else {
+      const { data, error } = await supabase
+        .from('ai_document_analyses')
+        .insert({
+          document_id: doc.id,
+          lawyer_id: doc.lawyer_id,
+          workspace_id: doc.workspace_id,
+          ...analysisPayload,
+        })
+        .select()
+        .single();
+      saved = data;
+      saveError = error;
     }
 
-    // Recién ahora se retira el análisis anterior (el bueno sobrevivió a un fallo de persistencia).
-    await supabase.from('ai_document_analyses').delete().eq('document_id', doc.id).neq('id', saved.id);
+    if (saveError || !saved) {
+      // Solo servidor: código/constraint + conteos sanitizados (sin texto cliente).
+      console.error('[LegalUpAI] Error guardando análisis:', {
+        code: saveError?.code,
+        message: saveError?.message,
+        details: saveError?.details,
+        hint: saveError?.hint,
+        document_id: doc.id,
+        update: !!existingAnalysis,
+        parties: verifiedParties.length,
+        key_points: verifiedKeyPoints.length,
+        obligations: verifiedObligations.length,
+        deadlines: verifiedDeadlines.length,
+        risks: verifiedRisks.length,
+        recommendations: verifiedRecommendations.length,
+      });
+      throw new Error('No se pudo guardar el análisis.');
+    }
 
     await supabase.from('ai_documents').update({ analysis_status: 'ready', analysis_error: null, model }).eq('id', doc.id);
 

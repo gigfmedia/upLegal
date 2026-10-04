@@ -21,7 +21,7 @@ const src = readFileSync(new URL('../../server.mjs', import.meta.url), 'utf8');
 const ast = ts.createSourceFile('server.mjs', src, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const user = id(1), foreign = id(2), caseId = id(3), workspaceId = id(4), conversationId = id(5);
-const names = ['requireAILawyer','getAIDocumentOwned','getAIWorkspaceOwned','getLawyerCaseOwned','requireAIEntitlement','getAIConversationOwned','getOrCreateAIConversation','AIChatRequestSchema','AIChatResponseSchema','AIDocumentAnalysisSchema','getAIUsagePeriod','recordAIUsage','isAIOverRateLimit','checkAIProtectionLimits','getAILawyerSubscription','getAILawyerAccess','getFreeCaseAccess','freeQuotaForEntitlement','getProLawyerSubscription','getProLawyerAccess','requireAIAccess','AI_FEATURES_ALL','PLAN_FEATURES_SERVER','getPlanForAccess','serverCanUseAIFeature','extractTextFromStoredPdf','commercialQuotaForPlan','freeQuotaForPlan','FREE_CASE_ALLOWANCE'];
+const names = ['requireAILawyer','getAIDocumentOwned','getAIWorkspaceOwned','getLawyerCaseOwned','requireAIEntitlement','getAIConversationOwned','getOrCreateAIConversation','AIChatRequestSchema','AIChatResponseSchema','AIDocumentAnalysisSchema','getAIUsagePeriod','recordAIUsage','isAIOverRateLimit','checkAIProtectionLimits','getAILawyerSubscription','getAILawyerAccess','getFreeCaseAccess','freeQuotaForEntitlement','getProLawyerSubscription','getProLawyerAccess','requireAIAccess','AI_FEATURES_ALL','PLAN_FEATURES_SERVER','getPlanForAccess','serverCanUseAIFeature','extractTextFromStoredPdf','commercialQuotaForPlan','freeQuotaForPlan','FREE_CASE_ALLOWANCE','resolveDocLinkedCaseId'];
 const paths = {
  provision:['post','/api/lawyer/cases/:caseId/ai-workspace'], process:['post','/api/ai/documents/:id/process'], analyze:['post','/api/ai/documents/:id/analyze'],
  del:['delete','/api/ai/documents/:id'], open:['get','/api/ai/documents/:id/open'],
@@ -54,6 +54,7 @@ function harness({paid=true, linked=true, count=3}={}) {
   app:{get:(p,h)=>routes[`get ${p}`]=h,post:(p,h)=>routes[`post ${p}`]=h,delete:(p,h)=>routes[`delete ${p}`]=h},getUserIdFromToken:async()=>tokenUser,
  chatCompletion:provider,isAIProviderConfigured:()=>true,AI_DEFAULT_MODEL:'gpt-4o-mini',AI_CHAT_MAX_TOKENS:2400,AI_DOCUMENTS_BUCKET:'ai-documents',MAX_EXTRACTED_TEXT_CHARS:80000,
  pdfParse:async()=>({text:'Contrato documental de prueba con obligaciones entre partes.',numpages:1}),
+ extractPdfText:async()=>({text:'Contrato documental de prueba con obligaciones entre partes.',pageCount:1}),
  aiRateLimiter:new Map(),AI_RATE_WINDOW_MS:60000,AI_PROTECT_RATE_LIMIT_PER_MINUTE:30,AI_PROTECT_MAX_MONTHLY_TOKENS:20000000,AI_PROTECT_MAX_MONTHLY_REQUESTS:5000,AI_USAGE_CREDITS_PER_TOKEN:1000,
  capturePostHog:async()=>{},notificationsService:{notifyUser:async()=>{}},AIResearchRequestSchema:z.object({query:z.string()}),validateResearchQuery:()=>({valid:true})});
  for(const n of ast.statements){
@@ -189,13 +190,33 @@ describe('4.34B actual Core handlers and real entitlement/metering helpers',()=>
    const remaining=h.rows.ai_document_analyses.filter(a=>a.document_id===id(10));
    expect(remaining).toHaveLength(1);expect(remaining[0].summary).not.toBe('previous');
   });
+  it('4.60B.3 reanalysis with existing row updates instead of violating UNIQUE(document_id)',async()=>{
+   const h=harness();
+   h.rows.ai_documents.forEach(d=>{d.status='ready';d.extracted_text='Contrato documental de prueba con obligaciones entre partes.';});
+   h.rows.ai_document_analyses.push({id:id(70),document_id:id(10),lawyer_id:user,workspace_id:workspaceId,summary:'previous'});
+   // Emula UNIQUE(ai_document_analyses.document_id) de producción: el INSERT
+   // con fila existente debe fallar 23505, y el endpoint debe resolverlo con UPDATE.
+   const origFrom=h.supabase.from.bind(h.supabase);
+   h.supabase.from=(table)=>{const q=origFrom(table);if(table!=='ai_document_analyses')return q;
+    const origInsert=q.insert.bind(q);
+    q.insert=(p)=>{const docId=(Array.isArray(p)?p[0]:p)?.document_id;
+     if(h.rows.ai_document_analyses.some(a=>a.document_id===docId))return {select:()=>({single:async()=>({data:null,error:{code:'23505',message:'duplicate key value violates unique constraint "ai_document_analyses_document_id_key"',details:`Key (document_id)=(${docId}) already exists.`}})})};
+     return origInsert(p);};
+    return q;};
+   const res=await h.call('analyze');
+   expect(res.statusCode).toBe(200);
+   const remaining=h.rows.ai_document_analyses.filter(a=>a.document_id===id(10));
+   expect(remaining).toHaveLength(1);expect(remaining[0].summary).not.toBe('previous');
+  });
   it('reanalysis DB failure preserves previous good analysis',async()=>{
    const h=harness();
    h.rows.ai_documents.forEach(d=>{d.status='ready';d.extracted_text='Contrato documental de prueba con obligaciones entre partes.';});
    h.rows.ai_document_analyses.push({id:id(70),document_id:id(10),lawyer_id:user,workspace_id:workspaceId,summary:'previous'});
+   // 4.60B.3: con fila existente el re-análisis hace UPDATE (UNIQUE document_id);
+   // el fallo simulado va en update y la fila previa debe sobrevivir.
    const origFrom=h.supabase.from.bind(h.supabase);
    h.supabase.from=(table)=>{const q=origFrom(table);if(table!=='ai_document_analyses')return q;
-    q.insert=()=>({select:()=>({single:async()=>({data:null,error:{code:'XX000',message:'db down'}})})});return q;};
+    q.update=()=>({eq:()=>({select:()=>({single:async()=>({data:null,error:{code:'XX000',message:'db down'}})})})});return q;};
    const res=await h.call('analyze');
    expect(res.statusCode).toBe(500);expect(h.provider).toHaveBeenCalledTimes(1);
    const remaining=h.rows.ai_document_analyses.filter(a=>a.document_id===id(10));

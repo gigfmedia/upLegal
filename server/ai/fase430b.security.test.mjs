@@ -6,7 +6,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
-import { hasCanonicalDocumentReference, resolveAnalysisModel } from './coreAuthority.mjs';
+import { hasCanonicalDocumentReference, resolveAnalysisModel, honestEvidenceLocation } from './coreAuthority.mjs';
+import { verifyDocumentClaims } from './documentGrounding.mjs';
 const src=readFileSync(new URL('../../server.mjs',import.meta.url),'utf8');
 const ast=ts.createSourceFile('server.mjs',src,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
 const names=['getLawyerCaseOwned','getAIWorkspaceOwned','getAIDocumentOwned','requireAIEntitlement','AI_FEATURES_ALL','PLAN_FEATURES_SERVER','serverCanUseAIFeature','getPlanForAccess','commercialQuotaForPlan','freeQuotaForPlan','FREE_CASE_ALLOWANCE','freeQuotaForEntitlement','getFreeCaseAccess'];
@@ -25,6 +26,7 @@ function harness({access={isProLimited:true},user='L1'}={}){
   const ctx=vm.createContext({createAIMetering:options=>createAIMetering({...options,log:()=>{}}),commercialQuotaForPlan,freeQuotaForPlan,FREE_CASE_ALLOWANCE,AI_PROTECT_MAX_MONTHLY_TOKENS:20000000,AI_PROTECT_MAX_MONTHLY_REQUESTS:5000,hasCanonicalDocumentReference,resolveAnalysisModel,supabase,console:{log(){},error(){},warn(){}},app:{post:(p,h)=>routes[p]=h,get(){}},
   requireAILawyer:async(_req,res)=>{if(!user){res.status(401).json({error:'unauthorized'});return null;}return user;},requireAIAccess:async()=>access,
   checkAILimits:async()=>null,isAIOverRateLimit:()=>false,checkAIProtectionLimits:async()=>null,
+  verifyDocumentClaims,honestEvidenceLocation,resolveDocLinkedCaseId:async()=>null,
   getAILawyerAccess:async()=>access,isAIProviderConfigured:()=>true,chatCompletion:provider,AI_DEFAULT_MODEL:'existing',
   buildAnalysisSystemPrompt:()=>'',buildAnalysisUserPrompt:()=>'',AIDocumentAnalysisSchema:{parse:v=>v},recordAIUsage:vi.fn(),
   capturePostHog:async()=>{},notificationsService:{notifyUser:async()=>{}},AIResearchRequestSchema:{safeParse:()=>({success:true,data:{query:'Legal research'}})},validateResearchQuery:()=>({valid:true}),
