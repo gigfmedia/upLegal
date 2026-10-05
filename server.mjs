@@ -10018,6 +10018,8 @@ const AIChatResponseSchema = z.object({
           fragment_id: z.string().optional(),
           page_number: z.number().int().optional(),
           evidence: z.string().optional(),
+          // FASE 4.61D: id estable del Evidence Pack (opcional, aditivo).
+          evidence_id: z.string().optional(),
         }),
         z.object({
           research_id: z.string(),
@@ -10222,22 +10224,94 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
         snapshotBlock = '';
       }
     }
-    const { context, tooLarge, researchSelected } = buildChatContext({
-      workspace,
-      documents: readyDocs,
-      analyses,
-      question: message,
-      proCase,
-      selectedDocumentId: prioritizedDocumentId || null,
-      researchList: researchRows,
-      snapshotBlock,
-    });
-    if (tooLarge) {
-      return await metering.respond(res, 422, {
-        error:
-          'Este caso contiene demasiada información para procesarla completa en una sola consulta.',
-        code: 'CONTEXT_TOO_LARGE',
+    // FASE 4.61D — retrieval canónico (una vez por operación lógica).
+    // Solo modo caso (sin documento priorizado). Document Chat intacto.
+    // Modos: rag-full (pack como contexto primario) / rag-partial (pack +
+    // fallback acotado solo para docs no indexados) / legacy (sin cambios).
+    let ragPack = null;
+    let ragMode = 'legacy';
+    if (!prioritizedDocumentId) {
+      try {
+        const { retrieveCaseEvidence } = await import('./server/ai/ragRetrieval.mjs');
+        const { decideChatRagMode } = await import('./server/ai/caseChatRag.mjs');
+        const linkedCaseId = await resolveDocLinkedCaseId(userId, workspace.id);
+        if (linkedCaseId) {
+          const retrievalStartedAt = Date.now();
+          const retrieved = await retrieveCaseEvidence({
+            supabase, lawyerId: userId, caseId: linkedCaseId, query: message,
+          });
+          ragPack = retrieved.pack;
+          ragMode = decideChatRagMode({ pack: ragPack, retrievalMode: retrieved.retrievalMode });
+          void retrievalStartedAt;
+        }
+      } catch (e) {
+        console.error('[LegalUpAI] rag retrieval failed, legacy fallback', e?.message || e);
+        ragPack = null;
+        ragMode = 'legacy';
+      }
+    }
+
+    let context;
+    let researchSelected;
+    if (ragMode === 'rag-full' && ragPack) {
+      // FULL: el Pack es el contexto documental primario. Sin dump crudo:
+      // eso anularía el retrieval. Sin snapshot derivado como evidencia.
+      const { buildRagContext } = await import('./server/ai/caseChatRag.mjs');
+      const { serializeEvidencePack } = await import('./server/ai/ragRetrieval.mjs');
+      const { RAG_INSTRUCTIONS } = await import('./server/ai/caseChatRag.mjs');
+      const rag = buildRagContext(ragPack, serializeEvidencePack);
+      researchSelected = rag.researchSelected;
+      const liveDesc = (proCase && proCase.description) || workspace.description;
+      const caseLine = liveDesc
+        ? `CASO: ${ragPack.caseContext.title || workspace.name || ''}\nDescripción: ${String(liveDesc).slice(0, 1000)}`
+        : '';
+      context = [RAG_INSTRUCTIONS, caseLine, rag.contextBlock].filter(Boolean).join('\n\n');
+    } else if (ragMode === 'rag-partial' && ragPack) {
+      // PARTIAL: pack + fallback acotado SOLO para docs no indexados.
+      // Nunca se duplican docs indexados por el contexto legacy.
+      const { buildRagContext, PARTIAL_FALLBACK_CHARS } = await import('./server/ai/caseChatRag.mjs');
+      const { serializeEvidencePack } = await import('./server/ai/ragRetrieval.mjs');
+      const { RAG_INSTRUCTIONS } = await import('./server/ai/caseChatRag.mjs');
+      const rag = buildRagContext(ragPack, serializeEvidencePack);
+      researchSelected = rag.researchSelected;
+      const unindexed = new Set((ragPack.retrievalMetadata.unindexedDocumentIds || []));
+      const fallbackDocs = (readyDocs || []).filter((d) => unindexed.has(d.id));
+      const fallbackAnalyses = {};
+      for (const d of fallbackDocs) {
+        if (analyses[d.id]) fallbackAnalyses[d.id] = analyses[d.id];
+      }
+      const legacyBuilt = buildChatContext({
+        workspace,
+        documents: fallbackDocs,
+        analyses: fallbackAnalyses,
+        question: message,
+        proCase,
+        selectedDocumentId: null,
+        researchList: [],
+        snapshotBlock: '',
       });
+      const fallbackText = legacyBuilt.context.slice(0, PARTIAL_FALLBACK_CHARS);
+      context = [RAG_INSTRUCTIONS, rag.contextBlock, fallbackText ? `CONTEXTO ADICIONAL (documentos aún no indexados):\n${fallbackText}` : ''].filter(Boolean).join('\n\n');
+    } else {
+      const built = buildChatContext({
+        workspace,
+        documents: readyDocs,
+        analyses,
+        question: message,
+        proCase,
+        selectedDocumentId: prioritizedDocumentId || null,
+        researchList: researchRows,
+        snapshotBlock,
+      });
+      context = built.context;
+      researchSelected = built.researchSelected;
+      if (built.tooLarge) {
+        return await metering.respond(res, 422, {
+          error:
+            'Este caso contiene demasiada información para procesarla completa en una sola consulta.',
+          code: 'CONTEXT_TOO_LARGE',
+        });
+      }
     }
 
     // Historial reciente (últimos N) para dar continuidad a la conversación.
@@ -10483,6 +10557,28 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       } catch {}
     }
 
+    // FASE 4.61D — valida evidence_id contra el Pack vigente (solo modo
+    // caso con pack). Inválidos se degradan a cita filename-level (flujo
+    // actual); válidos reciben página honesta del Pack. Sin pack: intacto.
+    let ragCitationStats = { validCitations: 0, invalidCitations: 0 };
+    if (ragPack && !prioritizedDocumentId) {
+      try {
+        const { enrichSourcesWithPack, ragObservability } = await import('./server/ai/caseChatRag.mjs');
+        const enriched = enrichSourcesWithPack(sources, ragPack);
+        sources = enriched.sources;
+        ragCitationStats = { validCitations: enriched.validCitations, invalidCitations: enriched.invalidCitations };
+        try {
+          console.log('[rag-chat]', JSON.stringify(ragObservability({
+            mode: ragMode,
+            pack: ragPack,
+            validCitations: enriched.validCitations,
+            invalidCitations: enriched.invalidCitations,
+            retrievalMs: ragPack.retrievalMetadata?.durationMs ?? null,
+          })));
+        } catch { /* observabilidad best-effort */ }
+      } catch { /* validación RAG best-effort; fuentes filename-level intactas */ }
+    }
+
     const { data: savedAssistant, error: assistantInsertError } = await supabase
       .from('ai_chat_messages')
       .insert({
@@ -10496,7 +10592,6 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       .select()
       .single();
     if (assistantInsertError) throw assistantInsertError;
-
     // Evento de activación: solo el primer mensaje de chat del abogado.
     try {
       const { count, error: countError } = await supabase

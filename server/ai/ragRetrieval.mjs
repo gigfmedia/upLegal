@@ -130,6 +130,8 @@ export async function retrieveCaseEvidence({
     unindexedDocuments: eligibleDocuments.filter((d) => !indexedDocumentIds.includes(d.id)).map((d) => d.id),
     coverageRatio: eligibleDocuments.length === 0 ? 1 : indexedDocumentIds.filter((id) => eligibleDocuments.some((d) => d.id === id)).length / eligibleDocuments.length,
   };
+  // 4.61D: IDs no indexados para fallback parcial acotado (solo internos).
+  const unindexedDocumentIds = coverage.unindexedDocuments;
 
   const filenames = new Map(eligibleDocuments.map((d) => [d.id, d.filename || 'documento']));
 
@@ -333,6 +335,7 @@ export async function retrieveCaseEvidence({
       topScore: documentEvidence[0]?.score ?? null,
       durationMs,
       generatedAt: now,
+      unindexedDocumentIds,
     },
   };
 
