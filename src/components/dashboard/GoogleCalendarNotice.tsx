@@ -2,32 +2,38 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
-import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 
 /**
- * FASE 5.2D — aviso compacto en Citas cuando Google no está conectado.
- * Solo lectura de estado; el flujo OAuth vive en Integraciones.
+ * FASE 5.2D + 4.60C.1 — aviso compacto en Citas cuando Google no está
+ * conectado. Estado vía endpoint canónico; el browser nunca lee la tabla.
  */
 export function GoogleCalendarNotice() {
-  const { user } = useAuth();
   const [checked, setChecked] = useState(false);
   const [connected, setConnected] = useState(true); // optimista: no mostrar ruido hasta saber
 
   useEffect(() => {
-    if (!user?.id) return;
     let cancelled = false;
-    supabase
-      .from('google_integrations')
-      .select('id')
-      .eq('user_id', user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (cancelled) return;
-        setConnected(!!data);
-        setChecked(true);
-      });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (cancelled || !session) {
+        if (!cancelled) setChecked(true);
+        return;
+      }
+      return supabase.functions
+        .invoke('google-auth/status', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        })
+        .then(({ data }) => {
+          if (cancelled) return;
+          setConnected((data as { connected?: boolean } | null)?.connected === true);
+          setChecked(true);
+        })
+        .catch(() => {
+          // Ante error no afirmar desconexión: no mostrar aviso.
+          if (!cancelled) setChecked(true);
+        });
+    });
     return () => { cancelled = true; };
-  }, [user?.id]);
+  }, []);
 
   if (!checked || connected) return null;
 

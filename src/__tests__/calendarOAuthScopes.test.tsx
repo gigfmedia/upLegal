@@ -15,14 +15,15 @@ vi.mock('@/lib/supabaseClient', () => ({
       getUser: async () => ({ data: { user: { id: 'L1' } } }),
       getSession: async () => ({ data: { session: { access_token: 'sess' } } }),
     },
-    from: () => ({
-      select: () => ({
-        eq: () => ({ maybeSingle: async () => ({ data: gcalState.connected ? { id: 'G1' } : null, error: null }) }),
-      }),
-    }),
+    from: () => {
+      throw new Error('direct table access is forbidden in tests');
+    },
     functions: {
       invoke: async (fn: string, opts: unknown) => {
         gcalState.invokeCalls.push({ fn, opts });
+        if (fn === 'google-auth/status') {
+          return { data: { connected: gcalState.connected }, error: null };
+        }
         return gcalState.invokeResult;
       },
     },
@@ -97,12 +98,15 @@ describe('FASE 4.60C — disconnect server-side', () => {
     expect(discBlock).toContain('.eq(\'user_id\', user.id)');
     expect(discBlock).toContain('getUser(token)');
   });
-  it('frontend usa el endpoint canónico; no borra la tabla directo', () => {
-    const src = read('src/components/dashboard/GoogleCalendarConnect.tsx');
-    expect(src).toContain('google-auth/disconnect');
-    // checkConnection (solo lectura de id) puede seguir usando la tabla;
-    // el delete directo de tokens sale del frontend.
-    expect(src).not.toMatch(/\.delete\(\)/);
+  it('frontend usa el endpoint canónico; cero acceso directo a la tabla', () => {
+    for (const p of [
+      'src/components/dashboard/GoogleCalendarConnect.tsx',
+      'src/components/dashboard/GoogleCalendarNotice.tsx',
+    ]) {
+      const src = read(p);
+      expect(src, p).toContain('google-auth/status');
+      expect(src, p).not.toContain("from('google_integrations')");
+    }
   });
 });
 
@@ -111,8 +115,10 @@ describe('FASE 4.60C — disconnect runtime', () => {
     render(<GoogleCalendarConnect />);
     await waitFor(() => expect(screen.getByText('Conectado')).toBeInTheDocument());
     fireEvent.click(screen.getByRole('button', { name: 'Desconectar' }));
-    await waitFor(() => expect(gcalState.invokeCalls).toHaveLength(1));
-    const call = gcalState.invokeCalls[0] as { fn: string; opts: unknown };
+    await waitFor(() => expect(
+      gcalState.invokeCalls.some((c) => (c as { fn: string }).fn === 'google-auth/disconnect')
+    ).toBe(true));
+    const call = gcalState.invokeCalls.find((c) => (c as { fn: string }).fn === 'google-auth/disconnect') as { fn: string; opts: unknown };
     expect(call.fn).toBe('google-auth/disconnect');
     expect(JSON.stringify(call.opts)).not.toMatch(/access_token|refresh_token/);
     await waitFor(() => expect(screen.getByText('No conectado')).toBeInTheDocument());
@@ -122,8 +128,29 @@ describe('FASE 4.60C — disconnect runtime', () => {
     render(<GoogleCalendarConnect />);
     await waitFor(() => expect(screen.getByText('Conectado')).toBeInTheDocument());
     fireEvent.click(screen.getByRole('button', { name: 'Desconectar' }));
-    await waitFor(() => expect(gcalState.invokeCalls).toHaveLength(1));
+    await waitFor(() => expect(
+      gcalState.invokeCalls.some((c) => (c as { fn: string }).fn === 'google-auth/disconnect')
+    ).toBe(true));
     expect(screen.getByText('Conectado')).toBeInTheDocument();
+  });
+});
+
+describe('FASE 4.60C.1 — endpoint status + RLS sin SELECT', () => {
+  it('status responde solo {connected}, con JWT y scoping propio', () => {
+    const src = read('supabase/functions/google-auth/index.ts');
+    const block = src.slice(src.indexOf("path === 'status'"), src.indexOf("path === 'disconnect'"));
+    expect(block).toContain('getUser(token)');
+    expect(block).toContain(".eq('user_id', user.id)");
+    expect(block).toContain('connected');
+    expect(block).not.toMatch(/access_token|refresh_token/);
+    expect(block).toContain('401');
+  });
+  it('migración elimina el SELECT autenticado (nombre exacto de prod)', () => {
+    const sql = read('supabase/migrations/20261013000000_harden_google_integrations_token_access.sql');
+    expect(sql).toContain('DROP POLICY IF EXISTS "Users can view their own google integration"');
+    expect(sql).toContain('ON public.google_integrations');
+    expect(sql).not.toMatch(/CREATE POLICY/i);
+    expect(sql).not.toMatch(/DISABLE ROW LEVEL SECURITY/i);
   });
 });
 

@@ -20,17 +20,17 @@ export function GoogleCalendarConnect() {
   const checkConnection = async () => {
     try {
       setError(null);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('google_integrations')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
+      // 4.60C.1: estado vía endpoint canónico (el browser nunca lee la tabla).
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setIsConnected(false);
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke('google-auth/status', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
       if (error) throw error;
-      setIsConnected(!!data);
+      setIsConnected((data as { connected?: boolean } | null)?.connected === true);
     } catch (error: any) {
       console.error('Error checking Google connection:', error);
       setError(error.message || 'Error checking connection');

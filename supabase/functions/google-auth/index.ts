@@ -53,6 +53,34 @@ serve(async (req) => {
       });
     }
 
+    if (path === 'status') {
+      // 4.60C.1: estado seguro para el browser. NUNCA devuelve tokens.
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: 'No authorization header provided', code: 'UNAUTHORIZED' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+      if (userError || !user) {
+        return new Response(JSON.stringify({ error: 'Invalid user token', code: 'UNAUTHORIZED' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const { data: integration, error: integrationError } = await supabaseClient
+        .from('google_integrations')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (integrationError) throw integrationError;
+      return new Response(JSON.stringify({ connected: !!integration }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     if (path === 'disconnect') {
       // 4.60C: desconexión canónica server-side. El browser nunca ve tokens.
       if (method !== 'POST') {
