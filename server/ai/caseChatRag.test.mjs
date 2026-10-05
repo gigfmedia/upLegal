@@ -86,14 +86,14 @@ describe('4.61D validación de citas contra el Pack', () => {
 });
 
 describe('4.61D integración en ruta (estático)', () => {
-  it('handler usa retrieval una vez solo en modo caso', async () => {
+  it('handlers usan retrieval una vez por operación (chat caso + drafting)', async () => {
     const { readFileSync } = await import('node:fs');
     const { resolve } = await import('node:path');
     const src = readFileSync(resolve(process.cwd(), 'server.mjs'), 'utf-8');
     expect(src).toContain('retrieveCaseEvidence');
-    // Una sola llamada por operación lógica.
+    // Exactamente dos sitios canónicos: chat caso y generación de borrador.
     const calls = src.match(/retrieveCaseEvidence\(/g) || [];
-    expect(calls.length).toBe(1);
+    expect(calls.length).toBe(2);
     // Document Chat (prioritizedDocumentId) excluido del path RAG.
     expect(src).toContain('if (!prioritizedDocumentId)');
   });

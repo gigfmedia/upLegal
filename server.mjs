@@ -11438,22 +11438,62 @@ app.post('/api/ai/cases/:caseId/drafts', async (req, res) => {
       .eq('workspace_id', workspace.id)
       .eq('lawyer_id', userId)
       .eq('status', 'ready');
+    // FASE 4.61E retrieval (query = instruccion).
+    let draftPack = null;
+    let draftRagMode = 'legacy';
+    try {
+      const { retrieveCaseEvidence } = await import('./server/ai/ragRetrieval.mjs');
+      const { decideChatRagMode } = await import('./server/ai/caseChatRag.mjs');
+      const retrieved = await retrieveCaseEvidence({
+        supabase, lawyerId: userId, caseId: link.caseRow.id, query: instruction,
+      });
+      draftPack = retrieved.pack;
+      draftRagMode = decideChatRagMode({ pack: draftPack, retrievalMode: retrieved.retrievalMode });
+    } catch (e) {
+      console.error('[LegalUpAI] draft rag retrieval failed, legacy fallback', e?.message || e);
+      draftPack = null;
+      draftRagMode = 'legacy';
+    }
     const factTexts = Array.isArray(snapPayload.facts)
       ? snapPayload.facts.slice(0, 10).map((f) => (typeof f === 'string' ? f : f.text || ''))
       : [];
-    const { context: evidenceContext, docMap } = selectDraftEvidence({
-      documents: readyDocs || [],
+    const unindexedIds = new Set((draftPack?.retrievalMetadata?.unindexedDocumentIds || []));
+    const legacyDocs = draftRagMode === 'rag-full'
+      ? []
+      : (readyDocs || []).filter((d) => draftRagMode !== 'rag-partial' || unindexedIds.has(d.id));
+    const { context: evidenceContext, docMap: legacyDocMap } = selectDraftEvidence({
+      documents: legacyDocs,
       instruction,
       snapshotFacts: factTexts,
       workspaceId: workspace.id,
       lawyerId: userId,
     });
+    // docMap del Pack (textos por documento) + fallback legacy.
+    const docMap = new Map(legacyDocMap);
+    for (const e of draftPack?.documentEvidence || []) {
+      if (!docMap.has(e.documentId)) {
+        const parts = (draftPack.documentEvidence || [])
+          .filter((x) => x.documentId === e.documentId)
+          .map((x) => x.text);
+        docMap.set(e.documentId, { file_name: e.filename, text: parts.join('\n\n') });
+      }
+    }
     const researchMap = new Map(
       (Array.isArray(snapPayload.legalContext) ? snapPayload.legalContext : []).map((l) => [
         String(l.research_id),
         { query: l.query, created_at: l.created_at, urls: new Set((l.source_urls || []).filter(Boolean)) },
       ])
     );
+    // Research del Pack (misma memoria persistida, sin segundo selector).
+    for (const r of draftPack?.researchEvidence || []) {
+      if (!researchMap.has(String(r.researchId))) {
+        researchMap.set(String(r.researchId), {
+          query: r.query,
+          created_at: r.date,
+          urls: new Set(r.url ? [r.url] : []),
+        });
+      }
+    }
     const researchBlocks = (Array.isArray(snapPayload.legalContext) ? snapPayload.legalContext : [])
       .slice(0, 5)
       .map((l, i) => `Contexto legal ${i + 1} (investigación del ${l.created_at || 'fecha no registrada'}${l.query ? ` sobre: ${l.query}` : ''}): ${String(l.synthesis || '').slice(0, 600)}`)
@@ -11466,14 +11506,25 @@ app.post('/api/ai/cases/:caseId/drafts', async (req, res) => {
     } catch (e) {
       console.error('[LegalUpAI] draft pro case header failed (continuing without it)', e?.message || e);
     }
+    // En FULL/PARTIAL el snapshot aporta hechos/partes (DERIVED); el
+    // contexto legal viene del Pack (sin duplicar investigaciones).
+    const snapshotForDraft = draftPack
+      ? { ...snapPayload, legalContext: [] }
+      : snapPayload;
     const draftContext = buildDraftContext({
       instruction,
       draftType: draft_type,
       caseHeader: proCaseBlock,
-      snapshot: snapPayload,
-      researchBlocks,
+      snapshot: snapshotForDraft,
+      researchBlocks: draftPack ? '' : researchBlocks,
     });
-    const fullContext = [draftContext, evidenceContext ? `EVIDENCIA PRIMARIA DEL CASO (fragmentos relevantes):\n${evidenceContext}` : '']
+    let packEvidenceBlock = '';
+    if (draftPack && (draftPack.documentEvidence || []).length > 0) {
+      const { serializeEvidencePack } = await import('./server/ai/ragRetrieval.mjs');
+      const { DRAFT_RAG_ADDENDUM } = await import('./server/ai/caseDraftRag.mjs');
+      packEvidenceBlock = [DRAFT_RAG_ADDENDUM, serializeEvidencePack(draftPack)].filter(Boolean).join('\n\n');
+    }
+    const fullContext = [draftContext, packEvidenceBlock, evidenceContext ? `EVIDENCIA PRIMARIA DEL CASO (fragmentos relevantes):\n${evidenceContext}` : '']
       .filter(Boolean)
       .join('\n\n')
       .slice(0, DRAFT_LIMITS.MAX_CONTEXT_CHARS);
@@ -11500,6 +11551,30 @@ app.post('/api/ai/cases/:caseId/drafts', async (req, res) => {
       });
     }
     const checked = validateDraftSources(validated.data.sources, { docMap, researchMap });
+    // FASE 4.61E — filtro de pertenencia al Pack + provenance estable.
+    // Fuentes fuera del Pack y del fallback permitido se descartan.
+    let packDropped = 0;
+    if (draftPack) {
+      const { filterDraftSourcesByPack, attachPackProvenance, draftRagObservability } = await import('./server/ai/caseDraftRag.mjs');
+      const packDocIds = (draftPack.documentEvidence || []).map((e) => e.documentId);
+      const fallbackDocIds = draftRagMode === 'rag-full' ? [] : [...legacyDocs.map((d) => d.id)];
+      const packResearchIds = (draftPack.researchEvidence || []).map((r) => String(r.researchId));
+      const legacyResearchIds = [...researchMap.keys()];
+      const filtered = filterDraftSourcesByPack(checked.sources, {
+        packDocIds, fallbackDocIds, packResearchIds, legacyResearchIds,
+      });
+      packDropped = filtered.droppedPack;
+      checked.sources = attachPackProvenance(filtered.sources, draftPack);
+      try {
+        console.log('[rag-draft]', JSON.stringify(draftRagObservability({
+          mode: draftRagMode,
+          pack: draftPack,
+          droppedPack: packDropped,
+          validatedDoc: checked.sources.filter((s) => !s.research_id).length,
+          validatedResearch: checked.sources.filter((s) => s.research_id).length,
+        })));
+      } catch { /* observabilidad best-effort */ }
+    }
     const warnings = [...(validated.data.warnings || []), ...checked.warnings];
     const content = String(validated.data.content || '').slice(0, 60000);
     if (!content.trim()) {
@@ -11535,6 +11610,8 @@ app.post('/api/ai/cases/:caseId/drafts', async (req, res) => {
         snapshot_version: snapRow.version,
         sources_kept: checked.sources.length,
         sources_dropped: checked.dropped,
+        retrieval_mode: draftRagMode,
+        coverage_ratio: draftPack?.retrievalMetadata?.coverageRatio ?? null,
       });
     } catch (e) {
       console.error('[LegalUpAI] draft analytics failed (continuing)', e?.message || e);
