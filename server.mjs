@@ -9482,6 +9482,20 @@ app.post('/api/ai/documents/:id/process', async (req, res) => {
       analysis_error: null,
     }).eq('id', doc.id);
 
+    // FASE 4.61B — indexación RAG fire-and-forget tras extracción exitosa.
+    // Nunca bloquea ni rompe el procesamiento: fallos solo se registran y
+    // un reintento posterior reconstruye (idempotente). Sin cambios si el
+    // documento no tiene caso real vinculado (defer huérfanos).
+    void (async () => {
+      try {
+        const { ingestDocumentChunks } = await import('./server/ai/ragIngest.mjs');
+        const caseId = await resolveDocLinkedCaseId(userId, doc.workspace_id);
+        await ingestDocumentChunks({ supabase, doc: { ...doc, extracted_text: text }, lawyerId: userId, workspaceId: doc.workspace_id, caseId });
+      } catch (e) {
+        console.error('[LegalUpAI] rag index failed (retryable)', e?.message || e);
+      }
+    })();
+
     await notificationsService.notifyUser({
       userId,
       type: 'ai.document.ready',
@@ -9557,6 +9571,16 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
         page_count: extracted.pageCount,
         analysis_error: null,
       }).eq('id', doc.id);
+      // FASE 4.61B — misma indexación idempotente que la ruta process.
+      void (async () => {
+        try {
+          const { ingestDocumentChunks } = await import('./server/ai/ragIngest.mjs');
+          const caseId = await resolveDocLinkedCaseId(userId, doc.workspace_id);
+          await ingestDocumentChunks({ supabase, doc: { ...doc, extracted_text: text }, lawyerId: userId, workspaceId: doc.workspace_id, caseId });
+        } catch (e) {
+          console.error('[LegalUpAI] rag index failed (retryable)', e?.message || e);
+        }
+      })();
     }
 
     // Fase 4.26.2 hardening: documento sin texto suficiente no debe llegar al LLM (evita costo y falla predecible)
