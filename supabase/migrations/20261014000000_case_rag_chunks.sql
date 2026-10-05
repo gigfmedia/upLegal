@@ -49,17 +49,9 @@ CREATE POLICY "ai_document_chunks_owner_select"
 
 -- Observabilidad: permitir capability document_embedding en ai_operations
 -- (cuota 0: costo interno, sin consumo de quotas de usuario).
-DO $$
-DECLARE cname text;
-BEGIN
-  SELECT c.conname INTO cname
-  FROM pg_constraint c JOIN pg_class t ON t.oid = c.conrelid
-  WHERE t.relname = 'ai_operations' AND pg_get_constraintdef(c.oid) LIKE '%document_analysis%'
-  LIMIT 1;
-  IF cname IS NOT NULL THEN
-    EXECUTE format('ALTER TABLE public.ai_operations DROP CONSTRAINT %I', cname);
-    ALTER TABLE public.ai_operations ADD CHECK (
-      capability IN ('case_chat','document_chat','document_analysis','research','document_embedding')
-    );
-  END IF;
-END $$;
+-- Patrón 4.59D: DROP + lista explícita completa (incluye case_drafting
+-- que ya existe en prod; un reemplazo parcial violaría filas existentes).
+ALTER TABLE public.ai_operations DROP CONSTRAINT IF EXISTS ai_operations_capability_check;
+ALTER TABLE public.ai_operations
+  ADD CONSTRAINT ai_operations_capability_check
+  CHECK (capability IN ('case_chat', 'document_chat', 'document_analysis', 'research', 'case_drafting', 'document_embedding'));
