@@ -77,24 +77,33 @@ export function GoogleCalendarConnect() {
 
   const handleDisconnect = async () => {
     try {
-      const { error } = await supabase
-        .from('google_integrations')
-        .delete()
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
-
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({ title: 'Error', description: 'No has iniciado sesión', variant: 'destructive' });
+        return;
+      }
+      // 4.60C: autoridad server-side (revoca en Google + borra fila).
+      // El browser nunca toca tokens.
+      const { data, error } = await supabase.functions.invoke('google-auth/disconnect', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
       if (error) throw error;
-      
+      if (data && (data as { code?: string }).code && !(data as { success?: boolean }).success) {
+        throw new Error((data as { error?: string }).error || 'No se pudo desconectar');
+      }
+
       setIsConnected(false);
       toast({
-        title: "Desconectado",
-        description: "Se ha desconectado tu cuenta de Google Calendar",
+        title: 'Desconectado',
+        description: 'Se ha desconectado tu cuenta de Google Calendar',
       });
     } catch (error) {
       console.error('Error disconnecting:', error);
       toast({
-        title: "Error",
-        description: "No se pudo desconectar la cuenta",
-        variant: "destructive"
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'No se pudo desconectar la cuenta',
+        variant: 'destructive',
       });
     }
   };
@@ -119,7 +128,7 @@ export function GoogleCalendarConnect() {
           Google Calendar
         </CardTitle>
         <CardDescription>
-          Conecta tu calendario para generar enlaces de Google Meet automáticamente.
+          Conecta tu calendario para considerar tus horarios ocupados y generar enlaces de Google Meet en tus citas.
         </CardDescription>
       </CardHeader>
       <CardContent>
