@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import type { AICaseWorkflowItem } from '@/hooks/useAICaseWorkflow';
 import type { AICaseIntelligence } from '@/hooks/useAIDocuments';
 import { EvidenceNavigator, type EvidenceReference } from './EvidenceNavigator';
+import { normalizeIntelligenceRisks, stripRiskFallback } from '@/lib/intelligenceRisks';
 import { useState } from 'react';
 
 type Props = {
@@ -110,8 +111,8 @@ export function AICaseWorkflowActionDrawer({
                     <p className="text-sm text-muted-foreground">No se detectaron riesgos con la información actual.</p>
                   ) : (
                     <ul className="space-y-2 text-sm">
-                      {intelligence.risks.map((r, i) => (
-                        <li key={i} className="flex gap-2 text-sm text-gray-700"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-60" /><span>{r}</span></li>
+                      {normalizeIntelligenceRisks(intelligence.risks).map((r, i) => (
+                        <li key={i} className="flex gap-2 text-sm text-gray-700"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-60" /><span>{stripRiskFallback(r.text)}</span></li>
                       ))}
                     </ul>
                   )}

@@ -13,6 +13,7 @@ import { fragmentLabelFromId } from '@/lib/evidenceLocation';
 import { AICaseWorkflowActionDrawer } from './AICaseWorkflowActionDrawer';
 import { DeadlinePromoteDialog, IntelligenceDeadlineRow, type IntelligenceDeadline } from './DeadlinePromoteDialog';
 import { deriveCaseActions } from '@/lib/caseActions';
+import { groupRisksByDocument, normalizeIntelligenceRisks, stripRiskFallback, UNKNOWN_SOURCE_LABEL } from '@/lib/intelligenceRisks';
 
 function getCaseStatus(data: { contradictions: unknown[]; risks: unknown[]; missingInformation: unknown[]; document_count: number }) {
   if (data.contradictions.length > 0) return { label: 'Hay contradicciones detectadas', color: 'bg-red-100 text-red-800', description: 'Revisa las contradicciones entre documentos.' };
@@ -290,17 +291,33 @@ export function AICaseIntelligence({ workspaceId, caseId, onQuestionClick, onNav
             </CardContent>
           </Card>
         )}
-        {data.risks.length > 0 && (
+        {data.risks.length > 0 ? (
+          <Card className="border-amber-200 bg-amber-50/60">
+            <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><ShieldAlert className="h-4 w-4 text-amber-600" /> Riesgos</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              {groupRisksByDocument(normalizeIntelligenceRisks(data.risks)).map((g) => (
+                <div key={g.key}>
+                  <p className="mb-1.5 truncate text-xs font-semibold text-gray-700">
+                    {g.filename || UNKNOWN_SOURCE_LABEL}
+                    <span className="ml-1.5 font-normal text-gray-500">· {g.items.length}</span>
+                  </p>
+                  <ul className="space-y-2">
+                    {g.items.map((r, i) => (
+                      <li key={`${g.key}-${i}`} className="flex text-sm text-gray-700">
+                        <span className="mr-2 mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-60" aria-hidden="true" />
+                        <span className="min-w-0 break-words">{stripRiskFallback(r.text)}.</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ) : (
           <Card className="border-amber-200 bg-amber-50/60">
             <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><ShieldAlert className="h-4 w-4 text-amber-600" /> Riesgos</CardTitle></CardHeader>
             <CardContent>
-              <ul className="text-sm space-y-2">
-                {data.risks.map((r,i) =>
-                  <li key={i} className="flex flex-wrap items-center gap-2 text-sm text-gray-700">
-                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-60" />{r}.
-                  </li>
-                )}
-              </ul>
+              <p className="text-sm text-muted-foreground">No se identificaron riesgos claros en los documentos analizados.</p>
             </CardContent>
           </Card>
         )}

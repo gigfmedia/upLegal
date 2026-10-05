@@ -29,7 +29,9 @@ export function deriveCaseBrief(intelligence, workflowItems, documents) {
     if (highlights.length >= 3) break;
     highlights.push({ id: `missing-${m.slice(0,20)}`, category: 'missing', title: m, priority: 'high', evidence: null, actionId: 'review_missing_information' });
   }
-  for (const r of (intelligence.risks || []).slice(0, 3)) {
+  for (const raw of (intelligence.risks || []).slice(0, 3)) {
+    const r = typeof raw === 'string' ? raw : String(raw?.text || '');
+    if (!r) continue;
     if (highlights.length >= 3) break;
     highlights.push({ id: `risk-${r.slice(0,20)}`, category: 'risk', title: r, priority: 'medium', evidence: null, actionId: 'review_risks' });
   }

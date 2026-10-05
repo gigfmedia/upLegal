@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAICaseIntelligence } from '@/hooks/useAIDocuments';
+import { normalizeIntelligenceRisks, stripRiskFallback } from '@/lib/intelligenceRisks';
 
 type Props = {
   workspaceId: string | null | undefined;
@@ -66,7 +67,8 @@ export function AICaseFreeSnapshot({ workspaceId, onUpgrade }: Props) {
   }
 
   const highlights: Array<{ icon: 'risk' | 'contradiction' | 'missing' | 'fact'; text: string }> = [];
-  if (data.risks.length > 0) highlights.push({ icon: 'risk', text: data.risks[0] });
+  const firstRisk = normalizeIntelligenceRisks(data.risks)[0];
+  if (firstRisk) highlights.push({ icon: 'risk', text: stripRiskFallback(firstRisk.text) });
   if (data.contradictions.length > 0 && highlights.length < 2) {
     const c = data.contradictions[0] as { topic?: unknown };
     if (typeof c?.topic === 'string' && c.topic.trim()) {

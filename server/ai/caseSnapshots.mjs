@@ -10,6 +10,62 @@ import { getProCaseHeader } from './proCaseContext.mjs';
 import { selectRelevantResearch, formatResearchLegalContext } from './researchMemory.mjs';
 import { honestEvidenceLocation } from './coreAuthority.mjs';
 
+const normalizeRiskKey = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+
+/**
+ * FASE 4.61H — agrega riesgos con provenance (puro, testeable).
+ * Dedup por documento + texto normalizado: el mismo texto en dos docs
+ * conserva ambas fuentes; duplicados del mismo doc colapsan.
+ * Sin migración: viaja en el payload JSON.
+ */
+export function aggregateRisks(analyses, docById, maxRisks = 50) {
+  const seen = new Set();
+  const risks = [];
+  for (const a of analyses || []) {
+    const doc = docById instanceof Map ? docById.get(a?.document_id) : null;
+    const list = Array.isArray(a?.risks) ? a.risks : [a?.risks].filter(Boolean);
+    for (const raw of list) {
+      const text = typeof raw === 'string' ? raw.trim() : String(raw?.text || '').trim();
+      if (!text) continue;
+      const key = `${a?.document_id}::${normalizeRiskKey(text)}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      risks.push({
+        text,
+        document_id: a?.document_id || null,
+        filename: doc?.original_filename || null,
+      });
+      if (risks.length >= maxRisks) return risks;
+    }
+  }
+  return risks;
+}
+
+/**
+ * FASE 4.61H — normaliza risks legacy (string[]) y nuevos (objetos) a
+ * forma canónica {text, document_id, filename}. Consumidores downstream
+ * (brief, chat, UI) deben usar riskText() en vez de asumir string.
+ */
+export function normalizeIntelligenceRisks(risks) {
+  return (Array.isArray(risks) ? risks : []).map((r) => {
+    if (typeof r === 'string') return { text: r, document_id: null, filename: null };
+    if (r && typeof r === 'object') {
+      return {
+        text: String(r.text || ''),
+        document_id: r.document_id ?? r.documentId ?? null,
+        filename: r.filename ?? null,
+      };
+    }
+    return { text: '', document_id: null, filename: null };
+  }).filter((r) => r.text.trim().length > 0);
+}
+
+export function riskText(r) {
+  if (typeof r === 'string') return r;
+  if (r && typeof r.text === 'string') return r.text;
+  return '';
+}
+
 function stableStringify(value) {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
@@ -274,11 +330,13 @@ for (const c of allClaims) {
 }
 const facts = Array.from(deduped.values());
 
-// Partes, obligaciones, fechas, riesgos consolidados (desde analyses, ya verificados)
+// Partes, obligaciones, fechas consolidados (desde analyses, ya verificados)
 const parties = Array.from(new Set((analyses || []).flatMap((a) => Array.isArray(a.parties) ? a.parties : []))).slice(0, 50);
 const obligations = Array.from(new Set((analyses || []).flatMap((a) => Array.isArray(a.obligations) ? a.obligations : []))).slice(0, 50);
 const deadlines = (analyses || []).flatMap((a) => Array.isArray(a.deadlines) ? a.deadlines : []).slice(0, 50);
-const risks = Array.from(new Set((analyses || []).flatMap((a) => Array.isArray(a.risks) ? a.risks : []))).slice(0, 50);
+
+// FASE 4.61H — riesgos con provenance (agregador puro en aggregateRisks).
+const risks = aggregateRisks(analyses, docById, 50);
 
 // Contradicciones: detecta hechos con mismo tema pero valores distintos (ej. fechas/montos)
 // Minimal: busca claims con mismo prefijo (primeras 3 palabras) pero texto distinto
