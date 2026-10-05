@@ -1,19 +1,42 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
 import { Loader2 } from 'lucide-react';
 import { getLawyerPostAuthDestination, isEmailVerified } from '@/lib/lawyerOnboardingGate';
+import { consumePostAuthRedirect, sanitizePostAuthRedirect, trackGoogleCompleted } from '@/lib/googleAuth';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
 
   useEffect(() => {
     const handleCallback = async () => {
       try {
+        // 4.60A: cancel/error del provider (ej: usuario cancela en Google).
+        const oauthError = params.get('error');
+        const oauthErrorDescription = params.get('error_description');
+        if (oauthError) {
+          console.warn('OAuth callback error:', oauthError);
+          navigate(`/?login=true&oauth_error=${encodeURIComponent(oauthErrorDescription || 'No se pudo completar el acceso con Google.')}`, { replace: true });
+          return;
+        }
+
+        // 4.60A: flujo PKCE (OAuth) trae ?code=; hay que canjearlo por sesión.
+        // Los links de email usan tokens en hash y no necesitan este paso.
+        const code = params.get('code');
+        if (code) {
+          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          if (exchangeError) {
+            console.error('Error exchanging OAuth code:', exchangeError);
+            navigate('/?login=true&oauth_error=' + encodeURIComponent('No se pudo completar el acceso con Google.'), { replace: true });
+            return;
+          }
+          trackGoogleCompleted();
+        }
+
         const { data: { session }, error } = await supabase.auth.getSession();
 
-        const params = new URLSearchParams(window.location.search);
-        const redirectTo = params.get('redirectTo');
+        const redirectTo = params.get('redirectTo') || consumePostAuthRedirect();
 
         if (error) {
           console.error('Error getting session:', error);
@@ -26,22 +49,24 @@ export default function AuthCallback() {
           const { data: { user: freshUser } } = await supabase.auth.getUser();
           const user = freshUser || session.user;
 
-          // Lawyer onboarding gate: only after email verification (respeta >=70% como satisfecho)
+        // Lawyer onboarding gate: only after email verification (respeta >=70% como satisfecho)
           const { data: profile } = await supabase
             .from('profiles')
             .select('*')
             .eq('user_id', user.id)
             .maybeSingle();
 
+          // 4.60A: solo destinos internos (anti open-redirect).
+          const safeRedirect = sanitizePostAuthRedirect(redirectTo);
           // If there's an explicit redirectTo, respect it only if email verified for lawyers
-          if (redirectTo) {
+          if (safeRedirect) {
             const isLawyer = profile?.role === 'lawyer' || (user.user_metadata as any)?.role === 'lawyer';
             if (isLawyer && !isEmailVerified(user as any)) {
               // Don't honor redirect to dashboard/onboarding before verification
               navigate('/?verifyEmail=true', { replace: true });
               return;
             }
-            navigate(decodeURIComponent(redirectTo), { replace: true });
+            navigate(safeRedirect, { replace: true });
             return;
           }
 
@@ -81,7 +106,7 @@ export default function AuthCallback() {
     };
 
     handleCallback();
-  }, [navigate]);
+  }, [navigate, params]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">

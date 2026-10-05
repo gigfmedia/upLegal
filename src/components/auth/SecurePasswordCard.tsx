@@ -248,6 +248,68 @@ export function SecurePasswordCard() {
     );
   }
 
+  // 4.60A: cuenta solo-OAuth (identidad google, sin identidad email).
+  // Nunca pedir "contraseña actual" que no existe: se ofrece crear una
+  // opcionalmente con el mismo flujo soportado (updateUser). Sin marker
+  // explícito (legacy_unknown) no se fuerza nada.
+  const identities = (user as unknown as { identities?: { provider?: string }[] } | null)?.identities;
+  const isOAuthOnly =
+    Array.isArray(identities) &&
+    identities.length > 0 &&
+    identities.every((i) => (i?.provider || '').toLowerCase() !== 'email');
+
+  if (state === 'legacy_unknown' && isOAuthOnly) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Shield className="h-5 w-5" />
+            <span>Seguridad</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="mb-4 rounded-md bg-gray-50 px-3 py-2 text-sm text-muted-foreground">
+            Método de acceso: <span className="font-medium text-gray-900">Google</span>
+          </p>
+          <form onSubmit={handleCreate} className="space-y-4">
+            <p className="text-sm font-medium">Crear contraseña (opcional)</p>
+            <p className="text-sm text-muted-foreground">
+              Si quieres, crea una contraseña para iniciar sesión también con tu correo y contraseña.
+            </p>
+            <PasswordField
+              id="new-password"
+              label="Nueva contraseña"
+              placeholder="Ingresa nueva contraseña"
+              value={newPassword}
+              onChange={setNewPassword}
+              disabled={submitting}
+              autoComplete="new-password"
+            />
+            <PasswordField
+              id="confirm-password"
+              label="Confirmar contraseña"
+              placeholder="Confirma nueva contraseña"
+              value={confirmPassword}
+              onChange={setConfirmPassword}
+              disabled={submitting}
+              autoComplete="new-password"
+            />
+            <Button type="submit" disabled={submitting} variant="outline" className="w-full">
+              {submitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creando...
+                </>
+              ) : (
+                'Crear contraseña'
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (state === 'setup_required') {
     return (
       <Card>

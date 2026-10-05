@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { toast } from "sonner";
 import { supabase } from "@/lib/supabaseClient";
 import { track } from "@/lib/track";
 import { Button } from "@/components/ui/button";
@@ -70,6 +71,11 @@ const Index = () => {
     if (urlParams.get('login') === 'true') {
       const redirectTo = urlParams.get('redirectTo');
       if (redirectTo) setPendingRedirect(redirectTo);
+      // 4.60A: error legible si el usuario canceló Google u OAuth falló.
+      const oauthError = urlParams.get('oauth_error');
+      if (oauthError) {
+        toast.error('Acceso con Google no completado', { description: decodeURIComponent(oauthError) });
+      }
       setShowAuthModal(true);
       setAuthMode('login');
       // Clean up URL without reloading the page (keep query params for redirect)

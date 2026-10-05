@@ -17,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
 import { Scale, Loader2, Eye, EyeOff, Key, Check, CheckCircle2, Info, XCircle, MailCheck } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { verifyRutWithPJUD } from "@/services/pjudService";
 import { format } from 'date-fns';
 
@@ -992,6 +993,17 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
               )}
             </DialogTitle>
           </DialogHeader>
+
+          <GoogleSignInButton
+            role={formData.role === 'lawyer' ? 'lawyer' : undefined}
+            dark={aiLanding}
+          />
+
+          <div className="flex items-center gap-3" aria-hidden="true">
+            <span className="h-px flex-1 bg-gray-200" />
+            <span className={`text-xs ${L.text}`}>o</span>
+            <span className="h-px flex-1 bg-gray-200" />
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
