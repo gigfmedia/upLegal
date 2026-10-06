@@ -1164,6 +1164,8 @@ export default function LegalUpPro() {
             <button onClick={() => scrollToId("producto")} className="hover:text-gray-900">Producto</button>
             <button onClick={() => scrollToId("pricing")} className="hover:text-gray-900">Precio</button>
             <button onClick={() => navigate("/contacto")} className="hover:text-gray-900">Contacto</button>
+            <button onClick={() => navigate("/privacidad")} className="hover:text-gray-900">Privacidad</button>
+            <button onClick={() => navigate("/terminos")} className="hover:text-gray-900">Términos</button>
           </div>
         </div>
       </footer>

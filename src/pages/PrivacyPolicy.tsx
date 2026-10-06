@@ -125,6 +125,9 @@ const PrivacyPolicy = () => {
 
             <h3 className="font-medium mt-4">4.5. Integración con Google Calendar (abogados)</h3>
             <p>La conexión con Google Calendar es opcional y solo está disponible para abogados que la activen explícitamente. Al conectarla, LegalUp solicita acceso limitado para: (i) consultar únicamente si existen horarios ocupados al ofrecer disponibilidad, sin leer el título ni el contenido de tus eventos; y (ii) crear en tu calendario los eventos de las citas agendadas en la plataforma, incluyendo el enlace de Google Meet. Para mantener la integración guardamos de forma segura los tokens de acceso otorgados por Google. Puedes desconectar la integración en cualquier momento desde la sección Integraciones, lo que revoca el acceso y elimina los tokens almacenados. Los datos de tu calendario no se utilizan con fines publicitarios ni para entrenar modelos de inteligencia artificial ajenos a tu caso.</p>
+
+            <h3 className="font-medium mt-4">4.6. Inicio de sesión con Google</h3>
+            <p>Si eliges crear tu cuenta o iniciar sesión con Google, recibimos de Google únicamente los datos básicos necesarios para autenticarte: tu nombre, dirección de correo electrónico e imagen de perfil. Estos datos se utilizan exclusivamente para crear y administrar tu cuenta de LegalUp y no se comparten con terceros con fines publicitarios. Iniciar sesión con Google NO otorga a LegalUp acceso a tu calendario, correo, Drive ni contactos; el acceso a Google Calendar es una integración separada y opcional descrita en la sección 4.5, que requiere tu autorización explícita adicional. Puedes eliminar tu cuenta y los datos asociados en cualquier momento según lo descrito en la sección 6.</p>
             
             <p className="font-medium">LegalUp SpA no vende información personal a terceros.</p>
 
