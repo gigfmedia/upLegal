@@ -5,7 +5,8 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 const cbState = vi.hoisted(() => ({
   exchanged: [] as unknown[],
   session: null as null | { user: { id: string; email_confirmed_at: string; user_metadata: Record<string, unknown> } },
-  profile: null as null | { role: string },
+  // 5.6: usuario existente CON aceptación → flujo 4.60A intacto.
+  profile: { role: 'lawyer', terms_accepted_at: '2026-10-06T00:00:00.000Z', privacy_acknowledged_at: '2026-10-06T00:00:00.000Z' } as null | { role: string },
 }));
 
 vi.mock('@/lib/supabaseClient', () => ({
@@ -54,7 +55,7 @@ beforeEach(() => {
   cbState.session = {
     user: { id: 'U1', email_confirmed_at: new Date().toISOString(), user_metadata: { role: 'lawyer' } },
   };
-  cbState.profile = { role: 'lawyer' };
+  cbState.profile = { role: 'lawyer', terms_accepted_at: '2026-10-06T00:00:00.000Z', privacy_acknowledged_at: '2026-10-06T00:00:00.000Z' };
   window.localStorage.clear();
 });
 
@@ -84,5 +85,11 @@ describe('FASE 4.60A — callback OAuth', () => {
     };
     renderCallback('/auth/callback?redirectTo=' + encodeURIComponent('/lawyer/cases'));
     await waitFor(() => expect(navState.path).toBe('/?verifyEmail=true'));
+  });
+  it('5.6: cuenta sin aceptación va al interstitial de consentimiento', async () => {
+    cbState.profile = { role: 'lawyer' };
+    renderCallback('/auth/callback?redirectTo=' + encodeURIComponent('/lawyer/cases'));
+    await waitFor(() => expect(navState.path).toContain('/auth/consent'));
+    expect(navState.path).toContain(encodeURIComponent('/lawyer/cases'));
   });
 });

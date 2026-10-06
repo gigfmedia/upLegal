@@ -107,6 +107,7 @@ const DashboardFavorites = lazy(() => import('./pages/DashboardFavorites'));
 const DashboardServices = lazy(() => import('./pages/DashboardServices'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const AuthCallback = lazy(() => import('./pages/auth/AuthCallback'));
+const ConsentPage = lazy(() => import('./pages/auth/ConsentPage'));
 const AcceptInvite = lazy(() => import('./pages/auth/AcceptInvite'));
 const BookingPage = lazy(() => import('./pages/BookingPage'));
 const PostHogBoundary = lazy(() => import('@/components/PostHogBoundary'));
@@ -670,6 +671,7 @@ const AppContent = () => {
               <Route path="/verify-email" element={<EmailVerification />} />
               <Route path="/auth/verify" element={<EmailVerification />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/auth/consent" element={<ConsentPage />} />
               <Route path="/auth/accept-invite" element={<AcceptInvite />} />
               <Route path="/auth/confirm-email" element={<EmailVerification />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />

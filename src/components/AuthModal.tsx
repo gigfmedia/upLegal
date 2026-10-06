@@ -14,10 +14,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
-import { Scale, Loader2, Eye, EyeOff, Key, Check, CheckCircle2, Info, XCircle, MailCheck } from "lucide-react";
+import { Scale, Loader2, Eye, EyeOff, Key, Check, CheckCircle2, Info, XCircle, MailCheck, Mail } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { TermsConsentCheckbox } from "@/components/auth/TermsConsentCheckbox";
+import { CONSENT_ERROR, buildConsentPatch } from "@/lib/legalConsent";
 import { verifyRutWithPJUD } from "@/services/pjudService";
 import { format } from 'date-fns';
 
@@ -78,6 +80,14 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [signupVerificationEmail, setSignupVerificationEmail] = useState<string | null>(null);
   const [isCheckingVerification, setIsCheckingVerification] = useState(false);
+  // FASE 5.6: aceptación de términos (solo signup, desmarcado por defecto).
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [consentError, setConsentError] = useState<string | null>(null);
+  // FASE 5.6B: formulario email colapsado en signup (reset al cambiar modo o reabrir).
+  const [showEmailSignup, setShowEmailSignup] = useState(false);
+  useEffect(() => {
+    setShowEmailSignup(false);
+  }, [mode, isOpen]);
   
   // Password requirements state
   const [passwordRequirements, setPasswordRequirements] = useState({
@@ -369,6 +379,20 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
     return { isValid: true, message: '' };
   };
 
+  // FASE 5.6B: Crear cuenta se habilita solo con formulario completo + consentimiento.
+  const isSignupComplete =
+    formData.firstName.trim().length > 0 &&
+    formData.lastName.trim().length > 0 &&
+    validateEmail(formData.email).isValid &&
+    isPasswordValid &&
+    formData.password === formData.confirmPassword &&
+    (formData.role !== 'lawyer' || aiLanding || formData.rut.trim().length > 0) &&
+    termsAccepted;
+
+  // Login se habilita con email válido + contraseña no vacía.
+  const isLoginComplete =
+    validateEmail(formData.email).isValid && formData.password.length > 0;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -411,6 +435,11 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
   };
   
   const handleSignup = async () => {
+    // FASE 5.6: aceptación obligatoria antes de cualquier validación.
+    if (!termsAccepted) {
+      setConsentError(CONSENT_ERROR);
+      throw new Error(CONSENT_ERROR);
+    }
     // Check if email already exists in auth.users
     const { data: existingUser } = await supabase
       .from('profiles')
@@ -551,6 +580,16 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
     } catch (profileError) {
       console.error('Error ensuring profile after signup:', profileError);
       // No lanzamos el error para no interrumpir el flujo de registro
+    }
+
+    // FASE 5.6: evidencia de aceptación en el propio perfil (RLS owner).
+    // El gate de AuthCallback lo respalda para cualquier vía de registro.
+    try {
+      if (payload.userId) {
+        await supabase.from('profiles').update(buildConsentPatch()).eq('id', payload.userId);
+      }
+    } catch {
+      /* best-effort; el callback lo asegura */
     }
 
     // Reset form on successful signup
@@ -867,7 +906,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
           style={aiLanding ? ({ "--surface": "oklch(0.14 0.012 264)" } as React.CSSProperties) : undefined}
         >
           <DialogHeader className="text-center">
-            <div className="flex items-center justify-center gap-2 mb-8">
+            <div className="flex items-center justify-center gap-2 mb-4">
               <Scale className={`h-8 w-8 ${L.logo}`} />
               <span className={`text-xl font-bold ${L.logoText}`}>LegalUp</span>
               {aiLanding && (
@@ -931,7 +970,8 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
               <Button 
                 type="submit" 
                 className={`w-full ${L.submit}`}
-                disabled={submitting}
+                disabled={submitting || !validateEmail(formData.email).isValid}
+                title={!validateEmail(formData.email).isValid ? 'Ingresa un correo válido para enviar el enlace' : undefined}
               >
                 {submitting ? (
                   <>
@@ -946,7 +986,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
                   onClick={() => setForgotPassword(false)}
                   className={`${L.link} font-medium`}
                 >
-                  ← Volver al inicio de sesión
+                ← Volver al inicio de sesión
                 </button>
               </div>
             </form>
@@ -973,7 +1013,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
             {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
           </DialogDescription>
           <DialogHeader className="text-center">
-            <div className="flex items-center justify-center gap-2 mb-8">
+            <div className="flex items-center justify-center gap-2 mb-4">
               <Scale className={`h-8 w-8 ${L.logo}`} />
               <span className={`text-xl font-bold ${L.logoText}`}>LegalUp</span>
               {aiLanding && (
@@ -983,29 +1023,55 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
               )}
             </div>
             <DialogTitle className={`text-2xl ${L.title}`}>
-              {mode === 'login' ? 'Ingresa a tu cuenta' : (
-                <>
-                  Crea tu cuenta
-                  {!aiLanding && (
-                    <p className={`text-sm font-normal mt-1 ${L.sub}`}>Únete a la plataforma líder de servicios legales</p>
-                  )}
-                </>
-              )}
+              
             </DialogTitle>
           </DialogHeader>
 
-          <GoogleSignInButton
-            role={formData.role === 'lawyer' ? 'lawyer' : undefined}
-            dark={aiLanding}
-          />
+          {mode === 'signup' && !showEmailSignup && (
+            <Button
+              type="button"
+              onClick={() => setShowEmailSignup(true)}
+              className="h-11 w-full gap-2 bg-gray-900 text-sm font-medium text-white hover:bg-green-900"
+              aria-expanded={showEmailSignup}
+            >
+              <Mail className="h-5 w-5" aria-hidden="true" />
+              Continuar con email
+            </Button>
+          )}
 
-          <div className="flex items-center gap-3" aria-hidden="true">
-            <span className="h-px flex-1 bg-gray-200" />
-            <span className={`text-xs ${L.text}`}>o</span>
-            <span className="h-px flex-1 bg-gray-200" />
-          </div>
+          {(mode === 'login' || (mode === 'signup' && !showEmailSignup)) && (
+            <GoogleSignInButton
+              role={formData.role === 'lawyer' ? 'lawyer' : undefined}
+              dark={aiLanding}
+              requireConsent={mode === 'signup'}
+              consentGiven={termsAccepted}
+              onConsentMissing={() => setConsentError(CONSENT_ERROR)}
+            />
+          )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {mode === 'signup' && !showEmailSignup && (
+            <TermsConsentCheckbox
+              checked={termsAccepted}
+              onCheckedChange={(v) => {
+                setTermsAccepted(v);
+                if (v) setConsentError(null);
+              }}
+              dark={aiLanding}
+              error={consentError}
+            />
+          )}
+
+          {(mode === 'login' || showEmailSignup) && (
+            <>
+              {mode === 'login' && (
+                <div className="flex items-center gap-3" aria-hidden="true">
+                  <span className="h-px flex-1 bg-gray-200" />
+                  <span className={`text-xs ${L.text}`}>o</span>
+                  <span className="h-px flex-1 bg-gray-200" />
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
@@ -1039,7 +1105,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
           {mode === 'signup' && !aiLanding && !proLanding && (
             <>
               <div className="space-y-3">
-                <h3 className="text-lg font-medium text-gray-900">¿Cómo planeas usar LegalUp?</h3>
+                <h3 className="text-md font-medium text-gray-900">¿Cómo planeas usar LegalUp?</h3>
                 <div className="space-y-3">
                   <label className={`flex items-center p-4 rounded-lg border cursor-pointer transition-colors ${
                     formData.role === 'client' 
@@ -1410,7 +1476,14 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
             <Button 
               type="submit" 
               className={`w-full ${L.submit}`}
-              disabled={submitting}
+              disabled={submitting || (mode === 'signup' ? !isSignupComplete : !isLoginComplete)}
+              title={
+                mode === 'signup' && !isSignupComplete
+                  ? 'Completa todos los campos y acepta los términos para continuar'
+                  : mode === 'login' && !isLoginComplete
+                    ? 'Ingresa tu correo y contraseña para continuar'
+                    : undefined
+              }
             >
               {submitting ? (
                 <>
@@ -1473,6 +1546,34 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
             </div>
           )}
         </form>
+
+        {mode === 'signup' && showEmailSignup && (
+          <>
+            <TermsConsentCheckbox
+              checked={termsAccepted}
+              onCheckedChange={(v) => {
+                setTermsAccepted(v);
+                if (v) setConsentError(null);
+              }}
+              dark={aiLanding}
+              error={consentError}
+            />
+            <div className="flex items-center gap-3" aria-hidden="true">
+              <span className="h-px flex-1 bg-gray-200" />
+              <span className={`text-xs ${L.text}`}>o</span>
+              <span className="h-px flex-1 bg-gray-200" />
+            </div>
+            <GoogleSignInButton
+              role={formData.role === 'lawyer' ? 'lawyer' : undefined}
+              dark={aiLanding}
+              requireConsent
+              consentGiven={termsAccepted}
+              onConsentMissing={() => setConsentError(CONSENT_ERROR)}
+            />
+          </>
+        )}
+            </>
+          )}
 
         <div className={`text-center text-sm ${L.text}`}>
           {mode === 'login' ? (

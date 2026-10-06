@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { Loader2 } from 'lucide-react';
 import { getLawyerPostAuthDestination, isEmailVerified } from '@/lib/lawyerOnboardingGate';
 import { consumePostAuthRedirect, sanitizePostAuthRedirect, trackGoogleCompleted } from '@/lib/googleAuth';
+import { hasLegalConsent } from '@/lib/legalConsent';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -58,6 +59,32 @@ export default function AuthCallback() {
 
           // 4.60A: solo destinos internos (anti open-redirect).
           const safeRedirect = sanitizePostAuthRedirect(redirectTo);
+          // FASE 5.6: cuentas sin evidencia de aceptación van al interstitial
+          // de consentimiento (solo primera vez; existentes pasan de largo).
+          try {
+            const readConsent = async () =>
+              supabase
+                .from('profiles')
+                .select('terms_accepted_at, privacy_acknowledged_at')
+                .eq('id', user.id)
+                .maybeSingle();
+            let { data: consentRow } = await readConsent();
+            // La fila del perfil puede crearse en paralelo al callback
+            // (repair de sesión): un reintento breve antes de decidir.
+            if (!consentRow) {
+              await new Promise((r) => setTimeout(r, 1500));
+              ({ data: consentRow } = await readConsent());
+            }
+            // Solo si la fila existe y carece de timestamps: sin fila no se
+            // puede distinguir nuevo de legacy → no bloquear (perfil se crea
+            // después y el próximo login sí lo evalúa).
+            if (consentRow && !hasLegalConsent(consentRow)) {
+              navigate(`/auth/consent?redirectTo=${encodeURIComponent(safeRedirect || '/')}`, { replace: true });
+              return;
+            }
+          } catch {
+            /* ante error de lectura no bloquear acceso: continuar flujo normal */
+          }
           // If there's an explicit redirectTo, respect it only if email verified for lawyers
           if (safeRedirect) {
             const isLawyer = profile?.role === 'lawyer' || (user.user_metadata as any)?.role === 'lawyer';

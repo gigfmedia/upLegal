@@ -17,15 +17,26 @@ import { cn } from '@/lib/utils';
 export function GoogleSignInButton({
   role,
   dark = false,
+  requireConsent = false,
+  consentGiven = true,
+  onConsentMissing,
 }: {
   role?: GoogleSignInRole;
   dark?: boolean;
+  /** FASE 5.6: en signup se exige aceptación antes de iniciar OAuth. */
+  requireConsent?: boolean;
+  consentGiven?: boolean;
+  onConsentMissing?: () => void;
 }) {
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
 
   const handleClick = async () => {
     if (busy) return;
+    if (requireConsent && !consentGiven) {
+      onConsentMissing?.();
+      return;
+    }
     setBusy(true);
     try {
       const { error } = await beginGoogleSignIn({ role });
