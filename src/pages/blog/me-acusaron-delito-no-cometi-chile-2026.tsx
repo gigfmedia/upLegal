@@ -9,6 +9,7 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
+import { ArticleViews } from "@/components/blog/ArticleViews";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
@@ -93,7 +94,8 @@ const BlogArticle = () => {
                     <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900">
                         <div className="flex items-center gap-2"><Calendar className="h-4 w-4" /><span>10 de Agosto, 2026</span></div>
                         <div className="flex items-center gap-2"><User className="h-4 w-4" /><span>Equipo LegalUp</span></div>
-                        <div className="flex items-center gap-2"><Clock className="h-4 w-4" /><ReadTime slug="me-acusaron-delito-no-cometi-chile-2026" /></div>
+                        <div className="flex items-center gap-2"><Clock className="h-4 w-4" /><ReadTime slug="me-acusaron-delito-no-cometi-chile-2026" />
+                              <ArticleViews slug="me-acusaron-delito-no-cometi-chile-2026" /></div>
                     </div>
                 </div>
             </div>

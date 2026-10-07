@@ -24,6 +24,7 @@ import CategoryCTA from "@/components/blog/CategoryCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 import { ReadTime } from "@/components/blog/ReadTime";
+import { ArticleViews } from "@/components/blog/ArticleViews";
 
 const BlogArticle = () => {
   const faqs = [
@@ -83,7 +84,7 @@ const BlogArticle = () => {
 
           <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">Resumen rápido</p>
-            <div className="space-y-3 text-white/90">
+            <div className="space-y-3 text-green-900">
               {[
                 "Con 1 mes de deuda pueden iniciar acciones legales",
                 "No pagar puede terminar en demanda, desalojo y cobro judicial",
@@ -114,6 +115,7 @@ const BlogArticle = () => {
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
               <ReadTime slug="me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026" />
+                              <ArticleViews slug="me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026" />
             </div>
           </div>
         </div>

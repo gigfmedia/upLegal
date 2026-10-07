@@ -11,6 +11,7 @@ import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 import { ReadTime } from "@/components/blog/ReadTime";
+import { ArticleViews } from "@/components/blog/ArticleViews";
 
 const BlogArticle = () => {
   const faqs = [
@@ -108,6 +109,7 @@ const BlogArticle = () => {
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
               <ReadTime slug="como-desalojar-a-una-persona-de-mi-propiedad-chile-2026" />
+                              <ArticleViews slug="como-desalojar-a-una-persona-de-mi-propiedad-chile-2026" />
             </div>
           </div>
         </div>

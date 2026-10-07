@@ -20,6 +20,7 @@ import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import BlogContextualCTAV2 from "@/components/blog/BlogContextualCTAV2";
 import { ReadTime } from "@/components/blog/ReadTime";
+import { ArticleViews } from "@/components/blog/ArticleViews";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
@@ -127,6 +128,7 @@ const BlogArticle = () => {
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
                             <ReadTime slug="cese-de-convivencia-chile-2026" />
+                              <ArticleViews slug="cese-de-convivencia-chile-2026" />
                         </div>
                     </div>
                 </div>

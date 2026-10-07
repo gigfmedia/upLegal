@@ -13,6 +13,7 @@ import BlogContextualCTA from "@/components/blog/BlogContextualCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 import { ReadTime } from "@/components/blog/ReadTime";
+import { ArticleViews } from "@/components/blog/ArticleViews";
 
 const BlogArticle = () => {
   const [rentValue, setRentValue] = useState<string>("500000");
@@ -129,6 +130,7 @@ const BlogArticle = () => {
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
               <ReadTime slug="reajuste-arriendo-ipc-chile-2026" />
+                              <ArticleViews slug="reajuste-arriendo-ipc-chile-2026" />
             </div>
           </div>
         </div>

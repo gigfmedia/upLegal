@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, Table as TableIcon } from "lucide-react";
 import { ReadTime } from "@/components/blog/ReadTime";
+import { ArticleViews } from "@/components/blog/ArticleViews";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
@@ -107,6 +108,7 @@ const BlogArticle = () => {
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
               <ReadTime slug="cuanto-demora-juicio-desalojo-chile-2026" />
+                              <ArticleViews slug="cuanto-demora-juicio-desalojo-chile-2026" />
             </div>
           </div>
         </div>

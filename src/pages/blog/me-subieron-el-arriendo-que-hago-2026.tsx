@@ -7,6 +7,7 @@ import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadTime } from "@/components/blog/ReadTime";
+import { ArticleViews } from "@/components/blog/ArticleViews";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
@@ -106,6 +107,7 @@ const BlogArticle = () => {
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
               <ReadTime slug="me-subieron-el-arriendo-que-hago-2026" />
+                              <ArticleViews slug="me-subieron-el-arriendo-que-hago-2026" />
             </div>
           </div>
         </div>

@@ -10,6 +10,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
+import { ArticleViews } from "@/components/blog/ArticleViews";
 
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
@@ -165,6 +166,7 @@ const BlogArticle = () => {
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
               <ReadTime slug="deuda-pension-alimentos-chile-2026" />
+                              <ArticleViews slug="deuda-pension-alimentos-chile-2026" />
             </div>
           </div>
         </div>

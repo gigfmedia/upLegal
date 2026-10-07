@@ -7,6 +7,8 @@ import { Calendar, User, Clock, ChevronRight, Home, ArrowLeft, Search } from "lu
 import Header from "@/components/Header";
 
 import { articles, Article } from "@/data/blogArticles";
+import { formatViews, useBlogPostViews, MIN_VIEWS_TO_DISPLAY } from "@/components/blog/ArticleViews";
+import { Eye } from "lucide-react";
 
 const BlogPage = () => {
   const helmetData = (
@@ -60,6 +62,8 @@ const BlogPage = () => {
   const getArticleCount = (category: string) => {
     return articles.filter(a => a.category === category).length;
   };
+
+  const postViews = useBlogPostViews(articles.map(a => a.id));
 
   return (
     <div className="min-h-screen bg-white">
@@ -239,6 +243,12 @@ const BlogPage = () => {
                         <Clock className="h-4 w-4" />
                         <span>{featuredArticle.readTime}</span>
                       </div>
+                      {postViews.get(featuredArticle.id) != null && postViews.get(featuredArticle.id)! >= MIN_VIEWS_TO_DISPLAY && (
+                        <div className="flex items-center gap-1">
+                          <Eye className="h-4 w-4" />
+                          <span>{formatViews(postViews.get(featuredArticle.id)!) } vistas</span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-3">
@@ -320,9 +330,17 @@ const BlogPage = () => {
                   </p>
 
                   <div className="flex items-center justify-between text-sm text-gray-500 mt-auto pt-4">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      <span>{article.date}</span>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        <span>{article.date}</span>
+                      </div>
+                      {postViews.get(article.id) != null && postViews.get(article.id)! >= MIN_VIEWS_TO_DISPLAY && (
+                        <div className="flex items-center gap-1">
+                          <Eye className="h-3 w-3" />
+                          <span>{formatViews(postViews.get(article.id)!)} vistas</span>
+                        </div>
+                      )}
                     </div>
 
                     <Link
