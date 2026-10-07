@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { motion } from "framer-motion";
 import posthog from "posthog-js";
+import { Badge } from "@/components/ui/badge";
 
 /**
  * Testimonios LegalUp Pro — sección editorial asimétrica (/pro).
@@ -80,8 +81,13 @@ export function TestimonialsSection() {
                 loading="lazy"
                 className="h-14 w-14 shrink-0 rounded-full object-cover"
               />
-              <span>
-                <span className="block text-sm font-bold text-gray-900">María Fernanda Gómez</span>
+              <span className="min-w-0">
+                <span className="flex flex-wrap items-center gap-1.5 text-sm font-bold text-gray-900">
+                  María Fernanda Gómez
+                  <Badge className="shrink-0 border-green-200 bg-green-100 text-[0.65rem] font-semibold text-green-800">
+                    Founder
+                  </Badge>
+                </span>
                 <span className="block text-sm text-green-950/70">Abogada registrada en LegalUp</span>
               </span>
             </figcaption>
@@ -105,8 +111,13 @@ export function TestimonialsSection() {
                 loading="lazy"
                 className="h-12 w-12 shrink-0 rounded-full object-cover"
               />
-              <span>
-                <span className="block text-sm font-bold text-gray-900">Ángel Labra</span>
+              <span className="min-w-0">
+                <span className="flex flex-wrap items-center gap-1.5 text-sm font-bold text-gray-900">
+                  Ángel Labra
+                  <Badge className="shrink-0 border-green-200 bg-green-100 text-[0.65rem] font-semibold text-green-800">
+                    Founder
+                  </Badge>
+                </span>
                 <span className="block text-sm text-gray-500">Abogado registrado en LegalUp</span>
               </span>
             </figcaption>
