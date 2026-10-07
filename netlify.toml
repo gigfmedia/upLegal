@@ -53,6 +53,45 @@
     Pragma = "no-cache"
     Expires = "0"
 
+# FASE Seguridad headers (observación inicial, sin bloqueo).
+# Netlify es el origen que sirve el HTML. Cloudflare está delante como proxy
+# (server: cloudflare + cf-ray en producción); DYNAMIC sugiere passthrough
+# pero NO lo garantiza: hay que comprobar en producción que estos headers
+# llegan intactos y que ninguna Transform Rule los altera o duplica.
+# Notas:
+# - script-src lleva 'unsafe-inline' por los 2 stubs inline de index.html
+#   (consent + gtag). Los hashes sha256 SÍ son viables como alternativa
+#   (uno por bloque <script>, sobre los bytes exactos servidos). No se fijan
+#   aún porque cualquier cambio de whitespace en index.html los invalida;
+#   quitar 'unsafe-inline' cuando se congelen.
+# - us-assets.i.posthog.com es OBLIGATORIO en script-src mientras
+#   startSessionRecording() esté activo: posthog-js inyecta el recorder
+#   (rrweb) como <script> remoto desde endpointFor("assets") = us-assets
+#   (verificado en posthog-js 1.418.15, clase Xa/RequestRouter). Sin este
+#   host, el recording falla silencioso (solo Report-Only lo reporta).
+# - worker-src 'self' SIN blob:: ni el repo ni posthog-js crean Workers
+#   (rg "new Worker" vacío en src/ y en el bundle; rrweb corre en el hilo
+#   principal). NO añadir blob: sin evidencia real.
+# - us.posthog.com/app.posthog.com aparecen como fallback internos de la lib;
+#   si Report-Only los reporta, evaluar antes de añadirlos.
+# PENDIENTE tras deploy (verificación manual, sin enforce):
+# 1. curl -sI https://legalup.cl/ → confirmar que la CSP Report-Only llega
+#    intacta tras Cloudflare (sin Transform Rules que la alteren/dupliquen).
+# 2. Aceptar analítica en el banner → DevTools Consola: cero warnings CSP;
+#    Network: lazy-recorder.js carga desde us-assets.i.posthog.com.
+# 3. PostHog dashboard → aparece la grabación de sesión (replay funciona).
+# La CSP arranca en Report-Only y SIN report-uri: las violaciones se revisan
+# en la consola del navegador durante QA. No activar `Content-Security-Policy`
+# (enforce) hasta completar la fase de observación.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    Content-Security-Policy-Report-Only = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://apis.google.com https://accounts.google.com https://us.i.posthog.com https://us-assets.i.posthog.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.supabase.co https://http2.mlstatic.com https://cdn.shadcnstudio.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://uplegal-service.onrender.com https://api.mercadopago.com https://us.i.posthog.com https://us-assets.i.posthog.com https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com; frame-src https://*.supabase.co; frame-ancestors 'none'; form-action 'self'; object-src 'none'; base-uri 'self'; worker-src 'self'"
+
 [build.environment]
   # Vite 8 usa rolldown como bundler: requiere Node >= 20.12 (styleText de
   # node:util). Node 18 rompe el build ("node:util no provee styleText").
