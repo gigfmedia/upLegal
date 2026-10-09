@@ -14,6 +14,7 @@ import CategoryCTA from "@/components/blog/CategoryCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 import { ReadTime } from "@/components/blog/ReadTime";
 import { ArticleViews } from "@/components/blog/ArticleViews";
+import { IpcReviewCTA } from "@/components/blog/IpcReviewCTA";
 
 const BlogArticle = () => {
   const [rentValue, setRentValue] = useState<string>("500000");
@@ -358,6 +359,9 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+
+          {/* FASE 5.20B — revisión jurídica post-calculadora (no toca la calculadora). */}
+          <IpcReviewCTA />
 
           <div className="mb-12">
             <h3 className="text-xl font-bold mb-6 text-gray-900 border-t pt-8">Ejemplos reales de reajuste</h3>
