@@ -4018,6 +4018,241 @@ app.get('/api/admin/chat-analytics', requireAdmin, async (req, res) => {
   }
 });
 
+// GET /api/admin/pro-kpis?from&to — Panel Pro desde Supabase (FASE 1.7).
+// Solo agregados (conteos/tasas/montos), nunca PII ni filas por abogado.
+// Reglas idénticas a src/lib/proKpis.ts (testeadas con fixtures): semanas UTC
+// día lunes, activación ≤7d con grants como respaldo, retención en (d+1,d+7],
+// suscripción activa = active o cancelled vigente, pago = ledger approved.
+// Requiere service_role (RLS es owner-scoped: ningún cliente puede agregar).
+app.get('/api/admin/pro-kpis', requireAdmin, async (req, res) => {
+  try {
+    const to = req.query.to ? new Date(String(req.query.to)) : new Date();
+    const from = req.query.from
+      ? new Date(String(req.query.from))
+      : new Date(to.getTime() - 12 * 7 * 24 * 60 * 60 * 1000);
+    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime()) || from >= to) {
+      return res.status(400).json({ error: 'Parámetros from/to (ISO) inválidos.' });
+    }
+    const fromIso = from.toISOString();
+    const toIso = to.toISOString();
+    const nowMs = Date.now();
+    const DAY = 24 * 60 * 60 * 1000;
+
+    const mondayOf = (ms) => {
+      const d = new Date(ms);
+      const day = d.getUTCDay();
+      const diff = (day + 6) % 7;
+      return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - diff));
+    };
+    const weekLabel = (ms) => mondayOf(ms).toISOString().slice(0, 10);
+
+    // Cuentas de prueba: dueño + @test.invalid (nunca en métricas reales).
+    const { data: profileIds } = await supabase.from('profiles').select('id,email');
+    const excluded = new Set(
+      (profileIds || [])
+        .filter((p) => isOwnerEmail(p.email) || String(p.email || '').toLowerCase().includes('@test.invalid'))
+        .map((p) => p.id),
+    );
+
+    // NOTA de ventanas: solo los cohortes de registro (KPI 1/2) usan [from,to].
+    // Las tablas de primera vez e historial (casos, grants, tareas, docs,
+    // análisis, mensajes, uso) van SIN cotas: acotarlas rompería "primero"
+    // y "ever" para activaciones fuera de la ventana (tablas diminutas hoy;
+    // paginar si crecen). Suscripciones/pagos tampoco se acotan.
+    const [lawyersRes, casesRes, grantsRes, tasksRes, nextRes, docsRes, analysesRes, messagesRes, usageRes, subsRes, paysRes] =
+      await Promise.all([
+        supabase.from('profiles').select('id,created_at').eq('role', 'lawyer').gte('created_at', fromIso).lte('created_at', toIso),
+        supabase.from('lawyer_cases').select('lawyer_id,created_at'),
+        supabase.from('pro_free_case_grants').select('lawyer_id,consumed_at'),
+        supabase.from('lawyer_case_tasks').select('lawyer_id,created_at'),
+        supabase.from('lawyer_cases').select('lawyer_id,next_action'),
+        supabase.from('ai_documents').select('lawyer_id,created_at,status'),
+        supabase.from('ai_document_analyses').select('lawyer_id,created_at'),
+        supabase.from('ai_chat_messages').select('lawyer_id,created_at').eq('role', 'assistant'),
+        supabase.from('ai_usage').select('lawyer_id,created_at'),
+        supabase.from('lawyer_subscriptions').select('lawyer_id,status,current_period_end,amount_clp'),
+        supabase.from('pro_subscription_payments').select('lawyer_id,status'),
+      ]);
+    const qErr = [lawyersRes, casesRes, grantsRes, tasksRes, nextRes, docsRes, analysesRes, messagesRes, usageRes, subsRes, paysRes].find((r) => r.error);
+    if (qErr) throw new Error(qErr.error.message);
+
+    const lawyers = (lawyersRes.data || []).filter((l) => !excluded.has(l.id));
+    const inWindow = (rows, getTime) =>
+      (rows || []).filter((r) => !excluded.has(r.lawyer_id) && getTime(r) !== null);
+    const t = (v) => {
+      const ms = Date.parse(v);
+      return Number.isNaN(ms) ? null : ms;
+    };
+    const cases = inWindow(casesRes.data, (r) => t(r.created_at));
+    const grants = inWindow(grantsRes.data, (r) => t(r.consumed_at));
+
+    // KPI 1 — nuevos por semana.
+    const kpi1map = new Map();
+    for (const l of lawyers) {
+      const ms = t(l.created_at);
+      if (ms === null) continue;
+      const label = weekLabel(ms);
+      kpi1map.set(label, (kpi1map.get(label) ?? 0) + 1);
+    }
+    const kpi1 = [...kpi1map.entries()]
+      .map(([week_start, new_lawyers]) => ({ week_start, new_lawyers }))
+      .sort((a, b) => (a.week_start < b.week_start ? -1 : 1));
+
+    // Primera activación (caso o grant) por abogado.
+    const firstActiveAt = new Map();
+    const noteFirst = (id, ms) => {
+      if (ms === null) return;
+      const prev = firstActiveAt.get(id);
+      if (prev === undefined || ms < prev) firstActiveAt.set(id, ms);
+    };
+    for (const c of cases) noteFirst(c.lawyer_id, t(c.created_at));
+    for (const g of grants) noteFirst(g.lawyer_id, t(g.consumed_at));
+
+    // KPI 2 — activación 7d por cohorte de registro.
+    const cohorts = new Map();
+    for (const l of lawyers) {
+      const ms = t(l.created_at);
+      if (ms === null) continue;
+      const label = weekLabel(ms);
+      if (!cohorts.get(label)) cohorts.set(label, []);
+      cohorts.get(label).push({ id: l.id, reg: ms });
+    }
+    const kpi2 = [...cohorts.entries()]
+      .map(([week_start, members]) => {
+        let complete = 0;
+        let activated = 0;
+        let pending = 0;
+        for (const m of members) {
+          if (nowMs - m.reg < 7 * DAY) {
+            pending += 1;
+            continue;
+          }
+          complete += 1;
+          const fa = firstActiveAt.get(m.id);
+          if (fa !== undefined && fa <= m.reg + 7 * DAY) activated += 1;
+        }
+        return {
+          week_start,
+          registered: members.length,
+          activated_7d: activated,
+          activation_rate_7d: complete > 0 ? activated / complete : null,
+          pending,
+        };
+      })
+      .sort((a, b) => (a.week_start < b.week_start ? -1 : 1));
+
+    const activatedIds = [...firstActiveAt.keys()].filter((id) => !excluded.has(id));
+
+    // KPI 3 — gestión (tareas exacto + próxima acción como estado actual).
+    const withTask = new Set((tasksRes.data || []).filter((r) => !excluded.has(r.lawyer_id)).map((r) => r.lawyer_id));
+    const withNext = new Set(
+      (nextRes.data || []).filter((r) => !excluded.has(r.lawyer_id) && r.next_action).map((r) => r.lawyer_id),
+    );
+    const kpi3 = {
+      activated_lawyers: activatedIds.length,
+      with_task_ever: activatedIds.filter((id) => withTask.has(id)).length,
+      with_next_action_now: activatedIds.filter((id) => withNext.has(id)).length,
+      with_either: activatedIds.filter((id) => withTask.has(id) || withNext.has(id)).length,
+    };
+
+    // KPI 4 — documentos e IA reales (éxito, no aperturas).
+    const docsAi = new Set();
+    for (const d of docsRes.data || []) {
+      if (!excluded.has(d.lawyer_id) && d.status === 'ready') docsAi.add(d.lawyer_id);
+    }
+    for (const src of [analysesRes.data, messagesRes.data, usageRes.data]) {
+      for (const r of src || []) if (!excluded.has(r.lawyer_id)) docsAi.add(r.lawyer_id);
+    }
+    const kpi4 = { lawyers_with_docs_or_ai: docsAi.size };
+
+    // KPI 5 — retorno en (d+1, d+7] tras la primera activación.
+    const sigActions = new Map();
+    const pushAction = (id, ms) => {
+      if (ms === null || excluded.has(id)) return;
+      if (!sigActions.get(id)) sigActions.set(id, []);
+      sigActions.get(id).push(ms);
+    };
+    for (const r of tasksRes.data || []) pushAction(r.lawyer_id, t(r.created_at));
+    for (const c of cases) pushAction(c.lawyer_id, t(c.created_at));
+    for (const d of docsRes.data || []) pushAction(d.lawyer_id, t(d.created_at));
+    for (const src of [messagesRes.data, usageRes.data]) {
+      for (const r of src || []) pushAction(r.lawyer_id, t(r.created_at));
+    }
+    const retWeeks = new Map();
+    for (const [id, at] of firstActiveAt) {
+      if (excluded.has(id)) continue;
+      const label = weekLabel(at);
+      if (!retWeeks.get(label)) retWeeks.set(label, []);
+      retWeeks.get(label).push({ id, at });
+    }
+    const kpi5 = [...retWeeks.entries()]
+      .map(([first_activation_week, members]) => {
+        let complete = 0;
+        let returned = 0;
+        let pending = 0;
+        for (const m of members) {
+          // Ventana (d+1, d+7] cerrada cuando now - at >= 7d.
+          if (nowMs - m.at < 7 * DAY) {
+            pending += 1;
+            continue;
+          }
+          complete += 1;
+          const acted = (sigActions.get(m.id) || []).some((ms) => ms > m.at + DAY && ms <= m.at + 7 * DAY);
+          if (acted) returned += 1;
+        }
+        return {
+          first_activation_week,
+          activated: complete,
+          returned_week_after: returned,
+          retention_rate: complete > 0 ? returned / complete : null,
+          pending,
+        };
+      })
+      .sort((a, b) => (a.first_activation_week < b.first_activation_week ? -1 : 1));
+
+    // KPI 6 — Pro: suscripciones activas vs pagos confirmados (sin duplicar).
+    const activeLawyers = new Set();
+    // OJO: NO es MRR normalizado. amount_clp mezcla intro ($19.990) con
+    // estándar ($49.990) y Plus según el estado de cada suscripción, e incluye
+    // canceladas vigentes. Es el monto comprometido del período vigente.
+    let activeAmount = 0;
+    for (const s of subsRes.data || []) {
+      if (excluded.has(s.lawyer_id)) continue;
+      const end = s.current_period_end ? t(s.current_period_end) : null;
+      if (s.status === 'active' || (s.status === 'cancelled' && end !== null && end > nowMs)) {
+        activeLawyers.add(s.lawyer_id);
+        activeAmount += Number.isFinite(s.amount_clp) ? s.amount_clp : 0;
+      }
+    }
+    const paidLawyers = new Set(
+      (paysRes.data || []).filter((p) => !excluded.has(p.lawyer_id) && p.status === 'approved').map((p) => p.lawyer_id),
+    );
+    const kpi6 = { active_subscriptions: activeLawyers.size, paid_lawyers: paidLawyers.size, active_amount_clp: activeAmount };
+
+    res.json({
+      generated_at: new Date().toISOString(),
+      window: { from: fromIso, to: toIso },
+      kpi_new_lawyers_by_week: kpi1,
+      kpi_activation_7d: kpi2,
+      kpi_management: kpi3,
+      kpi_docs_ai: kpi4,
+      kpi_retention: kpi5,
+      kpi_pro_conversion: kpi6,
+      notes: [
+        'Casos eliminados son invisibles (hard delete); los grants respaldan el primer caso gratuito.',
+        'Próxima gestión es estado actual, no historial.',
+        'Cohortes incompletas van en pending, fuera del denominador.',
+        'Cuentas del dueño y @test.invalid están excluidas.',
+        'active_amount_clp es monto comprometido del período vigente (mezcla intro/estándar/Plus): no es MRR normalizado.',
+        'from/to acotan los cohortes de registro (KPI 1/2); el resto de métricas es ever para no romper "primer" e historial.',
+      ],
+    });
+  } catch (err) {
+    console.error('[/api/admin/pro-kpis] Error:', err);
+    return res.status(500).json({ error: 'No pudimos cargar los KPIs de Pro.' });
+  }
+});
+
 // GET /api/admin/chat-leads?from&to&status&source&q&page&pageSize&export=1
 // Lista paginada de leads (booking_leads) para el tab "Leads del Chat". Filtros
 // por fecha, estado real del lead, origen del flujo y búsqueda (nombre/email/

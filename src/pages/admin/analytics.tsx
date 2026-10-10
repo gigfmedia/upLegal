@@ -13,6 +13,7 @@ import ProfileViewsChart from '@/components/admin/ProfileViewsChart';
 import LawyerProfileCards from '@/components/admin/LawyerProfileCards';
 import ChatAnalytics from '@/components/admin/ChatAnalytics';
 import ChatLeadsTab from '@/components/admin/ChatLeadsTab';
+import ProKpisTab from '@/components/admin/ProKpisTab';
 import FunnelDashboard from './FunnelDashboard';
 
 // Types
@@ -891,6 +892,7 @@ export default function AnalyticsDashboard() {
           <TabsTrigger value="profile-views">Vistas</TabsTrigger>
           <TabsTrigger value="chat">Chat</TabsTrigger>
           <TabsTrigger value="chat-leads">Leads del Chat</TabsTrigger>
+          <TabsTrigger value="pro">Pro</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -1216,6 +1218,9 @@ export default function AnalyticsDashboard() {
         </TabsContent>
         <TabsContent value="chat-leads" className="space-y-6">
           <ChatLeadsTab />
+        </TabsContent>
+        <TabsContent value="pro" className="space-y-6">
+          <ProKpisTab />
         </TabsContent>
       </Tabs>
     </div>
