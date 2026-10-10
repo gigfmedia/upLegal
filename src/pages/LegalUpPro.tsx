@@ -12,7 +12,7 @@ import { useProSubscription } from "@/hooks/useProSubscription";
 import { ProPricingModal } from "@/components/legalup-pro/ProPricingModal";
 import { TestimonialsSection } from "@/components/pro/TestimonialsSection";
 import { AuthModal } from "@/components/AuthModal";
-import posthog from "posthog-js";
+import { posthog } from "@/lib/posthogLoader";
 import { persistUTMsFromURL } from "@/lib/bookingAttribution";
 import { setProPendingAction, takeProPendingAction } from "@/lib/proPurchaseIntent";
 import { resolveFreeCTA, resolveProCTA } from "@/lib/proPlanCTA";

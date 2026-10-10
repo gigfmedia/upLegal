@@ -38,6 +38,9 @@ import { useAllCaseTasks } from '@/hooks/useCaseTasks';
 import { formatStaleLabel } from '@/lib/actionCenter';
 import { isBookingDeniedError } from '@/lib/appointmentEntitlement';
 import posthog from 'posthog-js';
+// FASE 1.5: eventos críticos Pro por fachada con gate de consentimiento.
+// El resto (demo/secundarios) mantiene el import directo, sin cambios.
+import { posthog as proPosthog } from '@/lib/posthogLoader';
 
 export default function LawyerDashboardPage() {
   const navigate = useNavigate();
@@ -100,8 +103,8 @@ export default function LawyerDashboardPage() {
     if (!isProReturn) return;
     // Si ya tiene Pro, éxito inmediato
     if (hasProAccessCheck) {
-      try { posthog.capture('pro_checkout_returned', { status: 'success' }); } catch {}
-      try { posthog.capture('pro_access_confirmed', { attempts: 0, elapsed_ms: 0 }); } catch {}
+      try { proPosthog.capture('pro_checkout_returned', { status: 'success' }); } catch {}
+      try { proPosthog.capture('pro_access_confirmed', { attempts: 0, elapsed_ms: 0 }); } catch {}
       toast({ title: '¡LegalUp Pro activado!', description: 'Ya puedes gestionar clientes, casos, solicitudes, citas y usar LegalUp AI en tus casos.' });
       const newParams = new URLSearchParams(searchParams);
       newParams.delete('pro_subscription_success');
@@ -114,7 +117,7 @@ export default function LawyerDashboardPage() {
     let cancelled = false;
     const start = Date.now();
     const run = async () => {
-      try { posthog.capture('pro_checkout_returned', { status: 'success' }); } catch {}
+      try { proPosthog.capture('pro_checkout_returned', { status: 'success' }); } catch {}
       setProVerificationState('verifying');
       for (let i = 0; i < 5; i++) {
         if (cancelled) return;
@@ -126,7 +129,7 @@ export default function LawyerDashboardPage() {
         // También considerar hasProAccess actualizado del hook en siguiente render, pero usamos result
         if (isActiveNow) {
           if (cancelled) return;
-          try { posthog.capture('pro_access_confirmed', { attempts: i + 1, elapsed_ms: Date.now() - start }); } catch {}
+          try { proPosthog.capture('pro_access_confirmed', { attempts: i + 1, elapsed_ms: Date.now() - start }); } catch {}
           toast({ title: '¡LegalUp Pro activado!', description: 'Ya puedes gestionar clientes, casos, solicitudes, citas y usar LegalUp AI en tus casos.' });
           const newParams = new URLSearchParams(searchParams);
           newParams.delete('pro_subscription_success');
@@ -138,7 +141,7 @@ export default function LawyerDashboardPage() {
       }
       if (!cancelled) {
         setProVerificationState('timeout');
-        try { posthog.capture('pro_access_verification_timeout', { attempts: 5 }); } catch {}
+        try { proPosthog.capture('pro_access_verification_timeout', { attempts: 5 }); } catch {}
       }
     };
     run();
@@ -226,7 +229,7 @@ export default function LawyerDashboardPage() {
               size="sm"
               className="bg-gray-900 hover:bg-green-900 shrink-0"
               onClick={() => {
-                try { posthog.capture('pro_paywall_opened', { action: 'dashboard_get_started' }); } catch {}
+                try { proPosthog.capture('pro_paywall_opened', { action: 'dashboard_get_started' }); } catch {}
                 setProPaywallOpen(true);
               }}
             >
@@ -299,7 +302,7 @@ export default function LawyerDashboardPage() {
                 const periodEndMs = sub?.current_period_end ? Date.parse(sub.current_period_end) : 0;
                 const isActiveNow = sub && (sub.status === 'active' || sub.status === 'cancelled') && periodEndMs > Date.now();
                 if (isActiveNow) {
-                  try { posthog.capture('pro_access_confirmed', { attempts: 1, elapsed_ms: 0 }); } catch {}
+                  try { proPosthog.capture('pro_access_confirmed', { attempts: 1, elapsed_ms: 0 }); } catch {}
                   toast({ title: '¡LegalUp Pro activado!', description: 'Ya puedes gestionar clientes, casos, solicitudes, citas y usar LegalUp AI en tus casos.' });
                   const newParams = new URLSearchParams(searchParams);
                   newParams.delete('pro_subscription_success');
@@ -307,7 +310,7 @@ export default function LawyerDashboardPage() {
                   setProVerificationState('idle');
                 } else {
                   setProVerificationState('timeout');
-                  try { posthog.capture('pro_access_verification_timeout', { attempts: 1 }); } catch {}
+                  try { proPosthog.capture('pro_access_verification_timeout', { attempts: 1 }); } catch {}
                 }
               }}
             >
@@ -393,7 +396,7 @@ export default function LawyerDashboardPage() {
                   // 4.37B — manual creation requires active Pro; never open a
                   // dead form for non-Pro (RLS would reject with a generic error).
                   if (!hasProAccess) {
-                    try { posthog.capture('pro_paywall_opened', { action: 'create_appointment' }); } catch { /* analytics best-effort; never blocks UX */ }
+                    try { proPosthog.capture('pro_paywall_opened', { action: 'create_appointment' }); } catch { /* analytics best-effort; never blocks UX */ }
                     setApptPaywallOpen(true);
                     return;
                   }
@@ -498,7 +501,7 @@ export default function LawyerDashboardPage() {
                     const stillPro =
                       !!fresh && (fresh.status === 'active' || fresh.status === 'cancelled') && periodEndMs > Date.now();
                     if (!stillPro) {
-                      try { posthog.capture('pro_paywall_opened', { action: 'create_appointment', reason: 'entitlement_rejected' }); } catch { /* analytics best-effort; never blocks UX */ }
+                      try { proPosthog.capture('pro_paywall_opened', { action: 'create_appointment', reason: 'entitlement_rejected' }); } catch { /* analytics best-effort; never blocks UX */ }
                       setShowNewAppointment(false);
                       setApptPaywallOpen(true);
                       return;

@@ -15,7 +15,7 @@ import { formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useProSubscription } from '@/hooks/useProSubscription';
 import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
-import posthog from 'posthog-js';
+import { posthog } from '@/lib/posthogLoader';
 
 function statusColor(status: string) {
   if (['pending', 'quote_pending'].includes(status)) return 'bg-yellow-100 text-yellow-800';

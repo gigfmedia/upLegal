@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, Loader2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
-import posthog from 'posthog-js';
+import { posthog } from '@/lib/posthogLoader';
 import { useProSubscription, useProSubscribe, useProFounderStatus } from '@/hooks/useProSubscription';
 import { PRO_PRICE_CLP_DISPLAY, PLUS_PRICE_CLP_DISPLAY } from '@/lib/planDisplay';
 import { format, parseISO } from 'date-fns';

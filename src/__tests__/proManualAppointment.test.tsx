@@ -77,7 +77,10 @@ vi.mock('@/lib/activationAnalytics', () => ({
 vi.mock('@/lib/normalizeEmail', () => ({
   normalizeEmail: (v: unknown) => v,
 }));
-vi.mock('posthog-js', () => ({ default: { capture: mocks.capture } }));
+vi.mock('posthog-js', () => ({ default: { capture: mocks.capture, init: vi.fn() } }));
+import { resetPostHogForTests } from '@/lib/posthogLoader';
+import { ensurePostHog } from '@/lib/consentTrackers';
+import { CONSENT_STORAGE_KEY } from '@/lib/cookieConsent';
 
 const sbState = vi.hoisted(() => ({
   bookings: [] as unknown[],
@@ -124,8 +127,16 @@ function renderCitas() {
 const EXPIRED_SUB = { status: 'expired', current_period_end: new Date(Date.now() - 1000).toISOString() };
 
 describe('4.37B — CitasPage manual gate', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    // FASE 1.5: la telemetría pasa por la fachada con gate de consentimiento:
+    // sembrar consentimiento e inicializar para que el capture llegue al mock.
+    window.localStorage.setItem(
+      CONSENT_STORAGE_KEY,
+      JSON.stringify({ version: '1', necessary: true, analytics: true, marketing: false, preferences: false, timestamp: new Date().toISOString() }),
+    );
+    resetPostHogForTests();
+    await ensurePostHog();
     mocks.hasProAccess = true;
     mocks.proLoading = false;
     mocks.findOrCreateClient.mockResolvedValue({ id: 'client-1' });

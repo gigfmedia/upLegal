@@ -30,6 +30,9 @@ import { isNextActionOverdue } from '@/lib/caseControl';
 import { activePortfolioCases, distinctStages, groupByStage, groupByStatus, normalizeStage, stageLabel } from '@/lib/portfolio';
 import { supabase } from '@/lib/supabaseClient';
 import posthog from 'posthog-js';
+// FASE 1.5: eventos críticos Pro por fachada con gate de consentimiento.
+// El resto (capacity/case/plus secundarios) mantiene el import directo.
+import { posthog as proPosthog } from '@/lib/posthogLoader';
 
 function CaseCardSkeleton() {
   return (
@@ -128,7 +131,7 @@ export default function CasesPage() {
       setCapacityModalOpen(true);
       return;
     }
-    posthog.capture('pro_paywall_opened', { action });
+    proPosthog.capture('pro_paywall_opened', { action });
     // 4.57D: free exhaustion always targets Pro (never Plus, never stale).
     setPaywallTarget('pro');
     setProPaywallOpen(true);
@@ -260,7 +263,7 @@ export default function CasesPage() {
       openBlockedGate('create_case');
       return;
     }
-    posthog.capture('pro_paywall_action', { action: 'create_case' });
+    proPosthog.capture('pro_paywall_action', { action: 'create_case' });
     if (!title.trim()) {
       toast({ title: 'Título requerido', variant: 'destructive' });
       return;
@@ -284,7 +287,7 @@ export default function CasesPage() {
       // free allowance → subscription modal; Pro capacity → capacity UX.
       // Unknown errors keep the normal error toast.
       if (isFreeCaseEntitlementError(err)) {
-        posthog.capture('pro_paywall_opened', { action: 'create_case', reason: 'entitlement_rejected' });
+        proPosthog.capture('pro_paywall_opened', { action: 'create_case', reason: 'entitlement_rejected' });
         setPaywallTarget('pro');
         setProPaywallOpen(true);
         void refetchEntitlement();
@@ -297,7 +300,7 @@ export default function CasesPage() {
       } else if (isRowDeniedError(err)) {
         const latest = await refetchEntitlement();
         if (!latest.hasProAccess && latest.freeCaseConsumed) {
-          posthog.capture('pro_paywall_opened', { action: 'create_case', reason: 'entitlement_rejected' });
+          proPosthog.capture('pro_paywall_opened', { action: 'create_case', reason: 'entitlement_rejected' });
           setPaywallTarget('pro');
           setProPaywallOpen(true);
         } else if (latest.hasProAccess && latest.activeCaseLimit > 0 && latest.activeCaseCount >= latest.activeCaseLimit) {

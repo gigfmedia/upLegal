@@ -20,7 +20,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { useProSubscription } from '@/hooks/useProSubscription';
 import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
 import { isBookingDeniedError } from '@/lib/appointmentEntitlement';
-import posthog from 'posthog-js';
+import { posthog } from '@/lib/posthogLoader';
 
 type Appointment = {
   id: string;

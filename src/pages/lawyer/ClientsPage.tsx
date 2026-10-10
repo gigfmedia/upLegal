@@ -14,7 +14,7 @@ import { formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useProSubscription } from '@/hooks/useProSubscription';
 import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
-import posthog from 'posthog-js';
+import { posthog } from '@/lib/posthogLoader';
 
 export default function ClientsPage() {
   const { clients, loading, error, createClient } = useLawyerClients();

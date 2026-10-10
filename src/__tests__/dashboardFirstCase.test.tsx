@@ -149,7 +149,24 @@ vi.mock('@/components/appointments/AppointmentForm', () => ({
     </div>
   ),
 }));
-vi.mock('posthog-js', () => ({ default: { capture: spy.capture } }));
+vi.mock('posthog-js', () => ({ default: { capture: spy.capture, init: vi.fn() } }));
+import { resetPostHogForTests } from '@/lib/posthogLoader';
+import { ensurePostHog } from '@/lib/consentTrackers';
+import { CONSENT_STORAGE_KEY } from '@/lib/cookieConsent';
+
+function seedAnalyticsConsent() {
+  window.localStorage.setItem(
+    CONSENT_STORAGE_KEY,
+    JSON.stringify({ version: '1', necessary: true, analytics: true, marketing: false, preferences: false, timestamp: new Date().toISOString() }),
+  );
+}
+
+async function initFacadeForTests() {
+  // FASE 1.5: la telemetría pasa por la fachada con gate de consentimiento.
+  seedAnalyticsConsent();
+  resetPostHogForTests();
+  await ensurePostHog();
+}
 
 import DashboardPage from '@/pages/lawyer/DashboardPage';
 
@@ -194,8 +211,9 @@ describe('4.36D — dashboard active definition (delivered counts)', () => {
 });
 
 describe('4.37B — dashboard manual appointment gate', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    await initFacadeForTests();
     dbMocks.hasProAccess = false;
     dbMocks.proSub = null;
     dbMocks.bookingInsertError = null;

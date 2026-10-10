@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import posthog from 'posthog-js';
+// FASE 1.5: pro_paywall_opened por fachada con gate de consentimiento.
+// ai_case_chat_panel_opened mantiene el import directo, sin cambios.
+import { posthog as proPosthog } from '@/lib/posthogLoader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -157,7 +160,7 @@ function CaseDetailContent() {
     // 4.37D — entitlement first: no form, no client lookup, no mutation
     // before the paywall. Active Pro falls through to the case-scoped flow.
     if (!hasProAccess) {
-      posthog.capture('pro_paywall_opened', { action: 'create_appointment' });
+      proPosthog.capture('pro_paywall_opened', { action: 'create_appointment' });
       setApptPaywallOpen(true);
       return;
     }
