@@ -47,9 +47,34 @@ if (typeof window !== 'undefined') {
   };
   scheduleIdleInit();
   // Consentimiento otorgado después del idle: inicializa entonces.
+  // FASE 1B: además re-evalúa la identidad (una sesión restaurada sin
+  // consentimiento previo nunca se identificó: hacerlo ahora).
   try {
     subscribeConsent((stored) => {
-      if (stored.analytics === true) initPostHogWhenIdle();
+      if (stored.analytics === true) {
+        initPostHogWhenIdle();
+        try {
+          void import('./lib/supabaseClient').then(({ getSupabaseClient }) =>
+            getSupabaseClient()
+              .auth.getSession()
+              .then(({ data }) => {
+                const uid = data.session?.user?.id;
+                if (!uid) return;
+                return import('./lib/proAnalytics').then(({ identifyProUser, trackProSessionReturn }) => {
+                  try {
+                    identifyProUser(uid);
+                    trackProSessionReturn(uid);
+                  } catch {
+                    // noop
+                  }
+                });
+              })
+              .catch(() => undefined),
+          );
+        } catch {
+          // noop
+        }
+      }
     });
   } catch {
     // noop

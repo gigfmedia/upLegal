@@ -634,7 +634,10 @@ export default function BookingPage() {
           }
         });
 
-        // F6 begin_checkout — canonical, solo con preference válida
+        // F6 begin_checkout — canonical, solo con preference válida.
+        // FASE 1C: vía única trackBeginCheckout (GA4+PostHog). Se elimina el
+        // gtag manual legacy que duplicaba `begin_checkout` en GA4 y además
+        // enviaba el nombre del abogado en `items` (PII en GA4).
         const { trackBeginCheckout } = await import('@/lib/bookingFunnel');
         trackBeginCheckout({
           booking_id: data.booking_id,
@@ -643,18 +646,6 @@ export default function BookingPage() {
           currency: 'CLP',
           source: 'booking_page',
           article_slug: (lawyer as any).article_slug || null,
-        });
-        // legacy direct (kept for backward compat)
-        window.gtag?.('event', 'begin_checkout', {
-          booking_id: data.booking_id,
-          value: totalPrice,
-          currency: 'CLP',
-          items: [{
-            item_id: data.booking_id,
-            item_name: `Asesoría con ${lawyer.first_name} ${lawyer.last_name}`,
-            price: totalPrice,
-            quantity: 1
-          }]
         });
 
         // Save booking context for PaymentFailure retry

@@ -1,5 +1,6 @@
 import { posthog } from '@/lib/posthogLoader';
 import { supabase } from '@/lib/supabaseClient';
+import { getStoredConsent } from '@/lib/cookieConsent';
 
 const FIRST_KEYS = {
   client: 'lawyer_first_client_created',
@@ -23,8 +24,24 @@ function markFired(key: string, lawyerId: string) {
   } catch {}
 }
 
+/**
+ * FASE 1C: las marcas de "primera vez" solo se escriben cuando el evento
+ * puede viajar (consentimiento vigente). Sin consentimiento NO se marca:
+ * el evento se reintentará cuando haya consentimiento y el conteo siga en 1.
+ * (Antes, un primer caso sin consent marcaba y el evento se perdía para
+ * siempre.) Si el conteo ya superó 1, se marca igual: ya no es "primero".
+ */
+function hasAnalyticsConsent(): boolean {
+  try {
+    return getStoredConsent()?.analytics === true;
+  } catch {
+    return false;
+  }
+}
+
 export function trackOnboardingViewed(lawyerId: string) {
   if (!lawyerId || hasFired(FIRST_KEYS.onboardingViewed, lawyerId)) return;
+  if (!hasAnalyticsConsent()) return; // no marcar sin consentimiento
   markFired(FIRST_KEYS.onboardingViewed, lawyerId);
   posthog.capture('lawyer_onboarding_viewed', { lawyer_id: lawyerId });
 }
@@ -34,6 +51,7 @@ export async function trackFirstClientIfNeeded(lawyerId: string, source: string)
   // verify via count
   const { count } = await supabase.from('lawyer_clients').select('id', { count: 'exact', head: true }).eq('lawyer_id', lawyerId);
   if ((count ?? 0) === 1) {
+    if (!hasAnalyticsConsent()) return; // reintentar con consentimiento
     markFired(FIRST_KEYS.client, lawyerId);
     posthog.capture('first_client_created', { source: source?.toLowerCase() || 'unknown' });
     posthog.capture('lawyer_first_client_created', { source: source?.toLowerCase() || 'unknown' });
@@ -46,6 +64,7 @@ export async function trackFirstCaseIfNeeded(lawyerId: string, source: string) {
   if (!lawyerId || hasFired(FIRST_KEYS.case, lawyerId)) return;
   const { count } = await supabase.from('lawyer_cases').select('id', { count: 'exact', head: true }).eq('lawyer_id', lawyerId);
   if ((count ?? 0) === 1) {
+    if (!hasAnalyticsConsent()) return; // reintentar con consentimiento
     markFired(FIRST_KEYS.case, lawyerId);
     posthog.capture('first_case_created', { source: source?.toLowerCase() || 'unknown' });
     posthog.capture('lawyer_first_case_created', { source: source?.toLowerCase() || 'unknown' });

@@ -26,6 +26,8 @@ import type { AIDocumentListItem } from '@/hooks/useAIDocuments';
 import { useAIUsage } from '@/hooks/useAIUsage';
 import { ProPricingModal } from '@/components/legalup-pro/ProPricingModal';
 import { chatLimitMessage, upgradeTargetForPlan } from '@/lib/planDisplay';
+import { captureCaseAiUsed } from '@/lib/proAnalytics';
+import { getSupabaseClient } from '@/lib/supabaseClient';
 
 type AIChatProps = {
   workspaceId: string;
@@ -262,6 +264,22 @@ function AIChatSession({ workspaceId, documents, documentId, onUploadClick, exte
             document_count: readyCount,
             source_count: data.sources?.length ?? 0,
           });
+          // FASE 1E: primer uso de IA completado (respuesta real del
+          // servidor, no el clic en enviar). getSession es local (sin red);
+          // best-effort, nunca bloquea el chat.
+          try {
+            void getSupabaseClient().auth.getSession().then(({ data: sessionData }) => {
+              const uid = sessionData.session?.user?.id;
+              if (!uid) return;
+              try {
+                captureCaseAiUsed(uid);
+              } catch {
+                // noop
+              }
+            });
+          } catch {
+            // noop
+          }
         },
         onSettled: () => { activeRequest.current = null; },
         onError: (err) => {

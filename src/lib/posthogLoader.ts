@@ -101,6 +101,30 @@ export const posthog = {
   capture: (event_name: string, properties?: Record<string, unknown>): void => {
     runWhenReady((ph) => ph.capture(event_name, properties));
   },
+  /**
+   * FASE 1B — identify centralizado. Solo corre con consentimiento analytics
+   * vigente (vía runWhenReady) y nunca antes de una sesión válida: los
+   * callers (proAnalytics) garantizan el user.id de Supabase Auth.
+   * Nunca pasar email/RUT/nombre como identificador.
+   */
+  identify: (distinctId: string): void => {
+    if (!distinctId) return;
+    runWhenReady((ph) => ph.identify(distinctId));
+  },
+  /**
+   * FASE 1B — reset centralizado (logout / cambio de cuenta). Solo actúa
+   * sobre instancia existente: sin init no hay nada que resetear y no se
+   * encola (un reset diferido podría limpiar la identidad equivocada).
+   */
+  reset: (): void => {
+    if (posthogInstance) {
+      try {
+        posthogInstance.reset();
+      } catch {
+        // noop
+      }
+    }
+  },
   startSessionRecording: (): void => {
     runWhenReady((ph) => ph.startSessionRecording());
   },

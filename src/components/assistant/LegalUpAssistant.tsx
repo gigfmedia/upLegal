@@ -251,14 +251,9 @@ export default function LegalUpAssistant({ source = 'widget' }: LegalUpAssistant
 
   const handleBook = (lawyer: AssistantLawyer, service: AssistantLawyerService) => {
     if (!pricingReady) return;
+    // FASE 1C: vía canónica única (GA4+PostHog). Se elimina el capture directo
+    // legacy que duplicaba `booking_started` en PostHog en el mismo clic.
     import('@/lib/bookingFunnel').then(({ trackBookingStarted }) => trackBookingStarted({ lawyer_id: lawyer.id, service_id: service.id, source: 'assistant', article_slug: null }));
-    // legacy direct
-    posthog.capture('booking_started', {
-      source,
-      lawyer_id: lawyer.id,
-      match_score: lawyer.matchScore,
-      has_service: Boolean(lawyer.bestService),
-    });
 
     if (isInitialConsultationService(service.title)) {
       navigate(`/booking/${lawyer.slug}-${lawyer.id}`);

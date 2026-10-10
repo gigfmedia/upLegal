@@ -1,4 +1,5 @@
 import { aiOperationIdentity } from '@/lib/aiOperationIdentity';
+import { captureCaseDocumentUploaded } from '@/lib/proAnalytics';
 import { pollTerminalResult } from '@/lib/aiInProgressPoll';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
@@ -247,6 +248,14 @@ export function useUploadAIDocument(workspace: string | undefined | (() => Promi
         }
       } catch (error) {
         console.error('[LegalUpAI] ai_first_document_uploaded failed', error);
+      }
+
+      // FASE 1E: documento guardado correctamente (Storage + fila OK).
+      // Repetible por subida; el "primero" lo cubre ai_first_document_uploaded.
+      try {
+        captureCaseDocumentUploaded(user.id);
+      } catch {
+        // Telemetry must not interrupt upload.
       }
 
       return inserted as AIDocument;

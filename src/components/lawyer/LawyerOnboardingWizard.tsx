@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import { verifyLawyer } from '@/api/verifyLawyer';
+import { captureOnboardingCompleted } from '@/lib/proAnalytics';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -215,6 +216,7 @@ export default function LawyerOnboardingWizard({ allowSkip = false, onSkip, skip
 
   const handleFinish = async () => {
     sessionStorage.removeItem('onboardingStep');
+    let completed = false;
     try {
       // El flujo "Crear tu perfil de abogado" debe dejar al usuario con rol de
       // abogado para que LegalUp AI pueda operar en su área protegida.
@@ -227,9 +229,19 @@ export default function LawyerOnboardingWizard({ allowSkip = false, onSkip, skip
         })
         .eq('user_id', user!.id);
       if (error) console.error('Error marcando rol de abogado:', error);
+      else completed = true;
       await supabase.auth.updateUser({ data: { role: 'lawyer' } });
     } catch (err) {
       console.error('Error al completar perfil de abogado:', err);
+    }
+    // FASE 1E: onboarding completado = criterio real del producto
+    // (profile_setup_completed persistido). Solo tras éxito.
+    if (completed && user?.id) {
+      try {
+        captureOnboardingCompleted(user.id);
+      } catch {
+        // analytics nunca bloquea navegación
+      }
     }
     // Si el abogado venía desde LegalUp AI, volver a la landing para continuar
     // automáticamente con el trial.

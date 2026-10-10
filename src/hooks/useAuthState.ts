@@ -5,6 +5,7 @@ import { getSupabaseClient } from '@/lib/supabaseClient';
 import { validateAndRefreshSession, refreshSession } from '@/lib/sessionUtils';
 import { handleAuthError } from '@/lib/authErrorHandler';
 import { setOwnerActive, isOwnerEmail } from '@/lib/owner';
+import { identifyProUser, resetProIdentity, trackProSessionReturn } from '@/lib/proAnalytics';
 
 declare module '@supabase/supabase-js' {
   interface User {
@@ -63,6 +64,15 @@ export const useAuthState = (): AuthState => {
       if (currentSession?.user) {
         // Activar bloqueo de analytics si el usuario autenticado es el dueño
         setOwnerActive(isOwnerEmail(currentSession.user.email));
+        // FASE 1B: identidad PostHog + retorno (idempotente, con consentimiento).
+        // checkSession corre en boot, login manual y visibilidad: todos son
+        // momentos de establecimiento de sesión, aptos para retorno.
+        try {
+          identifyProUser(currentSession.user.id);
+          trackProSessionReturn(currentSession.user.id);
+        } catch {
+          // analytics nunca bloquea auth
+        }
 
         let profileData = null;
         
@@ -231,6 +241,15 @@ export const useAuthState = (): AuthState => {
                 case 'USER_UPDATED':
                   if (session) {
                     setOwnerActive(isOwnerEmail(session.user.email));
+                    // FASE 1B: re-identificar (idempotente; cubre cambio de
+                    // cuenta con reset previo). Retorno solo en SIGNED_IN
+                    // (establecimiento real, no refresh periódico).
+                    try {
+                      identifyProUser(session.user.id);
+                      if (event === 'SIGNED_IN') trackProSessionReturn(session.user.id);
+                    } catch {
+                      // analytics nunca bloquea auth
+                    }
                     updateState({
                       session,
                       user: session.user,
@@ -243,6 +262,12 @@ export const useAuthState = (): AuthState => {
                   
                 case 'SIGNED_OUT':
                   setOwnerActive(false);
+                  // FASE 1B: reset de identidad (no-op si logout() ya lo hizo).
+                  try {
+                    resetProIdentity();
+                  } catch {
+                    // noop
+                  }
                   updateState({
                     session: null,
                     user: null,

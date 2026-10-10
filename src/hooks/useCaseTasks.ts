@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
+import { captureCaseTaskCreated, captureCaseTaskCompleted } from '@/lib/proAnalytics';
 
 export interface CaseTask {
   id: string;
@@ -68,6 +69,12 @@ export function useCaseTasks(caseId: string | undefined) {
       if (error) throw error;
       const created = data as CaseTask;
       setTasks((prev) => [created, ...prev]);
+      // FASE 1E: creación confirmada por el servidor (best-effort).
+      try {
+        if (user?.id) captureCaseTaskCreated(user.id);
+      } catch {
+        // noop
+      }
       return created;
     },
     [user?.id, caseId]
@@ -83,8 +90,14 @@ export function useCaseTasks(caseId: string | undefined) {
       .single();
     if (error) throw error;
     setTasks((prev) => prev.map((t) => (t.id === id ? (data as CaseTask) : t)));
+    // FASE 1E: finalización confirmada, separada de la creación.
+    try {
+      if (user?.id) captureCaseTaskCompleted(user.id);
+    } catch {
+      // noop
+    }
     return data as CaseTask;
-  }, []);
+  }, [user?.id]);
 
   const reopenTask = useCallback(async (id: string) => {
     const { data, error } = await supabase

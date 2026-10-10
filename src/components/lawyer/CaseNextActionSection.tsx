@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Calendar as CalendarIcon, CheckCircle2, Pencil, Plus } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
+import { captureCaseNextActionAdded } from '@/lib/proAnalytics';
 import type { LawyerCase } from '@/hooks/useLawyerCases';
 import {
   dateToNoonIso,
@@ -50,6 +51,8 @@ export function CaseNextActionSection({ caseData, onSaved }: Props) {
   const save = async () => {
     setSaving(true);
     setError(null);
+    // FASE 1E: primera gestión = transición null → valor (criterio real).
+    const wasFirst = !caseData.next_action;
     try {
       const { data, error } = await supabase
         .from('lawyer_cases')
@@ -64,6 +67,14 @@ export function CaseNextActionSection({ caseData, onSaved }: Props) {
       if (error) throw error;
       onSaved(data as Partial<LawyerCase>);
       setEditing(false);
+      // Solo tras éxito y solo si es la primera (best-effort, nunca bloquea).
+      if (wasFirst && (data as Partial<LawyerCase>)?.next_action) {
+        try {
+          captureCaseNextActionAdded(caseData.lawyer_id);
+        } catch {
+          // noop
+        }
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo guardar');
     } finally {

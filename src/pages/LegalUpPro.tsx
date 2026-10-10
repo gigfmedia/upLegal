@@ -383,6 +383,21 @@ export default function LegalUpPro() {
 
   useEffect(() => {
     persistUTMsFromURL();
+    // FASE 1D: atribución Pro con gate de consentimiento (memoria + espejo
+    // de sesión solo con analytics; coexiste con el mecanismo legacy de
+    // bookingAttribution sin modificarlo).
+    try {
+      void import('@/lib/proAttribution').then(({ captureProEntryAttribution, registerProAttribution }) => {
+        try {
+          captureProEntryAttribution(window.location.search);
+          registerProAttribution();
+        } catch {
+          // noop
+        }
+      });
+    } catch {
+      // noop
+    }
   }, []);
 
   // pro_landing_viewed once per mount

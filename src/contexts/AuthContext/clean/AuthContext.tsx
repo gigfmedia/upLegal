@@ -9,6 +9,14 @@ import { refreshSession } from '@/lib/sessionUtils';
 import { handleAuthError } from '@/lib/authErrorHandler';
 import { useAuth } from '@/hooks/useAuthState';
 import { supabase } from '@/lib/supabaseClient';
+import {
+  captureLoginCompleted,
+  captureSignUpStarted,
+  captureSignUpCompleted,
+  captureEmailVerificationCompleted,
+  identifyProUser,
+  resetProIdentity,
+} from '@/lib/proAnalytics';
 
 export type UserRole = 'client' | 'lawyer' | 'company';
 
@@ -132,7 +140,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!isValid) {
           throw new Error('Failed to establish a valid session');
         }
-        
+
+        // FASE 1C: login explícito por email (identify idempotente dentro).
+        try {
+          if (data.user?.id) captureLoginCompleted(data.user.id, 'email');
+        } catch {
+          // analytics nunca bloquea login
+        }
+
         return { user: data.user, error: null };
       } catch (error) {
         console.error('Login error:', error);
@@ -164,6 +179,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const error = new Error('Password must be at least 6 characters');
         setErrorState(error);
         return { user: null, error };
+      }
+
+      // FASE 1C: inicio real del flujo de registro (submit válido).
+      try {
+        captureSignUpStarted('email');
+      } catch {
+        // noop
       }
 
       // Sign up the user with Supabase Auth
@@ -255,7 +277,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // The useAuth hook will handle updating the user and session
       await checkSession();
-      
+
+      // FASE 1C: registro completado. Con sesión inmediata se identifica y
+      // mide; con confirmación pendiente se difiere al callback (sin sesión
+      // válida no hay identify: regla innegociable).
+      try {
+        if (data.session?.user?.id) {
+          captureSignUpCompleted(data.session.user.id, 'email');
+        }
+      } catch {
+        // analytics nunca bloquea registro
+      }
+
       return { 
         user: data.user, 
         error: null,
@@ -288,6 +321,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Clear all auth data
       await clearAuthData();
+
+      // FASE 1B: reset de identidad analítica (logout explícito).
+      try {
+        resetProIdentity();
+      } catch {
+        // noop
+      }
       
       // The useAuth hook will handle updating the user and session state
       
@@ -348,7 +388,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Refresh the auth state to get the latest session
       await checkSession();
-      
+
+      // FASE 1C: email verificado vía OTP (sesión válida recién confirmada).
+      try {
+        if (data.user?.id) {
+          identifyProUser(data.user.id);
+          captureEmailVerificationCompleted(data.user.id, 'email');
+        }
+      } catch {
+        // analytics nunca bloquea verificación
+      }
+
       return true;
     } catch (error) {
       console.error('Error confirming email:', error);

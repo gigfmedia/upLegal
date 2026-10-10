@@ -1,5 +1,6 @@
 import posthog from 'posthog-js';
 import { supabase } from '@/lib/supabaseClient';
+import { captureSignUpStarted } from '@/lib/proAnalytics';
 
 /**
  * FASE 4.60A — Google Sign-In (autenticación solamente).
@@ -67,6 +68,15 @@ export async function beginGoogleSignIn(options?: {
 }): Promise<{ error: Error | null }> {
   storePostAuthRedirect(options?.redirectTo ?? window.location.pathname);
   track('auth_started', { method: 'google', role: options?.role ?? 'client' });
+  // FASE 1C: role lawyer = superficie de adquisición de abogados → inicio
+  // de registro. Login Google genérico (sin role) no se cuenta como signup.
+  if (options?.role === 'lawyer') {
+    try {
+      captureSignUpStarted('google', 'pro_landing');
+    } catch {
+      /* noop */
+    }
+  }
   try {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',

@@ -5,6 +5,22 @@ import { Loader2 } from 'lucide-react';
 import { getLawyerPostAuthDestination, isEmailVerified } from '@/lib/lawyerOnboardingGate';
 import { consumePostAuthRedirect, sanitizePostAuthRedirect, trackGoogleCompleted } from '@/lib/googleAuth';
 import { hasLegalConsent } from '@/lib/legalConsent';
+import {
+  captureEmailVerificationCompleted,
+  captureLoginCompleted,
+  captureSignUpCompleted,
+  identifyProUser,
+  trackProSessionReturn,
+  SIGNUP_ATTRIBUTION_WINDOW_DAYS,
+} from '@/lib/proAnalytics';
+
+/** Usuario creado dentro de la ventana = registro reciente (vs login). */
+function isRecentSignup(createdAt: string | undefined): boolean {
+  if (!createdAt) return false;
+  const created = Date.parse(createdAt);
+  if (Number.isNaN(created)) return false;
+  return Date.now() - created <= SIGNUP_ATTRIBUTION_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+}
 
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -49,6 +65,25 @@ export default function AuthCallback() {
           // Ensure we have the freshest user (email_confirmed_at)
           const { data: { user: freshUser } } = await supabase.auth.getUser();
           const user = freshUser || session.user;
+
+          // FASE 1B/1C: identidad + retorno + registro/login + verificación.
+          // Todo idempotente y con consentimiento (no-ops sin él); el método
+          // se infiere del flujo (code OAuth = google, link = email).
+          try {
+            const method = code ? 'google' : 'email';
+            identifyProUser(user.id);
+            trackProSessionReturn(user.id);
+            if (isRecentSignup(user.created_at)) {
+              captureSignUpCompleted(user.id, method as 'google' | 'email');
+            } else {
+              captureLoginCompleted(user.id, method as 'google' | 'email');
+            }
+            if (isEmailVerified(user as any)) {
+              captureEmailVerificationCompleted(user.id, method as 'google' | 'email');
+            }
+          } catch {
+            // analytics nunca bloquea el callback
+          }
 
         // Lawyer onboarding gate: only after email verification (respeta >=70% como satisfecho)
           const { data: profile } = await supabase
