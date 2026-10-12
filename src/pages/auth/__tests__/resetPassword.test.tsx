@@ -58,8 +58,10 @@ describe('ResetPasswordPage', () => {
     await waitFor(() => expect(sendPasswordResetEmail).toHaveBeenCalledWith('cliente@test.cl'));
   });
 
-  it('con sesión ya establecida no re-canjea código (session-first)', async () => {
-    mockedGetSession.mockResolvedValue({
+  it('canje fallido con sesión activa continúa (carrera del auto-canje)', async () => {
+    const { exchangeCodeForSession, getSession } = supabase.auth;
+    vi.mocked(exchangeCodeForSession).mockResolvedValueOnce({ data: {}, error: new Error('code used') } as never);
+    vi.mocked(getSession).mockResolvedValue({
       data: { session: { user: { id: 'u1' } } },
       error: null,
     } as never);
@@ -69,8 +71,22 @@ describe('ResetPasswordPage', () => {
         <ResetPasswordPage />
       </MemoryRouter>
     );
-    await waitFor(() => expect(mockedGetSession).toHaveBeenCalled());
-    expect(supabase.auth.exchangeCodeForSession).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.getByText(/Restablecer contraseña/)).toBeDefined());
+    expect(screen.queryByText(/no es válido o ha expirado/)).toBeNull();
+    window.history.pushState({}, '', '/');
+  });
+
+  it('canje fallido sin sesión muestra enlace inválido', async () => {
+    const { exchangeCodeForSession, getSession } = supabase.auth;
+    vi.mocked(exchangeCodeForSession).mockResolvedValueOnce({ data: {}, error: new Error('bad code') } as never);
+    vi.mocked(getSession).mockResolvedValue({ data: { session: null }, error: null } as never);
+    window.history.pushState({}, '', '/reset-password?code=badcode');
+    render(
+      <MemoryRouter initialEntries={['/reset-password?code=badcode']}>
+        <ResetPasswordPage />
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(screen.getByText(/no es válido o ha expirado/)).toBeDefined());
     window.history.pushState({}, '', '/');
   });
 });

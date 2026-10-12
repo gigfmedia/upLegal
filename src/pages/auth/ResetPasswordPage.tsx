@@ -119,15 +119,7 @@ export default function ResetPasswordPage() {
         const refreshToken = hashParams.get('refresh_token');
         const type = hashParams.get('type');
 
-        // El cliente (detectSessionInUrl) puede haber establecido la sesión
-        // automáticamente al cargar. Si ya hay sesión, no re-canjear: un
-        // segundo canje del mismo código falla y mostraría un falso
-        // "enlace inválido". Solo se limpia la URL.
-        const { data: { session: existingSession } } = await supabase.auth.getSession();
-        if (existingSession) {
-          const cleanUrl = `${url.pathname}`;
-          window.history.replaceState({}, '', cleanUrl);
-        } else if (accessToken && refreshToken && type === 'recovery') {
+        if (accessToken && refreshToken && type === 'recovery') {
           const { error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
@@ -137,9 +129,16 @@ export default function ResetPasswordPage() {
           // Clear hash to avoid leaking tokens
           window.history.replaceState({}, '', `${url.pathname}${url.search}`);
         } else if (queryCode) {
-          // PKCE/code flow
+          // PKCE/code flow. El cliente (detectSessionInUrl) puede haber
+          // canjeado el código automáticamente al cargar: si el canje manual
+          // falla pero ya hay sesión activa, fue una carrera ganada por el
+          // auto-canje y se continúa sin mostrar un falso "enlace inválido".
+          // Sin sesión, el error es real.
           const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(queryCode);
-          if (exchangeError) throw exchangeError;
+          if (exchangeError) {
+            const { data: { session: racedSession } } = await supabase.auth.getSession();
+            if (!racedSession) throw exchangeError;
+          }
 
           // Remove code from URL
           const newUrl = new URL(window.location.href);
