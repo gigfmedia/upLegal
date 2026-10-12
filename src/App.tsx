@@ -366,6 +366,18 @@ const AppContent = () => {
       const type = hashParams.get('type') || searchParams.get('type');
       const emailParam = hashParams.get('email') || hashParams.get('user_email') || searchParams.get('email') || searchParams.get('user_email');
 
+      // Flujo de recuperación: NUNCA tratarlo como login genérico ni enviarlo
+      // a /auth/callback (eso establecía sesión y terminaba en /dashboard con
+      // el formulario normal que exige la clave actual). ResetPasswordPage es
+      // la única autoridad: conserva los tokens en la URL y llévalo allí.
+      if (type === 'recovery') {
+        hashHandledRef.current = true;
+        if (window.location.pathname !== '/reset-password') {
+          navigate(`/reset-password${window.location.search}${window.location.hash}`, { replace: true });
+        }
+        return;
+      }
+
       if (!accessToken && !refreshToken) {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {

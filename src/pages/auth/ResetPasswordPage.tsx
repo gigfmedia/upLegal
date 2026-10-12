@@ -7,9 +7,91 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Check, ArrowLeft } from 'lucide-react';
 import { AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { sendPasswordResetEmail } from '@/utils/auth-utils';
 import { markPasswordSetupComplete } from '@/hooks/usePasswordSetupState';
 import { useToast } from '@/hooks/use-toast';
 import Header from "@/components/Header";
+
+/** Enlace inválido/expirado con opción de solicitar otro correo (sin salir del flujo). */
+function InvalidLinkScreen({ onBackToLogin }: { onBackToLogin: () => void }) {
+  const { toast } = useToast();
+  const [email, setEmail] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const handleResend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) {
+      toast({ title: 'Error', description: 'Ingresa tu correo electrónico.', variant: 'destructive' });
+      return;
+    }
+    setSending(true);
+    try {
+      const { success, error } = await sendPasswordResetEmail(email.trim());
+      if (!success) throw new Error(error);
+      setSent(true);
+      toast({ title: 'Correo enviado', description: 'Revisa tu bandeja de entrada para continuar.' });
+    } catch {
+      toast({ title: 'Error', description: 'No se pudo enviar el correo. Inténtalo de nuevo.', variant: 'destructive' });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="w-full">
+      <Header />
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 pt-28">
+        <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
+          <div className="text-center">
+            <AlertCircle className="mx-auto h-12 w-12 text-yellow-500" />
+            <h2 className="mt-6 text-2xl font-bold text-gray-900">
+              Enlace inválido o expirado
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              No se encontró un código de restablecimiento válido. Ingresa tu correo para recibir uno nuevo.
+            </p>
+          </div>
+          {sent ? (
+            <p role="status" className="text-sm text-green-700 text-center">
+              Si el correo está registrado, recibirás un nuevo enlace en unos minutos.
+            </p>
+          ) : (
+            <form onSubmit={handleResend} className="space-y-4">
+              <div>
+                <Label htmlFor="reset-resend-email">Correo electrónico</Label>
+                <Input
+                  id="reset-resend-email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="tucorreo@ejemplo.cl"
+                  className="mt-1"
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={sending}>
+                {sending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  'Enviar nuevo enlace'
+                )}
+              </Button>
+            </form>
+          )}
+          <div>
+            <Button onClick={onBackToLogin} variant="outline" className="w-full">
+              Volver al inicio de sesión
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
@@ -37,7 +119,15 @@ export default function ResetPasswordPage() {
         const refreshToken = hashParams.get('refresh_token');
         const type = hashParams.get('type');
 
-        if (accessToken && refreshToken && type === 'recovery') {
+        // El cliente (detectSessionInUrl) puede haber establecido la sesión
+        // automáticamente al cargar. Si ya hay sesión, no re-canjear: un
+        // segundo canje del mismo código falla y mostraría un falso
+        // "enlace inválido". Solo se limpia la URL.
+        const { data: { session: existingSession } } = await supabase.auth.getSession();
+        if (existingSession) {
+          const cleanUrl = `${url.pathname}`;
+          window.history.replaceState({}, '', cleanUrl);
+        } else if (accessToken && refreshToken && type === 'recovery') {
           const { error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
@@ -144,30 +234,9 @@ export default function ResetPasswordPage() {
   const hasQueryRecoveryToken = Boolean(searchParams.get('code') || (searchParams.get('token_hash') && searchParams.get('type') === 'recovery'));
   if (!hasQueryRecoveryToken && !hasHashRecoveryToken) {
     return (
-      <div className="w-full">
-      <Header />
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 pt-28">
-          <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
-            <div className="text-center">
-              <AlertCircle className="mx-auto h-12 w-12 text-yellow-500" />
-              <h2 className="mt-6 text-2xl font-bold text-gray-900">
-                Enlace inválido o expirado
-              </h2>
-              <p className="mt-2 text-sm text-gray-600">
-                No se encontró un código de restablecimiento válido. Por favor, solicita un nuevo enlace desde la página de inicio de sesión.
-              </p>
-              <div className="mt-6">
-                <Button
-                  onClick={() => navigate('/')}
-                  className="w-full"
-                >
-                  Volver al inicio de sesión
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <InvalidLinkScreen
+        onBackToLogin={() => navigate('/')}
+      />
     );
   }
 
