@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, DollarSign, User, ArrowLeft, ShieldCheck, Loader2, Star, Quote, Globe, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, addDays, startOfDay, parseISO, isBefore, isAfter, setHours, setMinutes } from 'date-fns';
+import { filterSlotsByConfig, hasSurvivingSlotToday } from '@/lib/bookingAvailability';
 import { es } from 'date-fns/locale';
 import { isChileanHoliday } from '@/lib/holidays';
 import PreCheckoutModal from '@/components/PreCheckoutModal';
@@ -158,21 +159,11 @@ function getAvailabilityForDay(
   return null;
 }
 
-/** ¿Queda hoy algún slot config-true que supere el corte (now+15min)? */
-export function hasSurvivingSlotToday(
-  dayAvailability: boolean[] | null | undefined,
-  nowDate: Date,
-  startHour = 9
-): boolean {
-  if (!Array.isArray(dayAvailability)) return false;
-  const cutoff = new Date(nowDate.getTime() + 15 * 60 * 1000);
-  return dayAvailability.some((slot, index) => {
-    if (!slot) return false;
-    const d = new Date(nowDate);
-    d.setHours(startHour + index, 0, 0, 0);
-    return d.getTime() >= cutoff.getTime();
-  });
-}
+// Filtros puros en @/lib/bookingAvailability (misma semántica, testeables
+// sin arrastrar la página). Import directo arriba; re-export local para
+// compatibilidad con importadores existentes.
+export { filterSlotsByConfig, hasSurvivingSlotToday };
+export type { ConfigSlot } from '@/lib/bookingAvailability';
 
 export default function BookingPage() {
   const { clientSurchargePercent, pricingReady, pricingError } = useBookingPricing();
@@ -504,22 +495,12 @@ export default function BookingPage() {
         
         const hasCustomAvailability = availabilityConfig && Object.keys(availabilityConfig).length > 0;
 
-        const configFilteredSlots = baseSlots.filter(slot => {
-          const hour = parseInt(slot.time.split(':')[0]);
-          const hourIndex = hour - AVAILABILITY_START_HOUR;
-
-          if (dayAvailability && Array.isArray(dayAvailability)) {
-            const result = dayAvailability[hourIndex] === true;
-            if (!result)
-            return result;
-          }
-
-          if (hasCustomAvailability) {
-            return false;
-          }
-
-          return true;
-        });
+        const configFilteredSlots = filterSlotsByConfig(
+          baseSlots,
+          dayAvailability,
+          Boolean(hasCustomAvailability),
+          AVAILABILITY_START_HOUR
+        );
 
         // 4. Fetch busy slots from DB (Bookings) - defined above, now map them
         const bookedTimes = (busySlots as BusySlot[] | null)?.map((slot) => ({
