@@ -254,6 +254,21 @@ export default function ResetPasswordPage() {
 
     try {
       setProcessingReset(true);
+      // Si esta visita marcó una recuperación, la sesión actual debe seguir
+      // siendo del mismo usuario (cierre/cambio de cuenta en otra pestaña o
+      // expiración no deben heredar la autorización). Sin marca (tokens
+      // validados en esta visita pero almacenamiento no disponible) se
+      // continúa: updateUser actúa solo sobre la sesión vigente.
+      const mark = readRecoveryMark();
+      if (mark) {
+        const { data: { user: submitUser } } = await supabase.auth.getUser();
+        if (!submitUser || submitUser.id !== mark) {
+          clearRecoveryProcessed();
+          setError('La sesión cambió durante el proceso. Solicita un nuevo enlace de recuperación.');
+          setProcessingReset(false);
+          return;
+        }
+      }
       // Update password (requires a valid recovery session)
       const { error: updateError } = await supabase.auth.updateUser({
         password: password

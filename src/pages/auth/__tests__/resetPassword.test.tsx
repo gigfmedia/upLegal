@@ -8,7 +8,8 @@ vi.mock('@/lib/supabase', () => ({
   supabase: {
     auth: {
       getSession: vi.fn(async () => ({ data: { session: null }, error: null })),
-      setSession: vi.fn(async () => ({ data: {}, error: null })),
+      getUser: vi.fn(async () => ({ data: { user: { id: 'u1' } }, error: null })),
+      setSession: vi.fn(async () => ({ data: { user: { id: 'u1' } }, error: null })),
       exchangeCodeForSession: vi.fn(async () => ({ data: {}, error: null })),
       verifyOtp: vi.fn(async () => ({ data: {}, error: null })),
       updateUser: vi.fn(async () => ({ data: {}, error: null })),
@@ -45,7 +46,7 @@ describe('recovery nunca va a /auth/callback (App.tsx)', () => {
 
 describe('ResetPasswordPage', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     sessionStorage.clear();
     window.history.pushState({}, '', '/');
     const { getSession, setSession, exchangeCodeForSession, verifyOtp, updateUser } = supabase.auth;
@@ -157,6 +158,28 @@ describe('ResetPasswordPage', () => {
     );
     expect(await screen.findByText(/Enlace inválido o expirado/)).toBeDefined();
     expect(supabase.auth.updateUser).not.toHaveBeenCalled();
+    window.history.pushState({}, '', '/');
+  });
+
+  it('cambio de usuario antes de enviar bloquea y limpia la marca', async () => {
+    window.history.pushState({}, '', '/reset-password?code=ok123');
+    render(
+      <MemoryRouter initialEntries={['/reset-password?code=ok123']}>
+        <ResetPasswordPage />
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(screen.getByText(/Restablecer contraseña/)).toBeDefined());
+    // La visita marcó u1; la sesión vigente ahora es de otro usuario.
+    vi.mocked(supabase.auth.getUser).mockResolvedValue({
+      data: { user: { id: 'u2' } },
+      error: null,
+    } as never);
+    fireEvent.change(screen.getByLabelText(/Nueva contraseña/), { target: { value: 'NuevaSegura1!' } });
+    fireEvent.change(screen.getByLabelText(/Confirmar contraseña/), { target: { value: 'NuevaSegura1!' } });
+    fireEvent.click(screen.getByRole('button', { name: /Actualizar contraseña/ }));
+    await waitFor(() => expect(screen.getByText(/La sesión cambió durante el proceso/)).toBeDefined());
+    expect(supabase.auth.updateUser).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem('legalup_recovery_ok')).toBeNull();
     window.history.pushState({}, '', '/');
   });
 
