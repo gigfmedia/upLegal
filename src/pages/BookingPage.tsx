@@ -230,6 +230,9 @@ export default function BookingPage() {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   // Keep ref in sync so fetchAvailability can read current value without being a dependency
   useEffect(() => { selectedTimeRef.current = selectedTime; }, [selectedTime]);
+  const [duration, setDuration] = useState<60 | 90 | 120>(60);
+  const [showPreCheckout, setShowPreCheckout] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   // Diagnóstico: grilla vacía con fecha elegida y sin error (una vez por fecha).
   const emptyLoggedRef = useRef<string | null>(null);
   useEffect(() => {
@@ -253,9 +256,6 @@ export default function BookingPage() {
       }).catch(() => {});
     }).catch(() => {});
   }, [selectedDate, isLoadingSlots, slotsError, availableSlots.length, duration, actualLawyerId]);
-  const [duration, setDuration] = useState<60 | 90 | 120>(60);
-  const [showPreCheckout, setShowPreCheckout] = useState(false);
-  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
 
   // Fetch lawyer profile
   useEffect(() => {
