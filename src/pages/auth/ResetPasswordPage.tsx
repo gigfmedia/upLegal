@@ -8,6 +8,8 @@ import { Loader2, Check, ArrowLeft } from 'lucide-react';
 import { AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { sendPasswordResetEmail } from '@/utils/auth-utils';
+import { PasswordField } from '@/components/auth/SecurePasswordCard';
+import { isPasswordStrong } from '@/lib/passwordValidation';
 import { markPasswordSetupComplete } from '@/hooks/usePasswordSetupState';
 import { useToast } from '@/hooks/use-toast';
 import Header from "@/components/Header";
@@ -247,8 +249,8 @@ export default function ResetPasswordPage() {
       return;
     }
     
-    if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres');
+    if (!isPasswordStrong(password)) {
+      setError('La contraseña debe tener entre 8 y 18 caracteres e incluir mayúscula, minúscula, número y símbolo.');
       return;
     }
 
@@ -400,7 +402,7 @@ export default function ResetPasswordPage() {
               Restablecer contraseña
             </h2>
             <p className="mt-2 text-sm text-gray-600">
-              Ingresa tu nueva contraseña. Asegúrate de que tenga al menos 6 caracteres.
+              Ingresa tu nueva contraseña. Debe tener entre 8 y 18 caracteres e incluir mayúscula, minúscula, número y símbolo.
             </p>
           </div>
 
@@ -412,33 +414,24 @@ export default function ResetPasswordPage() {
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-6">
             <div className="space-y-4">
-              <div>
-                <Label htmlFor="password">Nueva contraseña</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="mt-1"
-                  minLength={6}
-                  placeholder="••••••"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="mt-1"
-                  minLength={6}
-                  placeholder="••••••"
-                />
-              </div>
+              <PasswordField
+                id="password"
+                label="Nueva contraseña"
+                placeholder="••••••"
+                value={password}
+                onChange={setPassword}
+                disabled={processingReset}
+                autoComplete="new-password"
+              />
+              <PasswordField
+                id="confirmPassword"
+                label="Confirmar contraseña"
+                placeholder="••••••"
+                value={confirmPassword}
+                onChange={setConfirmPassword}
+                disabled={processingReset}
+                autoComplete="new-password"
+              />
             </div>
 
             <div>

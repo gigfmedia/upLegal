@@ -16,7 +16,8 @@ import {
 } from '@/hooks/usePasswordSetupState';
 import { isPasswordStrong } from '@/lib/passwordValidation';
 
-function PasswordField({
+/** Campo de contraseña reutilizable con ojo mostrar/ocultar independiente. */
+export function PasswordField({
   id,
   label,
   placeholder,

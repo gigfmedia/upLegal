@@ -161,6 +161,41 @@ describe('ResetPasswordPage', () => {
     window.history.pushState({}, '', '/');
   });
 
+  it('ojo muestra/oculta cada campo de forma independiente', async () => {
+    window.history.pushState({}, '', '/reset-password?code=ok123');
+    render(
+      <MemoryRouter initialEntries={['/reset-password?code=ok123']}>
+        <ResetPasswordPage />
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(screen.getByText(/Restablecer contraseña/)).toBeDefined());
+    const toggles = screen.getAllByRole('button', { name: /Mostrar Nueva contraseña|Mostrar Confirmar contraseña/ });
+    expect(toggles).toHaveLength(2);
+    fireEvent.click(toggles[0]);
+    expect(screen.getByRole('button', { name: /Ocultar Nueva contraseña/ })).toBeDefined();
+    expect(screen.getByRole('button', { name: /Mostrar Confirmar contraseña/ })).toBeDefined();
+    const inputs = document.querySelectorAll('input');
+    expect(inputs[0].getAttribute('type')).toBe('text');
+    expect(inputs[1].getAttribute('type')).toBe('password');
+    window.history.pushState({}, '', '/');
+  });
+
+  it('rechaza clave débil con el mensaje canónico compartido', async () => {
+    window.history.pushState({}, '', '/reset-password?code=ok123');
+    render(
+      <MemoryRouter initialEntries={['/reset-password?code=ok123']}>
+        <ResetPasswordPage />
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(screen.getByText(/Restablecer contraseña/)).toBeDefined());
+    fireEvent.change(screen.getByLabelText(/Nueva contraseña/, { selector: 'input' }), { target: { value: 'corta1!' } });
+    fireEvent.change(screen.getByLabelText(/Confirmar contraseña/, { selector: 'input' }), { target: { value: 'corta1!' } });
+    fireEvent.click(screen.getByRole('button', { name: /Actualizar contraseña/ }));
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/entre 8 y 18 caracteres e incluir mayúscula/));
+    expect(supabase.auth.updateUser).not.toHaveBeenCalled();
+    window.history.pushState({}, '', '/');
+  });
+
   it('cambio de usuario antes de enviar bloquea y limpia la marca', async () => {
     window.history.pushState({}, '', '/reset-password?code=ok123');
     render(
@@ -174,8 +209,8 @@ describe('ResetPasswordPage', () => {
       data: { user: { id: 'u2' } },
       error: null,
     } as never);
-    fireEvent.change(screen.getByLabelText(/Nueva contraseña/), { target: { value: 'NuevaSegura1!' } });
-    fireEvent.change(screen.getByLabelText(/Confirmar contraseña/), { target: { value: 'NuevaSegura1!' } });
+    fireEvent.change(screen.getByLabelText(/Nueva contraseña/, { selector: 'input' }), { target: { value: 'NuevaSegura1!' } });
+    fireEvent.change(screen.getByLabelText(/Confirmar contraseña/, { selector: 'input' }), { target: { value: 'NuevaSegura1!' } });
     fireEvent.click(screen.getByRole('button', { name: /Actualizar contraseña/ }));
     await waitFor(() => expect(screen.getByText(/La sesión cambió durante el proceso/)).toBeDefined());
     expect(supabase.auth.updateUser).not.toHaveBeenCalled();
@@ -191,8 +226,8 @@ describe('ResetPasswordPage', () => {
       </MemoryRouter>
     );
     await waitFor(() => expect(screen.getByText(/Restablecer contraseña/)).toBeDefined());
-    fireEvent.change(screen.getByLabelText(/Nueva contraseña/), { target: { value: 'NuevaSegura1!' } });
-    fireEvent.change(screen.getByLabelText(/Confirmar contraseña/), { target: { value: 'NuevaSegura1!' } });
+    fireEvent.change(screen.getByLabelText(/Nueva contraseña/, { selector: 'input' }), { target: { value: 'NuevaSegura1!' } });
+    fireEvent.change(screen.getByLabelText(/Confirmar contraseña/, { selector: 'input' }), { target: { value: 'NuevaSegura1!' } });
     fireEvent.click(screen.getByRole('button', { name: /Actualizar contraseña/ }));
     await waitFor(() =>
       expect(supabase.auth.updateUser).toHaveBeenCalledWith({ password: 'NuevaSegura1!' })
