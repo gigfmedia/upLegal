@@ -1,4 +1,5 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
+import * as Sentry from '@sentry/react';
 import { logError } from '@/utils/errorLogger';
 import { Loader2 } from 'lucide-react';
 
@@ -74,6 +75,10 @@ class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     const isChunk = isChunkLoadError(error);
+
+    Sentry.captureException(error, {
+      extra: { componentStack: errorInfo.componentStack, isChunkError: isChunk },
+    });
 
     logError({
       type: isChunk ? 'chunk_load_error' : 'react_error_boundary',

@@ -7,7 +7,7 @@ interface ImportMetaEnv {
   readonly VITE_MERCADOPAGO_PUBLIC_KEY: string;
   readonly VITE_SUPABASE_PROJECT_ID: string;
   readonly VITE_GA_MEASUREMENT_ID: string;
-  // Add other environment variables as needed
+  readonly VITE_SENTRY_DSN?: string;
 }
 
 interface ImportMeta {
