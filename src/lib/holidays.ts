@@ -1,6 +1,6 @@
 import { format, parseISO, isSameDay } from 'date-fns';
 
-// Días feriados en Chile para 2025 y 2026
+// Días feriados en Chile para 2025, 2026 y 2027
 // Formato: YYYY-MM-DD
 export const CHILEAN_HOLIDAYS = [
 
@@ -41,6 +41,25 @@ export const CHILEAN_HOLIDAYS = [
   '2026-11-01', // Día de Todos los Santos
   '2026-12-08', // Inmaculada Concepción
   '2026-12-25', // Navidad (Irrenunciable)
+
+  // 2027
+  '2027-01-01', // Año Nuevo (Irrenunciable)
+  '2027-03-26', // Viernes Santo
+  '2027-03-27', // Sábado Santo
+  '2027-05-01', // Día del Trabajo (Irrenunciable)
+  '2027-05-21', // Día de las Glorias Navales
+  '2027-06-21', // Día Nacional de los Pueblos Indígenas
+  '2027-06-28', // San Pedro y San Pablo (trasladado al lunes)
+  '2027-07-16', // Día de la Virgen del Carmen
+  '2027-08-15', // Asunción de la Virgen
+  '2027-09-17', // Feriado adicional Fiestas Patrias
+  '2027-09-18', // Independencia Nacional (Irrenunciable)
+  '2027-09-19', // Día de las Glorias del Ejército (Irrenunciable)
+  '2027-10-11', // Encuentro de Dos Mundos (trasladado al lunes)
+  '2027-10-31', // Día de las Iglesias Evangélicas y Protestantes
+  '2027-11-01', // Día de Todos los Santos (trasladado al lunes)
+  '2027-12-08', // Inmaculada Concepción
+  '2027-12-25', // Navidad (Irrenunciable)
 ];
 
 /**
