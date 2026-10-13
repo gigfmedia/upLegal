@@ -236,10 +236,11 @@ export default function ResetPasswordPage() {
   // GoTrue redirige enlaces consumidos/expirados con params de error
   // (otp_expired, access_denied). Detectarlos distingue "enlace usado" de
   // "enlace sin tokens" sin exponer valores.
+  const hashErrorParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.hash.replace('#', '') : '');
   const urlErrorCode =
     searchParams.get('error_code') ||
-    new URLSearchParams(typeof window !== 'undefined' ? window.location.hash.replace('#', '') : '').get('error_code');
-  const linkFailed = Boolean(searchParams.get('error') || urlErrorCode);
+    hashErrorParams.get('error_code');
+  const linkFailed = Boolean(searchParams.get('error') || hashErrorParams.get('error') || urlErrorCode);
   const usedOrExpired = urlErrorCode === 'otp_expired' || urlErrorCode === 'access_denied';
   if (!hasQueryRecoveryToken && !hasHashRecoveryToken) {
     return (
