@@ -83,4 +83,17 @@ describe('sprint conversión: confianza en pago', () => {
     expect(c).toContain('trackBeginCheckout');
     expect(c).not.toContain('item_name');
   });
+
+  it('cambio de abogado invalida selección y config previa', () => {
+    const c = read('src/pages/BookingPage.tsx');
+    expect(c).toContain('setSelectedDate(null)');
+    expect(c).toContain('lawyerAvailabilityRef.current = undefined');
+    expect(c).toContain('grilla vacía fantasma');
+  });
+
+  it('diagnóstico solo tras cómputo real de la misma fecha', () => {
+    const c = read('src/pages/BookingPage.tsx');
+    expect(c).toContain('forKey');
+    expect(c).toContain('if (slotCountsRef.current.forKey !== key) return;');
+  });
 });

@@ -234,11 +234,14 @@ export default function BookingPage() {
   const [showPreCheckout, setShowPreCheckout] = useState(false);
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   // Diagnóstico: grilla vacía con fecha elegida y sin error (una vez por fecha).
+  // Solo tras un cómputo real para esa misma fecha (evita falsos positivos
+  // del primer render o de estados transitorios).
   const emptyLoggedRef = useRef<string | null>(null);
-  const slotCountsRef = useRef({ base: -1, config: -1, busy: -1, final: -1 });
+  const slotCountsRef = useRef({ base: -1, config: -1, busy: -1, final: -1, forKey: '' });
   useEffect(() => {
     if (!selectedDate || isLoadingSlots || slotsError || availableSlots.length > 0) return;
     const key = `${actualLawyerId}:${format(selectedDate, 'yyyy-MM-dd')}:${duration}`;
+    if (slotCountsRef.current.forKey !== key) return;
     if (emptyLoggedRef.current === key) return;
     emptyLoggedRef.current = key;
     import('@/utils/errorLogger').then(({ logError }) => {
@@ -263,6 +266,18 @@ export default function BookingPage() {
   useEffect(() => {
     async function fetchLawyer() {
       if (!lawyerId) return;
+
+      // Cambio de abogado con la misma instancia (navegación cliente-cliente):
+      // invalida selección y config previa para no computar nunca con datos
+      // mezclados (fecha de A con config de B = grilla vacía fantasma).
+      setSelectedDate(null);
+      setSelectedTime(null);
+      setAvailableSlots([]);
+      setSlotsError(false);
+      setLawyerAvailability(undefined);
+      lawyerAvailabilityRef.current = undefined;
+      emptyLoggedRef.current = null;
+      slotCountsRef.current = { base: -1, config: -1, busy: -1, final: -1, forKey: '' };
 
       const actualId = actualLawyerId;
 
@@ -555,7 +570,13 @@ export default function BookingPage() {
         });
 
         const filteredSlots = applySameDayFilter(finalSlots);
-        slotCountsRef.current = { ...slotCountsRef.current, final: filteredSlots.length };
+        slotCountsRef.current = {
+          base: baseSlots.length,
+          config: configFilteredSlots.length,
+          busy: bookedTimes.length,
+          final: filteredSlots.length,
+          forKey: `${actualLawyerId}:${format(selectedDate, 'yyyy-MM-dd')}:${duration}`,
+        };
 
         // Use ref to avoid selectedTime being a dependency (would cause double-fetch loop)
         if (selectedTimeRef.current && !filteredSlots.some(slot => slot.time === selectedTimeRef.current)) {
