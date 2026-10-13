@@ -12,6 +12,42 @@ import { markPasswordSetupComplete } from '@/hooks/usePasswordSetupState';
 import { useToast } from '@/hooks/use-toast';
 import Header from "@/components/Header";
 
+/**
+ * Autorización de recuperación con alcance de visita (sessionStorage = por pestaña).
+ * Se marca SOLO cuando esta visita canjeó credenciales de recuperación con éxito
+ * (setSession / exchangeCode / verifyOtp). Permite reconocer una sesión que ya
+ * fue establecida y cuya URL ya se limpió, sin aceptar una sesión ordinaria:
+ * el valor guardado es el user id y debe coincidir con la sesión actual.
+ * updateUser sigue actuando solo sobre el propio usuario de la sesión, por lo
+ * que no hay escalación posible: esto solo decide si se muestra el formulario.
+ */
+const RECOVERY_OK_KEY = 'legalup_recovery_ok';
+
+function markRecoveryProcessed(userId: string | undefined) {
+  if (!userId) return;
+  try {
+    sessionStorage.setItem(RECOVERY_OK_KEY, userId);
+  } catch {
+    /* almacenamiento no disponible: se mantiene el gate por tokens */
+  }
+}
+
+function readRecoveryMark(): string | null {
+  try {
+    return sessionStorage.getItem(RECOVERY_OK_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function clearRecoveryProcessed() {
+  try {
+    sessionStorage.removeItem(RECOVERY_OK_KEY);
+  } catch {
+    /* noop */
+  }
+}
+
 /** Enlace inválido/expirado con opción de solicitar otro correo (sin salir del flujo). */
 function InvalidLinkScreen({ onBackToLogin, reason }: { onBackToLogin: () => void; reason: 'used_or_expired' | 'generic' }) {
   const { toast } = useToast();
@@ -102,6 +138,9 @@ export default function ResetPasswordPage() {
   const [processingReset, setProcessingReset] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  // null = sin verificar (solo relevante sin tokens en URL); true = esta
+  // visita procesó una recuperación; false = sesión ordinaria o sin sesión.
+  const [recoveryVerified, setRecoveryVerified] = useState<boolean | null>(null);
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -122,11 +161,13 @@ export default function ResetPasswordPage() {
         const type = hashParams.get('type');
 
         if (accessToken && refreshToken && type === 'recovery') {
-          const { error: sessionError } = await supabase.auth.setSession({
+          const { data: setData, error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
           });
           if (sessionError) throw sessionError;
+          markRecoveryProcessed(setData?.user?.id);
+          setRecoveryVerified(true);
 
           // Clear hash to avoid leaking tokens
           window.history.replaceState({}, '', `${url.pathname}${url.search}`);
@@ -136,28 +177,49 @@ export default function ResetPasswordPage() {
           // falla pero ya hay sesión activa, fue una carrera ganada por el
           // auto-canje y se continúa sin mostrar un falso "enlace inválido".
           // Sin sesión, el error es real.
-          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(queryCode);
+          const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(queryCode);
           if (exchangeError) {
             const { data: { session: racedSession } } = await supabase.auth.getSession();
             if (!racedSession) throw exchangeError;
+            markRecoveryProcessed(racedSession.user?.id);
+          } else {
+            markRecoveryProcessed(exchangeData?.user?.id);
           }
+          setRecoveryVerified(true);
 
           // Remove code from URL
           const newUrl = new URL(window.location.href);
           newUrl.searchParams.delete('code');
           window.history.replaceState({}, '', newUrl.toString());
         } else if (queryTokenHash && queryType === 'recovery') {
-          const { error: verifyError } = await supabase.auth.verifyOtp({
+          const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
             type: 'recovery',
             token_hash: queryTokenHash,
           });
           if (verifyError) throw verifyError;
+          markRecoveryProcessed(verifyData?.user?.id);
+          setRecoveryVerified(true);
 
           // Remove token_hash/type from URL
           const newUrl = new URL(window.location.href);
           newUrl.searchParams.delete('token_hash');
           newUrl.searchParams.delete('type');
           window.history.replaceState({}, '', newUrl.toString());
+        } else {
+          // Sin credenciales en la URL: solo continuar si ESTA visita ya
+          // procesó una recuperación (sesión establecida y URL limpiada).
+          // Una sesión ordinaria sin marca NO autoriza el restablecimiento.
+          const mark = readRecoveryMark();
+          if (mark) {
+            const { data: { session: markedSession } } = await supabase.auth.getSession();
+            if (markedSession && markedSession.user?.id === mark) {
+              setRecoveryVerified(true);
+            } else {
+              setRecoveryVerified(false);
+            }
+          } else {
+            setRecoveryVerified(false);
+          }
         }
       } catch (err) {
         console.error('Error al procesar el enlace de recuperación:', err);
@@ -198,6 +260,9 @@ export default function ResetPasswordPage() {
       });
 
       if (updateError) throw updateError;
+
+      // Un solo uso: la autorización de esta visita queda consumida.
+      clearRecoveryProcessed();
 
       // 4.53D: graduate into explicit password authority while the recovery
       // session is still valid (before sign-out below). Best effort: failure
@@ -242,7 +307,19 @@ export default function ResetPasswordPage() {
     hashErrorParams.get('error_code');
   const linkFailed = Boolean(searchParams.get('error') || hashErrorParams.get('error') || urlErrorCode);
   const usedOrExpired = urlErrorCode === 'otp_expired' || urlErrorCode === 'access_denied';
-  if (!hasQueryRecoveryToken && !hasHashRecoveryToken) {
+  if (!hasQueryRecoveryToken && !hasHashRecoveryToken && recoveryVerified !== true) {
+    // loading === true + recoveryVerified === null significa "aún verificando":
+    // no mostrar el error hasta que el efecto confirme que no hay autorización.
+    if (loading || recoveryVerified === null) {
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="mx-auto h-12 w-12 animate-spin text-gray-900" />
+            <p className="mt-4 text-gray-600">Procesando solicitud de restablecimiento...</p>
+          </div>
+        </div>
+      );
+    }
     return (
       <InvalidLinkScreen
         onBackToLogin={() => navigate('/')}
