@@ -45,6 +45,18 @@ describe('recovery nunca va a /auth/callback (App.tsx)', () => {
 });
 
 describe('ResetPasswordPage', () => {
+  it('enlace consumido (error otp_expired) muestra causa específica + reenvío', async () => {
+    window.history.pushState({}, '', '/reset-password?error=access_denied&error_code=otp_expired');
+    render(
+      <MemoryRouter initialEntries={['/reset-password?error=access_denied&error_code=otp_expired']}>
+        <ResetPasswordPage />
+      </MemoryRouter>
+    );
+    expect(await screen.findByText(/ya fue utilizado o expiró/)).toBeDefined();
+    expect(screen.getByLabelText(/Correo electrónico/)).toBeDefined();
+    window.history.pushState({}, '', '/');
+  });
+
   it('sin tokens muestra pantalla inválida con reenvío (no exige login)', async () => {
     render(
       <MemoryRouter initialEntries={['/reset-password']}>

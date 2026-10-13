@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import Header from "@/components/Header";
 
 /** Enlace inválido/expirado con opción de solicitar otro correo (sin salir del flujo). */
-function InvalidLinkScreen({ onBackToLogin }: { onBackToLogin: () => void }) {
+function InvalidLinkScreen({ onBackToLogin, reason }: { onBackToLogin: () => void; reason: 'used_or_expired' | 'generic' }) {
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [sending, setSending] = useState(false);
@@ -49,7 +49,9 @@ function InvalidLinkScreen({ onBackToLogin }: { onBackToLogin: () => void }) {
               Enlace inválido o expirado
             </h2>
             <p className="mt-2 text-sm text-gray-600">
-              No se encontró un código de restablecimiento válido. Ingresa tu correo para recibir uno nuevo.
+              {reason === 'used_or_expired'
+                ? 'Este enlace ya fue utilizado o expiró. Los enlaces de recuperación son de un solo uso. Ingresa tu correo para recibir uno nuevo.'
+                : 'No se encontró un código de restablecimiento válido. Ingresa tu correo para recibir uno nuevo.'}
             </p>
           </div>
           {sent ? (
@@ -231,10 +233,19 @@ export default function ResetPasswordPage() {
   // Show error if no code is provided
   const hasHashRecoveryToken = typeof window !== 'undefined' && window.location.hash.includes('access_token=');
   const hasQueryRecoveryToken = Boolean(searchParams.get('code') || (searchParams.get('token_hash') && searchParams.get('type') === 'recovery'));
+  // GoTrue redirige enlaces consumidos/expirados con params de error
+  // (otp_expired, access_denied). Detectarlos distingue "enlace usado" de
+  // "enlace sin tokens" sin exponer valores.
+  const urlErrorCode =
+    searchParams.get('error_code') ||
+    new URLSearchParams(typeof window !== 'undefined' ? window.location.hash.replace('#', '') : '').get('error_code');
+  const linkFailed = Boolean(searchParams.get('error') || urlErrorCode);
+  const usedOrExpired = urlErrorCode === 'otp_expired' || urlErrorCode === 'access_denied';
   if (!hasQueryRecoveryToken && !hasHashRecoveryToken) {
     return (
       <InvalidLinkScreen
         onBackToLogin={() => navigate('/')}
+        reason={linkFailed || usedOrExpired ? 'used_or_expired' : 'generic'}
       />
     );
   }
