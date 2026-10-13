@@ -27,6 +27,39 @@ describe('sprint conversión: sin disponibilidad inventada', () => {
   });
 });
 
+describe('sprint conversión: fecha y slots con el mismo corte', () => {
+  it('helper hasSurvivingSlotToday existe y se usa en el filtro de fechas', () => {
+    const c = read('src/pages/BookingPage.tsx');
+    expect(c).toContain('export function hasSurvivingSlotToday');
+    expect(c).toContain('15 * 60 * 1000');
+    expect(c).not.toMatch(/slotHour > currentHour/);
+    // El filtro de hoy usa el helper en vez de granularidad por hora.
+    expect(c).toMatch(/if \(isTodayDate\) \{\s+return hasSurvivingSlotToday\(dayAvailability, now\);/);
+  });
+
+  it('lógica del helper: 17:50 excluye, 17:00 incluye, null excluye', () => {
+    // Réplica exacta del helper para validar la aritmética del corte.
+    const hasSurvivingSlotToday = (
+      dayAvailability: boolean[] | null | undefined, nowDate: Date, startHour = 9
+    ): boolean => {
+      if (!Array.isArray(dayAvailability)) return false;
+      const cutoff = new Date(nowDate.getTime() + 15 * 60 * 1000);
+      return dayAvailability.some((slot, index) => {
+        if (!slot) return false;
+        const d = new Date(nowDate);
+        d.setHours(startHour + index, 0, 0, 0);
+        return d.getTime() >= cutoff.getTime();
+      });
+    };
+    const src = read('src/pages/BookingPage.tsx');
+    expect(src).toContain('nowDate.getTime() + 15 * 60 * 1000');
+    const allTrue = Array(10).fill(true);
+    expect(hasSurvivingSlotToday(allTrue, new Date(2026, 9, 13, 17, 50))).toBe(false);
+    expect(hasSurvivingSlotToday(allTrue, new Date(2026, 9, 13, 17, 0))).toBe(true);
+    expect(hasSurvivingSlotToday(null, new Date(2026, 9, 13, 10, 0))).toBe(false);
+  });
+});
+
 describe('sprint conversión: confianza en pago', () => {
   it('BookingSuccess exige confirmed y no dispara purchase en pendiente', () => {
     const c = read('src/pages/BookingSuccessPage.tsx');

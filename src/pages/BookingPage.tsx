@@ -158,6 +158,22 @@ function getAvailabilityForDay(
   return null;
 }
 
+/** ¿Queda hoy algún slot config-true que supere el corte (now+15min)? */
+export function hasSurvivingSlotToday(
+  dayAvailability: boolean[] | null | undefined,
+  nowDate: Date,
+  startHour = 9
+): boolean {
+  if (!Array.isArray(dayAvailability)) return false;
+  const cutoff = new Date(nowDate.getTime() + 15 * 60 * 1000);
+  return dayAvailability.some((slot, index) => {
+    if (!slot) return false;
+    const d = new Date(nowDate);
+    d.setHours(startHour + index, 0, 0, 0);
+    return d.getTime() >= cutoff.getTime();
+  });
+}
+
 export default function BookingPage() {
   const { clientSurchargePercent, pricingReady, pricingError } = useBookingPricing();
   const { lawyerId } = useParams<{ lawyerId: string }>();
@@ -214,6 +230,29 @@ export default function BookingPage() {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   // Keep ref in sync so fetchAvailability can read current value without being a dependency
   useEffect(() => { selectedTimeRef.current = selectedTime; }, [selectedTime]);
+  // Diagnóstico: grilla vacía con fecha elegida y sin error (una vez por fecha).
+  const emptyLoggedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!selectedDate || isLoadingSlots || slotsError || availableSlots.length > 0) return;
+    const key = `${actualLawyerId}:${format(selectedDate, 'yyyy-MM-dd')}:${duration}`;
+    if (emptyLoggedRef.current === key) return;
+    emptyLoggedRef.current = key;
+    import('@/utils/errorLogger').then(({ logError }) => {
+      logError({
+        type: 'booking_empty_slots',
+        message: 'Grilla vacía sin error de disponibilidad',
+        details: {
+          lawyer_id: actualLawyerId,
+          date: format(selectedDate, 'yyyy-MM-dd'),
+          weekday: selectedDate.getDay(),
+          duration,
+          hasConfig: !!lawyerAvailabilityRef.current && Object.keys(lawyerAvailabilityRef.current).length > 0,
+          configKeys: lawyerAvailabilityRef.current ? Object.keys(lawyerAvailabilityRef.current) : [],
+        },
+        path: typeof window !== 'undefined' ? window.location.pathname : '',
+      }).catch(() => {});
+    }).catch(() => {});
+  }, [selectedDate, isLoadingSlots, slotsError, availableSlots.length, duration, actualLawyerId]);
   const [duration, setDuration] = useState<60 | 90 | 120>(60);
   const [showPreCheckout, setShowPreCheckout] = useState(false);
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
@@ -677,7 +716,6 @@ export default function BookingPage() {
   const availableDates = useMemo(() => {
     const now = new Date();
     const todayStr = format(now, 'yyyy-MM-dd');
-    const currentHour = now.getHours();
 
     const dates = Array.from({ length: 30 }, (_, i) => addDays(startOfDay(now), i));
 
@@ -689,7 +727,11 @@ export default function BookingPage() {
         const isTodayDate = format(date, 'yyyy-MM-dd') === todayStr;
 
         if (!lawyerAvailability || Object.keys(lawyerAvailability).length === 0) {
-          if (isTodayDate) return currentHour < 18;
+          if (isTodayDate) {
+            const lastSlot = new Date(date);
+            lastSlot.setHours(18, 0, 0, 0);
+            return lastSlot.getTime() >= now.getTime() + 15 * 60 * 1000;
+          }
           return true;
         }
 
@@ -699,10 +741,7 @@ export default function BookingPage() {
         if (!Array.isArray(dayAvailability)) return false;
 
         if (isTodayDate) {
-          return dayAvailability.some((slot, index) => {
-            const slotHour = 9 + index;
-            return slot && slotHour > currentHour;
-          });
+          return hasSurvivingSlotToday(dayAvailability, now);
         }
 
         return dayAvailability.some(Boolean);
