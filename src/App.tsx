@@ -679,6 +679,7 @@ const AppContent = () => {
 
               <Route path="/payment/success" element={<PaymentSuccess />} />
               <Route path="/payment/failure" element={<PaymentFailure />} />
+              <Route path="/payment/pending" element={<PaymentPending />} />
               <Route path="/payment-canceled" element={<PaymentCanceled />} />
               <Route path="/verify-email" element={<EmailVerification />} />
               <Route path="/auth/verify" element={<EmailVerification />} />

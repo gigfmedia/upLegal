@@ -244,24 +244,10 @@ export function LawyerCard({
     const hasTomorrow = hasAvailabilityForDay(tomorrowName);
     const hasMonday = hasAvailabilityForDay('Lunes');
 
-    // Fallback logic for lawyers without a specific availability_config
+    // Sin config de disponibilidad no se afirma disponibilidad: sin badge.
+    // (Antes se asumía Lun-Vie para verificados; generaba "Disponible hoy"
+    // falso cuando la ficha no trae el campo o el abogado no configuró.)
     if (!lawyer.availability_config) {
-      if (lawyer.verified) {
-        // Assume default availability for verified lawyers if no config is set
-        if ([1, 2, 3, 4, 5].includes(dayOfWeek)) {
-          // Mon-Fri
-          if (currentHour < 18) {
-            return { text: 'Disponible hoy', showPulse: true, shouldShow: true };
-          } else {
-            // After 6 PM on weekday -> Available tomorrow (or monday if friday)
-            if (dayOfWeek === 5) return { text: 'Disponible lunes', showPulse: false, shouldShow: true };
-            return { text: `Disponible ${dayNames[(dayOfWeek + 1) % 7].toLowerCase()}`, showPulse: false, shouldShow: true };
-          }
-        } else {
-          // Weekend
-          return { text: 'Disponible lunes', showPulse: false, shouldShow: true };
-        }
-      }
       return { text: '', showPulse: false, shouldShow: false };
     }
 

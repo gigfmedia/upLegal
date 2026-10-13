@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, DollarSign, User, ArrowLeft, ShieldCheck, Loader2, Star, Quote, Globe } from 'lucide-react';
+import { Calendar, Clock, DollarSign, User, ArrowLeft, ShieldCheck, Loader2, Star, Quote, Globe, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, addDays, startOfDay, parseISO, isBefore, isAfter, setHours, setMinutes } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -207,6 +207,9 @@ export default function BookingPage() {
   const availabilityInitialized = useRef(false);
   const [loading, setLoading] = useState(true);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+  // Error real de disponibilidad: no se muestran slots inventados.
+  const [slotsError, setSlotsError] = useState(false);
+  const [slotsRetryKey, setSlotsRetryKey] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   // Keep ref in sync so fetchAvailability can read current value without being a dependency
@@ -400,26 +403,11 @@ export default function BookingPage() {
 
         if (error) {
           console.error('[BookingPage] RPC error:', error);
-          // Error fallback: use ref (not reactive state) to avoid triggering this effect again
-          if (availabilityInitialized.current && lawyerAvailabilityRef.current) {
-            const dayName = getDayName(selectedDate);
-            const dayAvail = getAvailabilityForDay(lawyerAvailabilityRef.current, dayName);
-            const daySlots = baseSlots.filter(slot => {
-              const hourIdx = parseInt(slot.time.split(':')[0]) - AVAILABILITY_START_HOUR;
-              return Array.isArray(dayAvail) ? dayAvail[hourIdx] === true : false;
-            });
-            const filtered = applySameDayFilter(daySlots);
-            if (selectedTimeRef.current && !filtered.some(slot => slot.time === selectedTimeRef.current)) {
-              setSelectedTime(null);
-            }
-            setAvailableSlots(filtered);
-          } else {
-            const filtered = applySameDayFilter(baseSlots);
-            if (selectedTimeRef.current && !filtered.some(slot => slot.time === selectedTimeRef.current)) {
-              setSelectedTime(null);
-            }
-            setAvailableSlots(filtered);
-          }
+          // Sin disponibilidad verificada no se muestran slots: un calendario
+          // inventado termina en 409 tras el formulario. Error + reintento.
+          setSlotsError(true);
+          setAvailableSlots([]);
+          if (selectedTimeRef.current) setSelectedTime(null);
           return;
         }
 
@@ -527,15 +515,14 @@ export default function BookingPage() {
           setSelectedTime(null);
         }
 
+        setSlotsError(false);
         setAvailableSlots(filteredSlots);
 
       } catch (err) {
         console.error('Failed to check availability', err);
-        const filtered = applySameDayFilter(baseSlots);
-        if (selectedTimeRef.current && !filtered.some(slot => slot.time === selectedTimeRef.current)) {
-          setSelectedTime(null);
-        }
-        setAvailableSlots(filtered);
+        setSlotsError(true);
+        setAvailableSlots([]);
+        if (selectedTimeRef.current) setSelectedTime(null);
       } finally {
         setIsLoadingSlots(false);
       }
@@ -546,7 +533,7 @@ export default function BookingPage() {
   // (referencias estables). lawyerAvailability se lee desde lawyerAvailabilityRef para
   // evitar que el cambio de estado re-ejecute este efecto y cree un loop de fetches.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate, duration, actualLawyerId]);
+  }, [selectedDate, duration, actualLawyerId, slotsRetryKey]);
 
   // Helper to add minutes to HHMM integer (e.g. 900 + 60 => 1000)
   // This is a bit hacky, cleaner to use Date objects but sufficient for static slots
@@ -1080,6 +1067,21 @@ export default function BookingPage() {
                         <div className="flex justify-center py-8">
                           <Loader2 className="animate-spin h-8 w-8 text-gray-900" />
                         </div>
+                      ) : slotsError ? (
+                        <div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed border-gray-200 rounded-lg text-gray-500 bg-gray-50">
+                          <AlertTriangle className="h-8 w-8 mb-2 opacity-50" />
+                          <p className="font-medium text-center">No pudimos cargar la disponibilidad</p>
+                          <p className="text-xs text-center mt-1">Intenta de nuevo para ver las horas reales</p>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="mt-3"
+                            onClick={() => { setSlotsError(false); setSlotsRetryKey((k) => k + 1); }}
+                          >
+                            Reintentar
+                          </Button>
+                        </div>
                       ) : availableSlots.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed border-gray-200 rounded-lg text-gray-500 bg-gray-50">
                           <Clock className="h-8 w-8 mb-2 opacity-50" />
@@ -1138,6 +1140,7 @@ export default function BookingPage() {
                       <span>Total a pagar:</span>
                       <span className="text-green-900">${totalPrice.toLocaleString('es-CL')}</span>
                     </div>
+                    {/* <p className="text-xs text-gray-500 text-right">Incluye recargo de plataforma por pago online. Sin cargos ocultos.</p> */}
                   </div>
                 </div>
               )}
@@ -1223,6 +1226,12 @@ export default function BookingPage() {
               experiment_variant: variant,
               article_slug: articleSlugForCheckout,
             } as any}
+            onSlotTaken={() => {
+              setShowPreCheckout(false);
+              setSelectedTime(null);
+              setSlotsError(false);
+              setSlotsRetryKey((k) => k + 1);
+            }}
           />
           );
         })()}

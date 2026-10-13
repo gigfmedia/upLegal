@@ -51,9 +51,11 @@ interface PreCheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
   checkoutData: CheckoutData;
+  /** Llamado cuando el servidor rechaza por horario tomado (409): el dueño recarga disponibilidad. */
+  onSlotTaken?: () => void;
 }
 
-export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreCheckoutModalProps) {
+export default function PreCheckoutModal({ isOpen, onClose, checkoutData, onSlotTaken }: PreCheckoutModalProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -208,7 +210,15 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || data.error || 'Error al crear la reserva');
+      if (!response.ok) {
+        if (response.status === 409) {
+          // Horario tomado por otro usuario: refrescar disponibilidad en vez
+          // de dejar un toast genérico sobre slots viejos.
+          onSlotTaken?.();
+          throw new Error('Ese horario acaba de ser reservado. Elige otra hora disponible.');
+        }
+        throw new Error(data.message || data.error || 'Error al crear la reserva');
+      }
 
       window.gtag?.('event', 'lead_created', {
         lawyer_id: checkoutData.lawyer_id,
@@ -230,18 +240,13 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
           },
         });
 
-        window.gtag?.('event', 'begin_checkout', {
+        const { trackBeginCheckout } = await import('@/lib/bookingFunnel');
+        trackBeginCheckout({
           booking_id: data.booking_id,
+          lawyer_id: checkoutData.lawyer_id,
           value: checkoutData.price,
           currency: 'CLP',
-          items: [{
-            item_id: data.booking_id,
-            item_name: isService
-              ? (checkoutData as ServiceCheckoutData).service_title
-              : `Asesoría con ${checkoutData.lawyer_name}`,
-            price: checkoutData.price,
-            quantity: 1,
-          }],
+          source: isService ? 'ServicePreCheckoutModal' : 'PreCheckoutModal',
         });
 
         const nameSlug = checkoutData.lawyer_name
@@ -369,6 +374,7 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
                     <>
                       {(checkoutData as ServiceCheckoutData).service_description && <p>• {(checkoutData as ServiceCheckoutData).service_description}</p>}
                       <p>• Total: ${checkoutData.price.toLocaleString('es-CL')}</p>
+                  {/* <p className="text-gray-500">Incluye recargo de plataforma por pago online.</p> */}
                     </>
                   )}
                 </>
@@ -378,6 +384,7 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
                   <p>• Hora: {pp.scheduled_time}</p>
                   <p>• Duración: {pp.duration} minutos</p>
                   <p>• Total: ${checkoutData.price.toLocaleString('es-CL')}</p>
+                  {/* <p className="text-gray-500">Incluye recargo de plataforma por pago online.</p> */}
                 </>
               )}
             </div>

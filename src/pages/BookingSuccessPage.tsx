@@ -75,7 +75,7 @@ export default function BookingSuccessPage() {
   }, [bookingId, navigate]);
 
   useEffect(() => {
-    if (booking && !purchaseTracked.current) {
+    if (booking && !purchaseTracked.current && booking.status === 'confirmed') {
       purchaseTracked.current = true;
 
       // GA4 purchase NO se dispara desde el cliente (evita duplicados con el
@@ -135,6 +135,29 @@ export default function BookingSuccessPage() {
   }
 
   const isService = booking.booking_type === 'service';
+  const isPaid = booking.status === 'confirmed';
+
+  if (!isPaid) {
+    return (
+      <>
+        <Header />
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12 pt-32">
+          <div className="max-w-md w-full text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 mb-6">
+              <Clock className="h-8 w-8 text-amber-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Estamos verificando tu pago</h1>
+            <p className="text-gray-600 mb-6">
+              Tu reserva aún no está confirmada. Si ya pagaste en Mercado Pago, la confirmación llega en unos minutos a tu correo. Si el pago no se completó, puedes intentarlo de nuevo.
+            </p>
+            <Button onClick={() => navigate('/')} className="bg-gray-900 hover:bg-green-900">
+              Volver al inicio
+            </Button>
+          </div>
+        </div>
+      </>
+    );
+  }
   const hasMeeting = !isService || booking.requires_meeting !== false;
   const lawyerAvatar =
     booking.lawyer?.profile_picture_url ||
