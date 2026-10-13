@@ -235,6 +235,7 @@ export default function BookingPage() {
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   // Diagnóstico: grilla vacía con fecha elegida y sin error (una vez por fecha).
   const emptyLoggedRef = useRef<string | null>(null);
+  const slotCountsRef = useRef({ base: -1, config: -1, busy: -1, final: -1 });
   useEffect(() => {
     if (!selectedDate || isLoadingSlots || slotsError || availableSlots.length > 0) return;
     const key = `${actualLawyerId}:${format(selectedDate, 'yyyy-MM-dd')}:${duration}`;
@@ -251,6 +252,7 @@ export default function BookingPage() {
           duration,
           hasConfig: !!lawyerAvailabilityRef.current && Object.keys(lawyerAvailabilityRef.current).length > 0,
           configKeys: lawyerAvailabilityRef.current ? Object.keys(lawyerAvailabilityRef.current) : [],
+          counts: { ...slotCountsRef.current },
         },
         path: typeof window !== 'undefined' ? window.location.pathname : '',
       }).catch(() => {});
@@ -509,6 +511,12 @@ export default function BookingPage() {
           time: slot.scheduled_time.slice(0, 5),
           duration: slot.duration
         })) || [];
+        slotCountsRef.current = {
+          base: baseSlots.length,
+          config: configFilteredSlots.length,
+          busy: bookedTimes.length,
+          final: -1,
+        };
 
         // Remove expired pending bookings (>15 min without payment) from busy set
         const { data: expiredPending } = await supabase
@@ -532,8 +540,7 @@ export default function BookingPage() {
         }
 
         // 5. Collision detection with Bookings
-        const finalSlots = configFilteredSlots.map(slot => {
-          const slotTimeVal = parseInt(slot.time.replace(':', ''));
+        const finalSlots = configFilteredSlots.map(slot => {          const slotTimeVal = parseInt(slot.time.replace(':', ''));
           const slotEndVal = addMinutesToTime(slotTimeVal, duration);
 
           const isBlocked = bookedTimes.some((booked) => {
@@ -548,6 +555,7 @@ export default function BookingPage() {
         });
 
         const filteredSlots = applySameDayFilter(finalSlots);
+        slotCountsRef.current = { ...slotCountsRef.current, final: filteredSlots.length };
 
         // Use ref to avoid selectedTime being a dependency (would cause double-fetch loop)
         if (selectedTimeRef.current && !filteredSlots.some(slot => slot.time === selectedTimeRef.current)) {
