@@ -102,7 +102,7 @@ const DivorcioUnilateralLanding = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white pt-16">
+    <div className="min-h-screen bg-white pt-[104px]">
       <Helmet>
         <title>Abogado para Divorcio Unilateral en Chile | LegalUp</title>
         <meta name="description" content="Encuentra abogados especializados en divorcio unilateral en Chile. Compara perfiles, experiencia y valor de consulta." />
@@ -111,17 +111,19 @@ const DivorcioUnilateralLanding = () => {
       <Header onAuthClick={() => setShowAuthModal(true)} />
 
       {/* Hero Section */}
-      <div className="bg-gray-100 pt-20 pb-16 lg:pt-32 lg:pb-24 border-b border-gray-100">
+      <div className="bg-white">
+        <div className="px-3 pt-3 sm:px-6 sm:pt-6">
+          <div className="overflow-hidden rounded-[28px] bg-cream-900 pt-20 pb-16 sm:rounded-[40px] lg:pt-32 lg:pb-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           <div className="flex flex-col items-center text-center mx-auto">
-            <span className="border border-gray-900 bg-gray-900 rounded-full p-1 text-sm text-white mb-8 max-w-3xl mx-auto w-fit px-2 mt-4 flex items-center gap-2">
+            <span className="border border-gray-900 bg-green-900 rounded-full p-1 text-sm text-white mb-8 max-w-3xl mx-auto w-fit px-2 mt-4 flex items-center gap-2">
               Derecho de Familia
             </span>
-            <h1 className="text-4xl md:text-5xl font-bold font-serif text-gray-900 mb-6 leading-tight">
+            <h1 className="text-4xl md:text-5xl font-bold font-serif text-green-900 mb-6 leading-tight">
               ¿Necesitas iniciar un divorcio unilateral?
             </h1>
-            <p className="text-m sm:text-xl text-gray-900 mb-12 max-w-3xl mx-auto">
+            <p className="text-m sm:text-xl text-green-900 mb-12 max-w-3xl mx-auto">
               Compara abogados especializados, revisa precios y agenda tu consulta online.
             </p>
 
@@ -145,10 +147,14 @@ const DivorcioUnilateralLanding = () => {
           </div>
         </div>
       </div>
+        </div>
+      </div>
 
       {/* Lawyers List (Immediate after Hero) */}
-      <section ref={cardsRef} className="py-20 bg-muted">
-        <div className="max-w-7xl mx-auto">
+      <section className="bg-white">
+        <div className="px-3 py-3 sm:px-6 sm:py-6">
+          <div ref={cardsRef} className="overflow-hidden rounded-[28px] bg-muted sm:rounded-[40px] scroll-mt-20">
+        <div className="max-w-7xl mx-auto py-16 sm:py-24 px-4 sm:px-6">
           <div className="mb-12 text-center">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
               Abogados especializados en Divorcio Unilateral
@@ -197,10 +203,12 @@ const DivorcioUnilateralLanding = () => {
             </div>
           </div>
         </div>
+        </div>
+      </div>
       </section>
 
       {/* SEO Content Section */}
-      <section className="py-20 bg-white">
+      <section className="py-16 sm:py-24 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 prose prose-lg text-gray-600">
           <h2 className="text-3xl font-bold text-gray-900 mb-6">Abogado para divorcio unilateral en Chile</h2>
           <p>
@@ -238,8 +246,10 @@ const DivorcioUnilateralLanding = () => {
       </section>
 
       {/* FAQs (for SEO) */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="bg-white">
+        <div className="px-3 py-3 sm:px-6 sm:py-6">
+          <div className="overflow-hidden rounded-[28px] bg-gray-50 sm:rounded-[40px] scroll-mt-20">
+        <div className="max-w-4xl mx-auto py-16 sm:py-24 px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <span className="bg-gray-900 text-white text-xs border border-gray-900 font-semibold px-3 py-1 rounded-full uppercase tracking-wide inline-flex mb-6">
               FAQ
@@ -284,11 +294,15 @@ const DivorcioUnilateralLanding = () => {
             ))}
           </div>
         </div>
+        </div>
+      </div>
       </section>
 
       {/* Final CTA */}
-      <section className="py-20 bg-green-900 text-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <section className="bg-white">
+        <div className="px-3 py-3 sm:px-6 sm:py-6">
+          <div className="overflow-hidden rounded-[28px] bg-green-900 text-white sm:rounded-[40px] scroll-mt-20">
+        <div className="max-w-4xl mx-auto py-16 sm:py-24 px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold font-serif text-green-600 mb-6">
             ¿No sabes qué abogado elegir?
           </h2>
@@ -303,6 +317,8 @@ const DivorcioUnilateralLanding = () => {
             Comparar abogados especializados
           </Button>
         </div>
+        </div>
+      </div>
       </section>
 
       <AuthModal

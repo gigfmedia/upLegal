@@ -96,7 +96,7 @@ const ArriendoLanding = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-white pt-16">
+        <div className="min-h-screen bg-white pt-[104px]">
             <Helmet>
                 <title>Abogado Arriendo Chile | Recupera Rentas y Propiedad | LegalUp</title>
                 <meta name="description" content="Abogado para arriendos en Chile: recupera rentas impagas y tu propiedad cuando el arrendatario no paga. Compara abogados verificados por el PJUD, precio por hora y agenda online." />
@@ -105,16 +105,18 @@ const ArriendoLanding = () => {
 
             <Header onAuthClick={() => setShowAuthModal(true)} />
 
-            <div className="bg-gray-100 pt-20 pb-16 lg:pt-32 lg:pb-24 border-b border-gray-100">
+            <div className="bg-white">
+              <div className="px-3 pt-3 sm:px-6 sm:pt-6">
+                <div className="overflow-hidden rounded-[28px] bg-cream-900 pt-20 pb-16 sm:rounded-[40px] lg:pt-32 lg:pb-24">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex flex-col items-center text-center mx-auto">
                         <span className="border border-gray-900 bg-gray-900 rounded-full p-1 text-sm text-white mb-8 max-w-3xl mx-auto w-fit px-2 mt-4 flex items-center gap-2">
                             Derecho Civil / Arrendamiento
                         </span>
-                        <h1 className="text-4xl md:text-5xl font-bold font-serif text-gray-900 mb-6 leading-tight">
+                        <h1 className="text-4xl md:text-5xl font-bold font-serif text-green-900 mb-6 leading-tight">
                             Encuentra un abogado de arriendos en Chile
                         </h1>
-                        <p className="text-m sm:text-xl text-gray-900 mb-8 max-w-3xl mx-auto">
+                        <p className="text-m sm:text-xl text-green-900 mb-8 max-w-3xl mx-auto">
                             Consulta online de 60 minutos con abogados verificados por el PJUD. Abogados disponibles hoy, precios visibles y sin letra chica. Agenda en minutos.
                         </p>
                         <p className="text-sm font-semibold text-green-900 mb-12">Consultas desde $35.000 — 60 minutos</p>
@@ -138,9 +140,13 @@ const ArriendoLanding = () => {
                     </div>
                 </div>
             </div>
+              </div>
+            </div>
 
-            <section ref={cardsRef} className="py-20 bg-muted">
-                <div className="max-w-7xl mx-auto">
+            <section className="bg-white">
+              <div className="px-3 py-3 sm:px-6 sm:py-6">
+                <div ref={cardsRef} className="overflow-hidden rounded-[28px] bg-muted sm:rounded-[40px] scroll-mt-20">
+                <div className="max-w-7xl mx-auto py-16 sm:py-24 px-4 sm:px-6">
                     <div className="mb-12 text-center">
                         <h2 className="text-3xl font-bold text-gray-900 mb-4">
                             Abogados especializados en Arrendamiento
@@ -188,9 +194,11 @@ const ArriendoLanding = () => {
                         </div>
                     </div>
                 </div>
+              </div>
+            </div>
             </section>
 
-            <section className="py-20 bg-white">
+            <section className="py-16 sm:py-24 bg-white">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 prose prose-lg text-gray-600">
                     <h2 className="text-3xl font-bold text-gray-900 mb-6">Abogado para problemas de arriendo en Chile</h2>
                     <p>
@@ -240,8 +248,10 @@ const ArriendoLanding = () => {
                 </div>
             </section>
 
-            <section className="py-20 bg-gray-50">
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <section className="bg-white">
+              <div className="px-3 py-3 sm:px-6 sm:py-6">
+                <div className="overflow-hidden rounded-[28px] bg-gray-50 sm:rounded-[40px] scroll-mt-20">
+                <div className="max-w-4xl mx-auto py-16 sm:py-24 px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-12">
                         <span className="bg-gray-900 text-white text-xs border border-gray-900 font-semibold px-3 py-1 rounded-full uppercase tracking-wide inline-flex mb-6">
                             FAQ
@@ -281,10 +291,14 @@ const ArriendoLanding = () => {
                         ))}
                     </div>
                 </div>
+              </div>
+            </div>
             </section>
 
-            <section className="py-20 bg-green-900 text-white">
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <section className="bg-white">
+              <div className="px-3 py-3 sm:px-6 sm:py-6">
+                <div className="overflow-hidden rounded-[28px] bg-green-900 text-white sm:rounded-[40px] scroll-mt-20">
+                <div className="max-w-4xl mx-auto py-16 sm:py-24 px-4 sm:px-6 lg:px-8 text-center">
                     <h2 className="text-3xl font-bold font-serif text-green-600 mb-6">
                         ¿Listo para resolver tu arriendo?
                     </h2>
@@ -300,6 +314,8 @@ const ArriendoLanding = () => {
                         Ver abogados de arriendos disponibles
                     </Button>
                 </div>
+              </div>
+            </div>
             </section>
 
             <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} initialMode="login" />
