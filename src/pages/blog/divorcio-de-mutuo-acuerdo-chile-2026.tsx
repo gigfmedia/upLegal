@@ -502,10 +502,11 @@ const BlogArticle = () => {
 
           {/* CTA before Conclusion */}
           <InArticleCTA
-                        title="¿Necesitas resolver tu situación familiar?"
-                        message="Un abogado de familia puede orientarte sobre los pasos a seguir en tu caso y ayudarte a tomar decisiones informadas."
-                        buttonText="Habla con un abogado ahora"
+                        title="¿Necesitas avanzar con tu divorcio?"
+                        message="Un abogado de familia puede revisar tu acuerdo, verificar los requisitos y guiarte en la presentación ante el tribunal."
+                        buttonText="Revisar mi caso de divorcio"
                         category="Derecho de Familia"
+                        targetUrl="/abogados-divorcio"
                     />
 
 {/* Conclusion */}          <div className="mb-12 border-t border-gray-100 pt-8">

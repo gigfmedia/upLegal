@@ -689,7 +689,7 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
-      <BlogConversionPopup category="Derecho de Familia" topic="deuda-pension" />
+      <BlogConversionPopup category="Derecho de Familia" topic="deuda-pension" targetUrl="/abogado-pension-alimentos" />
     </div>
   );
 };

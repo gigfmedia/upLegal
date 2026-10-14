@@ -472,7 +472,7 @@ const BlogArticle = () => {
                         </p>
                         <p className="text-gray-600 leading-relaxed">
                             Si te encuentras ante una situación donde la filiación está siendo cuestionada o necesitas iniciar una acción, un{" "}
-                            <Link to="/abogado-pension-alimentos" className="text-green-700 underline hover:text-green-500">
+                            <Link to="/search?specialty=Derecho%20de%20Familia" className="text-green-700 underline hover:text-green-500">
                                 abogado de familia especializado en impugnación de paternidad
                             </Link>{" "}
                             puede analizar tu caso particular y recomendar el curso de acción más adecuado según tus circunstancias.

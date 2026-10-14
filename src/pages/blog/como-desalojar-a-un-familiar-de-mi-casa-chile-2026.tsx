@@ -322,7 +322,7 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
-<InArticleCTA category="Derecho Civil" title="¿Necesitas recuperar tu propiedad de un familiar?" message="Un abogado especializado puede evaluar la relación, determinar la acción legal correcta y guiar el proceso de desalojo." />
+<InArticleCTA category="Derecho Civil" targetUrl="/abogado-arriendo" title="¿Necesitas recuperar tu propiedad de un familiar?" message="Un abogado especializado puede evaluar la relación, determinar la acción legal correcta y guiar el proceso de desalojo." />
 
 
           <div className="space-y-4 mt-12 mb-12">

@@ -290,7 +290,7 @@ const BlogArticle = () => {
             </div>
 
           </div>
-<InArticleCTA category="Derecho Civil"  title="¿Vives arrendado sin contrato escrito?" message="Un abogado inmobiliario puede evaluar tu situación, determinar tus derechos y orientarte sobre cómo protegerte legalmente." />
+<InArticleCTA category="Derecho Civil" targetUrl="/abogado-arriendo" title="¿Vives arrendado sin contrato escrito?" message="Un abogado inmobiliario puede evaluar tu situación, determinar tus derechos y orientarte sobre cómo protegerte legalmente." />
 
 
           <div className="mb-12">
