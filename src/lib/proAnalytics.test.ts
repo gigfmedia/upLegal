@@ -68,6 +68,9 @@ import {
   captureLoginCompleted,
   captureEmailVerificationCompleted,
   captureOnboardingCompleted,
+  captureRoleOnboardingViewed,
+  captureRoleOnboardingRoleSelected,
+  captureRoleOnboardingCompleted,
   captureCaseNextActionAdded,
   captureCaseTaskCreated,
   captureCaseTaskCompleted,
@@ -267,6 +270,59 @@ describe('FASE 1C/E — catálogo canónico y primera vez', () => {
     await initWithConsent();
     expect(captureCaseNextActionAdded(UUID_A)).toBe(true);
     expect(captureCaseNextActionAdded(UUID_A)).toBe(false);
+  });
+
+  it('onboarding de rol: viewed/selected/completed con prop role, sin PII', async () => {
+    await initWithConsent();
+    captureRoleOnboardingViewed(UUID_A);
+    captureRoleOnboardingRoleSelected(UUID_A, 'lawyer');
+    captureRoleOnboardingCompleted(UUID_A, 'lawyer');
+    expect(capturedEvents()).toEqual([
+      'onboarding_viewed',
+      'onboarding_role_selected',
+      'onboarding_completed',
+    ]);
+    expect(payloadOf('onboarding_viewed')).toMatchObject({ flow: 'role_selection' });
+    expect(payloadOf('onboarding_role_selected')).toMatchObject({ role: 'lawyer', flow: 'role_selection' });
+    expect(payloadOf('onboarding_completed')).toMatchObject({ role: 'lawyer', flow: 'role_selection' });
+    for (const event of ['onboarding_viewed', 'onboarding_role_selected', 'onboarding_completed']) {
+      expect(JSON.stringify(payloadOf(event))).not.toMatch(/@|rut|phone|prompt|name/i);
+    }
+  });
+
+  it('onboarding de rol: flow distingue del onboarding_completed del wizard abogado', async () => {
+    await initWithConsent();
+    captureRoleOnboardingCompleted(UUID_A, 'client');
+    captureOnboardingCompleted(UUID_A);
+    const withFlow = mocks.capture.mock.calls.filter((c) => c[0] === 'onboarding_completed');
+    expect(withFlow).toHaveLength(2);
+    // Solo el de rol lleva contexto flow; el del wizard no lo trae.
+    expect(withFlow[0][1]).toMatchObject({ flow: 'role_selection' });
+    expect(withFlow[1][1]).not.toHaveProperty('flow');
+  });
+
+  it('onboarding de rol: roles inválidos no emiten', async () => {
+    await initWithConsent();
+    captureRoleOnboardingRoleSelected(UUID_A, 'admin');
+    captureRoleOnboardingCompleted(UUID_A, 'user');
+    captureRoleOnboardingCompleted(UUID_A, null);
+    expect(mocks.capture).not.toHaveBeenCalled();
+  });
+
+  it('onboarding de rol: sin consentimiento no emite ni identifica', async () => {
+    seedConsent(false);
+    captureRoleOnboardingViewed(UUID_A);
+    captureRoleOnboardingRoleSelected(UUID_A, 'client');
+    captureRoleOnboardingCompleted(UUID_A, 'client');
+    expect(mocks.identify).not.toHaveBeenCalled();
+    expect(mocks.capture).not.toHaveBeenCalled();
+  });
+
+  it('onboarding de rol: no consume la marca first-time del wizard abogado', async () => {
+    await initWithConsent();
+    captureRoleOnboardingCompleted(UUID_A, 'lawyer');
+    // El wizard profesional sigue pudiendo medir su propio onboarding.
+    expect(captureOnboardingCompleted(UUID_A)).toBe(true);
   });
 
   it('14. ningún payload canónico contiene PII (por construcción + strip)', async () => {

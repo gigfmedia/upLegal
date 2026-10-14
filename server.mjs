@@ -685,6 +685,117 @@ app.post('/api/profiles', requireAuthentication, async (req, res) => {
   }
 });
 
+// Onboarding simple post-registro: guarda el tipo de cuenta (abogado/cliente).
+// Solo persiste cuando el usuario aún no tiene rol definido; nunca sobrescribe
+// roles existentes (client/lawyer/company/admin) ni toca verificación
+// profesional (verified/pjud_verified/available_for_hire). Whitelist estricta:
+// únicamente 'client' | 'lawyer' (sin admin ni verificación implícita).
+app.post('/api/profile/role', requireAuthentication, async (req, res) => {
+  try {
+    const { role } = req.body || {};
+
+    if (role !== 'client' && role !== 'lawyer') {
+      return res.status(400).json({
+        error: 'Rol inválido. Elige entre abogado o cliente.'
+      });
+    }
+
+    const userId = req.authUser.id;
+
+    // Cuentas con privilegios de plataforma no pasan por esta selección.
+    if (isPlatformAdmin(req.authUser)) {
+      return res.status(403).json({
+        error: 'Las cuentas administrativas no usan esta selección.'
+      });
+    }
+
+    // H3: lectura por ambas claves (id PK y user_id, convención del resto
+    // de la app). Todas las escrituras setean ambas iguales, pero el OR
+    // garantiza no insertar una fila duplicada si el invariante se rompiera.
+    // userId proviene de la sesión validada (nunca del body del cliente).
+    const { data: existing, error: readError } = await supabase
+      .from('profiles')
+      .select('id, role')
+      .or(`id.eq.${userId},user_id.eq.${userId}`)
+      .maybeSingle();
+
+    if (readError) {
+      console.error('Error reading profile for role onboarding:', readError);
+      return res.status(500).json({
+        error: 'No se pudo leer tu perfil. Intenta nuevamente.'
+      });
+    }
+
+    const current = String(existing?.role || '').trim().toLowerCase();
+    if (['client', 'lawyer', 'company'].includes(current)) {
+      // Idempotente: ya definido, no sobrescribir (recarga o doble envío).
+      return res.json({ success: true, already: true, role: current });
+    }
+    if (['admin', 'superadmin'].includes(current)) {
+      return res.status(403).json({
+        error: 'Tu cuenta tiene un rol especial que no se puede modificar aquí.'
+      });
+    }
+
+    const timestamp = new Date().toISOString();
+
+    if (existing) {
+      // Solo role + updated_at: preserva nombres, verificación y resto intactos.
+      // Se actualiza por PK de la fila encontrada (preciso aunque id≠user_id).
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ role, updated_at: timestamp })
+        .eq('id', existing.id);
+
+      if (updateError) {
+        console.error('Error updating role from service:', updateError);
+        return res.status(500).json({
+          error: 'No se pudo guardar tu selección. Intenta nuevamente.'
+        });
+      }
+    } else {
+      // Sin fila (típico Google sin trigger): crea mínima con datos de Google.
+      // Sin rut, sin verificación: elegir abogado NO verifica como abogado.
+      const meta = req.authUser.user_metadata || {};
+      const normalizedEmail = String(req.authUser.email || '').toLowerCase().trim();
+      const firstName = safeTrim(meta.first_name) || null;
+      const lastName = safeTrim(meta.last_name) || null;
+      const displayName = safeTrim(meta.name) ||
+        [firstName, lastName].filter(Boolean).join(' ') ||
+        (normalizedEmail ? normalizedEmail.split('@')[0] : 'Usuario');
+
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .insert({
+          id: userId,
+          user_id: userId,
+          email: normalizedEmail || null,
+          first_name: firstName,
+          last_name: lastName,
+          display_name: displayName,
+          role,
+          has_used_free_consultation: false,
+          created_at: timestamp,
+          updated_at: timestamp
+        });
+
+      if (insertError) {
+        console.error('Error inserting role from service:', insertError);
+        return res.status(500).json({
+          error: 'No se pudo guardar tu selección. Intenta nuevamente.'
+        });
+      }
+    }
+
+    return res.json({ success: true, role });
+  } catch (error) {
+    console.error('Unexpected error in /api/profile/role:', error);
+    return res.status(500).json({
+      error: 'Error inesperado al guardar tu selección.'
+    });
+  }
+});
+
 // Function to validate RUT verifier digit
 const validateRutDV = (rut) => {
   const cleanRut = normalizeRut(rut);

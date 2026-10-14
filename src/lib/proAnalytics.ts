@@ -200,6 +200,44 @@ export function captureOnboardingCompleted(userId: string): boolean {
   return emitFirstTime('onboarding_completed', userId, {});
 }
 
+// --- Onboarding de rol post-registro (selección abogado/cliente) --------------
+// Usa los mismos nombres de evento del flujo de onboarding. Se emiten vía
+// emitPro SIN marcas de primera vez: la pantalla es inherentemente de una
+// sola vez por usuario (tras guardar redirige y no se vuelve a mostrar), y
+// así no se consume la marca first-time de `onboarding_completed` que usa el
+// wizard profesional de abogados (captureOnboardingCompleted). La prop
+// `flow: 'role_selection'` distingue estos eventos del `onboarding_completed`
+// del wizard en análisis. Sin consentimiento analytics el facade descarta:
+// la persistencia del rol es operacional (endpoint servidor) e independiente
+// de estos eventos.
+// NUNCA se envía email/RUT/nombre: solo `role` (lawyer|client) + `flow`.
+
+export type RoleOnboardingRole = 'lawyer' | 'client';
+
+/** Contexto que distingue el onboarding de rol del wizard profesional. */
+export const ROLE_ONBOARDING_FLOW = 'role_selection' as const;
+
+function isRoleOnboardingRole(value: unknown): value is RoleOnboardingRole {
+  return value === 'lawyer' || value === 'client';
+}
+
+export function captureRoleOnboardingViewed(userId: string): void {
+  if (!identifyProUser(userId)) return;
+  emitPro('onboarding_viewed', { flow: ROLE_ONBOARDING_FLOW });
+}
+
+export function captureRoleOnboardingRoleSelected(userId: string, role: unknown): void {
+  if (!isRoleOnboardingRole(role)) return;
+  if (!identifyProUser(userId)) return;
+  emitPro('onboarding_role_selected', { role, flow: ROLE_ONBOARDING_FLOW });
+}
+
+export function captureRoleOnboardingCompleted(userId: string, role: unknown): void {
+  if (!isRoleOnboardingRole(role)) return;
+  if (!identifyProUser(userId)) return;
+  emitPro('onboarding_completed', { role, flow: ROLE_ONBOARDING_FLOW });
+}
+
 export function captureCaseNextActionAdded(userId: string, entryPoint: ProEntryPoint = 'unknown'): boolean {
   if (!identifyProUser(userId)) return false;
   return emitFirstTime('case_next_action_added', userId, { entry_point: entryPoint });

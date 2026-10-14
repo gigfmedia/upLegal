@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { Loader2 } from 'lucide-react';
 import { getLawyerPostAuthDestination, isEmailVerified } from '@/lib/lawyerOnboardingGate';
 import { consumePostAuthRedirect, sanitizePostAuthRedirect, trackGoogleCompleted } from '@/lib/googleAuth';
+import { buildRoleOnboardingPath, needsRoleSelection } from '@/lib/roleOnboarding';
 import { hasLegalConsent } from '@/lib/legalConsent';
 import {
   captureEmailVerificationCompleted,
@@ -119,6 +120,14 @@ export default function AuthCallback() {
             }
           } catch {
             /* ante error de lectura no bloquear acceso: continuar flujo normal */
+          }
+          // Onboarding simple post-registro: sin tipo de cuenta definido
+          // (Google genérico sin rol en metadata ni perfil, o cuenta legacy
+          // sin rol) → pantalla de selección. Con rol o admin, flujo actual.
+          // El retorno sanitizado se preserva para después de la selección.
+          if (needsRoleSelection(profile, user as never)) {
+            navigate(buildRoleOnboardingPath(safeRedirect), { replace: true });
+            return;
           }
           // If there's an explicit redirectTo, respect it only if email verified for lawyers
           if (safeRedirect) {
