@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import { TermsConsentCheckbox } from '@/components/auth/TermsConsentCheckbox';
 import { CONSENT_ERROR, buildConsentPatch, sanitizeRedirectForConsent } from '@/lib/legalConsent';
+import { buildRoleOnboardingPath, needsRoleSelection } from '@/lib/roleOnboarding';
 
 /**
  * FASE 5.6 — interstitial post-OAuth para cuentas nuevas sin aceptación.
@@ -37,6 +38,22 @@ export default function ConsentPage() {
       }
       const { error } = await supabase.from('profiles').update(buildConsentPatch()).eq('id', user.id);
       if (error) throw error;
+      // Cierre del bypass consent→destino: si aún no tiene tipo de cuenta,
+      // pasa por el selector preservando el destino (nunca lo salta).
+      // Ante error de lectura no se bloquea: se continúa al destino.
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id, role')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (needsRoleSelection(profile, user as never)) {
+          navigate(buildRoleOnboardingPath(dest === '/' ? null : dest), { replace: true });
+          return;
+        }
+      } catch {
+        /* continuar al destino */
+      }
       navigate(dest, { replace: true });
     } catch (e) {
       toast({
