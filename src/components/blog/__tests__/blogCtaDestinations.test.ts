@@ -31,7 +31,7 @@ describe('blogCtaDestinations', () => {
         slug: 'despido-injustificado-chile-2026',
         category: 'Derecho Laboral',
       })
-    ).toBe('/abogados-laborales');
+    ).toBe('/abogado-laboral');
   });
 
   it('categoría sin landing dedicada cae a búsqueda genérica', () => {

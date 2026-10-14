@@ -9,7 +9,7 @@ const CATEGORY_LANDING: Record<string, string> = {
   'Derecho Inmobiliario': '/abogado-arriendo',
   'Derecho de Familia': '/abogado-familia',
   'Derecho Penal': '/abogado-penal',
-  'Derecho Laboral': '/abogados-laborales',
+  'Derecho Laboral': '/abogado-laboral',
 };
 
 type ResolveInput = {
