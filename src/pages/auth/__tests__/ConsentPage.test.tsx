@@ -72,6 +72,15 @@ describe('ConsentPage — cierre del bypass hacia el selector de rol', () => {
     expect(await screen.findByText('Buscador')).toBeInTheDocument();
   });
 
+  it('anti-regresión: cuenta nueva con destino / nunca termina en / sin elegir rol', async () => {
+    // Reproducción exacta del caso reportado: /auth/consent?redirectTo=%2F
+    // debe llevar al selector, jamás directo a /.
+    consentState.profile = { id: 'U-new', role: null };
+    renderAt('/auth/consent?redirectTo=%2F');
+    await acceptTerms();
+    expect(await screen.findByText('Pantalla de rol')).toBeInTheDocument();
+  });
+
   it('sin aceptar: no avanza y muestra el error de consentimiento', async () => {
     renderAt('/auth/consent?redirectTo=%2Fsearch');
     fireEvent.click(screen.getByRole('button', { name: 'Aceptar y continuar' }));
