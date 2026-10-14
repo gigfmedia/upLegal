@@ -119,7 +119,7 @@ const LaboralLanding = () => {
                         <p className="text-m sm:text-xl text-gray-900 mb-8 max-w-3xl mx-auto">
                             Consulta online de 60 minutos con abogados verificados por el PJUD. Revisa tu despido o finiquito antes de firmar. Agenda en minutos.
                         </p>
-                        <p className="text-sm font-semibold text-green-900 mb-12">Consultas desde $32.000 — 60 minutos</p>
+                        <p className="text-sm font-semibold text-green-900 mb-12">Consultas desde $35.000 — 60 minutos</p>
 
                         <div className="flex flex-col items-center gap-3 mb-12">
                             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
@@ -276,7 +276,7 @@ const LaboralLanding = () => {
                         ¿Te despidieron o debes firmar un finiquito?
                     </h2>
                     <p className="text-xl text-white mb-2">
-                        Consulta online de 60 minutos, abogados verificados y precio claro desde $32.000.
+                        Consulta online de 60 minutos, abogados verificados y precio claro desde $35.000.
                     </p>
                     <p className="text-sm text-white/80 mb-10">Elige al abogado que mejor se ajuste a tu caso y agenda hoy.</p>
                     <Button
