@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, ChevronRight } from 'lucide-react';
 import { useInView } from 'react-intersection-observer';
+import { resolveBlogCtaDestination } from './blogCtaDestinations';
 
 interface InArticleCTAProps {
   category?: string;
@@ -24,7 +25,13 @@ const InArticleCTA: React.FC<InArticleCTAProps> = ({
   const DEFAULT_TITLE = "¿Necesitas resolver tu situación?";
   const DEFAULT_MESSAGE = "Un abogado puede analizar tu caso y orientarte sobre las alternativas disponibles.";
   const DEFAULT_BUTTON = "Consultar con un abogado";
-  const resolvedTarget = targetUrl || `/search?specialty=${encodeURIComponent(category)}`;
+  const resolvedTarget = (() => {
+    if (typeof window === 'undefined') {
+      return resolveBlogCtaDestination({ category, targetUrl });
+    }
+    const slug = window.location.pathname.split('/').pop() || '';
+    return resolveBlogCtaDestination({ slug, category, targetUrl });
+  })();
 
   const { ref, inView } = useInView({
     triggerOnce: true,

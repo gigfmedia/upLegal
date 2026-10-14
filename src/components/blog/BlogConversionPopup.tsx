@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+import { resolveBlogCtaDestination } from './blogCtaDestinations';
 
 interface BlogConversionPopupProps {
   category?: string;
@@ -24,7 +25,12 @@ const BlogConversionPopup: React.FC<BlogConversionPopupProps> = ({
   const [hasDismissed, setHasDismissed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  const resolvedTarget = targetUrl || `/search?specialty=${encodeURIComponent(category)}`;
+  const resolvedTarget = (() => {
+    if (targetUrl) return targetUrl;
+    if (typeof window === 'undefined') return `/search?specialty=${encodeURIComponent(category)}`;
+    const slug = window.location.pathname.split('/').pop() || '';
+    return resolveBlogCtaDestination({ slug, category });
+  })();
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
