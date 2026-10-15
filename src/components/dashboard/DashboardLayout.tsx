@@ -164,7 +164,9 @@ function DashboardLayout() {
       if (isLoading) return;
 
       if (!user) {
-        navigate('/');
+        // Replace (no push): un redirect de guard no debe ensuciar el
+        // historial (atrás volvería a una home fantasma del parpadeo).
+        navigate('/', { replace: true });
         return;
       }
 

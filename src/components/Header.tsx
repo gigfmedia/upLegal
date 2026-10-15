@@ -50,9 +50,12 @@ export default function Header({
   const metadataLastName = metadata.last_name ?? metadata.lastName ?? null;
   const metadataDisplayName = metadata.display_name ?? metadata.name ?? metadata.full_name ?? null;
 
-  const userRole = (metadata.role as string | undefined)
+  // Fuente de verdad para DISPLAY: el perfil (autoridad del servidor,
+  // fresca tras checkSession) manda sobre user_metadata auto-declarada.
+  // user.role es el claim JWT ("authenticated"), solo fallback final.
+  const userRole = (user?.profile?.role as string | undefined)
+    ?? (metadata.role as string | undefined)
     ?? user?.role
-    ?? user?.profile?.role
     ?? 'client';
 
   const combinedName = [metadataFirstName, metadataLastName].filter(Boolean).join(' ');

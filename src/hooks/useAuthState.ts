@@ -1,5 +1,5 @@
 import { isPlatformAdmin } from '@/lib/adminAuthority';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { getSupabaseClient } from '@/lib/supabaseClient';
 import { validateAndRefreshSession, refreshSession } from '@/lib/sessionUtils';
@@ -36,6 +36,15 @@ export const useAuthState = (): AuthState => {
   });
   
   const supabase = getSupabaseClient();
+
+  // Identidad establecida + perfil adjunto (espejos síncronos del estado).
+  // Sirven para: (1) no vaciar el perfil ante eventos con usuario crudo
+  // (TOKEN_REFRESHED) del MISMO usuario; (2) no aplicar respuestas
+  // asíncronas obsoletas de una identidad anterior; (3) no cerrar sesión
+  // ante fallos transitorios cuando ya había sesión establecida.
+  const establishedUserIdRef = useRef<string | null>(null);
+  const attachedProfileRef = useRef<{ userId: string; profile: unknown } | null>(null);
+  const epochRef = useRef(0);
   
   // Update state helper
   const updateState = useCallback((updates: Partial<Omit<AuthState, 'checkSession' | 'refreshAuth' | 'setUser'>>) => {
@@ -54,6 +63,8 @@ export const useAuthState = (): AuthState => {
   
   // Check and refresh the current session
   const checkSession = useCallback(async (): Promise<boolean> => {
+    const epoch = epochRef.current;
+    const isCurrent = () => epoch === epochRef.current;
     try {
       // Don't set isLoading to true unconditionally to avoid unmounting components on background check.
       // The initial load state is handled by the default state of the hook.
@@ -86,6 +97,14 @@ export const useAuthState = (): AuthState => {
             
           if (profileError) {
             console.error('Error fetching profile:', profileError);
+            // Ante error de lectura, conservar el perfil ya adjunto del
+            // mismo usuario en vez de vaciarlo (evita badge/rol obsoleto).
+            if (
+              establishedUserIdRef.current === currentSession.user.id &&
+              attachedProfileRef.current?.userId === currentSession.user.id
+            ) {
+              profileData = attachedProfileRef.current.profile;
+            }
             // Continue without profile data rather than failing
           } else {
             profileData = data;
@@ -144,11 +163,20 @@ export const useAuthState = (): AuthState => {
       }
       
       if (error) throw error;
+
+      // Respuesta obsoleta (otra identidad tomó el turno): no tocar estado.
+      if (!isCurrent()) return false;
       
       if (currentSession) {
         const isValid = await validateAndRefreshSession();
+        if (!isCurrent()) return false;
         
         if (isValid) {
+          establishedUserIdRef.current = currentSession.user.id;
+          attachedProfileRef.current = {
+            userId: currentSession.user.id,
+            profile: currentSession.user.profile,
+          };
           updateState({
             session: currentSession,
             user: currentSession.user,
@@ -159,7 +187,21 @@ export const useAuthState = (): AuthState => {
         }
       }
       
-      // If we get here, the session is not valid
+      // Sesión presente pero no validada, o validación fallida: sin señal
+      // definitiva de revocación (esa la dan SIGNED_OUT o la ausencia limpia
+      // de sesión) se conserva la sesión establecida para no desloguear por
+      // un transitorio (red al volver a la ventana, refresh fallido, etc.).
+      // Una sola pasada, sin reintentos ni bucles.
+      if (establishedUserIdRef.current && currentSession?.user) {
+        updateState({
+          error: new Error('No se pudo validar la sesión; se mantiene la anterior.'),
+          isLoading: false,
+        });
+        return false;
+      }
+      // Sin sesión previa establecida: primera carga sin sesión válida.
+      establishedUserIdRef.current = null;
+      attachedProfileRef.current = null;
       updateState({
         session: null,
         user: null,
@@ -169,6 +211,16 @@ export const useAuthState = (): AuthState => {
       
       return false;
     } catch (error) {
+      // Excepción (p. ej. getSession lanzó): conservar la sesión establecida;
+      // solo limpiar cuando nunca hubo una.
+      if (establishedUserIdRef.current) {
+        const authError = error instanceof Error ? error : new Error('Failed to check session');
+        updateState({
+          error: authError,
+          isLoading: false,
+        });
+        return false;
+      }
       const authError = error instanceof Error ? error : new Error('Failed to check session');
       updateState({ 
         error: authError,
@@ -250,9 +302,29 @@ export const useAuthState = (): AuthState => {
                     } catch {
                       // analytics nunca bloquea auth
                     }
+                    // Los eventos traen el usuario crudo de Supabase (sin
+                    // .profile adjunto). Para el MISMO usuario se conserva el
+                    // perfil ya cargado; con otra identidad no se reutiliza
+                    // nada y la época invalida respuestas en vuelo.
+                    const incomingId = (session.user as User)?.id ?? null;
+                    if (incomingId !== establishedUserIdRef.current) {
+                      establishedUserIdRef.current = incomingId;
+                      attachedProfileRef.current = null;
+                      epochRef.current += 1;
+                    }
+                    const carried =
+                      incomingId !== null && attachedProfileRef.current?.userId === incomingId
+                        ? attachedProfileRef.current.profile
+                        : undefined;
+                    const mergedUser = {
+                      ...session.user,
+                      ...((session.user as User).profile === undefined && carried !== undefined
+                        ? { profile: carried }
+                        : {}),
+                    };
                     updateState({
                       session,
-                      user: session.user,
+                      user: mergedUser as User,
                       isAuthenticated: true,
                       error: null,
                       isLoading: false,
@@ -268,6 +340,9 @@ export const useAuthState = (): AuthState => {
                   } catch {
                     // noop
                   }
+                  establishedUserIdRef.current = null;
+                  attachedProfileRef.current = null;
+                  epochRef.current += 1;
                   updateState({
                     session: null,
                     user: null,
