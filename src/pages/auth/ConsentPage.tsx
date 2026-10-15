@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import { TermsConsentCheckbox } from '@/components/auth/TermsConsentCheckbox';
 import { CONSENT_ERROR, buildConsentPatch, hasLegalConsent, sanitizeRedirectForConsent } from '@/lib/legalConsent';
-import { buildRoleOnboardingPath, needsRoleSelection } from '@/lib/roleOnboarding';
+import { buildRoleOnboardingPath, needsRoleConfirmation } from '@/lib/roleOnboarding';
 
 /**
  * FASE 5.6 — interstitial post-OAuth para cuentas nuevas sin aceptación.
@@ -36,6 +36,14 @@ export default function ConsentPage() {
         navigate('/?login=true', { replace: true });
         return;
       }
+      // Estado PREVIO a este aceptar (rol + evidencia de consentimiento):
+      // la decisión de mostrar el selector debe evaluar lo que había ANTES
+      // del clic, porque este mismo clic registra los timestamps.
+      const { data: preProfile } = await supabase
+        .from('profiles')
+        .select('id, role, terms_accepted_at, privacy_acknowledged_at')
+        .eq('id', user.id)
+        .maybeSingle();
       const { error } = await supabase
         .from('profiles')
         .upsert({ id: user.id, user_id: user.id, ...buildConsentPatch() }, { onConflict: 'id' });
@@ -52,21 +60,19 @@ export default function ConsentPage() {
       if (!hasLegalConsent(consentCheck)) {
         throw new Error('Tu aceptación no quedó registrada. Intenta nuevamente.');
       }
-      // Cierre del bypass consent→destino: si aún no tiene tipo de cuenta,
-      // pasa por el selector preservando el destino (nunca lo salta).
-      // Ante error de lectura no se bloquea: se continúa al destino.
-      try {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('id, role')
-          .eq('user_id', user.id)
-          .maybeSingle();
-        if (needsRoleSelection(profile, user as never)) {
-          navigate(buildRoleOnboardingPath(dest === '/' ? null : dest), { replace: true });
-          return;
-        }
-      } catch {
-        /* continuar al destino */
+      // Cierre del bypass consent→destino: un 'client' por defecto del
+      // trigger (sin timestamps previos ni elección corroborada) pasa por
+      // el selector aunque ya existan timestamps recién escritos. Con rol
+      // elegido no se bloquea: se continúa al destino.
+      // El estado previo viaja en location.state: la pantalla de rol
+      // reevalúa con timestamps ya presentes y sin esta marca redirigiría
+      // sin mostrar el formulario.
+      if (needsRoleConfirmation(preProfile, user as never)) {
+        navigate(buildRoleOnboardingPath(dest === '/' ? null : dest), {
+          replace: true,
+          state: { fromConsent: true },
+        });
+        return;
       }
       navigate(dest, { replace: true });
     } catch (e) {

@@ -33,7 +33,11 @@ vi.mock('@/lib/supabaseClient', () => ({
       },
       select: () => ({
         eq: () => ({
-          maybeSingle: () => Promise.resolve({ data: consentState.profile }),
+          // Snapshot fresco por lectura (como PostgREST real).
+          maybeSingle: () =>
+            Promise.resolve({
+              data: consentState.profile ? { ...consentState.profile } : null,
+            }),
         }),
       }),
     }),
@@ -74,8 +78,13 @@ describe('ConsentPage — cierre del bypass hacia el selector de rol', () => {
     expect(await screen.findByText('Pantalla de rol')).toBeInTheDocument();
   });
 
-  it('usuario con rol definido: tras aceptar sigue al destino existente', async () => {
-    consentState.profile = { id: 'U-new', role: 'client' };
+  it('usuario con rol elegido (con historial de consentimiento): tras aceptar sigue al destino', async () => {
+    consentState.profile = {
+      id: 'U-new',
+      role: 'client',
+      terms_accepted_at: '2026-10-06T00:00:00.000Z',
+      privacy_acknowledged_at: '2026-10-06T00:00:00.000Z',
+    };
     renderAt('/auth/consent?redirectTo=%2Fsearch');
     await acceptTerms();
     expect(await screen.findByText('Buscador')).toBeInTheDocument();

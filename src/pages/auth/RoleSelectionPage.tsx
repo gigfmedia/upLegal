@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Loader2, Scale } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +12,7 @@ import {
   getDefinedAccountRole,
   getRoleOnboardingDestination,
   isSelectableRole,
-  needsRoleSelection,
+  needsRoleConfirmation,
   type SelectableRole,
 } from '@/lib/roleOnboarding';
 import {
@@ -38,8 +38,11 @@ const resolveApiBaseUrl = () => {
 
 /**
  * Onboarding simple post-registro: una sola pantalla para elegir tipo de
- * cuenta. Se llega solo desde AuthCallback cuando el usuario no tiene rol
- * definido; si ya lo tiene, redirige sin mostrarse (recargas incluidas).
+ * cuenta. Se llega solo desde AuthCallback/ConsentPage cuando el usuario no
+ * tiene rol elegido conscientemente; si ya lo eligió, redirige sin
+ * mostrarse (recargas incluidas). Un 'client' por defecto del trigger de
+ * Auth (sin timestamps ni corroboración) no cuenta como elegido.
+ * ConsentPage propaga esa decisión vía location.state (fromConsent).
  * Persiste vía POST /api/profile/role (validación en servidor, idempotente).
  */
 export default function RoleSelectionPage() {
@@ -61,6 +64,13 @@ export default function RoleSelectionPage() {
   const safeRedirect =
     rawRedirect && (rawRedirect.startsWith('/auth/') || rawRedirect === '/') ? null : rawRedirect;
 
+  // Marca de ConsentPage (location.state, no URL): viene de aceptar el
+  // consentimiento con estado previo sin elección. El mount reevalúa con
+  // timestamps ya presentes y sin esta marca redirigiría sin mostrar nada.
+  const location = useLocation();
+  const fromConsent =
+    (location.state as { fromConsent?: boolean } | null)?.fromConsent === true;
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -71,13 +81,17 @@ export default function RoleSelectionPage() {
         return;
       }
       // H3: misma clave que AuthCallback y el resto de la app (user_id).
+      // Se leen también los timestamps: la regla one-shot los necesita.
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id, role')
+        .select('id, role, terms_accepted_at, privacy_acknowledged_at')
         .eq('user_id', user.id)
         .maybeSingle();
       if (cancelled) return;
-      if (!needsRoleSelection(profile, user as never)) {
+      // Un 'client' por defecto del trigger (sin timestamps ni elección
+      // corroborada) NO cuenta como elegido: se muestra el formulario.
+      // Con rol elegido (o administrativo): no mostrar de nuevo.
+      if (!fromConsent && !needsRoleConfirmation(profile, user as never)) {
         // Ya definido (o administrativo): no mostrar de nuevo.
         const defined = getDefinedAccountRole(profile, user as never);
         navigate(

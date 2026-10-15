@@ -16,6 +16,8 @@
  *   (verified / pjud_verified) no se toca en este flujo.
  */
 
+import { hasLegalConsent, type LegalConsentState } from './legalConsent';
+
 export const ROLE_ONBOARDING_PATH = '/auth/role';
 
 /** Roles que cuentan como "tipo de cuenta ya definido". */
@@ -82,6 +84,30 @@ export function needsRoleSelection(
   if (defined === null) return true;
   if (isProtectedRole(defined)) return false;
   return !(DEFINED_ACCOUNT_ROLES as readonly string[]).includes(defined);
+}
+
+/**
+ * Distingue un rol elegido conscientemente de un default automático.
+ *
+ * El trigger `on_auth_user_created → handle_new_user()` inserta
+ * `role='client'` (COALESCE sin metadata) al crear el usuario OAuth: ese
+ * 'client' NO es una elección y no debe saltarse el selector. En cambio,
+ * 'lawyer'/'company' (o 'client' corroborado en `user_metadata`, o cualquier
+ * rol con consentimiento ya registrado) sí cuentan como definidos.
+ *
+ * Regla one-shot (sin bucles): el 'client' no corroborado solo exige el
+ * selector mientras FALTAN los timestamps de consentimiento. Tras aceptar
+ * (timestamps presentes) se confía en el rol y no se vuelve a pedir.
+ */
+export function needsRoleConfirmation(
+  profile: { role?: unknown } & Partial<LegalConsentState> | null | undefined,
+  user?: RoleCarrier,
+): boolean {
+  if (needsRoleSelection(profile, user)) return true;
+  const role = normalizeRole((profile as { role?: unknown } | null)?.role);
+  if (role !== 'client') return false;
+  if (normalizeRole(user?.user_metadata?.role) === 'client') return false;
+  return !hasLegalConsent(profile);
 }
 
 /**

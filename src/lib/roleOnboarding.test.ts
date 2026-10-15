@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   needsRoleSelection,
+  needsRoleConfirmation,
   getDefinedAccountRole,
   getRoleOnboardingDestination,
   buildRoleOnboardingPath,
@@ -45,6 +46,44 @@ describe('roleOnboarding — needsRoleSelection', () => {
   it('normaliza mayúsculas y espacios', () => {
     expect(needsRoleSelection({ role: ' Lawyer ' })).toBe(false);
     expect(getDefinedAccountRole({ role: 'CLIENT' })).toBe('client');
+  });
+});
+
+describe('roleOnboarding — needsRoleConfirmation (trigger vs elección)', () => {
+  const TS = '2026-10-06T00:00:00.000Z';
+
+  it("default del trigger ('client' sin timestamps ni metadata): exige selector", () => {
+    expect(needsRoleConfirmation({ role: 'client' }, { user_metadata: {} })).toBe(true);
+    expect(
+      needsRoleConfirmation({ role: 'client', terms_accepted_at: null }, { user_metadata: {} }),
+    ).toBe(true);
+  });
+
+  it('mismo client con consentimiento registrado: ya no lo exige (one-shot)', () => {
+    expect(
+      needsRoleConfirmation(
+        { role: 'client', terms_accepted_at: TS, privacy_acknowledged_at: TS },
+        { user_metadata: {} },
+      ),
+    ).toBe(false);
+  });
+
+  it('client corroborado en metadata: no lo exige', () => {
+    expect(
+      needsRoleConfirmation({ role: 'client' }, { user_metadata: { role: 'client' } }),
+    ).toBe(false);
+  });
+
+  it('lawyer/company/admin nunca lo exigen', () => {
+    expect(needsRoleConfirmation({ role: 'lawyer' }, { user_metadata: {} })).toBe(false);
+    expect(needsRoleConfirmation({ role: 'company' }, { user_metadata: {} })).toBe(false);
+    expect(needsRoleConfirmation({ role: 'admin' }, { user_metadata: {} })).toBe(false);
+  });
+
+  it('sin fila o rol indefinido: lo exige', () => {
+    expect(needsRoleConfirmation(null, { user_metadata: {} })).toBe(true);
+    expect(needsRoleConfirmation({ role: null }, { user_metadata: {} })).toBe(true);
+    expect(needsRoleConfirmation({ role: 'user' }, { user_metadata: {} })).toBe(true);
   });
 });
 

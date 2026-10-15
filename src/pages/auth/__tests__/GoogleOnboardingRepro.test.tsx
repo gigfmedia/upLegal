@@ -59,8 +59,13 @@ vi.mock('@/lib/supabaseClient', () => ({
       if (table !== 'profiles') throw new Error('tabla no mockeada: ' + table);
       return {
         select: () => ({
+          // PostgREST devuelve snapshots frescos por lectura: se copia para
+          // que el upsert no mute el estado "previo" ya leído.
           eq: (col: string, val: string) => ({
-            maybeSingle: async () => ({ data: findRow(col, val), error: null }),
+            maybeSingle: async () => {
+              const row = findRow(col, val);
+              return { data: row ? { ...row } : null, error: null };
+            },
           }),
         }),
         update: (patch: Record<string, unknown>) => ({
@@ -224,4 +229,43 @@ describe('Reproducción del fallo de onboarding Google en producción', () => {
     expect(screen.queryByText('Bienvenido a LegalUp')).not.toBeInTheDocument();
     expect(flowState.rows.size).toBe(0);
   }, 25000);
+
+  it("trigger autogenerado (role client sin timestamps): aceptar lleva al selector, no a /", async () => {
+    // Reproducción exacta del caso de producción: handle_new_user() insertó
+    // role='client' por defecto y el usuario jamás eligió su rol.
+    flowState.rows.set('U-repro', { id: 'U-repro', user_id: 'U-repro', role: 'client' });
+    renderFlow('/auth/callback?code=trigger-row&redirectTo=%2F');
+    await acceptConsent();
+    await screen.findByText('Bienvenido a LegalUp', undefined, { timeout: 10000 });
+    expect(probe()).toContain('/auth/role');
+    expect(probe()).not.toBe('/');
+  }, 25000);
+
+  it('trigger autogenerado: cadena completa consent → rol → /search con persistencia', async () => {
+    flowState.rows.set('U-repro', { id: 'U-repro', user_id: 'U-repro', role: 'client' });
+    renderFlow('/auth/callback?code=trigger-full&redirectTo=%2F');
+    await acceptConsent();
+    await chooseClient();
+    await screen.findByText('Buscador final', undefined, { timeout: 10000 });
+    expect(probe()).toContain('/search');
+    const row = findRow('id', flowState.user.id);
+    expect(row?.role).toBe('client');
+    expect(row?.terms_accepted_at).toBeTruthy();
+    expect(row?.privacy_acknowledged_at).toBeTruthy();
+    expect(flowState.rows.size).toBe(1);
+  }, 30000);
+
+  it('usuario existente con rol elegido e historial: va al destino sin consent ni rol', async () => {
+    flowState.rows.set('U-repro', {
+      id: 'U-repro',
+      user_id: 'U-repro',
+      role: 'client',
+      terms_accepted_at: '2026-10-06T00:00:00.000Z',
+      privacy_acknowledged_at: '2026-10-06T00:00:00.000Z',
+    });
+    renderFlow('/auth/callback?code=established&redirectTo=%2F');
+    await waitFor(() => expect(probe()).toBe('/'), { timeout: 10000 });
+    expect(screen.queryByText('Un paso más para crear tu cuenta')).not.toBeInTheDocument();
+    expect(screen.queryByText('Bienvenido a LegalUp')).not.toBeInTheDocument();
+  }, 20000);
 });

@@ -36,7 +36,10 @@ vi.mock('@/lib/supabaseClient', () => ({
     from: () => ({
       select: () => ({
         eq: () => ({
-          maybeSingle: async () => ({ data: flowState.profile }),
+          // Snapshot fresco por lectura (como PostgREST real).
+          maybeSingle: async () => ({
+            data: flowState.profile ? { ...flowState.profile } : null,
+          }),
         }),
       }),
       // ConsentPage persiste con upsert (crea la fila si falta) y verifica

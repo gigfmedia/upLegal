@@ -4,7 +4,12 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 
 const supabaseState = vi.hoisted(() => ({
   user: null as null | { id: string; email: string; user_metadata: Record<string, unknown> },
-  profile: null as null | { id: string; role: string | null },
+  profile: null as null | {
+    id: string;
+    role: string | null;
+    terms_accepted_at?: string | null;
+    privacy_acknowledged_at?: string | null;
+  },
   token: 'test-token',
 }));
 
@@ -100,8 +105,13 @@ describe('RoleSelectionPage — onboarding simple post-registro', () => {
     expect(await screen.findByText('Onboarding abogado')).toBeInTheDocument();
   });
 
-  it('2/5. usuario existente con rol: no muestra la pantalla', async () => {
-    supabaseState.profile = { id: 'user-google-1', role: 'client' };
+  it('2/5. usuario existente con rol elegido (con historial): no muestra la pantalla', async () => {
+    supabaseState.profile = {
+      id: 'user-google-1',
+      role: 'client',
+      terms_accepted_at: '2026-10-06T00:00:00.000Z',
+      privacy_acknowledged_at: '2026-10-06T00:00:00.000Z',
+    };
     renderAt('/auth/role');
     expect(await screen.findByText('Buscador')).toBeInTheDocument();
     expect(screen.queryByText('Bienvenido a LegalUp')).not.toBeInTheDocument();
@@ -140,10 +150,21 @@ describe('RoleSelectionPage — onboarding simple post-registro', () => {
     expect(await screen.findByText('Buscador')).toBeInTheDocument();
   });
 
-  it('H1. usuario con rol y redirectTo a /auth/ sale al destino real', async () => {
-    supabaseState.profile = { id: 'user-google-1', role: 'client' };
+  it('H1. usuario con rol elegido y redirectTo a /auth/ sale al destino real', async () => {
+    supabaseState.profile = {
+      id: 'user-google-1',
+      role: 'client',
+      terms_accepted_at: '2026-10-06T00:00:00.000Z',
+      privacy_acknowledged_at: '2026-10-06T00:00:00.000Z',
+    };
     renderAt('/auth/role?redirectTo=%2Fauth%2Frole');
     expect(await screen.findByText('Buscador')).toBeInTheDocument();
     expect(screen.queryByText('Bienvenido a LegalUp')).not.toBeInTheDocument();
+  });
+
+  it('default del trigger: client sin timestamps ni eleccion muestra el formulario', async () => {
+    supabaseState.profile = { id: 'user-google-1', role: 'client' };
+    renderAt('/auth/role');
+    expect(await screen.findByText('Bienvenido a LegalUp')).toBeInTheDocument();
   });
 });
