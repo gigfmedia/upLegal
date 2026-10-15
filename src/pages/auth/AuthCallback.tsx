@@ -210,7 +210,12 @@ export default function AuthCallback() {
             });
             return;
           }
-          // If there's an explicit redirectTo, respect it only if email verified for lawyers
+          // Destino post-login: un redirectTo EXPLÍCITO y válido se respeta.
+          // '/' NO es explícito: es el valor por defecto que guarda
+          // beginGoogleSignIn desde la home (sin destino solicitado). Para un
+          // abogado verificado sin destino explícito, '/' no debe prevalecer
+          // sobre su destino por rol (cae a la rama lawyer de abajo). Para el
+          // resto, '/' conserva el comportamiento habitual (volver a la home).
           if (safeRedirect) {
             const isLawyer = profile?.role === 'lawyer' || (user.user_metadata as any)?.role === 'lawyer';
             if (isLawyer && !isEmailVerified(user as any)) {
@@ -218,8 +223,10 @@ export default function AuthCallback() {
               navigate('/?verifyEmail=true', { replace: true });
               return;
             }
-            navigate(safeRedirect, { replace: true });
-            return;
+            if (!isLawyer || safeRedirect !== '/') {
+              navigate(safeRedirect, { replace: true });
+              return;
+            }
           }
 
           if (profile?.role === 'lawyer' || (user.user_metadata as any)?.role === 'lawyer') {

@@ -20,6 +20,7 @@ type ProfileRow = {
   role: string | null;
   terms_accepted_at?: string | null;
   privacy_acknowledged_at?: string | null;
+  profile_setup_completed?: boolean | null;
 };
 
 const flowState = vi.hoisted(() => ({
@@ -124,6 +125,9 @@ function renderFlow(entry: string) {
         <Route path="/auth/consent" element={<ConsentPage />} />
         <Route path="/auth/role" element={<RoleSelectionPage />} />
         <Route path="/search" element={<div>Buscador final</div>} />
+        <Route path="/lawyer/onboarding" element={<div>Onboarding abogado final</div>} />
+        <Route path="/lawyer/dashboard" element={<div>Dashboard abogado final</div>} />
+        <Route path="/lawyer/cases" element={<div>Casos abogado</div>} />
         <Route path="/" element={<div>Home sin rol</div>} />
       </Routes>
     </MemoryRouter>,
@@ -320,8 +324,7 @@ describe('Reproducción del fallo de onboarding Google en producción', () => {
     expect(probe()).toContain('/auth/consent');
   }, 20000);
 
-  it('OAuth cancelado: limpia el puente y va al login, sin transcribir', async () => {
-    seedBridge(validSnapshot());
+  it('OAuth cancelado: limpia el puente y va al login, sin transcribir', async () => {    seedBridge(validSnapshot());
     flowState.rows.set('U-repro', { id: 'U-repro', user_id: 'U-repro', role: 'client' });
     renderFlow('/auth/callback?error=access_denied&error_description=denied');
     await waitFor(() => expect(probe()).toContain('login=true'), { timeout: 10000 });
@@ -364,5 +367,71 @@ describe('Reproducción del fallo de onboarding Google en producción', () => {
     renderFlow('/auth/callback?code=second-attempt&redirectTo=%2F');
     await screen.findByText('Bienvenido a LegalUp', undefined, { timeout: 10000 });
     expect(probe()).toContain('/auth/role');
+  }, 20000);
+
+  it('abogado existente sin destino explícito: va a /lawyer/onboarding, no a /', async () => {
+    flowState.rows.set('U-repro', {
+      id: 'U-repro',
+      user_id: 'U-repro',
+      role: 'lawyer',
+      terms_accepted_at: '2026-10-06T00:00:00.000Z',
+      privacy_acknowledged_at: '2026-10-06T00:00:00.000Z',
+    });
+    renderFlow('/auth/callback?code=lawyer-login&redirectTo=%2F');
+    await screen.findByText('Onboarding abogado final', undefined, { timeout: 10000 });
+    expect(probe()).toBe('/lawyer/onboarding');
+  }, 20000);
+
+  it('abogado con onboarding completo: va a /lawyer/dashboard', async () => {
+    flowState.rows.set('U-repro', {
+      id: 'U-repro',
+      user_id: 'U-repro',
+      role: 'lawyer',
+      profile_setup_completed: true,
+      terms_accepted_at: '2026-10-06T00:00:00.000Z',
+      privacy_acknowledged_at: '2026-10-06T00:00:00.000Z',
+    });
+    renderFlow('/auth/callback?code=lawyer-done&redirectTo=%2F');
+    await screen.findByText('Dashboard abogado final', undefined, { timeout: 10000 });
+    expect(probe()).toBe('/lawyer/dashboard');
+  }, 20000);
+
+  it('abogado con destino interno explícito: se respeta', async () => {
+    flowState.rows.set('U-repro', {
+      id: 'U-repro',
+      user_id: 'U-repro',
+      role: 'lawyer',
+      terms_accepted_at: '2026-10-06T00:00:00.000Z',
+      privacy_acknowledged_at: '2026-10-06T00:00:00.000Z',
+    });
+    renderFlow('/auth/callback?code=lawyer-deep&redirectTo=%2Flawyer%2Fcases');
+    await screen.findByText('Casos abogado', undefined, { timeout: 10000 });
+    expect(probe()).toBe('/lawyer/cases');
+  }, 20000);
+
+  it('cliente existente sin destino explícito: conserva ir a /', async () => {
+    flowState.rows.set('U-repro', {
+      id: 'U-repro',
+      user_id: 'U-repro',
+      role: 'client',
+      terms_accepted_at: '2026-10-06T00:00:00.000Z',
+      privacy_acknowledged_at: '2026-10-06T00:00:00.000Z',
+    });
+    renderFlow('/auth/callback?code=client-login&redirectTo=%2F');
+    await waitFor(() => expect(probe()).toBe('/'), { timeout: 10000 });
+    expect(screen.queryByText('Un paso más para crear tu cuenta')).not.toBeInTheDocument();
+  }, 20000);
+
+  it('redirect externo con abogado: se sanitiza y va al destino por rol', async () => {
+    flowState.rows.set('U-repro', {
+      id: 'U-repro',
+      user_id: 'U-repro',
+      role: 'lawyer',
+      terms_accepted_at: '2026-10-06T00:00:00.000Z',
+      privacy_acknowledged_at: '2026-10-06T00:00:00.000Z',
+    });
+    renderFlow('/auth/callback?code=lawyer-evil&redirectTo=' + encodeURIComponent('https://attacker/x'));
+    await screen.findByText('Onboarding abogado final', undefined, { timeout: 10000 });
+    expect(probe()).toBe('/lawyer/onboarding');
   }, 20000);
 });
