@@ -39,14 +39,19 @@ vi.mock('@/lib/supabaseClient', () => ({
           maybeSingle: async () => ({ data: flowState.profile }),
         }),
       }),
-      // El patch de consentimiento materializa timestamps si hay fila
-      // (con 0 filas es no-op exitoso, igual que en Supabase real).
-      update: (patch: Record<string, unknown>) => ({
-        eq: async () => {
-          if (flowState.profile) Object.assign(flowState.profile, patch);
-          return { error: null };
-        },
-      }),
+      // ConsentPage persiste con upsert (crea la fila si falta) y verifica
+      // releyendo timestamps antes de navegar.
+      upsert: (obj: Record<string, unknown>) => {
+        if (flowState.profile) Object.assign(flowState.profile, obj);
+        else {
+          flowState.profile = {
+            id: 'U-flow',
+            role: null,
+            ...(obj as object),
+          } as never;
+        }
+        return Promise.resolve({ error: null });
+      },
     }),
   },
 }));

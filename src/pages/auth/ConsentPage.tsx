@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import { TermsConsentCheckbox } from '@/components/auth/TermsConsentCheckbox';
-import { CONSENT_ERROR, buildConsentPatch, sanitizeRedirectForConsent } from '@/lib/legalConsent';
+import { CONSENT_ERROR, buildConsentPatch, hasLegalConsent, sanitizeRedirectForConsent } from '@/lib/legalConsent';
 import { buildRoleOnboardingPath, needsRoleSelection } from '@/lib/roleOnboarding';
 
 /**
@@ -36,8 +36,22 @@ export default function ConsentPage() {
         navigate('/?login=true', { replace: true });
         return;
       }
-      const { error } = await supabase.from('profiles').update(buildConsentPatch()).eq('id', user.id);
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({ id: user.id, user_id: user.id, ...buildConsentPatch() }, { onConflict: 'id' });
       if (error) throw error;
+      // Verificar persistencia antes de avanzar: una escritura puede
+      // reportar éxito sin tocar filas (RLS) y avanzar igual reabriría el
+      // interstitial en el próximo login («ya había aceptado»). Sin
+      // evidencia leída no se navega: se muestra error y se permanece aquí.
+      const { data: consentCheck } = await supabase
+        .from('profiles')
+        .select('terms_accepted_at, privacy_acknowledged_at')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (!hasLegalConsent(consentCheck)) {
+        throw new Error('Tu aceptación no quedó registrada. Intenta nuevamente.');
+      }
       // Cierre del bypass consent→destino: si aún no tiene tipo de cuenta,
       // pasa por el selector preservando el destino (nunca lo salta).
       // Ante error de lectura no se bloquea: se continúa al destino.

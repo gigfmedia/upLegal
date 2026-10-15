@@ -54,8 +54,12 @@ export default function RoleSelectionPage() {
   // H1: un retorno hacia infraestructura auth (p. ej. redirectTo=/auth/role)
   // dejaría un spinner infinito (navegación replace a sí misma sin re-montar)
   // o re-mostraría el formulario tras guardar. Se trata como nulo.
+  // '/': valor por defecto de beginGoogleSignIn desde la home, sin destino
+  // explícito → aplican los destinos por rol (/search, /lawyer/onboarding),
+  // nunca la home como «destino post-onboarding».
   const rawRedirect = sanitizePostAuthRedirect(params.get('redirectTo'));
-  const safeRedirect = rawRedirect && rawRedirect.startsWith('/auth/') ? null : rawRedirect;
+  const safeRedirect =
+    rawRedirect && (rawRedirect.startsWith('/auth/') || rawRedirect === '/') ? null : rawRedirect;
 
   useEffect(() => {
     let cancelled = false;

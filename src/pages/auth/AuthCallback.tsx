@@ -95,8 +95,19 @@ export default function AuthCallback() {
 
           // 4.60A: solo destinos internos (anti open-redirect).
           const safeRedirect = sanitizePostAuthRedirect(redirectTo);
+          // Onboarding: '/' es el valor por defecto que guarda
+          // beginGoogleSignIn desde la home (sin destino explícito), NO un
+          // destino real. En la cadena de onboarding colapsa a nulo para que
+          // apliquen los destinos por rol (/search, /lawyer/onboarding).
+          // Fuera del onboarding (usuario con rol) '/' sí se respeta.
+          const onboardingRedirect = safeRedirect && safeRedirect !== '/' ? safeRedirect : null;
           // FASE 5.6: cuentas sin evidencia de aceptación van al interstitial
           // de consentimiento (solo primera vez; existentes pasan de largo).
+          // El checkbox del modal de registro es solo compuerta local: para
+          // Google nada persiste consentimiento antes del callback, así que
+          // un alta fresca (created_at reciente) sin fila va a consentimiento
+          // primero; legacy sin fila mantiene fail-open (se evalúa cuando la
+          // fila exista, típicamente tras elegir rol).
           try {
             const readConsent = async () =>
               supabase
@@ -111,11 +122,22 @@ export default function AuthCallback() {
               await new Promise((r) => setTimeout(r, 1500));
               ({ data: consentRow } = await readConsent());
             }
-            // Solo si la fila existe y carece de timestamps: sin fila no se
-            // puede distinguir nuevo de legacy → no bloquear (perfil se crea
-            // después y el próximo login sí lo evalúa).
+            // Solo si la fila existe y carece de timestamps, o si es un alta
+            // fresca aún sin fila y sin rol definido en ninguna fuente (nada
+            // pudo persistir su aceptación): en ambos casos corresponde el
+            // interstitial. Con rol en metadata (abogado Google) o admin, y
+            // legacy sin fila, no se bloquea: flujo previo intacto
+            // (fail-open; el consentimiento se evalúa cuando la fila exista).
+            if (
+              !consentRow &&
+              isRecentSignup(user.created_at) &&
+              needsRoleSelection(null, user as never)
+            ) {
+              navigate(`/auth/consent?redirectTo=${encodeURIComponent(onboardingRedirect || '/')}`, { replace: true });
+              return;
+            }
             if (consentRow && !hasLegalConsent(consentRow)) {
-              navigate(`/auth/consent?redirectTo=${encodeURIComponent(safeRedirect || '/')}`, { replace: true });
+              navigate(`/auth/consent?redirectTo=${encodeURIComponent(onboardingRedirect || '/')}`, { replace: true });
               return;
             }
           } catch {
@@ -126,7 +148,7 @@ export default function AuthCallback() {
           // sin rol) → pantalla de selección. Con rol o admin, flujo actual.
           // El retorno sanitizado se preserva para después de la selección.
           if (needsRoleSelection(profile, user as never)) {
-            navigate(buildRoleOnboardingPath(safeRedirect), { replace: true });
+            navigate(buildRoleOnboardingPath(onboardingRedirect), { replace: true });
             return;
           }
           // If there's an explicit redirectTo, respect it only if email verified for lawyers

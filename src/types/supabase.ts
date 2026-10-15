@@ -3050,6 +3050,8 @@ export type Database = {
           mercado_pago_user_id: string | null
           phone: string | null
           pjud_verified: boolean | null
+          privacy_acknowledged_at: string | null
+          privacy_version: string | null
           profile_setup_completed: boolean | null
           rating: number | null
           response_time: string | null
@@ -3061,6 +3063,8 @@ export type Database = {
           specialty_id: string | null
           study_end_year: number | null
           study_start_year: number | null
+          terms_accepted_at: string | null
+          terms_version: string | null
           university: string | null
           updated_at: string
           user_id: string
@@ -3106,6 +3110,8 @@ export type Database = {
           mercado_pago_user_id?: string | null
           phone?: string | null
           pjud_verified?: boolean | null
+          privacy_acknowledged_at?: string | null
+          privacy_version?: string | null
           profile_setup_completed?: boolean | null
           rating?: number | null
           response_time?: string | null
@@ -3117,6 +3123,8 @@ export type Database = {
           specialty_id?: string | null
           study_end_year?: number | null
           study_start_year?: number | null
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           university?: string | null
           updated_at?: string
           user_id: string
@@ -3162,6 +3170,8 @@ export type Database = {
           mercado_pago_user_id?: string | null
           phone?: string | null
           pjud_verified?: boolean | null
+          privacy_acknowledged_at?: string | null
+          privacy_version?: string | null
           profile_setup_completed?: boolean | null
           rating?: number | null
           response_time?: string | null
@@ -3173,6 +3183,8 @@ export type Database = {
           specialty_id?: string | null
           study_end_year?: number | null
           study_start_year?: number | null
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           university?: string | null
           updated_at?: string
           user_id?: string

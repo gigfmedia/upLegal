@@ -8,7 +8,12 @@ const consentState = vi.hoisted(() => ({
     email: string;
     user_metadata: Record<string, unknown>;
   },
-  profile: null as null | { id: string; role: string | null },
+  profile: null as null | {
+    id: string;
+    role: string | null;
+    terms_accepted_at?: string | null;
+    privacy_acknowledged_at?: string | null;
+  },
   updateError: null as null | Error,
 }));
 
@@ -18,10 +23,14 @@ vi.mock('@/lib/supabaseClient', () => ({
       getUser: () => Promise.resolve({ data: { user: consentState.user } }),
     },
     from: () => ({
-      // ConsentPage usa update().eq() para el patch y select().eq().maybeSingle() para el rol.
-      update: () => ({
-        eq: () => Promise.resolve({ error: consentState.updateError }),
-      }),
+      // ConsentPage persiste con upsert (crea la fila si falta) y verifica
+      // releyendo timestamps antes de navegar.
+      upsert: (obj: Record<string, unknown>) => {
+        if (!consentState.updateError) {
+          consentState.profile = { ...(consentState.profile as object | null), ...obj } as never;
+        }
+        return Promise.resolve({ error: consentState.updateError });
+      },
       select: () => ({
         eq: () => ({
           maybeSingle: () => Promise.resolve({ data: consentState.profile }),
