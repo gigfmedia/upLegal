@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { useLawyerClients } from '@/hooks/useLawyerClients';
+import { useLawyerClients, isFreeClientEntitlementError } from '@/hooks/useLawyerClients';
 import { useClientFollowUpOverview } from '@/hooks/useClientCommunications';
 import { formatLastContact } from '@/lib/followUp';
 import { useToast } from '@/hooks/use-toast';
@@ -41,9 +41,17 @@ export default function ClientsPage() {
     [clients, search]
   );
 
+  // Regla comercial: Pro ilimitado; sin Pro, exactamente un cliente de por
+  // vida (cupo free). El backend lo impone atómicamente
+  // (trg_claim_free_client_grant); aquí solo se evita el intento obvio:
+  // con ≥1 cliente visible y sin Pro va directo al paywall. Tras borrar al
+  // único cliente, el cupo puede estar consumido igual (lifetime): si el
+  // backend lo rechaza con el token, se abre el paywall, no un error seco.
+  const canAttemptCreate = hasProAccess || clients.length === 0;
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!hasProAccess) {
+    if (!canAttemptCreate) {
       posthog.capture('pro_paywall_opened', { action: 'create_client' });
       setProPaywallOpen(true);
       return;
@@ -62,6 +70,11 @@ export default function ClientsPage() {
       setPhone('');
       setOpen(false);
     } catch (err) {
+      if (isFreeClientEntitlementError(err)) {
+        posthog.capture('pro_paywall_opened', { action: 'create_client_exhausted' });
+        setProPaywallOpen(true);
+        return;
+      }
       toast({ title: 'Error', description: err instanceof Error ? err.message : 'No se pudo crear', variant: 'destructive' });
     } finally {
       setSaving(false);
@@ -84,7 +97,7 @@ export default function ClientsPage() {
           <p className="text-muted-foreground">Clientes del estudio — aislados por abogado</p>
         </div>
         <Button onClick={() => {
-          if (!hasProAccess) {
+          if (!canAttemptCreate) {
             posthog.capture('pro_paywall_opened', { action: 'create_client' });
             setProPaywallOpen(true);
             return;

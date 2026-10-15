@@ -17,6 +17,30 @@ export interface LawyerClient {
   updated_at: string;
 }
 
+// Token que levanta trg_claim_free_client_grant al consumir el cupo
+// lifetime (segundo cliente sin Pro). El frontend lo mapea al paywall
+// (igual que FREE_CASE_ALLOWANCE_CONSUMED en casos), nunca a error seco.
+export const FREE_CLIENT_ALLOWANCE_CONSUMED = 'FREE_CLIENT_ALLOWANCE_CONSUMED';
+
+function tokenInMessage(err: unknown, token: string): boolean {
+  if (!err) return false;
+  let msg: string;
+  if (err instanceof Error) msg = err.message;
+  else if (typeof err === 'string') msg = err;
+  else {
+    try {
+      msg = JSON.stringify(err);
+    } catch {
+      return false;
+    }
+  }
+  return msg.includes(token);
+}
+
+export function isFreeClientEntitlementError(err: unknown): boolean {
+  return tokenInMessage(err, FREE_CLIENT_ALLOWANCE_CONSUMED);
+}
+
 export function useLawyerClients() {
   const { user } = useAuth();
   const [clients, setClients] = useState<LawyerClient[]>([]);
