@@ -22,6 +22,20 @@ export function hasLegalConsent(profile: Partial<LegalConsentState> | null | und
   return !!profile?.terms_accepted_at && !!profile?.privacy_acknowledged_at;
 }
 
+/**
+ * Consentimiento vigente: con evidencia Y versiones actuales. Un historial
+ * con versiones obsoletas no cuenta como vigente (los textos cambiaron).
+ */
+export function hasCurrentLegalConsent(
+  profile: Partial<LegalConsentState> | null | undefined,
+): boolean {
+  return (
+    hasLegalConsent(profile) &&
+    profile?.terms_version === CURRENT_TERMS_VERSION &&
+    profile?.privacy_version === CURRENT_PRIVACY_VERSION
+  );
+}
+
 /** Destino interno seguro post-consentimiento (default: raíz). */
 export function sanitizeRedirectForConsent(raw: string | null | undefined): string {
   if (!raw) return '/';
@@ -46,39 +60,85 @@ export function buildConsentPatch(nowIso = new Date().toISOString()): LegalConse
 }
 
 /**
- * Aceptación marcada en el modal de registro, transmitida por OAuth dentro
- * de `user_metadata.terms_acceptance` (mismo canal que `data.role`, que el
- * trigger lee vía `raw_user_meta_data`). El checkbox del modal es compuerta
- * local: sin este puente, el post-OAuth no tiene evidencia y re-pregunta.
- *
- * Valida estrictamente: forma, versiones vigentes y fecha no futura. Lo que
- * no calza se ignora (→ interstitial) en vez de inventar evidencia.
+ * Instantánea de la aceptación marcada en el modal de registro (mismo acto
+ * del usuario: checkbox + continuar con Google).
  */
-export type OAuthTermsAcceptance = {
-  acceptedAt: unknown;
-  termsVersion: unknown;
-  privacyVersion: unknown;
+export type PendingConsentSnapshot = {
+  acceptedAt: string;
+  termsVersion: string;
+  privacyVersion: string;
 };
 
-export function getValidTranscribableAcceptance(metadata: unknown): LegalConsentState | null {
-  const acceptance = (metadata as { terms_acceptance?: unknown } | null)?.terms_acceptance as
-    | OAuthTermsAcceptance
-    | null
-    | undefined;
-  if (!acceptance || typeof acceptance !== 'object') return null;
-  if (
-    acceptance.termsVersion !== CURRENT_TERMS_VERSION ||
-    acceptance.privacyVersion !== CURRENT_PRIVACY_VERSION
-  ) {
+export function buildPendingConsentSnapshot(nowIso = new Date().toISOString()): PendingConsentSnapshot {
+  return {
+    acceptedAt: nowIso,
+    termsVersion: CURRENT_TERMS_VERSION,
+    privacyVersion: CURRENT_PRIVACY_VERSION,
+  };
+}
+
+/**
+ * Puente modal→callback para la aceptación explícita durante la redirección
+ * OAuth. Misma razón que el redirect post-auth, pero con evidencia: el SDK
+ * (`signInWithOAuth`) descarta `options.data`, así que `user_metadata` NO
+ * sirve como puente (verificado en @supabase/auth-js). Se guarda en el mismo
+ * origen (localStorage): sobrevive al redirect de Google y el callback lo
+ * consume una sola vez.
+ */
+const PENDING_CONSENT_KEY = 'legalup_pending_consent';
+/** Ventana para completar el roundtrip OAuth (un registro real toma ~1-2 min). */
+const PENDING_CONSENT_TTL_MS = 15 * 60 * 1000;
+
+/**
+ * Ventana de vinculación aceptación→intento: la cuenta debe haberse creado
+ * junto a la aceptación. Fuera de ella, el puente no aporta evidencia
+ * (registro abandonado + login posterior, otra cuenta, reloj disparado).
+ */
+export const BIND_CONSENT_WINDOW_MS = 30 * 60 * 1000;
+
+export function storePendingConsent(snapshot: PendingConsentSnapshot): void {
+  try {
+    window.localStorage.setItem(PENDING_CONSENT_KEY, JSON.stringify(snapshot));
+  } catch {
+    /* storage no disponible: el callback pedirá el interstitial */
+  }
+}
+
+/**
+ * Lee y elimina el puente (un solo uso). Devuelve el patch transcribible
+ * solo si la forma es válida, las versiones están vigentes y no expiró;
+ * en cualquier otro caso devuelve null (→ interstitial) y limpia.
+ */
+export function consumePendingConsent(nowMs = Date.now()): LegalConsentState | null {
+  let raw: string | null = null;
+  try {
+    raw = window.localStorage.getItem(PENDING_CONSENT_KEY);
+    window.localStorage.removeItem(PENDING_CONSENT_KEY);
+  } catch {
     return null;
   }
-  const acceptedMs = Date.parse(String(acceptance.acceptedAt ?? ''));
-  if (Number.isNaN(acceptedMs) || acceptedMs > Date.now() + 60 * 1000) return null;
-  const acceptedAt = new Date(acceptedMs).toISOString();
-  return {
-    terms_accepted_at: acceptedAt,
-    terms_version: CURRENT_TERMS_VERSION,
-    privacy_acknowledged_at: acceptedAt,
-    privacy_version: CURRENT_PRIVACY_VERSION,
-  };
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as {
+      acceptedAt?: unknown;
+      termsVersion?: unknown;
+      privacyVersion?: unknown;
+    };
+    if (parsed.termsVersion !== CURRENT_TERMS_VERSION) return null;
+    if (parsed.privacyVersion !== CURRENT_PRIVACY_VERSION) return null;
+    const acceptedMs = Date.parse(String(parsed.acceptedAt ?? ''));
+    if (Number.isNaN(acceptedMs) || acceptedMs > nowMs + 60 * 1000) return null;
+    if (nowMs - acceptedMs > PENDING_CONSENT_TTL_MS) return null;
+    const acceptedAt = new Date(acceptedMs).toISOString();
+    const patch: LegalConsentState = {
+      terms_accepted_at: acceptedAt,
+      terms_version: CURRENT_TERMS_VERSION,
+      privacy_acknowledged_at: acceptedAt,
+      privacy_version: CURRENT_PRIVACY_VERSION,
+    };
+    if (!hasLegalConsent(patch)) return null;
+    return patch;
+  } catch {
+    return null;
+  }
 }

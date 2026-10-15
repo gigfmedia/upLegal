@@ -5,7 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { getLawyerPostAuthDestination, isEmailVerified } from '@/lib/lawyerOnboardingGate';
 import { consumePostAuthRedirect, sanitizePostAuthRedirect, trackGoogleCompleted } from '@/lib/googleAuth';
 import { buildRoleOnboardingPath, needsRoleConfirmation, needsRoleSelection } from '@/lib/roleOnboarding';
-import { getValidTranscribableAcceptance, hasLegalConsent } from '@/lib/legalConsent';
+import { BIND_CONSENT_WINDOW_MS, hasCurrentLegalConsent, hasLegalConsent, consumePendingConsent } from '@/lib/legalConsent';
 import {
   captureEmailVerificationCompleted,
   captureLoginCompleted,
@@ -35,6 +35,7 @@ export default function AuthCallback() {
         const oauthErrorDescription = params.get('error_description');
         if (oauthError) {
           console.warn('OAuth callback error:', oauthError);
+          consumePendingConsent();
           navigate(`/?login=true&oauth_error=${encodeURIComponent(oauthErrorDescription || 'No se pudo completar el acceso con Google.')}`, { replace: true });
           return;
         }
@@ -46,6 +47,7 @@ export default function AuthCallback() {
           const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
           if (exchangeError) {
             console.error('Error exchanging OAuth code:', exchangeError);
+            consumePendingConsent();
             navigate('/?login=true&oauth_error=' + encodeURIComponent('No se pudo completar el acceso con Google.'), { replace: true });
             return;
           }
@@ -122,19 +124,29 @@ export default function AuthCallback() {
               await new Promise((r) => setTimeout(r, 1500));
               ({ data: consentRow } = await readConsent());
             }
-            // Puente modal→OAuth: si el perfil no tiene evidencia pero el
-            // checkbox del modal viajó en user_metadata y es válido
-            // (versiones vigentes, fecha real no futura), se transcribe al
-            // perfil —es el mismo acto del usuario, no un timestamp
-            // inventado— y no se re-pregunta. Solo se omite el interstitial
-            // si la relectura confirma lo persistido; ante cualquier fallo
+            // Puente modal→OAuth (localStorage, un solo uso): si el perfil no
+            // tiene evidencia pero el checkbox del modal quedó guardado al
+            // iniciar OAuth y sigue válido (versiones vigentes, sin expirar),
+            // se transcribe al perfil —es el mismo acto del usuario, no un
+            // timestamp inventado— y no se re-pregunta.
+            //
+            // Vinculación al intento: solo se transcribe si la cuenta se creó
+            // junto a la aceptación (ventana de 30 min entre created_at del
+            // usuario y acceptedAt del puente). Un puente abandonado NO puede
+            // aportar evidencia a un login posterior de cuenta antigua ni sin
+            // created_at. Solo se omite el interstitial si la relectura
+            // confirma timestamps Y versiones vigentes; ante cualquier fallo
             // se cae al interstitial (fail-safe, nunca se omite sin
             // evidencia guardada).
             if (!hasLegalConsent(consentRow)) {
-              const transcribed = getValidTranscribableAcceptance(
-                (user as unknown as { user_metadata?: unknown })?.user_metadata,
-              );
-              if (transcribed) {
+              const transcribed = consumePendingConsent();
+              const createdMs = Date.parse(String((user as { created_at?: unknown })?.created_at ?? ''));
+              const acceptedMs = transcribed ? Date.parse(String(transcribed.terms_accepted_at)) : NaN;
+              const boundToAttempt =
+                !Number.isNaN(createdMs) &&
+                !Number.isNaN(acceptedMs) &&
+                Math.abs(createdMs - acceptedMs) <= BIND_CONSENT_WINDOW_MS;
+              if (transcribed && boundToAttempt) {
                 try {
                   const { error: transcribeError } = await supabase
                     .from('profiles')
@@ -145,10 +157,10 @@ export default function AuthCallback() {
                   if (!transcribeError) {
                     const { data: transcribeCheck } = await supabase
                       .from('profiles')
-                      .select('terms_accepted_at, privacy_acknowledged_at')
+                      .select('terms_accepted_at, privacy_acknowledged_at, terms_version, privacy_version')
                       .eq('id', user.id)
                       .maybeSingle();
-                    if (hasLegalConsent(transcribeCheck)) {
+                    if (hasCurrentLegalConsent(transcribeCheck)) {
                       consentRow = transcribeCheck;
                     }
                   }
@@ -156,6 +168,9 @@ export default function AuthCallback() {
                   /* cae al interstitial */
                 }
               }
+            } else {
+              // Ya hay evidencia guardada: el puente (si existe) es redundante.
+              consumePendingConsent();
             }
             // Solo si la fila existe y carece de timestamps, o si es un alta
             // fresca aún sin fila y sin rol definido en ninguna fuente (nada
@@ -234,10 +249,12 @@ export default function AuthCallback() {
             navigate('/dashboard', { replace: true });
           }
         } else {
+          consumePendingConsent();
           navigate('/?login=true');
         }
       } catch (error) {
         console.error('Error in auth callback:', error);
+        consumePendingConsent();
         navigate('/?login=true');
       }
     };

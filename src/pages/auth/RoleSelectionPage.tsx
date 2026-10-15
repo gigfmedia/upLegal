@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Loader2, Scale } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/lib/supabaseClient';
+import { AuthContext } from '@/contexts/AuthContext/clean/AuthContext';
 import { sanitizePostAuthRedirect } from '@/lib/googleAuth';
 import {
   getDefinedAccountRole,
@@ -72,6 +73,8 @@ export default function RoleSelectionPage() {
   const location = useLocation();
   const needsRoleChoice =
     (location.state as { needsRoleChoice?: boolean } | null)?.needsRoleChoice === true;
+  // Refresco de sesión post-guardado (menú): sin provider es undefined.
+  const authCtx = useContext(AuthContext);
 
   useEffect(() => {
     let cancelled = false;
@@ -155,11 +158,25 @@ export default function RoleSelectionPage() {
       if (!response.ok) {
         throw new Error(result?.error || 'No se pudo guardar tu selección.');
       }
-      const savedRole: SelectableRole = isSelectableRole(result?.role) ? result.role : selected;
+      // El servidor es la autoridad: solo se navega con el rol que confirma
+      // haber persistido. Un rol ausente o inesperado es error recuperable,
+      // nunca navegación silenciosa con el valor pedido.
+      const savedRole: SelectableRole | null = isSelectableRole(result?.role) ? result.role : null;
+      if (!savedRole) {
+        throw new Error('No se pudo confirmar tu selección. Intenta nuevamente.');
+      }
       try {
         captureRoleOnboardingCompleted(userId, savedRole);
       } catch {
         // noop
+      }
+      try {
+        // Refresca sesión + perfil para que el menú muestre el rol nuevo
+        // sin depender de estado obsoleto (sin provider es no-op).
+        await authCtx?.checkSession();
+      } catch {
+        // La persistencia ya está confirmada; el menú se actualiza en la
+        // próxima carga.
       }
       navigate(getRoleOnboardingDestination(savedRole, safeRedirect), { replace: true });
     } catch (e) {

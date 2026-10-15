@@ -90,6 +90,10 @@ export interface AuthContextType {
   }>;
   logout: (options?: { redirect?: string }) => Promise<{ success: boolean; error: Error | null }>;
   updateProfile: (profile: Partial<Profile>) => Promise<User | null>;
+  /** Relee sesión + perfil (useAuthState) y actualiza el contexto: usar tras
+      cambios de perfil fuera del contexto (p. ej. RoleSelectionPage) para que
+      el Header muestre el rol actualizado sin recargar. */
+  checkSession: () => Promise<boolean>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);

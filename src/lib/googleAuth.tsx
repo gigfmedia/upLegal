@@ -1,11 +1,7 @@
 import posthog from 'posthog-js';
 import { supabase } from '@/lib/supabaseClient';
 import { captureSignUpStarted } from '@/lib/proAnalytics';
-import {
-  CURRENT_PRIVACY_VERSION,
-  CURRENT_TERMS_VERSION,
-  type OAuthTermsAcceptance,
-} from '@/lib/legalConsent';
+import { storePendingConsent, buildPendingConsentSnapshot, type PendingConsentSnapshot } from '@/lib/legalConsent';
 
 /**
  * FASE 4.60A — Google Sign-In (autenticación solamente).
@@ -62,25 +58,11 @@ export function consumePostAuthRedirect(): string | null {
 
 export type GoogleSignInRole = 'lawyer' | undefined;
 
-/**
- * Instantánea de la aceptación marcada en el modal (mismo acto del usuario:
- * checkbox + continuar). Viaja en `user_metadata.terms_acceptance` —el mismo
- * canal OAuth por el que viaja `role`— para que el callback pueda
- * transcribirla al perfil en vez de re-preguntar. Sin esto, el checkbox es
- * solo compuerta local y el consentimiento se pide dos veces.
- */
-export type GoogleTermsSnapshot = {
-  acceptedAt: string;
-  termsVersion: string;
-  privacyVersion: string;
-};
+/** Alias del snapshot del puente (el modal lo construye, OAuth lo guarda). */
+export type GoogleTermsSnapshot = PendingConsentSnapshot;
 
 export function buildGoogleTermsSnapshot(nowIso = new Date().toISOString()): GoogleTermsSnapshot {
-  return {
-    acceptedAt: nowIso,
-    termsVersion: CURRENT_TERMS_VERSION,
-    privacyVersion: CURRENT_PRIVACY_VERSION,
-  };
+  return buildPendingConsentSnapshot(nowIso);
 }
 
 /**
@@ -106,24 +88,20 @@ export async function beginGoogleSignIn(options?: {
     }
   }
   try {
-    // Puente de aceptación del modal → user_metadata (mismo canal que role;
-    // el trigger la ve vía raw_user_meta_data pero no la usa: la transcribe
-    // el callback tras verificarla, nunca se inventa).
-    const oauthData: Record<string, unknown> = {};
-    if (options?.role === 'lawyer') oauthData.role = 'lawyer';
+    // La aceptación del modal se guarda en el puente local (mismo origen):
+    // el SDK descarta `data` en signInWithOAuth, así que no viaja metadata.
     if (options?.termsAcceptance) {
-      const snapshot: OAuthTermsAcceptance = {
+      storePendingConsent({
         acceptedAt: options.termsAcceptance.acceptedAt,
         termsVersion: options.termsAcceptance.termsVersion,
         privacyVersion: options.termsAcceptance.privacyVersion,
-      };
-      oauthData.terms_acceptance = snapshot;
+      });
     }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
-        ...(Object.keys(oauthData).length > 0 ? { data: oauthData } : {}),
+        ...(options?.role === 'lawyer' ? { data: { role: 'lawyer' } } : {}),
       },
     });
     if (error) throw error;

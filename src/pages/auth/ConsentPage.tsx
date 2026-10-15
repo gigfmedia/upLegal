@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import { TermsConsentCheckbox } from '@/components/auth/TermsConsentCheckbox';
-import { CONSENT_ERROR, buildConsentPatch, hasLegalConsent, sanitizeRedirectForConsent } from '@/lib/legalConsent';
+import { CONSENT_ERROR, buildConsentPatch, hasCurrentLegalConsent, sanitizeRedirectForConsent } from '@/lib/legalConsent';
 import { buildRoleOnboardingPath, needsRoleConfirmation } from '@/lib/roleOnboarding';
 
 /**
@@ -51,13 +51,14 @@ export default function ConsentPage() {
       // Verificar persistencia antes de avanzar: una escritura puede
       // reportar éxito sin tocar filas (RLS) y avanzar igual reabriría el
       // interstitial en el próximo login («ya había aceptado»). Sin
-      // evidencia leída no se navega: se muestra error y se permanece aquí.
+      // evidencia vigente leída (timestamps Y versiones) no se navega: se
+      // muestra error y se permanece aquí.
       const { data: consentCheck } = await supabase
         .from('profiles')
-        .select('terms_accepted_at, privacy_acknowledged_at')
+        .select('terms_accepted_at, privacy_acknowledged_at, terms_version, privacy_version')
         .eq('id', user.id)
         .maybeSingle();
-      if (!hasLegalConsent(consentCheck)) {
+      if (!hasCurrentLegalConsent(consentCheck)) {
         throw new Error('Tu aceptación no quedó registrada. Intenta nuevamente.');
       }
       // Cierre del bypass consent→destino: un 'client' por defecto del

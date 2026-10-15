@@ -4,8 +4,16 @@ import {
   sanitizePostAuthRedirect,
   storePostAuthRedirect,
   consumePostAuthRedirect,
+  buildGoogleTermsSnapshot,
   beginGoogleSignIn,
 } from '@/lib/googleAuth';
+import {
+  CURRENT_PRIVACY_VERSION,
+  CURRENT_TERMS_VERSION,
+  hasCurrentLegalConsent,
+  storePendingConsent,
+  consumePendingConsent,
+} from '@/lib/legalConsent';
 
 const oauthState = vi.hoisted(() => ({ calls: [] as unknown[] }));
 vi.mock('@/lib/supabaseClient', () => ({
@@ -53,6 +61,78 @@ describe('FASE 4.60A — redirect seguro e inicio OAuth', () => {
     const opts = (oauthState.calls[0] as { options: Record<string, unknown> }).options;
     expect(String(opts.redirectTo)).toMatch(/\/auth\/callback$/);
     expect(opts).not.toHaveProperty('scopes');
+  });
+  it('termsAcceptance NO viaja en options.data (el SDK lo descarta): va al puente local', async () => {
+    oauthState.calls.length = 0;
+    window.localStorage.clear();
+    await beginGoogleSignIn({
+      termsAcceptance: buildGoogleTermsSnapshot('2026-10-15T12:00:00.000Z'),
+    });
+    const opts = (oauthState.calls[0] as { options: Record<string, unknown> }).options;
+    expect(opts).not.toHaveProperty('data');
+    const bridged = consumePendingConsent(new Date('2026-10-15T12:05:00.000Z').getTime());
+    expect(bridged).toMatchObject({
+      terms_version: CURRENT_TERMS_VERSION,
+      privacy_version: CURRENT_PRIVACY_VERSION,
+    });
+    // Consumo único: segunda lectura vacía.
+    expect(consumePendingConsent()).toBeNull();
+  });
+});
+
+describe('Puente de consentimiento modal→OAuth (localStorage, un solo uso)', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+  it('marcado: guarda y consume el patch con versiones vigentes', () => {
+    storePendingConsent(buildGoogleTermsSnapshot('2026-10-15T12:00:00.000Z'));
+    const patch = consumePendingConsent(new Date('2026-10-15T12:05:00.000Z').getTime());
+    expect(patch?.terms_accepted_at).toBe('2026-10-15T12:00:00.000Z');
+    expect(patch?.terms_version).toBe(CURRENT_TERMS_VERSION);
+  });
+  it('no marcado (sin snapshot): null sin pedir nada', () => {
+    expect(consumePendingConsent()).toBeNull();
+  });
+  it('expirado (>15min): null y limpia', () => {
+    storePendingConsent(buildGoogleTermsSnapshot('2026-10-15T12:00:00.000Z'));
+    expect(consumePendingConsent(new Date('2026-10-15T12:16:00.000Z').getTime())).toBeNull();
+    expect(window.localStorage.getItem('legalup_pending_consent')).toBeNull();
+  });
+  it('versión obsoleta o forma rota: null', () => {
+    window.localStorage.setItem(
+      'legalup_pending_consent',
+      JSON.stringify({ acceptedAt: new Date().toISOString(), termsVersion: '2024-01-01', privacyVersion: CURRENT_PRIVACY_VERSION }),
+    );
+    expect(consumePendingConsent()).toBeNull();
+    window.localStorage.setItem('legalup_pending_consent', 'no-json{{{');
+    expect(consumePendingConsent()).toBeNull();
+  });
+});
+
+describe('Consentimiento vigente (timestamps + versiones)', () => {
+  it('vigente solo con timestamps y versiones actuales', () => {
+    const ts = '2026-10-15T12:00:00.000Z';
+    expect(
+      hasCurrentLegalConsent({
+        terms_accepted_at: ts,
+        terms_version: CURRENT_TERMS_VERSION,
+        privacy_acknowledged_at: ts,
+        privacy_version: CURRENT_PRIVACY_VERSION,
+      }),
+    ).toBe(true);
+  });
+  it('timestamps con versión obsoleta: no vigente', () => {
+    const ts = '2026-10-15T12:00:00.000Z';
+    expect(
+      hasCurrentLegalConsent({
+        terms_accepted_at: ts,
+        terms_version: '2024-01-01',
+        privacy_acknowledged_at: ts,
+        privacy_version: CURRENT_PRIVACY_VERSION,
+      }),
+    ).toBe(false);
+    expect(hasCurrentLegalConsent({ terms_accepted_at: ts })).toBe(false);
+    expect(hasCurrentLegalConsent(null)).toBe(false);
   });
 });
 

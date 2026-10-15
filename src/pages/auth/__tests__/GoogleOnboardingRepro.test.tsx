@@ -108,7 +108,7 @@ vi.mock('posthog-js', () => ({ default: { capture: vi.fn() } }));
 import AuthCallback from '../AuthCallback';
 import ConsentPage from '../ConsentPage';
 import RoleSelectionPage from '../RoleSelectionPage';
-import { CURRENT_PRIVACY_VERSION, CURRENT_TERMS_VERSION } from '@/lib/legalConsent';
+import { CURRENT_PRIVACY_VERSION, CURRENT_TERMS_VERSION, storePendingConsent } from '@/lib/legalConsent';
 
 function Probe() {
   const loc = useLocation();
@@ -270,36 +270,32 @@ describe('Reproducción del fallo de onboarding Google en producción', () => {
     expect(screen.queryByText('Bienvenido a LegalUp')).not.toBeInTheDocument();
   }, 20000);
 
-  it('aceptación del modal en metadata vigente: se transcribe y no se re-pregunta', async () => {
-    flowState.user = {
-      ...flowState.user,
-      user_metadata: {
-        terms_acceptance: {
-          acceptedAt: new Date().toISOString(),
-          termsVersion: CURRENT_TERMS_VERSION,
-          privacyVersion: CURRENT_PRIVACY_VERSION,
-        },
-      },
+  function seedBridge(snapshot: Record<string, unknown>) {
+    window.localStorage.setItem('legalup_pending_consent', JSON.stringify(snapshot));
+  }
+
+  function validSnapshot() {
+    return {
+      acceptedAt: new Date().toISOString(),
+      termsVersion: CURRENT_TERMS_VERSION,
+      privacyVersion: CURRENT_PRIVACY_VERSION,
     };
+  }
+
+  it('aceptación del modal en puente vigente: se transcribe y no se re-pregunta', async () => {
+    seedBridge(validSnapshot());
     flowState.rows.set('U-repro', { id: 'U-repro', user_id: 'U-repro', role: 'client' });
     renderFlow('/auth/callback?code=modal-accepted&redirectTo=%2F');
     // Sin interstitial: va directo al selector y los timestamps quedaron.
     await screen.findByText('Bienvenido a LegalUp', undefined, { timeout: 10000 });
     expect(probe()).toContain('/auth/role');
     expect(findRow('id', flowState.user.id)?.terms_accepted_at).toBeTruthy();
+    // Consumo único: el puente quedó limpio.
+    expect(window.localStorage.getItem('legalup_pending_consent')).toBeNull();
   }, 20000);
 
   it('aceptación del modal sin fila: se transcribe creando la fila, sin interstitial', async () => {
-    flowState.user = {
-      ...flowState.user,
-      user_metadata: {
-        terms_acceptance: {
-          acceptedAt: new Date().toISOString(),
-          termsVersion: CURRENT_TERMS_VERSION,
-          privacyVersion: CURRENT_PRIVACY_VERSION,
-        },
-      },
-    };
+    seedBridge(validSnapshot());
     renderFlow('/auth/callback?code=modal-accepted-norow');
     await screen.findByText('Bienvenido a LegalUp', undefined, { timeout: 10000 });
     const row = findRow('id', flowState.user.id);
@@ -307,17 +303,8 @@ describe('Reproducción del fallo de onboarding Google en producción', () => {
     expect(row?.privacy_acknowledged_at).toBeTruthy();
   }, 20000);
 
-  it('metadata con versiones antiguas: se ignora y aparece el interstitial', async () => {
-    flowState.user = {
-      ...flowState.user,
-      user_metadata: {
-        terms_acceptance: {
-          acceptedAt: new Date().toISOString(),
-          termsVersion: '2024-01-01',
-          privacyVersion: CURRENT_PRIVACY_VERSION,
-        },
-      },
-    };
+  it('puente con versiones antiguas: se ignora y aparece el interstitial', async () => {
+    seedBridge({ ...validSnapshot(), termsVersion: '2024-01-01' });
     flowState.rows.set('U-repro', { id: 'U-repro', user_id: 'U-repro', role: 'client' });
     renderFlow('/auth/callback?code=modal-stale');
     await screen.findByText('Un paso más para crear tu cuenta', undefined, { timeout: 10000 });
@@ -326,19 +313,56 @@ describe('Reproducción del fallo de onboarding Google en producción', () => {
 
   it('transcripción que no persiste: fail-safe al interstitial, sin saltarlo', async () => {
     flowState.persistWrites = false;
-    flowState.user = {
-      ...flowState.user,
-      user_metadata: {
-        terms_acceptance: {
-          acceptedAt: new Date().toISOString(),
-          termsVersion: CURRENT_TERMS_VERSION,
-          privacyVersion: CURRENT_PRIVACY_VERSION,
-        },
-      },
-    };
+    seedBridge(validSnapshot());
     flowState.rows.set('U-repro', { id: 'U-repro', user_id: 'U-repro', role: 'client' });
     renderFlow('/auth/callback?code=modal-nowrite');
     await screen.findByText('Un paso más para crear tu cuenta', undefined, { timeout: 10000 });
     expect(probe()).toContain('/auth/consent');
+  }, 20000);
+
+  it('OAuth cancelado: limpia el puente y va al login, sin transcribir', async () => {
+    seedBridge(validSnapshot());
+    flowState.rows.set('U-repro', { id: 'U-repro', user_id: 'U-repro', role: 'client' });
+    renderFlow('/auth/callback?error=access_denied&error_description=denied');
+    await waitFor(() => expect(probe()).toContain('login=true'), { timeout: 10000 });
+    expect(window.localStorage.getItem('legalup_pending_consent')).toBeNull();
+    expect(findRow('id', flowState.user.id)?.terms_accepted_at).toBeFalsy();
+  }, 20000);
+
+  it('puente de intento abandonado + login de cuenta antigua: no se transcribe', async () => {
+    // El puente es de un registro abandonado; la cuenta que inicia sesión
+    // existe hace meses: sin vinculación temporal no hay transcripción.
+    seedBridge(validSnapshot());
+    flowState.user = {
+      ...flowState.user,
+      created_at: '2026-01-05T12:00:00.000Z',
+    };
+    flowState.rows.set('U-repro', { id: 'U-repro', user_id: 'U-repro', role: null });
+    renderFlow('/auth/callback?code=stale-bridge-login');
+    await screen.findByText('Un paso más para crear tu cuenta', undefined, { timeout: 10000 });
+    expect(probe()).toContain('/auth/consent');
+    expect(findRow('id', flowState.user.id)?.terms_accepted_at).toBeFalsy();
+  }, 20000);
+
+  it('puente sin created_at en el usuario: no se transcribe (fail-safe)', async () => {
+    seedBridge(validSnapshot());
+    flowState.user = { ...flowState.user, created_at: undefined } as never;
+    flowState.rows.set('U-repro', { id: 'U-repro', user_id: 'U-repro', role: null });
+    renderFlow('/auth/callback?code=no-created-at');
+    await screen.findByText('Un paso más para crear tu cuenta', undefined, { timeout: 10000 });
+    expect(probe()).toContain('/auth/consent');
+  }, 20000);
+
+  it('segundo intento sobrescribe al abandonado: vale la aceptación vigente', async () => {
+    seedBridge({ ...validSnapshot(), termsVersion: '2024-01-01' });
+    storePendingConsent({
+      acceptedAt: new Date().toISOString(),
+      termsVersion: CURRENT_TERMS_VERSION,
+      privacyVersion: CURRENT_PRIVACY_VERSION,
+    });
+    flowState.rows.set('U-repro', { id: 'U-repro', user_id: 'U-repro', role: 'client' });
+    renderFlow('/auth/callback?code=second-attempt&redirectTo=%2F');
+    await screen.findByText('Bienvenido a LegalUp', undefined, { timeout: 10000 });
+    expect(probe()).toContain('/auth/role');
   }, 20000);
 });

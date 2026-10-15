@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { AuthContext } from '@/contexts/AuthContext/clean/AuthContext';
 
 const supabaseState = vi.hoisted(() => ({
   user: null as null | { id: string; email: string; user_metadata: Record<string, unknown> },
@@ -190,5 +191,45 @@ describe('RoleSelectionPage — onboarding simple post-registro', () => {
     supabaseState.profile = { id: 'user-google-1', role: 'client' };
     renderAt('/auth/role');
     expect(await screen.findByText('Bienvenido a LegalUp')).toBeInTheDocument();
+  });
+
+  it('respuesta 200 con rol inesperado: NO navega, muestra error recuperable', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ success: true, role: 'admin' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderAt('/auth/role');
+    await screen.findByText('Bienvenido a LegalUp');
+    fireEvent.click(screen.getByLabelText(/Busco un abogado\/a/));
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    // 200 con rol no seleccionable: se trata como fallo, sin navegar.
+    expect(await screen.findByText('No se pudo confirmar tu selección. Intenta nuevamente.')).toBeInTheDocument();
+    expect(screen.getByTestId('probe').textContent).toBe('/auth/role');
+    expect(screen.queryByText('Buscador')).not.toBeInTheDocument();
+  });
+
+  it('guardado exitoso: refresca la sesión para que el menú muestre el rol nuevo', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ success: true, role: 'lawyer' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const checkSession = vi.fn().mockResolvedValue(true);
+    render(
+      <MemoryRouter initialEntries={['/auth/role']}>
+        <AuthContext.Provider value={{ checkSession } as never}>
+          <Routes>
+            <Route path="/auth/role" element={<RoleSelectionPage />} />
+            <Route path="/lawyer/onboarding" element={<div>Onboarding abogado</div>} />
+          </Routes>
+        </AuthContext.Provider>
+      </MemoryRouter>,
+    );
+    await screen.findByText('Bienvenido a LegalUp');
+    fireEvent.click(screen.getByLabelText(/Soy abogado\/a/));
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    expect(await screen.findByText('Onboarding abogado')).toBeInTheDocument();
+    expect(checkSession).toHaveBeenCalledTimes(1);
   });
 });

@@ -715,7 +715,7 @@ app.post('/api/profile/role', requireAuthentication, async (req, res) => {
     // userId proviene de la sesión validada (nunca del body del cliente).
     const { data: existing, error: readError } = await supabase
       .from('profiles')
-      .select('id, role, terms_accepted_at, privacy_acknowledged_at')
+      .select('id, role')
       .or(`id.eq.${userId},user_id.eq.${userId}`)
       .maybeSingle();
 
@@ -728,24 +728,27 @@ app.post('/api/profile/role', requireAuthentication, async (req, res) => {
 
     const current = String(existing?.role || '').trim().toLowerCase();
     // handle_new_user() inserta role='client' por defecto al crear el usuario
-    // OAuth: ese 'client' sin evidencia de consentimiento NO es una elección
-    // (el usuario jamás pasó por el selector). La elección explícita actual
-    // gana sobre el default no consolidado. Con historial, mismo valor o
-    // roles sensibles, el guard idempotente se mantiene intacto.
-    const onboarded = !!(existing?.terms_accepted_at && existing?.privacy_acknowledged_at);
-    const unconfirmedDefault = current === 'client' && !onboarded;
+    // OAuth: ese 'client' NO es una elección (el usuario jamás pasó por el
+    // selector). Una elección explícita client→lawyer siempre se honra: los
+    // timestamps no sirven para distinguir, porque el consentimiento precede
+    // al selector y ya existen al momento del POST. Mismo valor, roles
+    // sensibles ya definidos (lawyer/company/admin) y downgrades conservan
+    // el guard idempotente (fresh null→lawyer siempre estuvo permitido).
     if (['admin', 'superadmin'].includes(current)) {
       return res.status(403).json({
         error: 'Tu cuenta tiene un rol especial que no se puede modificar aquí.'
       });
     }
-    if (['client', 'lawyer', 'company'].includes(current) && (role === current || !unconfirmedDefault)) {
+    if (
+      ['client', 'lawyer', 'company'].includes(current) &&
+      (role === current || current !== 'client')
+    ) {
       // Idempotente (mismo valor) o rol consolidado/sensible ya definido:
       // no sobrescribir (recarga o doble envío).
       return res.json({ success: true, already: true, role: current });
     }
-    // Sin fila, rol legacy vacío o default no consolidado con elección
-    // distinta: continúa al update/insert de abajo.
+    // Sin fila, rol legacy vacío o 'client' por defecto con elección
+    // explícita distinta: continúa al update/insert de abajo.
 
     const timestamp = new Date().toISOString();
 
