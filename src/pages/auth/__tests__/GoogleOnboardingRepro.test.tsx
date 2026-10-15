@@ -108,6 +108,7 @@ vi.mock('posthog-js', () => ({ default: { capture: vi.fn() } }));
 import AuthCallback from '../AuthCallback';
 import ConsentPage from '../ConsentPage';
 import RoleSelectionPage from '../RoleSelectionPage';
+import { CURRENT_PRIVACY_VERSION, CURRENT_TERMS_VERSION } from '@/lib/legalConsent';
 
 function Probe() {
   const loc = useLocation();
@@ -267,5 +268,77 @@ describe('Reproducción del fallo de onboarding Google en producción', () => {
     await waitFor(() => expect(probe()).toBe('/'), { timeout: 10000 });
     expect(screen.queryByText('Un paso más para crear tu cuenta')).not.toBeInTheDocument();
     expect(screen.queryByText('Bienvenido a LegalUp')).not.toBeInTheDocument();
+  }, 20000);
+
+  it('aceptación del modal en metadata vigente: se transcribe y no se re-pregunta', async () => {
+    flowState.user = {
+      ...flowState.user,
+      user_metadata: {
+        terms_acceptance: {
+          acceptedAt: new Date().toISOString(),
+          termsVersion: CURRENT_TERMS_VERSION,
+          privacyVersion: CURRENT_PRIVACY_VERSION,
+        },
+      },
+    };
+    flowState.rows.set('U-repro', { id: 'U-repro', user_id: 'U-repro', role: 'client' });
+    renderFlow('/auth/callback?code=modal-accepted&redirectTo=%2F');
+    // Sin interstitial: va directo al selector y los timestamps quedaron.
+    await screen.findByText('Bienvenido a LegalUp', undefined, { timeout: 10000 });
+    expect(probe()).toContain('/auth/role');
+    expect(findRow('id', flowState.user.id)?.terms_accepted_at).toBeTruthy();
+  }, 20000);
+
+  it('aceptación del modal sin fila: se transcribe creando la fila, sin interstitial', async () => {
+    flowState.user = {
+      ...flowState.user,
+      user_metadata: {
+        terms_acceptance: {
+          acceptedAt: new Date().toISOString(),
+          termsVersion: CURRENT_TERMS_VERSION,
+          privacyVersion: CURRENT_PRIVACY_VERSION,
+        },
+      },
+    };
+    renderFlow('/auth/callback?code=modal-accepted-norow');
+    await screen.findByText('Bienvenido a LegalUp', undefined, { timeout: 10000 });
+    const row = findRow('id', flowState.user.id);
+    expect(row?.terms_accepted_at).toBeTruthy();
+    expect(row?.privacy_acknowledged_at).toBeTruthy();
+  }, 20000);
+
+  it('metadata con versiones antiguas: se ignora y aparece el interstitial', async () => {
+    flowState.user = {
+      ...flowState.user,
+      user_metadata: {
+        terms_acceptance: {
+          acceptedAt: new Date().toISOString(),
+          termsVersion: '2024-01-01',
+          privacyVersion: CURRENT_PRIVACY_VERSION,
+        },
+      },
+    };
+    flowState.rows.set('U-repro', { id: 'U-repro', user_id: 'U-repro', role: 'client' });
+    renderFlow('/auth/callback?code=modal-stale');
+    await screen.findByText('Un paso más para crear tu cuenta', undefined, { timeout: 10000 });
+    expect(probe()).toContain('/auth/consent');
+  }, 20000);
+
+  it('transcripción que no persiste: fail-safe al interstitial, sin saltarlo', async () => {
+    flowState.persistWrites = false;
+    flowState.user = {
+      ...flowState.user,
+      user_metadata: {
+        terms_acceptance: {
+          acceptedAt: new Date().toISOString(),
+          termsVersion: CURRENT_TERMS_VERSION,
+          privacyVersion: CURRENT_PRIVACY_VERSION,
+        },
+      },
+    };
+    flowState.rows.set('U-repro', { id: 'U-repro', user_id: 'U-repro', role: 'client' });
+    renderFlow('/auth/callback?code=modal-nowrite');
+    await screen.findByText('Un paso más para crear tu cuenta', undefined, { timeout: 10000 });
+    expect(probe()).toContain('/auth/consent');
   }, 20000);
 });

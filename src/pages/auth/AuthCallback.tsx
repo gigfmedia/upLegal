@@ -5,7 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { getLawyerPostAuthDestination, isEmailVerified } from '@/lib/lawyerOnboardingGate';
 import { consumePostAuthRedirect, sanitizePostAuthRedirect, trackGoogleCompleted } from '@/lib/googleAuth';
 import { buildRoleOnboardingPath, needsRoleConfirmation, needsRoleSelection } from '@/lib/roleOnboarding';
-import { hasLegalConsent } from '@/lib/legalConsent';
+import { getValidTranscribableAcceptance, hasLegalConsent } from '@/lib/legalConsent';
 import {
   captureEmailVerificationCompleted,
   captureLoginCompleted,
@@ -122,6 +122,41 @@ export default function AuthCallback() {
               await new Promise((r) => setTimeout(r, 1500));
               ({ data: consentRow } = await readConsent());
             }
+            // Puente modal→OAuth: si el perfil no tiene evidencia pero el
+            // checkbox del modal viajó en user_metadata y es válido
+            // (versiones vigentes, fecha real no futura), se transcribe al
+            // perfil —es el mismo acto del usuario, no un timestamp
+            // inventado— y no se re-pregunta. Solo se omite el interstitial
+            // si la relectura confirma lo persistido; ante cualquier fallo
+            // se cae al interstitial (fail-safe, nunca se omite sin
+            // evidencia guardada).
+            if (!hasLegalConsent(consentRow)) {
+              const transcribed = getValidTranscribableAcceptance(
+                (user as unknown as { user_metadata?: unknown })?.user_metadata,
+              );
+              if (transcribed) {
+                try {
+                  const { error: transcribeError } = await supabase
+                    .from('profiles')
+                    .upsert(
+                      { id: user.id, user_id: user.id, ...transcribed },
+                      { onConflict: 'id' },
+                    );
+                  if (!transcribeError) {
+                    const { data: transcribeCheck } = await supabase
+                      .from('profiles')
+                      .select('terms_accepted_at, privacy_acknowledged_at')
+                      .eq('id', user.id)
+                      .maybeSingle();
+                    if (hasLegalConsent(transcribeCheck)) {
+                      consentRow = transcribeCheck;
+                    }
+                  }
+                } catch {
+                  /* cae al interstitial */
+                }
+              }
+            }
             // Solo si la fila existe y carece de timestamps, o si es un alta
             // fresca aún sin fila y sin rol definido en ninguna fuente (nada
             // pudo persistir su aceptación): en ambos casos corresponde el
@@ -150,7 +185,14 @@ export default function AuthCallback() {
           // admin, flujo actual.
           // El retorno sanitizado se preserva para después de la selección.
           if (needsRoleConfirmation(profile, user as never)) {
-            navigate(buildRoleOnboardingPath(onboardingRedirect), { replace: true });
+            // La marca viaja en location.state: si el rol se confirmó por
+            // transcripción en este mismo paso, la pantalla de rol reevaluaría
+            // con timestamps ya presentes y sin ella redirigiría sin mostrar
+            // el formulario. Solo se llega aquí con rol sin confirmar.
+            navigate(buildRoleOnboardingPath(onboardingRedirect), {
+              replace: true,
+              state: { needsRoleChoice: true },
+            });
             return;
           }
           // If there's an explicit redirectTo, respect it only if email verified for lawyers

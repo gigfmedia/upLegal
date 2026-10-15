@@ -1,6 +1,11 @@
 import posthog from 'posthog-js';
 import { supabase } from '@/lib/supabaseClient';
 import { captureSignUpStarted } from '@/lib/proAnalytics';
+import {
+  CURRENT_PRIVACY_VERSION,
+  CURRENT_TERMS_VERSION,
+  type OAuthTermsAcceptance,
+} from '@/lib/legalConsent';
 
 /**
  * FASE 4.60A — Google Sign-In (autenticación solamente).
@@ -58,13 +63,36 @@ export function consumePostAuthRedirect(): string | null {
 export type GoogleSignInRole = 'lawyer' | undefined;
 
 /**
+ * Instantánea de la aceptación marcada en el modal (mismo acto del usuario:
+ * checkbox + continuar). Viaja en `user_metadata.terms_acceptance` —el mismo
+ * canal OAuth por el que viaja `role`— para que el callback pueda
+ * transcribirla al perfil en vez de re-preguntar. Sin esto, el checkbox es
+ * solo compuerta local y el consentimiento se pide dos veces.
+ */
+export type GoogleTermsSnapshot = {
+  acceptedAt: string;
+  termsVersion: string;
+  privacyVersion: string;
+};
+
+export function buildGoogleTermsSnapshot(nowIso = new Date().toISOString()): GoogleTermsSnapshot {
+  return {
+    acceptedAt: nowIso,
+    termsVersion: CURRENT_TERMS_VERSION,
+    privacyVersion: CURRENT_PRIVACY_VERSION,
+  };
+}
+
+/**
  * Inicia Google Sign-In vía redirect (Supabase maneja PKCE/state).
  * role='lawyer' SOLO desde superficies de adquisición de abogados
  * (el formulario ya trae role lawyer); nunca 'admin', nunca desde query.
+ * termsAcceptance SOLO cuando el modal de signup tiene el checkbox marcado.
  */
 export async function beginGoogleSignIn(options?: {
   role?: GoogleSignInRole;
   redirectTo?: string | null;
+  termsAcceptance?: GoogleTermsSnapshot | null;
 }): Promise<{ error: Error | null }> {
   storePostAuthRedirect(options?.redirectTo ?? window.location.pathname);
   track('auth_started', { method: 'google', role: options?.role ?? 'client' });
@@ -78,11 +106,24 @@ export async function beginGoogleSignIn(options?: {
     }
   }
   try {
+    // Puente de aceptación del modal → user_metadata (mismo canal que role;
+    // el trigger la ve vía raw_user_meta_data pero no la usa: la transcribe
+    // el callback tras verificarla, nunca se inventa).
+    const oauthData: Record<string, unknown> = {};
+    if (options?.role === 'lawyer') oauthData.role = 'lawyer';
+    if (options?.termsAcceptance) {
+      const snapshot: OAuthTermsAcceptance = {
+        acceptedAt: options.termsAcceptance.acceptedAt,
+        termsVersion: options.termsAcceptance.termsVersion,
+        privacyVersion: options.termsAcceptance.privacyVersion,
+      };
+      oauthData.terms_acceptance = snapshot;
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
-        ...(options?.role === 'lawyer' ? { data: { role: 'lawyer' } } : {}),
+        ...(Object.keys(oauthData).length > 0 ? { data: oauthData } : {}),
       },
     });
     if (error) throw error;

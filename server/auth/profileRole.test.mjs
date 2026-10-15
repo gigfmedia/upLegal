@@ -162,15 +162,46 @@ describe('POST /api/profile/role — validación y persistencia', () => {
     expect(s.tables.profiles).toEqual([]);
   });
 
-  it.each(['client', 'lawyer', 'company'])('rol ya definido (%s): 200 idempotente sin sobrescribir', async (current) => {
+  it.each(['client', 'lawyer', 'company'])('rol consolidado con historial (%s): 200 idempotente sin sobrescribir', async (current) => {
     const s = setup({
       user: baseUser(),
-      profiles: [{ id: USER, user_id: USER, role: current, verified: true }],
+      profiles: [{
+        id: USER, user_id: USER, role: current, verified: true,
+        terms_accepted_at: '2026-10-06T00:00:00.000Z',
+        privacy_acknowledged_at: '2026-10-06T00:00:00.000Z',
+      }],
     });
     const { res, tables, writes } = await s.execute({ role: current === 'client' ? 'lawyer' : 'client' });
     expect(res.code).toBe(200);
     expect(res.body).toMatchObject({ success: true, already: true, role: current });
     expect(tables.profiles[0].role).toBe(current);
+    expect(writes).toEqual([]);
+  });
+
+  it("default del trigger (client sin timestamps): eleccion lawyer lo sobrescribe", async () => {
+    const s = setup({
+      user: baseUser(),
+      profiles: [{ id: USER, user_id: USER, role: 'client', display_name: 'nuevo' }],
+    });
+    const { res, tables, writes } = await s.execute({ role: 'lawyer' });
+    expect(res.code).toBe(200);
+    expect(res.body).toMatchObject({ success: true, role: 'lawyer' });
+    expect(res.body.already).toBeUndefined();
+    expect(tables.profiles[0]).toMatchObject({ role: 'lawyer', display_name: 'nuevo' });
+    // Timestamps intactos (siguen ausentes): solo role + updated_at.
+    expect(tables.profiles[0].terms_accepted_at ?? null).toBeNull();
+    expect(writes).toHaveLength(1);
+    expect(Object.keys(writes[0].values).sort()).toEqual(['role', 'updated_at']);
+  });
+
+  it('default del trigger + mismo valor client: idempotente sin escribir', async () => {
+    const s = setup({
+      user: baseUser(),
+      profiles: [{ id: USER, user_id: USER, role: 'client' }],
+    });
+    const { res, writes } = await s.execute({ role: 'client' });
+    expect(res.code).toBe(200);
+    expect(res.body).toMatchObject({ success: true, already: true, role: 'client' });
     expect(writes).toEqual([]);
   });
 

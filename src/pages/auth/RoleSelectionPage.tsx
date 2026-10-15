@@ -42,7 +42,8 @@ const resolveApiBaseUrl = () => {
  * tiene rol elegido conscientemente; si ya lo eligió, redirige sin
  * mostrarse (recargas incluidas). Un 'client' por defecto del trigger de
  * Auth (sin timestamps ni corroboración) no cuenta como elegido.
- * ConsentPage propaga esa decisión vía location.state (fromConsent).
+ * ConsentPage y AuthCallback propagan esa decisión vía location.state
+ * (needsRoleChoice).
  * Persiste vía POST /api/profile/role (validación en servidor, idempotente).
  */
 export default function RoleSelectionPage() {
@@ -64,12 +65,13 @@ export default function RoleSelectionPage() {
   const safeRedirect =
     rawRedirect && (rawRedirect.startsWith('/auth/') || rawRedirect === '/') ? null : rawRedirect;
 
-  // Marca de ConsentPage (location.state, no URL): viene de aceptar el
-  // consentimiento con estado previo sin elección. El mount reevalúa con
-  // timestamps ya presentes y sin esta marca redirigiría sin mostrar nada.
+  // Marca de la cadena de onboarding (location.state, no URL): el decisor
+  // (callback o consentimiento) ya determinó con el estado previo que falta
+  // elección. La pantalla reevalúa con timestamps ya presentes y sin esta
+  // marca redirigiría sin mostrar el formulario.
   const location = useLocation();
-  const fromConsent =
-    (location.state as { fromConsent?: boolean } | null)?.fromConsent === true;
+  const needsRoleChoice =
+    (location.state as { needsRoleChoice?: boolean } | null)?.needsRoleChoice === true;
 
   useEffect(() => {
     let cancelled = false;
@@ -91,7 +93,7 @@ export default function RoleSelectionPage() {
       // Un 'client' por defecto del trigger (sin timestamps ni elección
       // corroborada) NO cuenta como elegido: se muestra el formulario.
       // Con rol elegido (o administrativo): no mostrar de nuevo.
-      if (!fromConsent && !needsRoleConfirmation(profile, user as never)) {
+      if (!needsRoleChoice && !needsRoleConfirmation(profile, user as never)) {
         // Ya definido (o administrativo): no mostrar de nuevo.
         const defined = getDefinedAccountRole(profile, user as never);
         navigate(

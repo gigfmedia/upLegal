@@ -70,7 +70,7 @@ export default function ConsentPage() {
       if (needsRoleConfirmation(preProfile, user as never)) {
         navigate(buildRoleOnboardingPath(dest === '/' ? null : dest), {
           replace: true,
-          state: { fromConsent: true },
+          state: { needsRoleChoice: true },
         });
         return;
       }

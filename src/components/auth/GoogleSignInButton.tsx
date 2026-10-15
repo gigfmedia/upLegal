@@ -6,6 +6,7 @@ import {
   GoogleIcon,
   beginGoogleSignIn,
   type GoogleSignInRole,
+  type GoogleTermsSnapshot,
 } from '@/lib/googleAuth';
 import { cn } from '@/lib/utils';
 
@@ -20,6 +21,7 @@ export function GoogleSignInButton({
   requireConsent = false,
   consentGiven = true,
   onConsentMissing,
+  termsAcceptance = null,
 }: {
   role?: GoogleSignInRole;
   dark?: boolean;
@@ -27,6 +29,12 @@ export function GoogleSignInButton({
   requireConsent?: boolean;
   consentGiven?: boolean;
   onConsentMissing?: () => void;
+  /**
+   * Instantánea del checkbox del modal: viaja en user_metadata para que el
+   * callback la transcriba en vez de re-preguntar. Solo se envía cuando el
+   * usuario la marcó (el botón ya exige consentGiven si requireConsent).
+   */
+  termsAcceptance?: GoogleTermsSnapshot | null;
 }) {
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
@@ -39,7 +47,12 @@ export function GoogleSignInButton({
     }
     setBusy(true);
     try {
-      const { error } = await beginGoogleSignIn({ role });
+      const { error } = await beginGoogleSignIn({
+        role,
+        // Solo se transmite si hubo aceptación real (el gate de arriba ya
+        // bloqueó el caso requireConsent && !consentGiven).
+        termsAcceptance: consentGiven ? termsAcceptance : null,
+      });
       if (error) throw error;
       // Éxito = redirect a Google (Supabase maneja PKCE/state).
     } catch (e) {

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom';
 
 const supabaseState = vi.hoisted(() => ({
   user: null as null | { id: string; email: string; user_metadata: Record<string, unknown> },
@@ -32,9 +32,15 @@ vi.mock('@/lib/supabaseClient', () => ({
 
 import RoleSelectionPage from '../RoleSelectionPage';
 
+function Probe() {
+  const loc = useLocation();
+  return <div data-testid="probe">{`${loc.pathname}${loc.search}`}</div>;
+}
+
 function renderAt(path: string) {
   return render(
     <MemoryRouter initialEntries={[path]}>
+      <Probe />
       <Routes>
         <Route path="/auth/role" element={<RoleSelectionPage />} />
         <Route path="/search" element={<div>Buscador</div>} />
@@ -160,6 +166,24 @@ describe('RoleSelectionPage — onboarding simple post-registro', () => {
     renderAt('/auth/role?redirectTo=%2Fauth%2Frole');
     expect(await screen.findByText('Buscador')).toBeInTheDocument();
     expect(screen.queryByText('Bienvenido a LegalUp')).not.toBeInTheDocument();
+  });
+
+  it('HTTP 500/404 al guardar: NO navega a /search, muestra error recuperable', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: () => Promise.resolve({ error: 'Fallo backend' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderAt('/auth/role');
+    await screen.findByText('Bienvenido a LegalUp');
+    fireEvent.click(screen.getByLabelText(/Soy abogado\/a/));
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    // Se queda en el selector con el error: jamás avanza sin persistencia.
+    expect(await screen.findByText('Fallo backend')).toBeInTheDocument();
+    expect(screen.getByTestId('probe').textContent).toBe('/auth/role');
+    expect(screen.queryByText('Buscador')).not.toBeInTheDocument();
+    expect(screen.queryByText('Onboarding abogado')).not.toBeInTheDocument();
   });
 
   it('default del trigger: client sin timestamps ni eleccion muestra el formulario', async () => {

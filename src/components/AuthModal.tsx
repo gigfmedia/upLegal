@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { TermsConsentCheckbox } from "@/components/auth/TermsConsentCheckbox";
 import { CONSENT_ERROR, buildConsentPatch } from "@/lib/legalConsent";
+import { buildGoogleTermsSnapshot } from "@/lib/googleAuth";
 import { verifyRutWithPJUD } from "@/services/pjudService";
 import { format } from 'date-fns';
 
@@ -1046,6 +1047,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
               requireConsent={mode === 'signup'}
               consentGiven={termsAccepted}
               onConsentMissing={() => setConsentError(CONSENT_ERROR)}
+              termsAcceptance={termsAccepted ? buildGoogleTermsSnapshot() : null}
             />
           )}
 
@@ -1569,6 +1571,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
               requireConsent
               consentGiven={termsAccepted}
               onConsentMissing={() => setConsentError(CONSENT_ERROR)}
+              termsAcceptance={termsAccepted ? buildGoogleTermsSnapshot() : null}
             />
           </>
         )}
