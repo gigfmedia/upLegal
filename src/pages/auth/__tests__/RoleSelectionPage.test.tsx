@@ -12,6 +12,8 @@ const supabaseState = vi.hoisted(() => ({
     privacy_acknowledged_at?: string | null;
   },
   token: 'test-token',
+  lastUpdateUserArgs: null as null | unknown[],
+  failUpdateUser: false,
 }));
 
 vi.mock('@/lib/supabaseClient', () => ({
@@ -20,6 +22,11 @@ vi.mock('@/lib/supabaseClient', () => ({
       getUser: () => Promise.resolve({ data: { user: supabaseState.user } }),
       getSession: () =>
         Promise.resolve({ data: { session: supabaseState.token ? { access_token: supabaseState.token } : null } }),
+      updateUser: (...args: unknown[]) => {
+        supabaseState.lastUpdateUserArgs = args;
+        if (supabaseState.failUpdateUser) return Promise.reject(new Error('auth offline'));
+        return Promise.resolve({ data: {}, error: null });
+      },
     },
     from: () => ({
       select: () => ({
@@ -62,6 +69,8 @@ beforeEach(() => {
   supabaseState.user = { ...GOOGLE_USER };
   supabaseState.profile = null;
   supabaseState.token = 'test-token';
+  supabaseState.lastUpdateUserArgs = null;
+  supabaseState.failUpdateUser = false;
   vi.unstubAllGlobals();
 });
 
@@ -209,8 +218,7 @@ describe('RoleSelectionPage — onboarding simple post-registro', () => {
     expect(screen.queryByText('Buscador')).not.toBeInTheDocument();
   });
 
-  it('guardado exitoso: refresca la sesión para que el menú muestre el rol nuevo', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
+  it('guardado exitoso: refresca la sesión para que el menú muestre el rol nuevo', async () => {    const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ success: true, role: 'lawyer' }),
     });
@@ -231,5 +239,38 @@ describe('RoleSelectionPage — onboarding simple post-registro', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
     expect(await screen.findByText('Onboarding abogado')).toBeInTheDocument();
     expect(checkSession).toHaveBeenCalledTimes(1);
+  });
+
+  it('guardado exitoso: sella el rol en user_metadata para el menú (display)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ success: true, role: 'lawyer' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderAt('/auth/role');
+    await screen.findByText('Bienvenido a LegalUp');
+    fireEvent.click(screen.getByLabelText(/Soy abogado\/a/));
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    await waitFor(() => {
+      expect(supabaseState.lastUpdateUserArgs).toEqual([{ data: { role: 'lawyer' } }]);
+    });
+  });
+
+  it('sello display falla: el servidor sigue siendo autoridad, navega igual sin bloquear', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ success: true, role: 'lawyer' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    supabaseState.failUpdateUser = true;
+    renderAt('/auth/role');
+    await screen.findByText('Bienvenido a LegalUp');
+    fireEvent.click(screen.getByLabelText(/Soy abogado\/a/));
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    // El destino lo decide el rol confirmado por el servidor; el fallo del
+    // sello no presenta estado engañoso ni bloquea (el menú se actualiza en
+    // la próxima carga).
+    expect(await screen.findByText('Onboarding abogado')).toBeInTheDocument();
+    expect(screen.queryByText(/No se pudo/)).not.toBeInTheDocument();
   });
 });

@@ -171,6 +171,16 @@ export default function RoleSelectionPage() {
         // noop
       }
       try {
+        // Sello en user_metadata (display): el Header prioriza metadata.role
+        // y la tabla profiles es independiente de la sesión; sin esto el
+        // menú muestra el rol anterior hasta el próximo inicio de sesión.
+        // RLS nunca usa user_metadata como autoridad (solo app_metadata),
+        // así que no concede permisos: es solo la etiqueta visible.
+        await supabase.auth.updateUser({ data: { role: savedRole } });
+      } catch {
+        // best-effort: checkSession cubre la lectura fresca
+      }
+      try {
         // Refresca sesión + perfil para que el menú muestre el rol nuevo
         // sin depender de estado obsoleto (sin provider es no-op).
         await authCtx?.checkSession();

@@ -18,8 +18,12 @@ export default function LawyerOnboardingPage() {
   const [profile, setProfile] = useState<any>(null);
   const [skipping, setSkipping] = useState(false);
 
-  // Invitados por magic link (admin) pueden omitir el onboarding inicial.
-  const cameFromInvite = !!(user as any)?.user_metadata?.admin_lawyer_magic_link;
+  // El onboarding (wizard) es completable pero omisible: tanto invitados
+  // por magic link (admin) como abogados OAuth auto-registrados pueden
+  // posponerlo. Omitir NO salta requisitos: email verificado se exige antes
+  // (arriba), RUT/verificación profesional viven en sus propios gates y el
+  // consentimiento ya se recogió en el flujo OAuth. Solo marca el paso como
+  // pospuesto y conserva el rol lawyer intacto.
 
   const handleSkip = async () => {
     if (!user || skipping) return;
@@ -131,7 +135,7 @@ export default function LawyerOnboardingPage() {
             </div>
           }
         >
-          <LawyerOnboardingWizard allowSkip={cameFromInvite} onSkip={handleSkip} skipping={skipping} />
+          <LawyerOnboardingWizard allowSkip onSkip={handleSkip} skipping={skipping} />
         </Suspense>
       </div>
     </div>
