@@ -74,8 +74,16 @@ function DashboardLayout() {
   const { hasProAccess } = useProSubscription();
   const showOrphanAIHistory = legacyAICompat?.hasUnlinkedWorkspaces ?? false;
   
-  // Get user role safely
+  // Get user role safely.
+  // Fuente de verdad: el perfil persistido (profiles.role, fresco vía
+  // contexto). La ruta solo desempata sin perfil (p. ej. arranque), y
+  // user_metadata/user quedan como último fallback de presentación —
+  // nunca como autoridad. Así, páginas compartidas como
+  // /dashboard/payment-settings muestran el sidebar que corresponde al
+  // usuario real, no el de la ruta que las contiene.
   const getUserRole = (): UserRole => {
+    const profileRole = (user as any)?.profile?.role as string | undefined;
+    if (profileRole === 'lawyer' || profileRole === 'client') return profileRole;
     if (location.pathname.startsWith('/lawyer')) {
       return 'lawyer';
     }
