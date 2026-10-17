@@ -11972,6 +11972,15 @@ app.post('/api/ai/cases/:caseId/drafts', async (req, res) => {
       .single();
     if (saveError) throw saveError;
 
+    // FASE 4.62C: versión inicial append-only de la generación. El borrador
+    // recién creado siempre arranca con version_no=1 (UNIQUE(draft, no);
+    // nadie más puede haber escrito a esta corriente). supabase-js reporta
+    // errores de Postgres vía {error} SIN throw: se chequea explícitamente el
+    // campo. El borrador ya pagado se conserva; el historial se reconstruye de
+    // forma fiable con el primer guardado (baseline + versión de edición).
+    const draftVersionOne = { draft_id: saved.id, lawyer_id: userId, lawyer_case_id: link.caseRow.id, workspace_id: workspace.id, version_no: 1, origin: 'generation', content, content_format: 'markdown', sources: checked.sources, intelligence_snapshot_id: snapRow.id, model: AI_DEFAULT_MODEL, title: saved.title };
+    const { error: versionOneError } = await supabase.from('ai_case_draft_versions').insert(draftVersionOne);
+
     try {
       await capturePostHog('ai_case_draft_generated', userId, {
         case_id: link.caseRow.id,
@@ -11986,9 +11995,22 @@ app.post('/api/ai/cases/:caseId/drafts', async (req, res) => {
       console.error('[LegalUpAI] draft analytics failed (continuing)', e?.message || e);
     }
 
+    if (versionOneError) {
+      // Log estructurado mínimo: solo código, jamás contenido, tokens ni PII.
+      console.error('[LegalUpAI] draft_version_v1_insert_failed', JSON.stringify({
+        code: versionOneError.code ?? 'unknown_error',
+        draft_saved: true,
+        // El historial no reporta éxito completo; se reconstruye con el
+        // primer guardado (ensureDraftLegacyBaseline + versión de edición).
+        history_state: 'rebuild_on_first_save',
+      }));
+    }
     await metering.respond(res, 200, {
       draft: saved,
       snapshot: { version: snapRow.version, generated_at: snapRow.created_at },
+      // Contrato 4.62C: versión explícita solo si existe; null = advertencia
+      // al cliente de que el historial inicial quedó pendiente de reconstruir.
+      version: versionOneError ? null : { version_no: 1, origin: 'generation' },
       warnings,
     });
   } catch (error) {
@@ -12053,6 +12075,102 @@ app.get('/api/ai/cases/:caseId/drafts/:draftId', async (req, res) => {
   }
 });
 
+// — FASE 4.62C: guardado documental con OCC y versiones append-only —
+// El revision number vive en el servidor (ai_case_drafts.revision); updated_at
+// del navegador nunca es autoritativo. Orígenes client: solo 'edit'|'autosave'
+// (generation/restore/legacy/others los fija el servidor).
+const DRAFT_CLIENT_SAVE_ORIGINS = new Set(['edit', 'autosave']);
+const DRAFT_CONTENT_FORMATS = new Set(['markdown', 'html']);
+
+/**
+ * Baseline 0 para draft legacy sin versiones: preserva el contenido PREVIO al
+ * primer guardado de esta vía. La violación de UNIQUE(draft_id, version_no)
+ * (carrera entre pestañas) se trata como baseline ya insertado, nunca como
+ * error del flujo.
+ */
+async function ensureDraftLegacyBaseline(draft) {
+  const readMax = async () => {
+    const { data: last, error } = await supabase
+      .from('ai_case_draft_versions')
+      .select('version_no')
+      .eq('draft_id', draft.id)
+      .eq('lawyer_id', draft.lawyer_id)
+      .order('version_no', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    return last ? Number(last.version_no) : null;
+  };
+  const maxNo = await readMax();
+  if (maxNo !== null) return maxNo;
+  const { error } = await supabase.from('ai_case_draft_versions').insert({
+    draft_id: draft.id,
+    lawyer_id: draft.lawyer_id,
+    lawyer_case_id: draft.lawyer_case_id,
+    workspace_id: draft.workspace_id,
+    version_no: 0,
+    origin: 'legacy',
+    content: draft.content,
+    content_format: draft.content_format || 'markdown',
+    sources: draft.sources || [],
+    intelligence_snapshot_id: draft.intelligence_snapshot_id,
+    model: draft.model,
+    title: draft.title,
+    created_at: draft.updated_at || draft.created_at || new Date().toISOString(),
+  });
+  if (!error) return 0;
+  if (error?.code !== '23505') throw error;
+  const raced = await readMax();
+  if (raced === null) throw error;
+  return raced;
+}
+
+/**
+ * Inserta la versión nueva (max+1) append-only DESPUÉS de que el head quedó
+ * actualizado: jamás persiste contenido que la base rechazó. UNIQUE(draft_id,
+ * version_no) con una carrera reintenta recalculando; segunda violación sale
+ * como 409 del guard de revisión del head, nunca como pérdida.
+ */
+async function insertDraftVersionHead({ draft, content, contentFormat, origin }) {
+  const readMax = async () => {
+    const { data: last, error } = await supabase
+      .from('ai_case_draft_versions')
+      .select('version_no')
+      .eq('draft_id', draft.id)
+      .eq('lawyer_id', draft.lawyer_id)
+      .order('version_no', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    return last ? Number(last.version_no) : null;
+  };
+  const insertOne = (nos) => supabase.from('ai_case_draft_versions').insert({
+    draft_id: draft.id,
+    lawyer_id: draft.lawyer_id,
+    lawyer_case_id: draft.lawyer_case_id,
+    workspace_id: draft.workspace_id,
+    version_no: nos,
+    origin,
+    content,
+    content_format: contentFormat,
+    sources: draft.sources || [],
+    intelligence_snapshot_id: draft.intelligence_snapshot_id,
+    model: origin === 'generation' ? draft.model : null,
+    title: draft.title,
+  });
+  const maxNo = await readMax();
+  const first = maxNo === null ? 1 : maxNo + 1;
+  const { error } = await insertOne(first);
+  if (!error || error?.code !== '23505') {
+    if (error) throw error;
+    return first;
+  }
+  const retryNo = ((await readMax()) ?? 0) + 1;
+  const { error: retryError } = await insertOne(retryNo);
+  if (retryError) throw retryError;
+  return retryNo;
+}
+
 app.put('/api/ai/cases/:caseId/drafts/:draftId', async (req, res) => {
   let userId = null;
   try {
@@ -12062,31 +12180,215 @@ app.put('/api/ai/cases/:caseId/drafts/:draftId', async (req, res) => {
     if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
     const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
     if (entitlement.res) return entitlement.res;
+
     const content = typeof req.body?.content === 'string' ? req.body.content : '';
     if (!content.trim() || content.length > 200000) {
       return res.status(400).json({ error: 'Contenido inválido.', code: 'INVALID_REQUEST' });
     }
+    const rawRevision = req.body?.base_revision;
+    const baseRevision = rawRevision === undefined || rawRevision === null ? null : Number(rawRevision);
+    if (baseRevision !== null && (!Number.isInteger(baseRevision) || baseRevision < 1)) {
+      return res.status(400).json({ error: 'Solicitud inválida.', code: 'INVALID_REQUEST' });
+    }
+    const origin = DRAFT_CLIENT_SAVE_ORIGINS.has(req.body?.origin) ? req.body.origin : 'edit';
+    const requestedFormat = req.body?.content_format;
+    if (requestedFormat !== undefined && !DRAFT_CONTENT_FORMATS.has(requestedFormat)) {
+      return res.status(400).json({ error: 'Solicitud inválida.', code: 'INVALID_REQUEST' });
+    }
+
     const { data: existing, error: fetchError } = await supabase
       .from('ai_case_drafts')
-      .select('id')
+      .select('*')
       .eq('id', req.params.draftId)
       .eq('lawyer_id', userId)
       .eq('workspace_id', workspace.id)
       .maybeSingle();
     if (fetchError) throw fetchError;
     if (!existing) return res.status(404).json({ error: 'Borrador no encontrado.' });
+
+    // OCC: clientes que declaran su revisión base. force=true es una acción
+    // explícita del usuario (nunca un descarte silencioso del cliente).
+    const currentRevision = Number(existing.revision) || 1;
+    if (baseRevision !== null && baseRevision !== currentRevision && req.body?.force !== true) {
+      return res.status(409).json({
+        error: 'El documento cambió en otro dispositivo o pestaña. Recarga para ver la versión actual o recupera tus cambios.',
+        code: 'AI_DRAFT_REVISION_CONFLICT',
+        current_revision: currentRevision,
+      });
+    }
+    const contentFormat = requestedFormat || existing.content_format || 'markdown';
+
+    // Orden append-only correcto: baseline del contenido previo (si es legacy),
+    // luego actualización atómica del head con guard de revisión, y solo si el
+    // head cambió se persiste la versión nueva. El resultado nunca muestra
+    // versiones de contenido que la base rechazó.
+    await ensureDraftLegacyBaseline(existing);
     const { data, error } = await supabase
       .from('ai_case_drafts')
-      .update({ content, updated_at: new Date().toISOString() })
+      .update({ content, content_format: contentFormat, revision: currentRevision + 1, updated_at: new Date().toISOString() })
       .eq('id', req.params.draftId)
       .eq('lawyer_id', userId)
+      .eq('revision', currentRevision)
       .select()
       .single();
     if (error) throw error;
-    res.json({ draft: data });
+    if (!data) {
+      // Carrera real: otra escritura ganó entre el select y el update.
+      const { data: rebound } = await supabase.from('ai_case_drafts').select('revision').eq('id', req.params.draftId).maybeSingle();
+      return res.status(409).json({
+        error: 'El documento cambió en otro dispositivo o pestaña. Recarga para ver la versión actual o recupera tus cambios.',
+        code: 'AI_DRAFT_REVISION_CONFLICT',
+        current_revision: Number(rebound?.revision) || currentRevision + 1,
+      });
+    }
+    const versionNo = await insertDraftVersionHead({ draft: existing, content, contentFormat, origin });
+    res.json({ draft: data, version: { version_no: versionNo } });
   } catch (error) {
-    console.error('[LegalUpAI] draft update error:', error);
+    console.error('[LegalUpAI] draft update error:', error?.code && error.code !== '23505' ? `code=${error.code}` : error);
+    if (error?.code === '23505') {
+      return res.status(409).json({
+        error: 'El documento cambió en otro dispositivo o pestaña.',
+        code: 'AI_DRAFT_REVISION_CONFLICT',
+      });
+    }
     res.status(500).json({ error: 'No se pudo guardar el borrador.' });
+  }
+});
+
+app.get('/api/ai/cases/:caseId/drafts/:draftId/versions', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
+    if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
+    const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
+    if (entitlement.res) return entitlement.res;
+    const { data: draft, error: draftError } = await supabase
+      .from('ai_case_drafts')
+      .select('id')
+      .eq('id', req.params.draftId)
+      .eq('lawyer_id', userId)
+      .eq('workspace_id', workspace.id)
+      .maybeSingle();
+    if (draftError) throw draftError;
+    if (!draft) return res.status(404).json({ error: 'Borrador no encontrado.' });
+    const { data, error } = await supabase
+      .from('ai_case_draft_versions')
+      .select('version_no, origin, content_format, model, title, created_at')
+      .eq('draft_id', req.params.draftId)
+      .eq('lawyer_id', userId)
+      .order('version_no', { ascending: false })
+      .limit(200);
+    if (error) throw error;
+    res.json({ versions: data || [] });
+  } catch (error) {
+    console.error('[LegalUpAI] draft versions list error:', error);
+    res.status(500).json({ error: 'No se pudo abrir el historial.' });
+  }
+});
+
+app.get('/api/ai/cases/:caseId/drafts/:draftId/versions/:versionNo', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
+    if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
+    const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
+    if (entitlement.res) return entitlement.res;
+    const versionNo = Number(req.params.versionNo);
+    if (!Number.isInteger(versionNo) || versionNo < 0) {
+      return res.status(400).json({ error: 'Versión inválida.', code: 'INVALID_REQUEST' });
+    }
+    const { data, error } = await supabase
+      .from('ai_case_draft_versions')
+      .select('*')
+      .eq('draft_id', req.params.draftId)
+      .eq('lawyer_id', userId)
+      .eq('workspace_id', workspace.id)
+      .eq('version_no', versionNo)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Versión no encontrada.' });
+    res.json({ version: data });
+  } catch (error) {
+    console.error('[LegalUpAI] draft version error:', error);
+    res.status(500).json({ error: 'No se pudo abrir la versión.' });
+  }
+});
+
+app.post('/api/ai/cases/:caseId/drafts/:draftId/versions/:versionNo/restore', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
+    if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
+    const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
+    if (entitlement.res) return entitlement.res;
+    const versionNo = Number(req.params.versionNo);
+    if (!Number.isInteger(versionNo) || versionNo < 0) {
+      return res.status(400).json({ error: 'Versión inválida.', code: 'INVALID_REQUEST' });
+    }
+    const { data: version, error: versionError } = await supabase
+      .from('ai_case_draft_versions')
+      .select('*')
+      .eq('draft_id', req.params.draftId)
+      .eq('lawyer_id', userId)
+      .eq('workspace_id', workspace.id)
+      .eq('version_no', versionNo)
+      .maybeSingle();
+    if (versionError) throw versionError;
+    if (!version) return res.status(404).json({ error: 'Versión no encontrada.' });
+
+    const { data: existing, error: fetchError } = await supabase
+      .from('ai_case_drafts')
+      .select('*')
+      .eq('id', req.params.draftId)
+      .eq('lawyer_id', userId)
+      .eq('workspace_id', workspace.id)
+      .maybeSingle();
+    if (fetchError) throw fetchError;
+    if (!existing) return res.status(404).json({ error: 'Borrador no encontrado.' });
+
+    const currentRevision = Number(existing.revision) || 1;
+    // Restaurar solo head después del guard atómico; la versión nueva entra
+    // append-only si la restauración ganó. Jamás borra ni muta el historial.
+    const { data, error } = await supabase
+      .from('ai_case_drafts')
+      .update({
+        content: version.content,
+        content_format: version.content_format || 'markdown',
+        revision: currentRevision + 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', req.params.draftId)
+      .eq('lawyer_id', userId)
+      .eq('revision', currentRevision)
+      .select()
+      .single();
+    if (error) throw error;
+    if (!data) {
+      return res.status(409).json({
+        error: 'El documento cambió mientras se restauraba. Reintenta.',
+        code: 'AI_DRAFT_REVISION_CONFLICT',
+        current_revision: currentRevision + 1,
+      });
+    }
+    const restoredVersionNo = await insertDraftVersionHead({
+      draft: existing,
+      content: version.content,
+      contentFormat: version.content_format || 'markdown',
+      origin: 'restore',
+    });
+    res.json({
+      draft: data,
+      version: { version_no: restoredVersionNo, origin: 'restore', restored_from: versionNo },
+    });
+  } catch (error) {
+    console.error('[LegalUpAI] draft restore error:', error);
+    res.status(500).json({ error: 'No se pudo restaurar la versión.' });
   }
 });
 

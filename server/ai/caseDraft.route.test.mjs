@@ -29,7 +29,9 @@ const names = ['getAIWorkspaceOwned', 'requireAIAccess', 'getAILawyerAccess', 'g
   'getProLawyerSubscription', 'getProLawyerAccess', 'getPlanForAccess', 'serverCanUseAIFeature', 'isAIOverRateLimit', 'checkAIProtectionLimits',
   'getAIUsagePeriod', 'AI_FEATURES_ALL', 'PLAN_FEATURES_SERVER', 'AI_PROTECT_MAX_MONTHLY_TOKENS', 'AI_PROTECT_MAX_MONTHLY_REQUESTS',
   'aiRateLimiter', 'AI_RATE_WINDOW_MS', 'AI_PROTECT_RATE_LIMIT_PER_MINUTE',
-  'AIDraftRequestSchema', 'AIDraftResponseSchema', 'DRAFTING_ALLOWED_PLANS', 'AI_DEFAULT_MODEL', 'freeQuotaForEntitlement'];
+  'AIDraftRequestSchema', 'AIDraftResponseSchema', 'DRAFTING_ALLOWED_PLANS', 'AI_DEFAULT_MODEL', 'freeQuotaForEntitlement',
+  'DRAFT_CLIENT_SAVE_ORIGINS', 'DRAFT_CONTENT_FORMATS', 'ensureDraftLegacyBaseline', 'insertDraftVersionHead',
+];
 
 const DOC_TEXT = 'Contrato de arrendamiento. La cláusula quinta establece la obligación de pagar la renta antes del día diez de cada mes. Las partes son Ana Arrendadora y Beto Arrendatario.';
 const EVIDENCE = 'la obligación de pagar la renta antes del día diez';
@@ -79,6 +81,10 @@ function harness({ plan = 'pro' } = {}) {
     return { data: null, error: null };
   });
   const providerCalls = [];
+  // Inyección de fallo en INSERT de versiones SIN excepción (contrato de
+  // supabase-js: {data:null, error}), para probar la reconstrucción del
+  // historial post-generación.
+  const versionInsertErrors = [];
   const provider = vi.fn(async (opts) => { providerCalls.push(opts); return JSON.parse(JSON.stringify(llmDraft())); });
   const supabase = { rpc, storage: { from: () => ({}) }, from(table) {
     let action = 'select', payload, limit = Infinity, filters = [], orderKey = null, orderAsc = true;
@@ -89,11 +95,16 @@ function harness({ plan = 'pro' } = {}) {
       if (!orderAsc) found = [...found].reverse();
       found = found.slice(0, limit);
       if (action === 'insert') {
-        const values = (Array.isArray(payload) ? payload : [payload]).map((p) => ({ id: randomUUID(), created_at: new Date().toISOString(), updated_at: new Date().toISOString(), ...p }));
+        // violación UNIQUE simúlada: fila NO persistida (semántica real)
+        if (table === 'ai_case_draft_versions' && versionInsertErrors.length) {
+          return { data: null, error: versionInsertErrors.shift() };
+        }
+        const defaults = table === 'ai_case_drafts' ? { revision: 1, content_format: 'markdown' } : {};
+        const values = (Array.isArray(payload) ? payload : [payload]).map((p) => ({ id: randomUUID(), created_at: new Date().toISOString(), updated_at: new Date().toISOString(), ...defaults, ...p }));
         list.push(...values); found = values;
       }
       if (action === 'update') found.forEach((r) => Object.assign(r, payload));
-      return { data: single ? (found[0] || null) : found.map((r) => ({ ...r })), error: null };
+      return { data: single ? ((found[0] && { ...found[0] }) || null) : found.map((r) => ({ ...r })), error: null };
     };
     const q = { select: () => q,
       eq: (k, v) => { filters.push((r) => r[k] === v); return q; },
@@ -127,15 +138,18 @@ function harness({ plan = 'pro' } = {}) {
     if ((ts.isVariableStatement(n) || ts.isFunctionDeclaration(n)) &&
       names.includes((n.declarationList?.declarations?.[0]?.name ?? n.name)?.getText(ast))) vm.runInContext(n.getText(ast), ctx);
     if (ts.isExpressionStatement(n) && ts.isCallExpression(n.expression) &&
-      ['/api/ai/cases/:caseId/drafts', '/api/ai/cases/:caseId/drafts/:draftId'].includes(n.expression.arguments[0]?.text)) vm.runInContext(n.getText(ast), ctx);
+      ['/api/ai/cases/:caseId/drafts', '/api/ai/cases/:caseId/drafts/:draftId',
+        '/api/ai/cases/:caseId/drafts/:draftId/versions',
+        '/api/ai/cases/:caseId/drafts/:draftId/versions/:versionNo',
+        '/api/ai/cases/:caseId/drafts/:draftId/versions/:versionNo/restore'].includes(n.expression.arguments[0]?.text)) vm.runInContext(n.getText(ast), ctx);
   }
-  async function call(method, path, body = {}, draftId = null) {
+  async function call(method, path, body = {}, draftId = null, extraParams = {}) {
     const res = { statusCode: 200, status(n) { this.statusCode = n; return this; }, json(b) { this.body = b; return this; } };
     const key = `${method} ${path}`;
-    await routes[key]({ headers: { authorization: 'Bearer f', 'x-ai-operation-id': randomUUID() }, params: { caseId: workspaceId, draftId }, body }, res);
+    await routes[key]({ headers: { authorization: 'Bearer f', 'x-ai-operation-id': randomUUID() }, params: { caseId: workspaceId, draftId, ...extraParams }, body }, res);
     return res;
   }
-  return { rows, provider, providerCalls, rpc, call,
+  return { rows, provider, providerCalls, rpc, call, versionInsertErrors,
     callWithKey: async (key, body = {}) => {
       const res = { statusCode: 200, status(n) { this.statusCode = n; return this; }, json(b) { this.body = b; return this; } };
       await routes['post /api/ai/cases/:caseId/drafts']({ headers: { authorization: 'Bearer f', 'x-ai-operation-id': key }, params: { caseId: workspaceId }, body }, res);
@@ -171,6 +185,45 @@ describe('4.59D draft grounded (documentos + snapshot + research)', () => {
     expect((await h.call('post', '/api/ai/cases/:caseId/drafts', { draft_type: 'demanda', instruction: 'instrucción suficientemente larga aquí' })).statusCode).toBe(400);
     expect(h.provider).not.toHaveBeenCalled();
     expect(h.rows.ai_case_drafts).toHaveLength(0);
+  });
+});
+
+describe('4.62C.3 reconstrucción del historial post-generación', () => {
+  it('fallo {error} sin excepción en v1: draft se conserva, no se reporta versionado, historial vacío', async () => {
+    const h = harness();
+    h.versionInsertErrors.push({ code: '23505', message: 'duplicate key' });
+    const res = await h.call('post', '/api/ai/cases/:caseId/drafts', { draft_type: 'escrito', instruction: 'Preparar contestación centrada en el requerimiento previo de pago' });
+    expect(res.statusCode).toBe(200);
+    // El borrador pagado NO se pierde aunque la versión inicial falle.
+    expect(h.rows.ai_case_drafts).toHaveLength(1);
+    expect(h.rows.ai_case_draft_versions).toHaveLength(0);
+    // Contrato: sin versión inicial NO se reporta éxito de versionado.
+    expect(res.body.version).toBe(null);
+    // Idempotencia/cuota intactas: la operación igualmente marcó caso_drafting.
+    const begins = h.rpc.mock.calls.filter(([n]) => n === 'ai_begin_operation').map(([, a]) => a);
+    expect(begins[0].p_capability).toBe('case_drafting');
+  });
+
+  it('primer PUT tras fallo de v1 reconstruye: baseline legacy + versión edit', async () => {
+    const h = harness();
+    h.versionInsertErrors.push({ code: '23505', message: 'duplicate key' });
+    const gen = await h.call('post', '/api/ai/cases/:caseId/drafts', { draft_type: 'escrito', instruction: 'Preparar contestación centrada en el requerimiento previo de pago' });
+    expect(h.rows.ai_case_draft_versions).toHaveLength(0);
+    const put = await h.call('put', '/api/ai/cases/:caseId/drafts/:draftId', { content: 'Primera edición tras reconstruir.', origin: 'edit', base_revision: 1 }, gen.body.draft.id);
+    expect(put.statusCode).toBe(200);
+    const versions = h.rows.ai_case_draft_versions;
+    expect(versions.map((v) => [v.version_no, v.origin])).toEqual([[0, 'legacy'], [1, 'edit']]);
+    // El baseline preserva el contenido generado (reconstrucción fiable).
+    expect(versions[0].content).toBe(gen.body.draft.content);
+    expect(h.rows.ai_case_drafts[0].revision).toBe(2);
+  });
+
+  it('generación con v1 exitosa reporta versión en la respuesta', async () => {
+    const h = harness();
+    const res = await h.call('post', '/api/ai/cases/:caseId/drafts', { draft_type: 'escrito', instruction: 'Preparar contestación centrada en el requerimiento previo de pago' });
+    expect(res.statusCode).toBe(200);
+    expect(h.rows.ai_case_draft_versions.map((v) => [v.version_no, v.origin])).toEqual([[1, 'generation']]);
+    expect(res.body.version).toEqual({ version_no: 1, origin: 'generation' });
   });
 });
 
