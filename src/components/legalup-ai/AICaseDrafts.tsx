@@ -244,6 +244,7 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   const openIdRef = useRef<string | null>(null);
   const statusRef = useRef<SaveStatus>('idle');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const restoringRef = useRef(false);
 
   const setStatus = useCallback((next: SaveStatus) => {
     statusRef.current = next;
@@ -485,9 +486,28 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
 
   const restoreVersion = async (versionNo: number) => {
     if (!openId) return;
+    // Doble-clic / carrera: solo una restauración en vuelo; nunca entra durante
+    // un guardado en curso (el botón ya se deshabilita con 'saving').
+    if (restoringRef.current || statusRef.current === 'saving') return;
+    restoringRef.current = true;
     setRestoring(true);
     setDetailError(null);
     try {
+      // Ediciones pendientes: se guardan PRIMERO. El contenido local se pierde
+      // solo si el servidor confirmó el guardado (respuestas 2xx → 'saved').
+      // Fallos (error 500) y conflictos OCC dejan el texto local intachable y
+      // cancelan la restauración.
+      if (statusRef.current === 'dirty') {
+        if (debounceRef.current) { clearTimeout(debounceRef.current); debounceRef.current = null; }
+        await runSave({ origin: 'edit' });
+        // Local: runSave actualiza a través de callbacks; el valor que importa
+        // es el posterior al guardado, no el 'dirty' estrechado por el await.
+        const afterFlush = statusRef.current as SaveStatus;
+        if (afterFlush !== 'saved') {
+          setDetailError('La restauración se canceló: guarda o resuelve tus cambios pendientes primero. Tu texto sigue en el editor.');
+          return;
+        }
+      }
       const body = await requestJson<{ draft?: CaseDraft }>(
         `${getApiBaseUrl()}/api/ai/cases/${workspaceId}/drafts/${openId}/versions/${versionNo}/restore`,
         { method: 'POST' }
@@ -506,6 +526,7 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
     } catch (e) {
       setDetailError(e instanceof Error ? e.message : 'No se pudo restaurar.');
     } finally {
+      restoringRef.current = false;
       setRestoring(false);
     }
   };
@@ -735,6 +756,7 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                     <div className="flex items-center gap-2">
                       <span
                         data-testid="save-status"
+                        aria-live="polite"
                         className={`text-xs ${saveStatus === 'error' || saveStatus === 'conflict' ? 'text-red-600' : 'text-muted-foreground'}`}
                       >
                         {SAVE_STATUS_LABEL[saveStatus]}
@@ -861,7 +883,11 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                   </p>
                   <StaticDraftDoc html={draftContentToEditorHtml(previewVersion)} />
                   <div className="flex flex-wrap gap-2">
-                    <Button size="sm" disabled={restoring} onClick={() => void restoreVersion(previewVersion.version_no)}>
+                    <Button
+                      size="sm"
+                      disabled={restoring || saveStatus === 'saving'}
+                      onClick={() => void restoreVersion(previewVersion.version_no)}
+                    >
                       {restoring ? 'Restaurar…' : 'Restaurar esta versión'}
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => setPreviewVersion(null)}>

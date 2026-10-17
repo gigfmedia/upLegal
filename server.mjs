@@ -1,5 +1,6 @@
 import { retiredAITrialInvite } from './server/retiredAITrialInvite.mjs';
 import { createAIMetering } from './server/ai/metering.mjs';
+import { serverPayloadTooLargeMiddleware } from './server/ai/payloadLimit.mjs';
 import { PRO_AI_ALLOWANCE, PLUS_AI_ALLOWANCE, commercialQuotaForPlan, FREE_CASE_ALLOWANCE, freeQuotaForPlan } from './server/ai/proAllowance.mjs';
 import { PLAN_NOT_AVAILABLE, PLUS_ACQUISITION_DISABLED, isPlusAcquisitionEnabled, normalizePlanCode, resolveCheckoutPlanCode, PLUS_PRICE_CLP, PRO_STANDARD_PRICE_CLP_CANON, resolvePlanPrice, canonicalPaidPlan } from './server/ai/plans.mjs';
 import {
@@ -428,7 +429,9 @@ const corsOptions = {
 
 // Apply middleware
 app.use(cors(corsOptions));
-app.use(express.json());
+// 2mb: mínimo que soporta el contrato del editor (200.000 chars UTF-8 ⩽ 800KB)
+// sin ampliar de más la superficie de los demás endpoints.
+app.use(express.json({ limit: '2mb' }));
 app.use(cookieParser());
 
 // Authorization uses Auth server-managed claims, never editable profile/user metadata.
@@ -13225,6 +13228,9 @@ app.post('/api/legal-category/classify', async (req, res) => {
 });
 
 // ---- Error handling middleware ----
+// 413 controlado del parser de body (cuerpo demasiado grande): JSON de la API,
+// sin filtrar detalles internos. Todo lo demás sigue al handler existente.
+app.use(serverPayloadTooLargeMiddleware);
 app.use((error, req, res, next) => {
   if (error.message === 'Not allowed by CORS') {
     return res.status(403).json({

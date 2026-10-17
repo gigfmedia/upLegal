@@ -335,3 +335,44 @@ describe('4.59D ownership, gates y casos borde', () => {
     expect(h.rows.ai_case_drafts).toHaveLength(0);
   });
 });
+
+describe('4.62D.2 límite de body coherente con la validación del editor', () => {
+  it('PUT con contenido >100KB y ≤200000 chars llega a la validación y versiona', async () => {
+    const h = harness();
+    const gen = await h.call('post', '/api/ai/cases/:caseId/drafts', { draft_type: 'escrito', instruction: 'Preparar contestación centrada en el requerimiento previo de pago' });
+    expect(gen.statusCode).toBe(200);
+    const big = '<p>' + 'x'.repeat(150000) + '</p>';
+    expect(big.length).toBeGreaterThan(100000);
+    const put = await h.call('put', '/api/ai/cases/:caseId/drafts/:draftId', { content: big, origin: 'edit', base_revision: 1 }, gen.body.draft.id);
+    expect(put.statusCode).toBe(200);
+    expect(put.body.draft.content).toBe(big);
+    // v1 de generación (exitosa) + versión del PUT; el baseline legacy solo
+    // aplica a borradores anteriores a 4.62C.
+    expect(h.rows.ai_case_draft_versions.map((v) => [v.version_no, v.origin])).toEqual([[1, 'generation'], [2, 'edit']]);
+  });
+
+  it('PUT con 200001 chars rechaza con 400 INVALID_REQUEST (body dentro del límite HTTP)', async () => {
+    const h = harness();
+    const gen = await h.call('post', '/api/ai/cases/:caseId/drafts', { draft_type: 'escrito', instruction: 'Preparar contestación centrada en el requerimiento previo de pago' });
+    const tooBig = 'x'.repeat(200001);
+    const put = await h.call('put', '/api/ai/cases/:caseId/drafts/:draftId', { content: tooBig, origin: 'edit', base_revision: 1 }, gen.body.draft.id);
+    expect(put.statusCode).toBe(400);
+    expect(put.body.code).toBe('INVALID_REQUEST');
+    // Sin guardado fantasma ni versión fantasma.
+    expect(h.rows.ai_case_draft_versions).toHaveLength(1);
+    expect(put.body.current_revision).toBeUndefined();
+  });
+
+  it('server.mjs fija limit 2mb y ejecuta el middleware 413 antes del handler genérico', () => {
+    expect(src.includes("express.json({ limit: '2mb' })")).toBe(true);
+    expect(src.includes('app.use(serverPayloadTooLargeMiddleware)')).toBe(true);
+    // El middleware 413 va antes del console.error/500 genérico: el body-parser demasiado grande
+    // no cae en 'Internal server error'.
+    const parserIdx = src.indexOf("app.use(express.json({ limit: '2mb' })");
+    const errIdx = src.indexOf('app.use((error, req, res, next) =>');
+    const tooLargeIdx = src.indexOf('app.use(serverPayloadTooLargeMiddleware)');
+    expect(tooLargeIdx).toBeGreaterThan(0);
+    expect(tooLargeIdx).toBeLessThan(errIdx);
+    expect(parserIdx).toBeGreaterThan(0);
+  });
+});

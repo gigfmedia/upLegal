@@ -98,6 +98,8 @@ let usageAllowance: unknown = { plan: 'pro_limited', drafting: { used: 12, limit
 let versionsPayload: unknown[] = [];
 let versionDetail: unknown = null;
 let putFailure: { status: number; body: Record<string, unknown> } | null = null;
+// FASE 4.62D: retiene PUTs en vuelo para congelar el estado 'saving' de forma determinista.
+let holdPutGate: Promise<void> | null = null;
 
 type ApiCall = [string, RequestInit];
 
@@ -110,6 +112,7 @@ beforeEach(() => {
   versionsPayload = [];
   versionDetail = null;
   putFailure = null;
+  holdPutGate = null;
   resetEditors();
   fetchMock = vi.fn(async (url: string, opts?: RequestInit) => {
     const urlStr = String(url);
@@ -123,6 +126,11 @@ beforeEach(() => {
       return { ok: true, json: async () => ({ draft: DRAFT, snapshot: { version: 1 } }) } as Response;
     }
     if (opts?.method === 'PUT') {
+      if (holdPutGate) {
+        const gate = holdPutGate;
+        holdPutGate = null;
+        await gate;
+      }
       if (putFailure) {
         const fail = putFailure;
         return { ok: false, status: fail.status, json: async () => fail.body } as unknown as Response;
@@ -358,4 +366,132 @@ describe('FASE 4.59D.4 gating preservado', () => {
     expect(await screen.findByText('Ver LegalUp Pro')).toBeTruthy();
     expect(screen.queryByText(/de 30 este mes/)).toBeNull();
   });
+});
+
+describe('FASE 4.62D.2 restauración sin pérdida de ediciones', () => {
+  const openVersionPreview = async (needle: RegExp) => {
+    fireEvent.click((await screen.findAllByText(needle))[0]);
+    return await screen.findByText('Restaurar esta versión');
+  };
+
+  it('dirty → restaurar: primero PUT origin edit con el contenido local, después restore', async () => {
+    versionsPayload = [
+      { version_no: 1, origin: 'generation', content_format: 'markdown', model: 'm', title: 'v1', created_at: '2026-10-01T10:00:00Z' },
+    ];
+    versionDetail = {
+      version_no: 1, origin: 'generation', content_format: 'markdown', model: 'm', title: 'v1',
+      created_at: '2026-10-01T10:00:00Z', content: 'Texto de la versión previa.',
+    };
+    renderDrafts();
+    await openFirstDraft();
+    const ed = mainEditor()!;
+    act(() => { ed.commands.setContent('<p>trabajo local pendiente</p>', { emitUpdate: true }); });
+    const restoreBtn = await openVersionPreview(/v1 · generación IA/);
+    fireEvent.click(restoreBtn);
+    // El guardado local precede a la restauración y lleva el contenido local.
+    await waitFor(() => {
+      const edits = putCalls().filter((c) => putBody(c).origin === 'edit');
+      expect(edits.length).toBeGreaterThan(0);
+      expect(putBody(edits[0]).content).toContain('trabajo local pendiente');
+    }, { timeout: 3000, interval: 50 });
+    await waitFor(() => {
+      expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/versions/1/restore') && (c[1] as RequestInit).method === 'POST')).toBe(true);
+    }, { timeout: 3000, interval: 50 });
+    // Nada se perdió: el PUT local persistió antes de restaurar.
+    expect(putBody(putCalls()[0]).origin).toBe('edit');
+  }, 20000);
+
+  it('guardado fallido antes de restaurar: sin POST restore, texto local intacto, aviso visible', async () => {
+    versionsPayload = [
+      { version_no: 1, origin: 'generation', content_format: 'markdown', model: 'm', title: 'v1', created_at: '2026-10-01T10:00:00Z' },
+    ];
+    versionDetail = {
+      version_no: 1, origin: 'generation', content_format: 'markdown', model: 'm', title: 'v1',
+      created_at: '2026-10-01T10:00:00Z', content: 'Texto de la versión previa.',
+    };
+    renderDrafts();
+    await openFirstDraft();
+    const ed = mainEditor()!;
+    putFailure = { status: 500, body: { error: 'boom' } };
+    act(() => { ed.commands.setContent('<p>ediciones no confirmadas</p>', { emitUpdate: true }); });
+    const restoreBtn = await openVersionPreview(/v1 · generación IA/) as HTMLElement;
+    fireEvent.click(restoreBtn);
+    await waitFor(() => expect(putCalls().length).toBeGreaterThan(0), { timeout: 3000, interval: 50 });
+    // La restauración NO se ejecuta.
+    expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/restore'))).toBe(false);
+    expect(await screen.findByText(/La restauración se canceló/)).toBeTruthy();
+    // El contenido local sigue en el editor (sin reemplazo silencioso).
+    expect(ed.getHTML()).toContain('ediciones no confirmadas');
+    putFailure = null;
+  }, 20000);
+
+  it('conflicto OCC en el flush: sin POST restore, cambios locales conservados y panel de conflicto', async () => {
+    versionsPayload = [
+      { version_no: 1, origin: 'generation', content_format: 'markdown', model: 'm', title: 'v1', created_at: '2026-10-01T10:00:00Z' },
+    ];
+    versionDetail = {
+      version_no: 1, origin: 'generation', content_format: 'markdown', model: 'm', title: 'v1',
+      created_at: '2026-10-01T10:00:00Z', content: 'Texto de la versión previa.',
+    };
+    renderDrafts();
+    await openFirstDraft();
+    const ed = mainEditor()!;
+    putFailure = { status: 409, body: { error: 'conflicto', code: 'AI_DRAFT_REVISION_CONFLICT', current_revision: 9 } };
+    act(() => { ed.commands.setContent('<p>mi versión local en conflicto</p>', { emitUpdate: true }); });
+    const restoreBtn = await openVersionPreview(/v1 · generación IA/) as HTMLElement;
+    fireEvent.click(restoreBtn);
+    await waitFor(() => expect(putCalls().length).toBeGreaterThan(0), { timeout: 3000, interval: 50 });
+    expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/restore'))).toBe(false);
+    // El panel de conflicto manda: el usuario decide, la restauración queda cancelada.
+    expect(await screen.findByText('El documento cambió en otro dispositivo o pestaña.')).toBeTruthy();
+    expect((screen.getAllByText('Copiar mis cambios')).length).toBeGreaterThan(0);
+    expect(ed.getHTML()).toContain('mi versión local en conflicto');
+    putFailure = null;
+  }, 20000);
+
+  it('sin cambios pendientes: restauración directa sin PUT previo', async () => {
+    versionsPayload = [
+      { version_no: 1, origin: 'generation', content_format: 'markdown', model: 'm', title: 'v1', created_at: '2026-10-01T10:00:00Z' },
+    ];
+    versionDetail = {
+      version_no: 1, origin: 'generation', content_format: 'markdown', model: 'm', title: 'v1',
+      created_at: '2026-10-01T10:00:00Z', content: 'Texto de la versión previa.',
+    };
+    renderDrafts();
+    await openFirstDraft();
+    const restoreBtn = await openVersionPreview(/v1 · generación IA/);
+    fireEvent.click(restoreBtn as HTMLElement);
+    await waitFor(() => {
+      expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/versions/1/restore') && (c[1] as RequestInit).method === 'POST')).toBe(true);
+    }, { timeout: 3000, interval: 50 });
+    // Sin flush previo: ningún PUT en toda la sesión.
+    expect(putCalls()).toHaveLength(0);
+  }, 20000);
+
+  it('botón de restauración deshabilitado durante el guardado en curso', async () => {
+    versionsPayload = [
+      { version_no: 1, origin: 'generation', content_format: 'markdown', model: 'm', title: 'v1', created_at: '2026-10-01T10:00:00Z' },
+    ];
+    versionDetail = {
+      version_no: 1, origin: 'generation', content_format: 'markdown', model: 'm', title: 'v1',
+      created_at: '2026-10-01T10:00:00Z', content: 'Texto de la versión previa.',
+    };
+    let releaseHold = () => {};
+    renderDrafts();
+    await openFirstDraft();
+    const ed = mainEditor()!;
+    holdPutGate = new Promise<void>((resolve) => { releaseHold = resolve; });
+    act(() => { ed.commands.setContent('<p>guardado retenido</p>', { emitUpdate: true }); });
+    const restoreBtn = await openVersionPreview(/v1 · generación IA/);
+    // El PUT en vuelo (retenido) congela 'saving': el botón debe estar deshabilitado.
+    fireEvent.click(restoreBtn);
+    await waitFor(() => {
+      expect(restoreBtn).toBeDisabled();
+    }, { timeout: 3000, interval: 50 });
+    expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/restore'))).toBe(false);
+    releaseHold();
+    await waitFor(() => {
+      expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/versions/1/restore') && (c[1] as RequestInit).method === 'POST')).toBe(true);
+    }, { timeout: 3000, interval: 50 });
+  }, 20000);
 });
