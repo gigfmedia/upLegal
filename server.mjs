@@ -3308,6 +3308,16 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         }
       } catch (trackingError) {
         console.error('[webhook] step=booking_normalization error=payment_event', trackingError);
+        // R1: solo el conflicto reconocido por payment_events_success_payment_once es
+        // un duplicado benigno. Un fallo real al persistir el evento se propaga:
+        // el catch del webhook responde 5xx y el reintento del proveedor completa
+        // la persistencia pendiente vía la rama recovery del claim de payment_id.
+        const isR1IdempotencyConflict =
+          trackingError?.code === '23505' &&
+          (trackingError?.message || '').indexOf('payment_events_success_payment_once') !== -1;
+        if (!isR1IdempotencyConflict) {
+          throw trackingError;
+        }
       }
 
       // STEP 4: Appointment creation (only when the service requires a meeting)
