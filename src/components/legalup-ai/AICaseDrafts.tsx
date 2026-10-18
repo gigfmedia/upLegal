@@ -273,7 +273,16 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   }, []);
 
   const openDraftById = useCallback(async (id: string, opts?: { force?: boolean }) => {
-    if (statusRef.current === 'dirty' && !opts?.force) {
+    // FASE 4.62D.32: 'dirty' no es el único estado con texto local más nuevo
+    // que el servidor. Tras un guardado fallido ('error') o un conflicto OCC
+    // ('conflict'), el contenido del editor tampoco vive en el servidor:
+    // abrir otro borrador sin confirmación descartaba el texto en silencio.
+    // La resolución explícita (Guardar y abrir / Descartar cambios y abrir)
+    // es la misma panelflow ya probada para 'dirty' (FASE 4.62D.30).
+    if (
+      (statusRef.current === 'dirty' || statusRef.current === 'error' || statusRef.current === 'conflict')
+      && !opts?.force
+    ) {
       const target = drafts.find((d) => d.id === id);
       setPendingSwitch({ targetId: id, targetTitle: target?.title ?? 'otro borrador' });
       return null;
@@ -458,9 +467,14 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
 
   // Flush best-effort al abandonar la página. keepalive sin await: lo que
   // llegue llega; el autosave normal sigue siendo la vía principal.
+  // FASE 4.62D.32: tras un guardado fallido ('error') el texto del editor
+  // sigue sin llegar al servidor y la base_revision local sigue siendo la
+  // vigente — el flush puede persistirla. Con 'conflict' se omite: la
+  // base_revision está desfasada por definición (409 garantizado).
   useEffect(() => {
     const onBeforeUnload = () => {
-      if (statusRef.current !== 'dirty' || !openIdRef.current || !tokenRef.current) return;
+      const st = statusRef.current;
+      if ((st !== 'dirty' && st !== 'error') || !openIdRef.current || !tokenRef.current) return;
       const current = editorRef.current;
       if (!current || current.isDestroyed) return;
       void fetch(`${getApiBaseUrl()}/api/ai/cases/${workspaceId}/drafts/${openIdRef.current}`, {

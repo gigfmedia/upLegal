@@ -1023,3 +1023,105 @@ describe('FASE 4.62D.31 flush de beforeunload con token vigente', () => {
     expect(flushCalls()).toHaveLength(0);
   }, 20000);
 });
+
+// FASE 4.62D.32 — recuperación de contenido: 'dirty' no es el único estado
+// donde el editor contiene texto más nuevo que el servidor. Tras un guardado
+// fallido (error) o un conflicto OCC (conflict), abrir otro borrador debe
+// exigir la misma resolución explícita, y el flush de emergencia debe
+// intentarlo mientras la base_revision siga siendo válida.
+describe('FASE 4.62D.32 recuperación tras fallo y conflicto: el texto local exige resolución explícita', () => {
+  const A_ID = 'dA';
+  const B_ID = 'dB';
+  const TITLE_A = 'Contestación revisión alta';
+  const TITLE_B = 'Carta revisión baja';
+  const draftA = makeDraft({ id: A_ID, title: TITLE_A, revision: 1, content: '# TextoA\n\nPárrafo alto de A.' });
+  const draftB = makeDraft({ id: B_ID, title: TITLE_B, revision: 1, content: '# TextoB\n\nPárrafo bajo de B.' });
+  const LOCAL_HTML = '<p>texto crítico no guardado</p>';
+
+  beforeEach(() => {
+    const byId: Record<string, unknown> = { [A_ID]: draftA, [B_ID]: draftB };
+    fetchMock = vi.fn(async (url: string, opts?: RequestInit) => {
+      const urlStr = String(url);
+      if (urlStr.includes('/api/ai/usage')) {
+        return { ok: true, json: async () => ({ allowance: usageAllowance }) } as Response;
+      }
+      if (opts?.method === 'PUT') {
+        if (putFailure) {
+          const fail = putFailure;
+          return { ok: false, status: fail.status, json: async () => fail.body } as unknown as Response;
+        }
+        const body = JSON.parse(String(opts?.body ?? '{}')) as { content?: string; base_revision?: number };
+        return {
+          ok: true,
+          json: async () => ({ draft: makeDraft({ content: body.content ?? '', content_format: 'html', revision: (body.base_revision ?? 1) + 1 }) }),
+        } as Response;
+      }
+      if (/\/drafts\/[^/]+\/versions\/\d+$/.test(urlStr)) {
+        return { ok: true, json: async () => ({ version: versionDetail }) } as Response;
+      }
+      if (/\/drafts\/[^/]+\/versions$/.test(urlStr)) {
+        return { ok: true, json: async () => ({ versions: versionsPayload }) } as Response;
+      }
+      if (/\/drafts\/[^/]+$/.test(urlStr)) {
+        const m = urlStr.match(/\/drafts\/([^/?]+)$/) as RegExpMatchArray;
+        return { ok: true, json: async () => ({ draft: byId[m[1]] ?? draftA }) } as Response;
+      }
+      return { ok: true, json: async () => ({ drafts: [draftA, draftB] }) } as Response;
+    });
+    (globalThis as unknown as { fetch: typeof fetch }).fetch = fetchMock as unknown as typeof fetch;
+  });
+
+  const abrirAConFallo = async (failure: { status: number; body: Record<string, unknown>; statusLabel?: string }) => {
+    putFailure = failure;
+    renderDrafts();
+    fireEvent.click(await screen.findByText(TITLE_A));
+    await screen.findByText(/Párrafo alto de A\./);
+    const ed = mainEditor()!;
+    act(() => { ed.commands.setContent(LOCAL_HTML, { emitUpdate: true }); });
+    await screen.findByText(failure.statusLabel ?? 'Error al guardar', {}, { timeout: 4000, interval: 50 });
+    putFailure = null;
+  };
+  const flushCalls = (): ApiCall[] =>
+    (fetchMock.mock.calls as unknown[][]).filter((c) => (c[1] as RequestInit).keepalive === true) as ApiCall[];
+
+  it('1. 500 → abrir otro borrador: exige resolución explícita y conserva el texto local', async () => {
+    await abrirAConFallo({ status: 500, body: { error: 'No se pudo guardar el borrador.' } });
+    fireEvent.click((await screen.findAllByText(TITLE_B))[0]);
+    expect(await screen.findByText(/Tienes cambios sin guardar en Contestación revisión alta/)).toBeTruthy();
+    expect(screen.getByText('Guardar y abrir')).toBeTruthy();
+    expect(screen.getByText('Descartar cambios y abrir')).toBeTruthy();
+    expect(mainEditor()!.getHTML()).toContain('texto crítico no guardado');
+  }, 20000);
+
+  it('2. 409 conflicts panel → abrir otro borrador: exige resolución explícita (texto local único)', async () => {
+    await abrirAConFallo({
+      status: 409,
+      body: { error: 'El documento cambió en otro dispositivo o pestaña.', code: 'AI_DRAFT_REVISION_CONFLICT', current_revision: 5 },
+      statusLabel: 'Cambios en conflicto',
+    });
+    // El panel de conflicto con sus 3 salidas es visible e invita a resolver:
+    // ningún clic lateral está autorizado a descartar el texto sin confirmación.
+    expect(await screen.findByText(/tú decides qué pasa/)).toBeTruthy();
+    fireEvent.click((await screen.findAllByText(TITLE_B))[0]);
+    expect(await screen.findByText(/Tienes cambios sin guardar en Contestación revisión alta/)).toBeTruthy();
+    expect(mainEditor()!.getHTML()).toContain('texto crítico no guardado');
+  }, 20000);
+
+  it('3. 500 → cerrar la pestaña: el flush de emergencia intenta persistir con base_revision aún válida', async () => {
+    await abrirAConFallo({ status: 500, body: { error: 'No se pudo guardar el borrador.' } });
+    fireEvent(window, new Event('beforeunload'));
+    await waitFor(() => expect(flushCalls()).toHaveLength(1), { timeout: 3000, interval: 50 });
+    const body = putBody(flushCalls()[0]);
+    expect(body.base_revision).toBe(1);
+    expect(String(body.content)).toContain('texto crítico');
+  }, 20000);
+
+  it('4. Guardar y abrir tras un 500: cuando el guardado luego resulta, el destino se abre', async () => {
+    await abrirAConFallo({ status: 500, body: { error: 'No se pudo guardar el borrador.' } });
+    fireEvent.click((await screen.findAllByText(TITLE_B))[0]);
+    fireEvent.click(await screen.findByText('Guardar y abrir'));
+    await screen.findByText(/Párrafo bajo de B\./);
+    expect(mainEditor()!.getHTML()).toContain('Párrafo bajo de B.');
+    expect(mainEditor()!.getHTML()).not.toContain('texto crítico');
+  }, 20000);
+});
