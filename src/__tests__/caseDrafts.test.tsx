@@ -6,8 +6,35 @@ import { AICaseDrafts } from '@/components/legalup-ai/AICaseDrafts';
 // FASE 4.59D + 4.62C — Draft/document workspace UI: lista, creación validada,
 // editor rich (TipTap) con autosave, OCC (409) y versiones.
 
+// FASE 4.62D.31 — estado de sesión controlable para probar el flush de
+// beforeunload (rotación de token por GoTrue, cierre de sesión, red caída).
+const authState = vi.hoisted(() => {
+  type Listener = (event: string, session: { access_token?: string } | null) => void;
+  const listeners = new Set<Listener>();
+  const currentToken = { value: 'tok' };
+  return {
+    listeners,
+    currentToken,
+    emit: (event: string, token: string | null) => {
+      for (const cb of Array.from(listeners)) cb(event, token === null ? null : { access_token: token });
+    },
+    reset: () => {
+      listeners.clear();
+      currentToken.value = 'tok';
+    },
+  };
+});
+
 vi.mock('@/lib/supabaseClient', () => ({
-  supabase: { auth: { getSession: async () => ({ data: { session: { access_token: 'tok', user: { id: 'u' } } } }) } },
+  supabase: {
+    auth: {
+      getSession: async () => ({ data: { session: { access_token: authState.currentToken.value, user: { id: 'u' } } } }),
+      onAuthStateChange: (cb: (event: string, session: { access_token?: string } | null) => void) => {
+        authState.listeners.add(cb);
+        return { data: { subscription: { unsubscribe: () => authState.listeners.delete(cb) } } };
+      },
+    },
+  },
 }));
 
 vi.mock('@/lib/aiOperationIdentity', () => ({
@@ -117,6 +144,7 @@ beforeEach(() => {
   putFailure = null;
   holdPutGate = null;
   putStaleRevisions = [];
+  authState.reset();
   resetEditors();
   fetchMock = vi.fn(async (url: string, opts?: RequestInit) => {
     const urlStr = String(url);
@@ -925,5 +953,73 @@ describe('FASE 4.62D.30 guardar y abrir no abandona el borrador con guardado fal
     await screen.findByText(/Párrafo de B\./);
     expect(mainEditor()!.getHTML()).toContain('Párrafo de B.');
     expect(mainEditor()!.getHTML()).not.toContain(LOCAL_TEXT);
+  }, 20000);
+});
+
+// FASE 4.62D.31 — flush de beforeunload con token vigente. El PUT de emergencia
+// no puede esperar una renovación (beforeunload es síncrono), así que el token
+// en caché debe mantenerse al día con los eventos de sesión de GoTrue.
+// El flush sigue siendo best-effort: no se atribuyen garantías del navegador.
+describe('FASE 4.62D.31 flush de beforeunload con token vigente', () => {
+  const flushCalls = (): ApiCall[] =>
+    (fetchMock.mock.calls as unknown[][]).filter((c) => (c[1] as RequestInit).keepalive === true) as ApiCall[];
+  const flushAuthorization = (call: ApiCall) =>
+    ((call[1].headers ?? {}) as Record<string, string>).Authorization;
+  const abrirConCambiosPendientes = async () => {
+    renderDrafts();
+    await openFirstDraft();
+    const ed = mainEditor()!;
+    act(() => { ed.commands.setContent('<p>cambios al abandonar</p>', { emitUpdate: true }); });
+    return ed;
+  };
+
+  it('TOKEN_REFRESHED: el flush de emergencia envía el token rotado, no el de montaje', async () => {
+    await abrirConCambiosPendientes();
+    // Rotación de GoTrue ocurrida con la pestaña abierta (autosave normal
+    // leyó getSession() fresco; el ref local era el token del mount 'tok').
+    authState.emit('TOKEN_REFRESHED', 'tok-rotado');
+    fireEvent(window, new Event('beforeunload'));
+    const [flush] = await waitFor(() => {
+      const calls = flushCalls();
+      expect(calls).toHaveLength(1);
+      return calls;
+    }, { timeout: 3000, interval: 50 });
+    expect(String(flush[0])).toContain('/api/ai/cases/w1/drafts/d1');
+    // Defecto previo: Authorization era 'Bearer tok' (caducado) → 401 silencioso.
+    expect(flushAuthorization(flush)).toBe('Bearer tok-rotado');
+    expect(JSON.parse(String(flush[1].body)).origin).toBe('autosave');
+  }, 20000);
+
+  it('SIGNED_OUT: sin sesión no se envía PUT de emergencia', async () => {
+    await abrirConCambiosPendientes();
+    authState.emit('SIGNED_OUT', null);
+    fireEvent(window, new Event('beforeunload'));
+    await new Promise((r) => setTimeout(r, 300));
+    expect(flushCalls()).toHaveLength(0);
+  }, 20000);
+
+  it('fallo de red en el flush: best-effort sin crash y el autosave posterior sigue guardando', async () => {
+    const baseFetch = fetchMock;
+    fetchMock = vi.fn(async (url: string, opts?: RequestInit) => {
+      if ((opts as RequestInit & { keepalive?: boolean })?.keepalive) throw new TypeError('network down');
+      return baseFetch(url, opts);
+    });
+    (globalThis as unknown as { fetch: typeof fetch }).fetch = fetchMock as unknown as typeof fetch;
+    await abrirConCambiosPendientes();
+    fireEvent(window, new Event('beforeunload'));
+    // El intento SÍ ocurrió (diagnóstico del fallo), y su rechazo quedó contenido.
+    await waitFor(() => expect(flushCalls()).toHaveLength(1), { timeout: 3000, interval: 50 });
+    // Sin bloqueo permanente: el debounce pendiente guarda normalmente.
+    await waitFor(() => expect(screen.getByTestId('save-status').textContent).toContain('Guardado'), { timeout: 4000, interval: 50 });
+    expect(mainEditor()!.getHTML()).toContain('cambios al abandonar');
+  }, 20000);
+
+  it('abandonar la página sin cambios pendientes: ningún PUT de emergencia', async () => {
+    renderDrafts();
+    await openFirstDraft();
+    await new Promise((r) => setTimeout(r, 300));
+    fireEvent(window, new Event('beforeunload'));
+    await new Promise((r) => setTimeout(r, 300));
+    expect(flushCalls()).toHaveLength(0);
   }, 20000);
 });

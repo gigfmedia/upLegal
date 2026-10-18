@@ -483,10 +483,23 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   }, [workspaceId]);
 
   // Token en caché para el flush de beforeunload (getSession es async).
+  // FASE 4.62D.31: el token del montaje caduca (TTL ≈1h con rotación de GoTrue)
+  // y el flush no puede esperar una renovación como el autosave normal.
+  // La suscripción mantiene tokenRef vigente en memoria (TOKEN_REFRESHED /
+  // SIGNED_OUT), sin almacenamiento adicional ni awaitable dentro de
+  // beforeunload. El flush sigue siendo best-effort: si la pestaña pasa >1h
+  // oculta sin volver a activarse, la renovación queda pausada y el PUT puede
+  // llegar expirado (401) — limitación documentada, no garantía del navegador.
   useEffect(() => {
     let alive = true;
     void getAccessToken().then((t) => { if (alive) tokenRef.current = t; });
-    return () => { alive = false; };
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (alive) tokenRef.current = session?.access_token ?? null;
+    });
+    return () => {
+      alive = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Historial de versiones del borrador abierto.
