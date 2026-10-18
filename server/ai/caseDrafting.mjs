@@ -28,6 +28,12 @@ export const DRAFT_LIMITS = {
   MAX_RESEARCH_CHARS: 6000,
   // Salida.
   MAX_OUTPUT_TOKENS: 4000,
+  // FASE 4.62D.18 — presupuesto de salida SOLO para generación de borradores.
+  // 8000 es una hipótesis de mitigación (2x), no una garantía: modelos con
+  // razonamiento (p. ej. gpt-oss-20b) pueden agotar el max_tokens en
+  // `reasoning` y dejar `content` vacío o truncado. Si el 507 persiste, la
+  // mitigación siguiente (contexto/modelo) es una decisión aparte.
+  DRAFT_OUTPUT_TOKENS: 8000,
   // Instrucción del abogado.
   MAX_INSTRUCTION_CHARS: 2000,
   MIN_INSTRUCTION_CHARS: 10,

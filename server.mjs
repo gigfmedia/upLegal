@@ -11907,16 +11907,33 @@ app.post('/api/ai/cases/:caseId/drafts', async (req, res) => {
 
     if (!await metering.begin(req, res, { lawyerId: userId, workspaceId: workspace.id, capability: 'case_drafting', resourceId: snapRow.id, input: { draft_type, instruction, snapshot_id: snapRow.id, model: AI_DEFAULT_MODEL }, commercialLimits: commercialQuotaForPlan(entitlement.plan), freeQuota: freeQuotaForEntitlement(entitlement) })) return;
 
-    const { data: raw } = await chatCompletion({
+    const { data: raw, usage: rawUsage, finishReason: rawFinishReason } = await chatCompletion({
       model: AI_DEFAULT_MODEL,
       metering,
       system: buildDraftSystemPrompt({ draftType: draft_type }),
       messages: [{ role: 'user', content: `Contexto del caso:\n${fullContext}` }],
-      maxTokens: DRAFT_LIMITS.MAX_OUTPUT_TOKENS,
+      // FASE 4.62D.18 — presupuesto de salida específico para borradores
+      // (constante en DRAFT_LIMITS; hipótesis de mitigación, ver comentario).
+      maxTokens: DRAFT_LIMITS.DRAFT_OUTPUT_TOKENS,
       temperature: 0.2,
     });
     const validated = AIDraftResponseSchema.safeParse(typeof raw === 'string' ? JSON.parse(raw) : raw);
     if (!validated.success) {
+      // FASE 4.62D.18 — diagnóstico desinfectado de salida inválida del modelo
+      // (JSON ausente/inválido o incompatible con el schema). Solo metadatos:
+      // sin contenido del modelo, sin prompts, sin documentos, sin PII.
+      // La unidad/costo y estado persisten en metering (ai_operations/
+      // ai_provider_attempts con finish_reason en usage_details).
+      console.error('[LegalUpAI] draft_invalid_model_response', JSON.stringify({
+        code: 'AI_PROVIDER_INVALID_RESPONSE',
+        parsed_data: raw != null,
+        finish_reason: rawFinishReason ?? null,
+        actual_model: rawUsage?.actual_model ?? null,
+        provider_request_id: rawUsage?.provider_request_id ?? null,
+        input_tokens: rawUsage?.input_tokens ?? null,
+        output_tokens: rawUsage?.output_tokens ?? null,
+        reasoning_tokens: rawUsage?.usage_details?.reasoning_tokens ?? null,
+      }));
       return await metering.respond(res, 502, {
         error: 'El modelo no devolvió un borrador válido. Intenta nuevamente.',
         code: 'AI_PROVIDER_INVALID_RESPONSE',
@@ -11950,6 +11967,18 @@ app.post('/api/ai/cases/:caseId/drafts', async (req, res) => {
     const warnings = [...(validated.data.warnings || []), ...checked.warnings];
     const content = String(validated.data.content || '').slice(0, 60000);
     if (!content.trim()) {
+      // FASE 4.62D.18 — misma instrumentación desinfectada para salida con
+      // schema parse-able pero content vacío (sin contenido del modelo).
+      console.error('[LegalUpAI] draft_invalid_model_response', JSON.stringify({
+        code: 'AI_PROVIDER_INVALID_RESPONSE',
+        parsed_data: true,
+        finish_reason: rawFinishReason ?? null,
+        actual_model: rawUsage?.actual_model ?? null,
+        provider_request_id: rawUsage?.provider_request_id ?? null,
+        input_tokens: rawUsage?.input_tokens ?? null,
+        output_tokens: rawUsage?.output_tokens ?? null,
+        reasoning_tokens: rawUsage?.usage_details?.reasoning_tokens ?? null,
+      }));
       return await metering.respond(res, 502, {
         error: 'El modelo no devolvió contenido. Intenta nuevamente.',
         code: 'AI_PROVIDER_INVALID_RESPONSE',
@@ -12017,9 +12046,34 @@ app.post('/api/ai/cases/:caseId/drafts', async (req, res) => {
       warnings,
     });
   } catch (error) {
-    console.error('[LegalUpAI] draft error:', error);
+    // FASE 4.62D.21 — logging acotado: solo campos tipados con null explícito.
+    // Sin .detail (cuerpo crudo del proveedor), .diag, .stack ni objeto completo
+    // (los metadatos completos ya están en la línea estructurada de abajo).
+    console.error('[LegalUpAI] draft error', JSON.stringify({
+      code: error?.code ?? null,
+      status: error?.status ?? null,
+      retriable: error?.retriable ?? null,
+    }));
     const code =
       error?.code?.startsWith('AI_') ? error.code : 'PROVIDER_ERROR';
+    // FASE 4.62D.18 — línea estructurada y desinfectada para diagnóstico
+    // (OUTPUT_TOKEN_LIMIT, EMPTY_RESPONSE y proveedores): solo metadatos
+    // (código, status, latencia, finish_reason, tokens, request id). Sin
+    // contenido del proveedor, sin prompts, sin documentos ni secretos.
+    // Estado y unidades de metering persisten vía metering en ai_operations
+    // y ai_provider_attempts (quota_units incluido, ver fase 4.62D.16).
+    console.error('[LegalUpAI] draft_generation_failed_typed', JSON.stringify({
+      code,
+      status: error?.status ?? null,
+      retriable: error?.retriable ?? null,
+      latency_ms: error?.latencyMs ?? null,
+      finish_reason: error?.diag?.finish_reason ?? null,
+      actual_model: error?.diag?.actual_model ?? null,
+      provider_request_id: error?.diag?.provider_request_id ?? null,
+      input_tokens: error?.diag?.input_tokens ?? null,
+      output_tokens: error?.diag?.output_tokens ?? null,
+      reasoning_tokens: error?.diag?.reasoning_tokens ?? null,
+    }));
     await metering.respond(res, error?.status || 500, {
       error: error.message || 'No se pudo generar el borrador.',
       code,

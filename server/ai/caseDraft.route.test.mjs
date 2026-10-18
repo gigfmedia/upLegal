@@ -117,7 +117,14 @@ function harness({ plan = 'pro' } = {}) {
     return q;
   } };
   const routes = {};
-  const quiet = { log() {}, warn() {}, error() {} };
+  // FASE 4.62D.18 — consola grabada (sin stdout) para auditar la
+  // instrumentalización desinfectada de borradores en tests.
+  const logs = [];
+  const quiet = {
+    log(...a) { logs.push(['log', ...a.map(String)]); },
+    warn(...a) { logs.push(['warn', ...a.map(String)]); },
+    error(...a) { logs.push(['error', ...a.map(String)]); },
+  };
   const ctx = vm.createContext({ console: quiet, z, Buffer, process: { env: { AI_DRAFTING_ENABLED: '1' } }, supabase,
     createAIMetering: (options) => createAIMetering({ ...options, log: () => {} }),
     commercialQuotaForPlan,
@@ -149,7 +156,7 @@ function harness({ plan = 'pro' } = {}) {
     await routes[key]({ headers: { authorization: 'Bearer f', 'x-ai-operation-id': randomUUID() }, params: { caseId: workspaceId, draftId, ...extraParams }, body }, res);
     return res;
   }
-  return { rows, provider, providerCalls, rpc, call, versionInsertErrors,
+  return { rows, provider, providerCalls, rpc, call, versionInsertErrors, logs,
     callWithKey: async (key, body = {}) => {
       const res = { statusCode: 200, status(n) { this.statusCode = n; return this; }, json(b) { this.body = b; return this; } };
       await routes['post /api/ai/cases/:caseId/drafts']({ headers: { authorization: 'Bearer f', 'x-ai-operation-id': key }, params: { caseId: workspaceId }, body }, res);
@@ -333,6 +340,170 @@ describe('4.59D ownership, gates y casos borde', () => {
     const res = await h.call('post', '/api/ai/cases/:caseId/drafts', { draft_type: 'carta', instruction: 'Carta formal sobre el pago de la renta adeudada' });
     expect(res.statusCode).toBe(500);
     expect(h.rows.ai_case_drafts).toHaveLength(0);
+  });
+});
+
+describe('4.62D.18 presupuesto de salida y diagnóstico de borradores', () => {
+  it('presupuesto 8000 solo en borradores; límites de chat/research/documentos intactos (E.6/E.7)', async () => {
+    const h = harness();
+    const res = await h.call('post', '/api/ai/cases/:caseId/drafts', { draft_type: 'escrito', instruction: 'Preparar contestación centrada en el requerimiento previo de pago de la renta' });
+    expect(res.statusCode).toBe(200);
+    // Solo borradores usan el presupuesto específico…
+    expect(h.providerCalls[0].maxTokens).toBe(8000);
+    // …y el resto de consumidores conserva sus límites originales en el source.
+    expect(DRAFT_LIMITS.MAX_OUTPUT_TOKENS).toBe(4000);
+    expect(src.includes('const AI_CHAT_MAX_TOKENS = Number(process.env.AI_CHAT_MAX_TOKENS) || 2400;')).toBe(true);
+    expect(src.includes('maxTokens: DRAFT_LIMITS.DRAFT_OUTPUT_TOKENS,')).toBe(true);
+    expect(src.includes('maxTokens: DRAFT_LIMITS.MAX_OUTPUT_TOKENS,')).toBe(false);
+    expect(src.includes('maxTokens: 700,')).toBe(true);   // instrucciones cortas (13000)
+    expect(src.includes('maxTokens: 800,')).toBe(true);   // instrucciones cortas (13070)
+    expect(src.includes('maxTokens: 30,')).toBe(true);    // titulares (13211)
+    const providerSrc = readFileSync(new URL('./provider.mjs', import.meta.url), 'utf8');
+    expect(providerSrc.includes('maxTokens = 4000')).toBe(true); // análisis/research default intacto
+  });
+
+  it('JSON inválido sin truncamiento → 502 INVALID_RESPONSE + diagnóstico desinfectado (E.3/E.9/E.10)', async () => {
+    const h = harness();
+    h.provider.mockImplementationOnce(async () => ({
+      data: null, raw: 'texto plano del modelo sin JSON, jamás registrado',
+      finishReason: null,
+      usage: { actual_model: 'openai/gpt-oss-20b', provider_request_id: 'chatcmpl-77', input_tokens: 31000, output_tokens: 1500, usage_details: { reasoning_tokens: 1200 } },
+    }));
+    const res = await h.call('post', '/api/ai/cases/:caseId/drafts', { draft_type: 'carta', instruction: 'Carta formal sobre el pago de la renta adeudada' });
+    expect(res.statusCode).toBe(502);
+    expect(res.body.code).toBe('AI_PROVIDER_INVALID_RESPONSE');
+    expect(h.provider).toHaveBeenCalledTimes(1); // sin reintentos a nivel ruta
+    expect(h.rows.ai_case_drafts).toHaveLength(0);
+    const finishes = h.rpc.mock.calls.filter(([n]) => n === 'ai_finish_operation').map(([, a]) => a);
+    expect(finishes).toHaveLength(1);
+    expect(finishes[0].p_status).toBe(502); // metering: operación fallida, cuota intacta (quota_units=0 en DB)
+    const typed = h.logs.find((entry) => entry[1] === '[LegalUpAI] draft_invalid_model_response');
+    expect(typed).toBeTruthy();
+    const payload = JSON.parse(typed[2]);
+    expect(payload).toEqual({
+      code: 'AI_PROVIDER_INVALID_RESPONSE',
+      parsed_data: false,
+      finish_reason: null,
+      actual_model: 'openai/gpt-oss-20b',
+      provider_request_id: 'chatcmpl-77',
+      input_tokens: 31000,
+      output_tokens: 1500,
+      reasoning_tokens: 1200,
+    });
+    // Sin contenido del modelo ni de la instrucción en los logs (E.10).
+    const allLogs = JSON.stringify(h.logs);
+    expect(allLogs).not.toContain('texto plano del modelo');
+    expect(allLogs).not.toContain('renta adeudada');
+    expect(allLogs).not.toContain('authorization');
+    expect(allLogs).not.toContain('test-key');
+  });
+
+  it('JSON válido pero incompatible con AIDraftResponseSchema → 502 + diagnóstico (E.4)', async () => {
+    const h = harness();
+    h.provider.mockImplementationOnce(async () => ({
+      data: { title: 'T', content: 'C', sources: 'no-es-array', missing_info: 'tampoco', warnings: [] },
+      finishReason: 'stop',
+      usage: { actual_model: 'openai/gpt-oss-20b', provider_request_id: 'chatcmpl-88', input_tokens: 32000, output_tokens: 2000, usage_details: { reasoning_tokens: 1500 } },
+    }));
+    const res = await h.call('post', '/api/ai/cases/:caseId/drafts', { draft_type: 'carta', instruction: 'Carta formal sobre el pago de la renta adeudada' });
+    expect(res.statusCode).toBe(502);
+    expect(res.body.code).toBe('AI_PROVIDER_INVALID_RESPONSE');
+    expect(h.rows.ai_case_drafts).toHaveLength(0);
+    const typed = h.logs.find((entry) => entry[1] === '[LegalUpAI] draft_invalid_model_response');
+    const payload = JSON.parse(typed[2]);
+    expect(payload.parsed_data).toBe(true);
+    expect(payload.finish_reason).toBe('stop');
+    expect(payload.provider_request_id).toBe('chatcmpl-88');
+    // `content` del modelo nunca está en los logs: solo métricas tipadas.
+    expect(typed.join(' ')).not.toContain('no-es-array');
+  });
+
+  it('OUTPUT_TOKEN_LIMIT (truncado) → 507 PROVIDER_ERROR + línea estructurada con diag, sin cobro (E.1/E.9)', async () => {
+    const h = harness();
+    h.provider.mockRejectedValueOnce(Object.assign(new Error('La respuesta superó el presupuesto de tokens del proveedor. Intenta de nuevo con una pregunta más acotada.'), {
+      status: 507, code: 'OUTPUT_TOKEN_LIMIT', retriable: false, latencyMs: 47123,
+      diag: { finish_reason: 'length', actual_model: 'openai/gpt-oss-20b', provider_request_id: 'chatcmpl-462d18', input_tokens: 39000, output_tokens: 8000, reasoning_tokens: 7600 },
+    }));
+    const res = await h.call('post', '/api/ai/cases/:caseId/drafts', { draft_type: 'escrito', instruction: 'Preparar contestación centrada en el requerimiento previo de pago de la renta' });
+    expect(res.statusCode).toBe(507);
+    expect(res.body.code).toBe('PROVIDER_ERROR'); // no-AI_* prefix ⇒ re-etiquetado, contrato 4.62D.17
+    expect(h.rows.ai_case_drafts).toHaveLength(0);
+    expect(h.provider).toHaveBeenCalledTimes(1);
+    const finishes = h.rpc.mock.calls.filter(([n]) => n === 'ai_finish_operation').map(([, a]) => a);
+    expect(finishes[0].p_status).toBe(507);
+    const typed = h.logs.find((entry) => entry[1] === '[LegalUpAI] draft_generation_failed_typed');
+    expect(typed).toBeTruthy();
+    const payload = JSON.parse(typed[2]);
+    expect(payload).toEqual({
+      code: 'PROVIDER_ERROR',
+      status: 507,
+      retriable: false,
+      latency_ms: 47123,
+      finish_reason: 'length',
+      actual_model: 'openai/gpt-oss-20b',
+      provider_request_id: 'chatcmpl-462d18',
+      input_tokens: 39000,
+      output_tokens: 8000,
+      reasoning_tokens: 7600,
+    });
+  });
+
+  it('respuesta válida completa sigue el mismo camino de sucesso con metering (E.5, protección de regresión)', async () => {
+    const h = harness();
+    const res = await h.call('post', '/api/ai/cases/:caseId/drafts', { draft_type: 'escrito', instruction: 'Preparar contestación centrada en el requerimiento previo de pago' });
+    expect(res.statusCode).toBe(200);
+    expect(h.rows.ai_case_draft_versions.map((v) => [v.version_no, v.origin])).toEqual([[1, 'generation']]);
+    // Sin líneas de diagnóstico en el camino de éxito (sin duplicar eventos).
+    expect(h.logs.some(([, tag]) => String(tag) === '[LegalUpAI] draft_invalid_model_response')).toBe(false);
+    expect(h.logs.some(([, tag]) => String(tag) === '[LegalUpAI] draft_generation_failed_typed')).toBe(false);
+  });
+});
+
+describe('4.62D.21 logging sanitizado del catch de borradores', () => {
+  it('detail/diag/message/stack con sentinels NO llegan a stdout; campos tipados sí; HTTP y metering intactos', async () => {
+    const h = harness();
+    const error = Object.assign(new Error('RAW_MSG_SENTINEL_txt'), {
+      status: 507, code: 'OUTPUT_TOKEN_LIMIT', retriable: false, latencyMs: 47123,
+      detail: 'PROVIDER_BODY_SENTINEL_' + '{"error":{"user_id":"acct_secret"}}'.slice(0, 60),
+      diag: { finish_reason: 'length', actual_model: 'openai/gpt-oss-20b', provider_request_id: 'chatcmpl-462d21', input_tokens: 39000, output_tokens: 8000, reasoning_tokens: 7600 },
+      stack: 'STACK_SENTINEL_server.mjs:1:1',
+    });
+    h.provider.mockRejectedValueOnce(error);
+    const res = await h.call('post', '/api/ai/cases/:caseId/drafts', { draft_type: 'escrito', instruction: 'Preparar contestación centrada en el requerimiento previo de pago' });
+    expect(res.statusCode).toBe(507);
+    expect(res.body.code).toBe('PROVIDER_ERROR');
+    expect(h.rows.ai_case_drafts).toHaveLength(0);
+    const finishes = h.rpc.mock.calls.filter(([n]) => n === 'ai_finish_operation').map(([, a]) => a);
+    expect(finishes[0].p_status).toBe(507);
+    // 1) Ninguna línea logueada contiene los tres marcadores arbitrarios.
+    const allLogs = JSON.stringify(h.logs);
+    expect(allLogs).not.toContain('PROVIDER_BODY_SENTINEL');
+    expect(allLogs).not.toContain('RAW_MSG_SENTINEL');
+    expect(allLogs).not.toContain('STACK_SENTINEL');
+    // (diag sí es metadata sanitizada; su request id puede aparecer, no es arbitrario)
+    // 2) El catch acotado conserva los campos tipados permitidos.
+    const scoped = h.logs.find((entry) => entry[1] === '[LegalUpAI] draft error');
+    expect(scoped).toBeTruthy();
+    const scopedPayload = JSON.parse(scoped[2]);
+    expect(scopedPayload).toEqual({ code: 'OUTPUT_TOKEN_LIMIT', status: 507, retriable: false });
+    // 3) La línea estructurada ya lleva el diagnóstico operacional suficiente.
+    const typed = h.logs.find((entry) => entry[1] === '[LegalUpAI] draft_generation_failed_typed');
+    const payload = JSON.parse(typed[2]);
+    expect(payload).toEqual({
+      code: 'PROVIDER_ERROR', status: 507, retriable: false, latency_ms: 47123,
+      finish_reason: 'length', actual_model: 'openai/gpt-oss-20b',
+      provider_request_id: 'chatcmpl-462d21', input_tokens: 39000,
+      output_tokens: 8000, reasoning_tokens: 7600,
+    });
+  });
+  it('error imprevisto sin propiedades tipadas → null explícito, respuesta 500 igual al comportamiento previo', async () => {
+    const h = harness();
+    h.provider.mockRejectedValueOnce('algo raro no-Error');
+    const res = await h.call('post', '/api/ai/cases/:caseId/drafts', { draft_type: 'carta', instruction: 'Carta formal sobre el pago de la renta adeudada' });
+    expect(res.statusCode).toBe(500);
+    expect(res.body.code).toBe('PROVIDER_ERROR');
+    const scoped = h.logs.find((entry) => entry[1] === '[LegalUpAI] draft error');
+    expect(JSON.parse(scoped[2])).toEqual({ code: null, status: null, retriable: null });
   });
 });
 

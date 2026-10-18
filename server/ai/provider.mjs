@@ -153,6 +153,24 @@ const MAX_LLM_CALLS_PER_REQUEST = 6; // presupuesto global de llamadas por reque
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
+ * Fase 4.62D.18 — diagnóstico de fallo desinfectado, para logging/metering.
+ * Solo metadatos acotados: SIN prompts, SIN documentos, SIN contenido del
+ * modelo, SIN header secrets. Campos por la instrumental D de 4.62D.18:
+ * finish_reason, modelo efectivo, provider_request_id y tokens (in/out/
+ * reasoning) cuando el proveedor los provee.
+ */
+function providerDiagnostics(finishReason, usage) {
+  return finishReason == null && !usage ? undefined : {
+    finish_reason: finishReason ?? null,
+    actual_model: usage?.actual_model ?? null,
+    provider_request_id: usage?.provider_request_id ?? null,
+    input_tokens: usage?.input_tokens ?? null,
+    output_tokens: usage?.output_tokens ?? null,
+    reasoning_tokens: usage?.usage_details?.reasoning_tokens ?? null,
+  };
+}
+
+/**
  * Delay de reintento: respeta el header Retry-After del proveedor (con tope) o
  * usa backoff lineal por intento. Puro y testeable.
  * @param {{ attempt: number, retryAfterSeconds?: number|null,
@@ -248,6 +266,8 @@ export async function chatCompletion({ model, system, user, messages, maxTokens 
       provider, model, budget: Buffer.byteLength(JSON.stringify(chatMessages), 'utf8') + maxTokens + 1024,
     }) : null;
     let attemptUsage = providerUsage(null, model, provider);
+    // Fase 4.62D.18 — finish_reason del intento (para diagnóstico y metering)
+    let finishReason = null;
     let attemptError = null;
     try {
     const body = withJsonMode ? payload : { ...payload, response_format: undefined };
@@ -301,12 +321,20 @@ export async function chatCompletion({ model, system, user, messages, maxTokens 
       try { attemptUsage = providerUsage(JSON.parse(text), model, provider); } catch { /* metadata unavailable */ }
       attemptUsage.provider_request_id ||= response.headers?.get?.('x-request-id') || null;
       const retryAfter = response.headers?.get?.('retry-after') ?? null;
-      throw classifyProviderError(response.status, text, retryAfter);
+      const error = classifyProviderError(response.status, text, retryAfter);
+      // Fase 4.62D.18 — diagnóstico seguro de intención de fallo provider-side
+      // (sin cuerpo crudo del proveedor, solo metadatos acotados).
+      try { error.diag = providerDiagnostics(finishReason, attemptUsage); } catch { /* opcional */ }
+      throw error;
     }
 
     const data = await response.json();
     attemptUsage = providerUsage(data, model, provider);
     attemptUsage.provider_request_id ||= response.headers?.get?.('x-request-id') || null;
+    const choice = data?.choices?.[0] || {};
+    const message = choice.message || {};
+    const content = message.content;
+    finishReason = typeof choice.finish_reason === 'string' ? choice.finish_reason : null;
     if (data?.error) {
       const isJsonValidateFailed = data.error.code === 'json_validate_failed';
       const status = isJsonValidateFailed ? 400 : response.status;
@@ -317,24 +345,30 @@ export async function chatCompletion({ model, system, user, messages, maxTokens 
       error.code = isJsonValidateFailed ? 'AI_PROVIDER_JSON_VALIDATE_FAILED' : 'AI_PROVIDER_ERROR';
       error.retriable = isJsonValidateFailed;
       error.detail = String(data.error.message || JSON.stringify(data.error)).slice(0, 300);
+      try { error.diag = providerDiagnostics(finishReason, attemptUsage); } catch { /* opcional */ }
       throw error;
     }
-    const content = data?.choices?.[0]?.message?.content;
+    // Fase 4.62D.18 — truncamiento por presupuesto de tokens. finish_reason
+    // 'length' significa salida TRUNCADA: content vacío o (nuevo) UN JSON
+    // PARCIAL que podría "parsear" aparentemente válido por el extractJson.
+    // No se repara, no se acepta como respuesta y NO es reintentable (reintentar
+    // con el mismo presupuesto reproduciría el error, 4.62D.17). El caso
+    // content vacío + razonamiento (sin finish_reason explícito) se mantiene.
+    if (finishReason === 'length' || (!content && message.reasoning)) {
+      const err = new Error(
+        'La respuesta superó el presupuesto de tokens del proveedor. Intenta de nuevo con una pregunta más acotada.'
+      );
+      err.status = 507;
+      err.code = 'OUTPUT_TOKEN_LIMIT';
+      err.retriable = false;
+      err.detail =
+        finishReason === 'length'
+          ? 'provider output truncated (finish_reason=length)'
+          : 'provider output consumed by reasoning (content empty)'; // solo logging interno.
+      try { err.diag = providerDiagnostics(finishReason, attemptUsage); } catch { /* opcional */ }
+      throw err;
+    }
     if (!content) {
-      // Con modelos de razonamiento (p. ej. gpt-oss), un presupuesto de tokens
-      // insuficiente agota el `max_tokens` en el campo `reasoning` y deja el
-      // `content` vacío. Distinguimos el caso para dar un mensaje accionable.
-      const finish = data?.choices?.[0]?.finish_reason;
-      const reasoning = data?.choices?.[0]?.message?.reasoning;
-      if (finish === 'length' || (!content && reasoning)) {
-        const err = new Error(
-          'La respuesta superó el presupuesto de tokens del proveedor. Intenta de nuevo con una pregunta más acotada.'
-        );
-        err.status = 507;
-        err.code = 'OUTPUT_TOKEN_LIMIT';
-        err.retriable = false;
-        throw err;
-      }
       // Fase 4.2.10: respuesta HTTP 200 sin contenido (choices vacío o content
       // null/vacío) es un fallo TIPADO del proveedor, con retry controlado y
       // NUNCA se convierte en NO_EVIDENCE.
@@ -344,6 +378,7 @@ export async function chatCompletion({ model, system, user, messages, maxTokens 
       err.status = 502;
       err.code = 'AI_PROVIDER_EMPTY_RESPONSE';
       err.retriable = true;
+      try { err.diag = providerDiagnostics(finishReason, attemptUsage); } catch { /* opcional */ }
       throw err;
     }
 
@@ -358,6 +393,9 @@ export async function chatCompletion({ model, system, user, messages, maxTokens 
       data: parsed,
       raw: content,
       usage: attemptUsage,
+      // Fase 4.62D.18 — metadato de truncamiento para diagnóstico en rutas
+      // que reciben contenido sin JSON (no expone contenido del proveedor).
+      finishReason,
     };
     } catch (error) {
       attemptError = error;
@@ -371,7 +409,12 @@ export async function chatCompletion({ model, system, user, messages, maxTokens 
         total_tokens: attemptUsage.total_tokens,
         provider_cost_actual: attemptUsage.provider_cost_actual,
         provider_cost_estimated: attemptUsage.estimated_cost_usd,
-        usage_details: attemptUsage.usage_details,
+        usage_details: {
+          ...attemptUsage.usage_details,
+          // Fase 4.62D.18 — finish_reason persiste en el intento vía
+          // los usage_details del metering (jsonb, sin migración ni tabla nueva).
+          finish_reason: finishReason ?? null,
+        },
         latency_ms: Date.now() - attemptStartedAt,
         status: attemptError ? 'failed' : 'succeeded',
         error_code: attemptError?.code || (attemptError ? 'AI_PROVIDER_ERROR' : null),
