@@ -801,3 +801,129 @@ describe('FASE 4.62D.11 cambio de borrador: la base OCC es la del borrador abier
     }, { timeout: 3000, interval: 50 });
   }, 20000);
 });
+
+// FASE 4.62D.30 — Guardar y abrir: el destino solo se abre cuando el guardado
+// pendiente terminó en 'saved'. Fallos (500/red) y conflictos 409 mantienen al
+// usuario en el borrador de origen con su texto; «Descartar cambios y abrir»
+// sigue siendo la vía forzada explícita.
+describe('FASE 4.62D.30 guardar y abrir no abandona el borrador con guardado fallido', () => {
+  const A_ID = 'dA';
+  const B_ID = 'dB';
+  const TITLE_A = 'Contestación origen';
+  const TITLE_B = 'Carta destino';
+  const draftA = makeDraft({ id: A_ID, title: TITLE_A, revision: 3, content: '# TextoA\n\nPárrafo de A.' });
+  const draftB = makeDraft({ id: B_ID, title: TITLE_B, revision: 1, content: '# TextoB\n\nPárrafo de B.' });
+  const LOCAL_TEXT = 'trabajo local pendiente de confirmar';
+
+  beforeEach(() => {
+    const byId: Record<string, unknown> = { [A_ID]: draftA, [B_ID]: draftB };
+    fetchMock = vi.fn(async (url: string, opts?: RequestInit) => {
+      const urlStr = String(url);
+      if (urlStr.includes('/api/ai/usage')) {
+        return { ok: true, json: async () => ({ allowance: usageAllowance }) } as Response;
+      }
+      if (opts?.method === 'PUT') {
+        if (putFailure) {
+          const fail = putFailure;
+          return { ok: false, status: fail.status, json: async () => fail.body } as unknown as Response;
+        }
+        const body = JSON.parse(String(opts?.body ?? '{}')) as { content?: string; base_revision?: number };
+        return { ok: true, json: async () => ({ draft: makeDraft({ content: body.content ?? '', content_format: 'html', revision: (body.base_revision ?? 1) + 1 }) }) } as Response;
+      }
+      if (/\/drafts\/[^/]+$/.test(urlStr)) {
+        const m = urlStr.match(/\/drafts\/([^/?]+)$/) as RegExpMatchArray;
+        return { ok: true, json: async () => ({ draft: byId[m[1]] ?? draftA }) } as Response;
+      }
+      return { ok: true, json: async () => ({ drafts: [draftA, draftB] }) } as Response;
+    });
+    (globalThis as unknown as { fetch: typeof fetch }).fetch = fetchMock as unknown as typeof fetch;
+  });
+
+  const abrirConPendiente = async () => {
+    renderDrafts();
+    fireEvent.click(await screen.findByText(TITLE_A));
+    await screen.findByText(/Párrafo de A\./);
+    const ed = mainEditor()!;
+    act(() => { ed.commands.setContent(`<p>${LOCAL_TEXT}</p>`, { emitUpdate: true }); });
+    fireEvent.click((await screen.findAllByText(TITLE_B))[0]);
+    await screen.findByText('Guardar y abrir');
+    return ed;
+  };
+
+  const destinoNoAbierto = () => {
+    // GET del borrador destino jamás ocurrió ni ocurrirá tras la resolución.
+    expect(fetchMock.mock.calls.some((c) => String(c[0]).endsWith(`/drafts/${B_ID}`))).toBe(false);
+    expect(mainEditor()!.getHTML()).toContain(LOCAL_TEXT);
+    expect(mainEditor()!.getHTML()).not.toContain('Párrafo de B.');
+  };
+
+  it('1. guardado correcto: el borrador de destino se abre', async () => {
+    const ed = await abrirConPendiente();
+    fireEvent.click(screen.getByText('Guardar y abrir'));
+    // PUT de flush con el contenido local y origin edit.
+    await waitFor(() => {
+      const flush = putCalls().find((c) => putBody(c).origin === 'edit');
+      expect(flush).toBeTruthy();
+      expect(String(putBody(flush!).content)).toContain(LOCAL_TEXT);
+    }, { timeout: 3000, interval: 50 });
+    await screen.findByText(/Párrafo de B\./);
+    expect(mainEditor()!.getHTML()).toContain('Párrafo de B.');
+    expect(mainEditor()!.getHTML()).not.toContain(LOCAL_TEXT);
+    expect(ed).toBeTruthy();
+  }, 20000);
+
+  it('2. guardado con estado de error (500): el destino no se abre y el texto se conserva', async () => {
+    putFailure = { status: 500, body: { error: 'boom' } };
+    const ed = await abrirConPendiente();
+    fireEvent.click(screen.getByText('Guardar y abrir'));
+    await waitFor(() => expect(putCalls().length).toBeGreaterThan(0), { timeout: 3000, interval: 50 });
+    await screen.findByText('No se pudo guardar: los cambios siguen en el editor.');
+    expect(screen.getByTestId('save-status').textContent).toContain('Error al guardar');
+    destinoNoAbierto();
+    expect(screen.getByText(/Tienes cambios sin guardar/)).toBeTruthy();
+    expect(screen.getByText('Guardar y abrir')).toBeTruthy();
+    expect(ed).toBeTruthy();
+    putFailure = null;
+  }, 20000);
+
+  it('3. conflicto 409: se conserva el flujo de recuperación y no se abandona el borrador', async () => {
+    putFailure = { status: 409, body: { error: 'conflicto', code: 'AI_DRAFT_REVISION_CONFLICT', current_revision: 8 } };
+    const ed = await abrirConPendiente();
+    fireEvent.click(screen.getByText('Guardar y abrir'));
+    await waitFor(() => expect(putCalls().length).toBeGreaterThan(0), { timeout: 3000, interval: 50 });
+    // El panel de conflicto manda: 3 salidas presentes, usuario en el origen.
+    expect(await screen.findByText('El documento cambió en otro dispositivo o pestaña.')).toBeTruthy();
+    expect(screen.getByText('Copiar mis cambios')).toBeTruthy();
+    expect(screen.getByText('Descartar y recargar')).toBeTruthy();
+    expect(screen.getByText('Forzar mi versión')).toBeTruthy();
+    destinoNoAbierto();
+    expect(screen.getByText(/Tienes cambios sin guardar/)).toBeTruthy();
+    putFailure = null;
+  }, 20000);
+
+  it('4. fallo de red (promesa PUT rechazada): el destino no se abre y el contenido sigue recuperable', async () => {
+    // El mock de fetch rechaza: requestJson propaga el rechazo; runSave lo
+    // traduce a 'error' y nunca deja escapar la promesa sin abrir el destino.
+    const originalFetch = fetchMock;
+    fetchMock = vi.fn(async (url: string, opts?: RequestInit) => {
+      if (opts?.method === 'PUT') throw new TypeError('network down');
+      return originalFetch(url, opts);
+    });
+    (globalThis as unknown as { fetch: typeof fetch }).fetch = fetchMock as unknown as typeof fetch;
+    const ed = await abrirConPendiente();
+    fireEvent.click(screen.getByText('Guardar y abrir'));
+    await screen.findByText('No se pudo guardar: los cambios siguen en el editor.');
+    expect(screen.getByTestId('save-status').textContent).toContain('Error al guardar');
+    destinoNoAbierto();
+    expect(screen.getByText(/Tienes cambios sin guardar/)).toBeTruthy();
+    expect(ed).toBeTruthy();
+  }, 20000);
+
+  it('5. descartar explícitamente: sigue permitiendo cambiar de borrador sin guardar', async () => {
+    await abrirConPendiente();
+    fireEvent.click(screen.getByText('Descartar cambios y abrir'));
+    await screen.findByText(/Párrafo de B\./);
+    expect(mainEditor()!.getHTML()).toContain('Párrafo de B.');
+    expect(mainEditor()!.getHTML()).not.toContain(LOCAL_TEXT);
+  }, 20000);
+});

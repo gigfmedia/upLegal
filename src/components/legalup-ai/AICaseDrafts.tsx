@@ -854,6 +854,14 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                             if (debounceRef.current) { clearTimeout(debounceRef.current); debounceRef.current = null; }
                             setStatus('saving');
                             void runSave({ origin: 'edit' }).then(() => {
+                              // FASE 4.62D.30: runSave nunca rechaza (su catch
+                              // interno traduce fallos a status 'error'|'conflict'),
+                              // así que la apertura del destino exige 'saved'.
+                              // Errores y conflictos 409 mantienen al usuario en
+                              // el borrador de origen con su texto y el panel de
+                              // recuperación; el switch forzado solo existe en
+                              // «Descartar cambios y abrir».
+                              if (statusRef.current !== 'saved') return;
                               setPendingSwitch(null);
                               void openDraftById(target.targetId, { force: true });
                             });
