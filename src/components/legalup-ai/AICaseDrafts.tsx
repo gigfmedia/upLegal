@@ -260,7 +260,12 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   const setEditorFromDraft = useCallback((draft: CaseDraft) => {
     const html = draftContentToEditorHtml(draft);
     lastSavedHtmlRef.current = html;
-    openRevisionRef.current = Math.max(openRevisionRef.current, Number(draft.revision) || 1);
+    // FASE 4.62D.11: la base OCC es SIEMPRE la del borrador que se abre. El GET
+    // de apertura ya trajo la revisión fresca; asignación directa evita heredar
+    // la revisión del borrador anterior (Math.max acumulativo causó 409 real
+    // A(rev alta)→B(rev 1)). Las respuestas tardías del borrador previo quedan
+    // aisladas por los guards de openIdRef en runSave/restoreVersion.
+    openRevisionRef.current = Number(draft.revision) || 1;
     const editor = editorRef.current;
     if (editor && !editor.isDestroyed) {
       editor.commands.setContent(html, { emitUpdate: false });
@@ -582,8 +587,12 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
         { method: 'POST' }
       );
       const restored = body?.draft;
+      // FASE 4.62D.11 — identidad: si el usuario cambió de borrador mientras el
+      // POST restauraba (el switch no queda bloqueado por 'saving'), esta
+      // respuesta tardía no puede reabrir el borrador A ni pisar el contenido,
+      // la revisión ni el estado del borrador B ahora abierto.
+      if (openIdRef.current !== openId) return;
       if (restored) {
-        openIdRef.current = openId;
         openRevisionRef.current = Math.max(openRevisionRef.current, Number(restored.revision) || openRevisionRef.current + 1);
         setOpenDraft(restored);
         setEditorFromDraft(restored);

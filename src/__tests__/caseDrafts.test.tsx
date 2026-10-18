@@ -620,3 +620,184 @@ describe('FASE 4.62D.6 serialización de escrituras OCC', () => {
     expect(putBody(putCalls()[2]).base_revision).toBe(2);
   }, 20000);
 });
+
+describe('FASE 4.62D.11 cambio de borrador: la base OCC es la del borrador abierto', () => {
+  const A_ID = 'dA';
+  const B_ID = 'dB';
+  const TITLE_A = 'Contestación revisión alta';
+  const TITLE_B = 'Carta revisión baja';
+  const draftA = makeDraft({ id: A_ID, title: TITLE_A, revision: 10, content: '# TextoA\n\nPárrafo alto de A.' });
+  const draftB = makeDraft({ id: B_ID, title: TITLE_B, revision: 1, content: '# TextoB\n\nPárrafo bajo de B.' });
+
+  let restoreHoldGate: Promise<void> | null = null;
+  let restoredDraft = draftA;
+
+  beforeEach(() => {
+    restoreHoldGate = null;
+    restoredDraft = makeDraft({ id: A_ID, title: TITLE_A, revision: 11, content: '# TextoA\n\nPárrafo alto de A.' });
+    const byId: Record<string, unknown> = { [A_ID]: draftA, [B_ID]: draftB };
+    fetchMock = vi.fn(async (url: string, opts?: RequestInit) => {
+      const urlStr = String(url);
+      if (urlStr.includes('/api/ai/usage')) {
+        return { ok: true, json: async () => ({ allowance: usageAllowance }) } as Response;
+      }
+      if (opts?.method === 'POST' && urlStr.includes('/restore')) {
+        if (restoreHoldGate) await restoreHoldGate;
+        return { ok: true, json: async () => ({ draft: restoredDraft, version: { version_no: 11, origin: 'restore', restored_from: 1 } }) } as Response;
+      }
+      if (opts?.method === 'PUT') {
+        if (holdPutGate) {
+          const gate = holdPutGate;
+          holdPutGate = null;
+          await gate;
+        }
+        if (putFailure) {
+          const fail = putFailure;
+          return { ok: false, status: fail.status, json: async () => fail.body } as unknown as Response;
+        }
+        const body = JSON.parse(String(opts?.body ?? '{}')) as { content?: string; base_revision?: number };
+        const legitRevision = (body.base_revision ?? 1) + 1;
+        const revision = putStaleRevisions.length > 0 ? (putStaleRevisions.shift() as number) : legitRevision;
+        return {
+          ok: true,
+          json: async () => ({ draft: makeDraft({ content: body.content ?? '', content_format: 'html', revision }) }),
+        } as Response;
+      }
+      if (/\/drafts\/[^/]+\/versions\/\d+$/.test(urlStr)) {
+        return { ok: true, json: async () => ({ version: versionDetail }) } as Response;
+      }
+      if (/\/drafts\/[^/]+\/versions$/.test(urlStr)) {
+        return { ok: true, json: async () => ({ versions: versionsPayload }) } as Response;
+      }
+      if (/\/drafts\/[^/]+$/.test(urlStr)) {
+        const m = urlStr.match(/\/drafts\/([^/?]+)$/) as RegExpMatchArray;
+        return { ok: true, json: async () => ({ draft: byId[m[1]] ?? draftA }) } as Response;
+      }
+      return { ok: true, json: async () => ({ drafts: [draftA, draftB] }) } as Response;
+    });
+    (globalThis as unknown as { fetch: typeof fetch }).fetch = fetchMock as unknown as typeof fetch;
+  });
+
+  const loadVersionsOne = () => {
+    versionsPayload = [
+      { version_no: 1, origin: 'generation', content_format: 'markdown', model: 'm', title: 'v1', created_at: '2026-10-01T10:00:00Z' },
+    ];
+    versionDetail = {
+      version_no: 1, origin: 'generation', content_format: 'markdown', model: 'm', title: 'v1',
+      created_at: '2026-10-01T10:00:00Z', content: 'Texto de la versión previa.',
+    };
+  };
+
+  it('CASO A10→B1: abrir A(rev 10) y luego B(rev 1); el primer PUT de B usa base_revision=1, nunca 10', async () => {
+    renderDrafts();
+    fireEvent.click(await screen.findByText(TITLE_A));
+    await screen.findByText(/Párrafo alto de A\./);
+    // Cambio a B con A en estado tranquilo (sin dirty): switch directo.
+    fireEvent.click((await screen.findAllByText(TITLE_B))[0]);
+    await screen.findByText(/Párrafo bajo de B\./);
+    const ed = mainEditor()!;
+    expect(ed.getHTML()).toContain('Párrafo bajo de B.');
+    expect(ed.getHTML()).not.toContain('Párrafo alto de A.');
+    act(() => { ed.commands.setContent('<p>edición de B</p>', { emitUpdate: true }); });
+    await waitFor(() => expect(putCalls()).toHaveLength(1), { timeout: 3000, interval: 50 });
+    const first = putCalls()[0];
+    expect(first[0]).toContain(`/api/ai/cases/w1/drafts/${B_ID}`);
+    expect(putBody(first).base_revision).toBe(1);
+    // El guardado de B no reutiliza contenido de A.
+    expect(String(putBody(first).content)).toContain('edición de B');
+    expect(String(putBody(first).content)).not.toContain('Párrafo alto de A.');
+    // Síntoma del bug histórico: ninguna petición con base_revision=10.
+    expect(putCalls().some((c) => putBody(c).base_revision === 10)).toBe(false);
+  }, 20000);
+
+  it('CASO B1→A10: abrir B(rev 1) y luego A(rev 10); el primer PUT de A usa base_revision=10', async () => {
+    renderDrafts();
+    fireEvent.click(await screen.findByText(TITLE_B));
+    await screen.findByText(/Párrafo bajo de B\./);
+    fireEvent.click((await screen.findAllByText(TITLE_A))[0]);
+    await screen.findByText(/Párrafo alto de A\./);
+    const ed = mainEditor()!;
+    act(() => { ed.commands.setContent('<p>edición de A</p>', { emitUpdate: true }); });
+    await waitFor(() => expect(putCalls()).toHaveLength(1), { timeout: 3000, interval: 50 });
+    const first = putCalls()[0];
+    expect(first[0]).toContain(`/api/ai/cases/w1/drafts/${A_ID}`);
+    expect(putBody(first).base_revision).toBe(10);
+    expect(putCalls().some((c) => putBody(c).base_revision === 1)).toBe(false);
+  }, 20000);
+
+  it('respuesta tardía del PUT de A no contamina B: sin PUT extra, sin estado falsos y base de B intacta', async () => {
+    let releaseHold = () => {};
+    renderDrafts();
+    fireEvent.click(await screen.findByText(TITLE_A));
+    await screen.findByText(/Párrafo alto de A\./);
+    const ed = mainEditor()!;
+    holdPutGate = new Promise<void>((resolve) => { releaseHold = resolve; });
+    act(() => { ed.commands.setContent('<p>edición de A en vuelo</p>', { emitUpdate: true }); });
+    await waitFor(() => expect(putCalls()).toHaveLength(1), { timeout: 3000, interval: 50 });
+    expect(putBody(putCalls()[0]).base_revision).toBe(10);
+    // Cambio a B mientras el PUT de A sigue retenido ('saving' no bloquea el switch).
+    fireEvent.click((await screen.findAllByText(TITLE_B))[0]);
+    await screen.findByText(/Párrafo bajo de B\./);
+    releaseHold();
+    await new Promise((r) => setTimeout(r, 1200));
+    // La respuesta tardía de A (rev 11) resultó ignorada: sin trailing save ni PUT por B.
+    expect(putCalls()).toHaveLength(1);
+    expect(screen.getByTestId('save-status').textContent).toBe('');
+    // La base OCC de B sigue siendo su propia revisión (1), no la de la respuesta tardía.
+    act(() => { ed.commands.setContent('<p>edición de B tardía</p>', { emitUpdate: true }); });
+    await waitFor(() => expect(putCalls()).toHaveLength(2), { timeout: 3000, interval: 50 });
+    const bPut = putCalls().find((c) => String(c[0]).includes(`/drafts/${B_ID}`))!;
+    expect(putBody(bPut).base_revision).toBe(1);
+    expect(String(putBody(bPut).content)).toContain('edición de B tardía');
+  }, 20000);
+
+  it('respuesta tardía del POST restore de A no reabre A ni pisa el contenido de B', async () => {
+    loadVersionsOne();
+    let releaseRestore = () => {};
+    renderDrafts();
+    fireEvent.click(await screen.findByText(TITLE_A));
+    await screen.findByText(/Párrafo alto de A\./);
+    // Preview de la v1 de A y click en restaurar con el POST retenido.
+    fireEvent.click((await screen.findAllByText(/v1 · generación IA/))[0]);
+    const restoreBtn = await screen.findByText('Restaurar esta versión');
+    restoreHoldGate = new Promise<void>((resolve) => { releaseRestore = resolve; });
+    fireEvent.click(restoreBtn);
+    await waitFor(() => {
+      expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/versions/1/restore') && (c[1] as RequestInit).method === 'POST')).toBe(true);
+    }, { timeout: 3000, interval: 50 });
+    // Cambio a B mientras el restore de A está en vuelo (permitido: no hay dirty).
+    fireEvent.click((await screen.findAllByText(TITLE_B))[0]);
+    await screen.findByText(/Párrafo bajo de B\./);
+    releaseRestore();
+    await new Promise((r) => setTimeout(r, 1200));
+    // El borrador B sigue abierto e intacto: la respuesta tardía de A no lo pisó.
+    expect(mainEditor()!.getHTML()).toContain('Párrafo bajo de B.');
+    expect(mainEditor()!.getHTML()).not.toContain('Texto de la versión previa.');
+    expect(screen.getByText(/Párrafo bajo de B\./)).toBeTruthy();
+    // La edición posterior de B sigue usando su propia base (1).
+    act(() => { mainEditor()!.commands.setContent('<p>edición de B post restore</p>', { emitUpdate: true }); });
+    await waitFor(() => expect(putCalls()).toHaveLength(1), { timeout: 3000, interval: 50 });
+    expect(putBody(putCalls()[0]).base_revision).toBe(1);
+  }, 20000);
+
+  it('HTTP 409 genuino durante la edición de B tras cambiar de A: panel con las 3 salidas y Forzar envía force', async () => {
+    renderDrafts();
+    fireEvent.click(await screen.findByText(TITLE_A));
+    await screen.findByText(/Párrafo alto de A\./);
+    fireEvent.click((await screen.findAllByText(TITLE_B))[0]);
+    await screen.findByText(/Párrafo bajo de B\./);
+    putFailure = { status: 409, body: { error: 'conflicto', code: 'AI_DRAFT_REVISION_CONFLICT', current_revision: 7 } };
+    act(() => { mainEditor()!.commands.setContent('<p>mi versión local de B</p>', { emitUpdate: true }); });
+    expect(await screen.findByText('El documento cambió en otro dispositivo o pestaña.')).toBeTruthy();
+    expect(screen.getByText('Copiar mis cambios')).toBeTruthy();
+    expect(screen.getByText('Descartar y recargar')).toBeTruthy();
+    expect(screen.getByText('Forzar mi versión')).toBeTruthy();
+    putFailure = null;
+    fireEvent.click(screen.getByText('Forzar mi versión'));
+    await waitFor(() => {
+      const forced = putCalls().find((c) => putBody(c).force === true);
+      expect(forced).toBeTruthy();
+      expect(String(forced![0])).toContain(`/drafts/${B_ID}`);
+    }, { timeout: 3000, interval: 50 });
+  }, 20000);
+});
