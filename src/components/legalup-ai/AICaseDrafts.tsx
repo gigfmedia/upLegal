@@ -245,6 +245,12 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   const statusRef = useRef<SaveStatus>('idle');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restoringRef = useRef(false);
+  // Serialización de escrituras: un PUT activo por borrador, promesa compartida
+  // para unir invocaciones concurrentes y bandera de contenido más fresco que
+  // el PUT activo (se persiste con un trailing save tras el éxito).
+  const saveInFlightRef = useRef(false);
+  const saveInFlightPromiseRef = useRef<Promise<void> | null>(null);
+  const savePendingRef = useRef(false);
 
   const setStatus = useCallback((next: SaveStatus) => {
     statusRef.current = next;
@@ -297,54 +303,105 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
       const id = openIdRef.current;
       const editor = editorRef.current;
       if (!id || !editor || editor.isDestroyed) return;
-      const html = editor.getHTML();
-      if (config.force !== true && html === lastSavedHtmlRef.current) {
+      // Exclusión mutua real: un único PUT por borrador. Invocaciones durante
+      // un guardado activo recuerdan el contenido más fresco y esperan al PUT
+      // en vuelo; al terminar, si hay contenido sin confirmar, se persiste con
+      // la revisión ya actualizada (trailing save). Nunca dos PUT con la misma
+      // base_revision por una carrera intra-pestaña.
+      if (saveInFlightRef.current) {
+        if (editor.getHTML() !== lastSavedHtmlRef.current) savePendingRef.current = true;
+        const inFlight = saveInFlightPromiseRef.current;
+        if (inFlight) {
+          try { await inFlight; } catch { /* el estado ya lo estableció el catch interno */ }
+          if (openIdRef.current !== id) return;
+        }
+        const fresh = editorRef.current;
+        const freshHtml = fresh && !fresh.isDestroyed ? fresh.getHTML() : null;
+        if (freshHtml === null || (!config.force && freshHtml === lastSavedHtmlRef.current)) {
+          // Contenido ya confirmado por el servidor: el estado 'saved' es
+          // real aunque un PUT redundante (edición revertida) siga en vuelo.
+          if (statusRef.current !== 'conflict') setStatus('saved');
+          return;
+        }
+        // Concentra las escrituras cortando el possibly-pending debounce; el
+        // trailing save mantiene el último contenido.
+        if (statusRef.current === 'conflict') return;
+        if (debounceRef.current) { clearTimeout(debounceRef.current); debounceRef.current = null; }
+        // El trailing save del PUT recién terminado pudo re-tomar la exclusión:
+        // esta invocación se une a ESA promesa en vez de apilarse encima.
+        if (saveInFlightRef.current) return runSave(config);
+      }
+      const currentEditor = editorRef.current;
+      if (!currentEditor || currentEditor.isDestroyed) return;
+      const html = currentEditor.getHTML();
+      if (!config.force && html === lastSavedHtmlRef.current) {
         setSaveConflict(null);
+        savePendingRef.current = false;
         if (statusRef.current === 'saving' || statusRef.current === 'dirty') setStatus('saved');
         return;
       }
-      setStatus('saving');
-      try {
-        const body = await requestJson<{ draft?: CaseDraft }>(
-          `${getApiBaseUrl()}/api/ai/cases/${workspaceId}/drafts/${id}`,
-          {
-            method: 'PUT',
-            body: JSON.stringify({
-              content: html,
-              content_format: 'html',
-              origin: config.origin,
-              base_revision: openRevisionRef.current,
-              force: config.force === true,
-            }),
-          }
-        );
-        if (openIdRef.current !== id) return;
-        // Revisión monotónica: una respuesta tardía nunca degrada la base OCC.
-        openRevisionRef.current = Math.max(openRevisionRef.current, Number(body?.draft?.revision) || openRevisionRef.current + 1);
-        lastSavedHtmlRef.current = html;
-        setSaveConflict(null);
-        setStatus('saved');
-        setOpenDraft((prev) => (prev && prev.id === id ? { ...prev, content: html, content_format: 'html', revision: body?.draft?.revision } : prev));
-        void queryClient.invalidateQueries({ queryKey: [...AI_CASE_DRAFTS_QUERY_KEY, workspaceId, id, 'versions'] });
-        void queryClient.invalidateQueries({ queryKey: [...AI_CASE_DRAFTS_QUERY_KEY, workspaceId] });
-      } catch (e) {
-        if (openIdRef.current !== id) return;
-        if (e instanceof DraftApiError && e.code === AI_DRAFT_REVISION_CONFLICT) {
-          // Conflicto trivial: el contenido local YA es la cabeza (carrera de
-          // guardados idénticos). Recarga silenciosa, sin panel de conflicto.
-          if (editorRef.current?.getHTML() === lastSavedHtmlRef.current) {
-            void openDraftById(id, { force: true });
+      saveInFlightRef.current = true;
+      const savePromise = (async () => {
+        setStatus('saving');
+        try {
+          const body = await requestJson<{ draft?: CaseDraft }>(
+            `${getApiBaseUrl()}/api/ai/cases/${workspaceId}/drafts/${id}`,
+            {
+              method: 'PUT',
+              body: JSON.stringify({
+                content: html,
+                content_format: 'html',
+                origin: config.origin,
+                base_revision: openRevisionRef.current,
+                force: config.force === true,
+              }),
+            }
+          );
+          if (openIdRef.current !== id) return;
+          // Revisión monotónica: una respuesta tardía nunca degrada la base OCC.
+          openRevisionRef.current = Math.max(openRevisionRef.current, Number(body?.draft?.revision) || openRevisionRef.current + 1);
+          lastSavedHtmlRef.current = html;
+          setSaveConflict(null);
+          setStatus('saved');
+          setOpenDraft((prev) => (prev && prev.id === id ? { ...prev, content: html, content_format: 'html', revision: body?.draft?.revision } : prev));
+          void queryClient.invalidateQueries({ queryKey: [...AI_CASE_DRAFTS_QUERY_KEY, workspaceId, id, 'versions'] });
+          void queryClient.invalidateQueries({ queryKey: [...AI_CASE_DRAFTS_QUERY_KEY, workspaceId] });
+        } catch (e) {
+          if (openIdRef.current !== id) return;
+          if (e instanceof DraftApiError && e.code === AI_DRAFT_REVISION_CONFLICT) {
+            // Conflicto trivial: el contenido local YA es la cabeza (carrera de
+            // guardados idénticos). Recarga silenciosa, sin panel de conflicto.
+            if (editorRef.current?.getHTML() === lastSavedHtmlRef.current) {
+              void openDraftById(id, { force: true });
+              return;
+            }
+            setSaveConflict({
+              current_revision: e.currentRevision ?? openRevisionRef.current,
+              message: 'El documento cambió en otro dispositivo o pestaña.',
+            });
+            setStatus('conflict');
             return;
           }
-          setSaveConflict({
-            current_revision: e.currentRevision ?? openRevisionRef.current,
-            message: 'El documento cambió en otro dispositivo o pestaña.',
-          });
-          setStatus('conflict');
-          return;
+          setStatus('error');
+        } finally {
+          // Liberación garantizada en éxito, fallo y conflicto: nunca queda un
+          // guardado bloqueado por una petición anterior.
+          saveInFlightRef.current = false;
+          saveInFlightPromiseRef.current = null;
+          // Trailing save: persiste la edición más reciente (escrita durante el
+          // PUT) UNA sola vez, solo tras un éxito; el contenido confirmado por
+          // el servidor no se re-envía y no hay bucles de autosave.
+          if (openIdRef.current === id && savePendingRef.current && statusRef.current === 'saved') {
+            savePendingRef.current = false;
+            const trailing = editorRef.current;
+            if (trailing && !trailing.isDestroyed && trailing.getHTML() !== lastSavedHtmlRef.current) {
+              void runSave({ origin: 'autosave' });
+            }
+          }
         }
-        setStatus('error');
-      }
+      })();
+      saveInFlightPromiseRef.current = savePromise;
+      return savePromise;
     },
     [workspaceId, queryClient, setStatus, openDraftById]
   );
@@ -384,6 +441,15 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   useEffect(() => {
     editorRef.current = editor;
   }, [editor]);
+
+  // Desmontaje: cancela el debounce de autosave pendiente y limpia la cola de
+  // escrituras del borrador abierto. Nunca dispara un guardado tras el unmount.
+  useEffect(() => () => {
+    if (debounceRef.current) { clearTimeout(debounceRef.current); debounceRef.current = null; }
+    saveInFlightRef.current = false;
+    saveInFlightPromiseRef.current = null;
+    savePendingRef.current = false;
+  }, []);
 
   // Flush best-effort al abandonar la página. keepalive sin await: lo que
   // llegue llega; el autosave normal sigue siendo la vía principal.
@@ -486,18 +552,21 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
 
   const restoreVersion = async (versionNo: number) => {
     if (!openId) return;
-    // Doble-clic / carrera: solo una restauración en vuelo; nunca entra durante
-    // un guardado en curso (el botón ya se deshabilita con 'saving').
-    if (restoringRef.current || statusRef.current === 'saving') return;
+    // Doble-clic / carrera: solo una restauración en vuelo. La serialización de
+    // escrituras hace que runSave espere (y use la revisión más fresca), así
+    // que siempre se flushea en orden y nunca con una base_revision obsoleta.
+    if (restoringRef.current) return;
     restoringRef.current = true;
     setRestoring(true);
     setDetailError(null);
     try {
-      // Ediciones pendientes: se guardan PRIMERO. El contenido local se pierde
-      // solo si el servidor confirmó el guardado (respuestas 2xx → 'saved').
+      // Ediciones pendientes o escrituras ya en vuelo: se guardan PRIMERO,
+      // serializadas (runSave se une a la cola activa). Sin nada pendiente, la
+      // restauración es directa (sin PUT). El contenido local se pierde solo
+      // si el servidor confirmó el guardado (2xx → 'saved').
       // Fallos (error 500) y conflictos OCC dejan el texto local intachable y
       // cancelan la restauración.
-      if (statusRef.current === 'dirty') {
+      if (saveInFlightRef.current || statusRef.current === 'dirty' || statusRef.current === 'saving') {
         if (debounceRef.current) { clearTimeout(debounceRef.current); debounceRef.current = null; }
         await runSave({ origin: 'edit' });
         // Local: runSave actualiza a través de callbacks; el valor que importa

@@ -100,6 +100,9 @@ let versionDetail: unknown = null;
 let putFailure: { status: number; body: Record<string, unknown> } | null = null;
 // FASE 4.62D: retiene PUTs en vuelo para congelar el estado 'saving' de forma determinista.
 let holdPutGate: Promise<void> | null = null;
+// FASE 4.62D.6: cola de revisiones "tardías" que el mock devuelve para
+// simular respuestas con revisiones más antiguas que la vigente (Caso 5).
+let putStaleRevisions: number[] = [];
 
 type ApiCall = [string, RequestInit];
 
@@ -113,6 +116,7 @@ beforeEach(() => {
   versionDetail = null;
   putFailure = null;
   holdPutGate = null;
+  putStaleRevisions = [];
   resetEditors();
   fetchMock = vi.fn(async (url: string, opts?: RequestInit) => {
     const urlStr = String(url);
@@ -136,9 +140,11 @@ beforeEach(() => {
         return { ok: false, status: fail.status, json: async () => fail.body } as unknown as Response;
       }
       const body = JSON.parse(String(opts?.body ?? '{}')) as { content?: string; base_revision?: number };
+      const legitRevision = (body.base_revision ?? 1) + 1;
+      const revision = putStaleRevisions.length > 0 ? (putStaleRevisions.shift() as number) : legitRevision;
       return {
         ok: true,
-        json: async () => ({ draft: makeDraft({ content: body.content ?? '', content_format: 'html', revision: (body.base_revision ?? 1) + 1 }) }),
+        json: async () => ({ draft: makeDraft({ content: body.content ?? '', content_format: 'html', revision }) }),
       } as Response;
     }
     if (/\/drafts\/[^/]+\/versions\/\d+$/.test(urlStr)) {
@@ -493,5 +499,124 @@ describe('FASE 4.62D.2 restauración sin pérdida de ediciones', () => {
     await waitFor(() => {
       expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/versions/1/restore') && (c[1] as RequestInit).method === 'POST')).toBe(true);
     }, { timeout: 3000, interval: 50 });
+  }, 20000);
+});
+
+describe('FASE 4.62D.6 serialización de escrituras OCC', () => {
+  const openVersionPreviewLocal = async (needle: RegExp) => {
+    fireEvent.click((await screen.findAllByText(needle))[0]);
+    return await screen.findByText('Restaurar esta versión');
+  };
+
+  const loadVersionOne = () => {
+    versionsPayload = [
+      { version_no: 1, origin: 'generation', content_format: 'markdown', model: 'm', title: 'v1', created_at: '2026-10-01T10:00:00Z' },
+    ];
+    versionDetail = {
+      version_no: 1, origin: 'generation', content_format: 'markdown', model: 'm', title: 'v1',
+      created_at: '2026-10-01T10:00:00Z', content: 'Texto de la versión previa.',
+    };
+  };
+
+  it('CASO 1: un solo PUT activo; la edición durante el vuelo se persiste después con base_revision actualizada', async () => {
+    let releaseHold = () => {};
+    renderDrafts();
+    await openFirstDraft();
+    const ed = mainEditor()!;
+    holdPutGate = new Promise<void>((resolve) => { releaseHold = resolve; });
+    act(() => { ed.commands.setContent('<p>primera</p>', { emitUpdate: true }); });
+    await waitFor(() => expect(putCalls()).toHaveLength(1), { timeout: 3000, interval: 50 });
+    // El usuario sigue escribiendo mientras el PUT 1 está retenido.
+    act(() => { ed.commands.setContent('<p>primera segunda</p>', { emitUpdate: true }); });
+    await new Promise((r) => setTimeout(r, 300));
+    // Serialización: ningún segundo PUT mientras el primero sigue pendiente.
+    expect(putCalls()).toHaveLength(1);
+    releaseHold();
+    await waitFor(() => expect(putCalls()).toHaveLength(2), { timeout: 3000, interval: 50 });
+    await waitFor(() => expect(screen.getByTestId('save-status').textContent).toContain('Guardado'), { timeout: 3000, interval: 50 });
+    // PUT 1: contenido en el momento del guardado, base revision inicial.
+    expect(putBody(putCalls()[0]).base_revision).toBe(1);
+    expect(String(putBody(putCalls()[0]).content)).toContain('primera');
+    expect(String(putBody(putCalls()[0]).content)).not.toContain('segunda');
+    // Trailing save: contenido más reciente con la revisión ya actualizada.
+    expect(putBody(putCalls()[1]).base_revision).toBe(2);
+    expect(String(putBody(putCalls()[1]).content)).toContain('segunda');
+  }, 20000);
+
+  it('CASO 2: restaurar durante un guardado en vuelo — PUT serializados y POST restore solo después del flush', async () => {
+    loadVersionOne();
+    let releaseHold = () => {};
+    renderDrafts();
+    await openFirstDraft();
+    const ed = mainEditor()!;
+    holdPutGate = new Promise<void>((resolve) => { releaseHold = resolve; });
+    act(() => { ed.commands.setContent('<p>edición en vuelo</p>', { emitUpdate: true }); });
+    await waitFor(() => expect(putCalls()).toHaveLength(1), { timeout: 3000, interval: 50 });
+    act(() => { ed.commands.setContent('<p>edición en vuelo extra</p>', { emitUpdate: true }); });
+    const restoreBtn = (await openVersionPreviewLocal(/v1 · generación IA/)) as HTMLElement;
+    fireEvent.click(restoreBtn);
+    await new Promise((r) => setTimeout(r, 300));
+    // Mientras el PUT 1 esté retenido: no hay segundo PUT ni POST de restauración
+    // (la restauración se une al guardado activo y no entra con base obsoleta).
+    expect(putCalls()).toHaveLength(1);
+    expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/restore'))).toBe(false);
+    releaseHold();
+    await waitFor(() => {
+      expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/versions/1/restore') && (c[1] as RequestInit).method === 'POST')).toBe(true);
+    }, { timeout: 3000, interval: 50 });
+    // Flush serializado: PUT 2 con base_revision fresca y el contenido local más reciente.
+    expect(putCalls()).toHaveLength(2);
+    expect(putBody(putCalls()[1]).base_revision).toBe(2);
+    expect(String(putBody(putCalls()[1]).content)).toContain('extra');
+    // Orden: la restauración ocurre estrictamente después del último PUT.
+    const calls = fetchMock.mock.calls as unknown[][];
+    const restoreIdx = calls.findIndex((c) => String(c[0]).includes('/versions/1/restore'));
+    const lastPutIdx = calls.reduce((acc, c, i) => ((c[1] as RequestInit).method === 'PUT' ? i : acc), -1);
+    expect(restoreIdx).toBeGreaterThan(lastPutIdx);
+  }, 20000);
+
+  it('CASO 3: fallo del primer guardado — texto intacto, restauración cancelada y sin bloqueo permanente', async () => {
+    loadVersionOne();
+    putFailure = { status: 500, body: { error: 'boom' } };
+    renderDrafts();
+    await openFirstDraft();
+    const ed = mainEditor()!;
+    act(() => { ed.commands.setContent('<p>cambio con fallo</p>', { emitUpdate: true }); });
+    const restoreBtn = (await openVersionPreviewLocal(/v1 · generación IA/)) as HTMLElement;
+    fireEvent.click(restoreBtn);
+    await waitFor(() => expect(putCalls().length).toBeGreaterThan(0), { timeout: 3000, interval: 50 });
+    // El errorpaneal aparece y la restauración queda cancelada, no ejecutada.
+    expect(await screen.findByText('No se pudo guardar: los cambios siguen en el editor.')).toBeTruthy();
+    expect(await screen.findByText('La restauración se canceló: guarda o resuelve tus cambios pendientes primero. Tu texto sigue en el editor.')).toBeTruthy();
+    expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/restore'))).toBe(false);
+    // La edición local permanece y no se marcó como guardada.
+    expect(ed.getHTML()).toContain('cambio con fallo');
+    expect(screen.getByTestId('save-status').textContent).toContain('Error al guardar');
+    // Sin bloqueo permanente: al liberar el fallo, el reintento guarda con base_revision fresca.
+    putFailure = null;
+    fireEvent.click(screen.getByText('Reintentar'));
+    await waitFor(() => expect(screen.getByTestId('save-status').textContent).toContain('Guardado'), { timeout: 3000, interval: 50 });
+    const retry = putCalls()[putCalls().length - 1];
+    expect(putBody(retry).base_revision).toBe(1);
+    expect(String(putBody(retry).content)).toContain('cambio con fallo');
+  }, 20000);
+
+  it('CASO 5: una respuesta tardía con revisión antigua nunca degrada la base OCC local', async () => {
+    renderDrafts();
+    await openFirstDraft();
+    const ed = mainEditor()!;
+    act(() => { ed.commands.setContent('<p>uno</p>', { emitUpdate: true }); });
+    await waitFor(() => expect(screen.getByTestId('save-status').textContent).toContain('Guardado'), { timeout: 3000, interval: 50 });
+    // El PUT 2 devolverá una revisión "tardía" (1) aunque el PUT 1 confirmó la 2:
+    // la base OCC local no puede retroceder con una respuesta antigua.
+    putStaleRevisions = [1];
+    act(() => { ed.commands.setContent('<p>uno dos</p>', { emitUpdate: true }); });
+    await waitFor(() => expect(putCalls()).toHaveLength(2), { timeout: 3000, interval: 50 });
+    await waitFor(() => expect(screen.getByTestId('save-status').textContent).toContain('Guardado'), { timeout: 3000, interval: 50 });
+    act(() => { ed.commands.setContent('<p>uno dos tres</p>', { emitUpdate: true }); });
+    await waitFor(() => expect(putCalls()).toHaveLength(3), { timeout: 3000, interval: 50 });
+    // Monotónico: el PUT 3 mantiene la revisión confirmada por el PUT 1 (2);
+    // una base degradada a 1 (la de la respuesta tardía) haría fallar este assert.
+    expect(putBody(putCalls()[2]).base_revision).toBe(2);
   }, 20000);
 });
