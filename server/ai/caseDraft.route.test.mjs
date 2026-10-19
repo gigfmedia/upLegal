@@ -30,7 +30,7 @@ const names = ['getAIWorkspaceOwned', 'requireAIAccess', 'getAILawyerAccess', 'g
   'getAIUsagePeriod', 'AI_FEATURES_ALL', 'PLAN_FEATURES_SERVER', 'AI_PROTECT_MAX_MONTHLY_TOKENS', 'AI_PROTECT_MAX_MONTHLY_REQUESTS',
   'aiRateLimiter', 'AI_RATE_WINDOW_MS', 'AI_PROTECT_RATE_LIMIT_PER_MINUTE',
   'AIDraftRequestSchema', 'AIDraftResponseSchema', 'DRAFTING_ALLOWED_PLANS', 'AI_DEFAULT_MODEL', 'freeQuotaForEntitlement',
-  'DRAFT_CLIENT_SAVE_ORIGINS', 'DRAFT_CONTENT_FORMATS', 'ensureDraftLegacyBaseline', 'insertDraftVersionHead',
+  'DRAFT_CLIENT_SAVE_ORIGINS', 'DRAFT_CONTENT_FORMATS', 'DRAFT_AUTOSAVE_COALESCE_MS', 'ensureDraftLegacyBaseline', 'insertDraftVersionHead',
 ];
 
 const DOC_TEXT = 'Contrato de arrendamiento. La cláusula quinta establece la obligación de pagar la renta antes del día diez de cada mes. Las partes son Ana Arrendadora y Beto Arrendatario.';
@@ -108,6 +108,7 @@ function harness({ plan = 'pro' } = {}) {
     };
     const q = { select: () => q,
       eq: (k, v) => { filters.push((r) => r[k] === v); return q; },
+      lt: (k, v) => { filters.push((r) => Number(r[k]) < v); return q; },
       order: (k, o) => { orderKey = k; orderAsc = !o || o.ascending !== false; return q; },
       limit: (n) => { limit = n; return q; },
       insert: (p) => { action = 'insert'; payload = p; return q; },

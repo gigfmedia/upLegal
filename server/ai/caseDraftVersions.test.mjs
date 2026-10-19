@@ -31,7 +31,7 @@ const names = ['getAIWorkspaceOwned', 'requireAIAccess', 'getAILawyerAccess', 'g
   'getAIUsagePeriod', 'AI_FEATURES_ALL', 'PLAN_FEATURES_SERVER', 'AI_PROTECT_MAX_MONTHLY_TOKENS', 'AI_PROTECT_MAX_MONTHLY_REQUESTS',
   'aiRateLimiter', 'AI_RATE_WINDOW_MS', 'AI_PROTECT_RATE_LIMIT_PER_MINUTE',
   'AIDraftRequestSchema', 'AIDraftResponseSchema', 'DRAFTING_ALLOWED_PLANS', 'AI_DEFAULT_MODEL', 'freeQuotaForEntitlement',
-  'DRAFT_CLIENT_SAVE_ORIGINS', 'DRAFT_CONTENT_FORMATS', 'ensureDraftLegacyBaseline', 'insertDraftVersionHead',
+  'DRAFT_CLIENT_SAVE_ORIGINS', 'DRAFT_CONTENT_FORMATS', 'DRAFT_AUTOSAVE_COALESCE_MS', 'ensureDraftLegacyBaseline', 'insertDraftVersionHead',
 ];
 
 const DOC_TEXT = 'Contrato de arrendamiento. La cláusula quinta establece la obligación de pagar la renta antes del día diez de cada mes.';
@@ -102,6 +102,7 @@ function harness({ plan = 'pro' } = {}) {
     };
     const q = { select: (...a) => { selCols = typeof a[0] === 'string' && a[0] && !a[0].includes('*') ? a[0].split(',').map((c) => c.trim()) : null; return q; },
       eq: (k, v) => { filters.push((r) => r[k] === v); return q; },
+      lt: (k, v) => { filters.push((r) => Number(r[k]) < v); return q; },
       order: (k, o) => { orderKey = k; orderAsc = !o || o.ascending !== false; return q; },
       limit: (n) => { limit = n; return q; },
       insert: (p) => { action = 'insert'; payload = p; return q; },
@@ -143,8 +144,11 @@ function harness({ plan = 'pro' } = {}) {
   }
   const res = () => ({ statusCode: 200, status(n) { this.statusCode = n; return this; }, json(b) { this.body = b; return this; } });
   async function call(method, path, body = {}, params = {}) {
+    //getQuery en el route real llega vía req.query: separar el querystring del
+    // path de registro en el dummy router.
+    const [bare, qs] = String(path).split('?');
     const r = res();
-    await routes[`${method} ${path}`]({ headers: { authorization: 'Bearer f', 'x-ai-operation-id': randomUUID() }, params: { caseId: workspaceId, ...params }, body }, r);
+    await routes[`${method} ${bare}`]({ headers: { authorization: 'Bearer f', 'x-ai-operation-id': randomUUID() }, params: { caseId: workspaceId, ...params }, query: Object.fromEntries(new URLSearchParams(qs ?? '')), body }, r);
     return r;
   }
   const asForeign = () => { tokenUser = foreign; };
@@ -379,5 +383,231 @@ describe('4.62C ownership y gates en versiones', () => {
     expect((await h.call('get', DRAFT_PATHS.versions, {}, { draftId: gen.body.draft.id })).statusCode).toBe(403);
     expect((await h.call('put', DRAFT_PATHS.draft, { content: 'x'.repeat(50), base_revision: 1 }, { draftId: gen.body.draft.id })).statusCode).toBe(403);
     expect(h.rows.ai_case_draft_versions).toHaveLength(1);
+  });
+});
+
+// — FASE 4.62E: coalescencia de autosaves + paginación del historial —
+describe('4.62E coalescencia de autosaves', () => {
+  it('dos autosaves consecutivos en ventana: se coalescen en una única versión (version_no y created_at preservados)', async () => {
+    const h = harness();
+    const gen = await generatedDraft(h);
+    const s1 = await h.call('put', DRAFT_PATHS.draft, { content: '<p>Autosave uno.</p>', content_format: 'html', origin: 'autosave', base_revision: 1 }, { draftId: gen.body.draft.id });
+    expect(s1.statusCode).toBe(200);
+    expect(s1.body.version).toEqual({ version_no: 2 });
+    const v2 = h.rows.ai_case_draft_versions.find((v) => v.version_no === 2);
+    const createdAt = v2.created_at;
+    const s2 = await h.call('put', DRAFT_PATHS.draft, { content: '<p>Autosave uno más el agregado.</p>', content_format: 'html', origin: 'autosave', base_revision: 2 }, { draftId: gen.body.draft.id });
+    expect(s2.statusCode).toBe(200);
+    expect(s2.body.version).toEqual({ version_no: 2, coalesced: true });
+    const versions = h.rows.ai_case_draft_versions;
+    expect(versions).toHaveLength(2);
+    expect(versions.map((v) => [v.version_no, v.origin])).toEqual([[1, 'generation'], [2, 'autosave']]);
+    const v2After = versions.find((v) => v.version_no === 2);
+    // La coalescencia ACTUALIZA la fila del primer autosave: no inserta v3.
+    expect(v2After.content).toBe('<p>Autosave uno más el agregado.</p>');
+    expect(v2After.content_format).toBe('html');
+    expect(v2After.created_at).toBe(createdAt);
+    expect(versions.find((v) => v.version_no === 1).content).toBe(gen.body.draft.content);
+    // El head del draft lleva el contenido más reciente y la revisión sube.
+    expect(h.rows.ai_case_drafts[0].content).toBe('<p>Autosave uno más el agregado.</p>');
+    expect(h.rows.ai_case_drafts[0].revision).toBe(3);
+    // El historial muestra la cabecera actualizada.
+    const list = await h.call('get', DRAFT_PATHS.versions, {}, { draftId: gen.body.draft.id });
+    expect(list.body.versions.map((v) => [v.version_no, v.origin])).toEqual([[2, 'autosave'], [1, 'generation']]);
+  });
+
+  it('ventana vencida: el último autosave inserta versión nueva (no coalesce)', async () => {
+    const h = harness();
+    const gen = await generatedDraft(h);
+    const s1 = await h.call('put', DRAFT_PATHS.draft, { content: '<p>Autosave inicial.</p>', content_format: 'html', origin: 'autosave', base_revision: 1 }, { draftId: gen.body.draft.id });
+    expect(s1.statusCode).toBe(200);
+    // Reloj de la v2 vencido (11 min > ventana de 10).
+    const head = h.rows.ai_case_draft_versions.find((v) => v.version_no === 2);
+    head.created_at = new Date(Date.now() - 11 * 60 * 1000).toISOString();
+    const s2 = await h.call('put', DRAFT_PATHS.draft, { content: '<p>Autosave posterior a la ventana.</p>', content_format: 'html', origin: 'autosave', base_revision: 2 }, { draftId: gen.body.draft.id });
+    expect(s2.statusCode).toBe(200);
+    expect(s2.body.version).toEqual({ version_no: 3 });
+    expect(h.rows.ai_case_draft_versions.map((v) => [v.version_no, v.origin])).toEqual([[1, 'generation'], [2, 'autosave'], [3, 'autosave']]);
+    expect(h.rows.ai_case_draft_versions.find((v) => v.version_no === 2).content).toBe('<p>Autosave inicial.</p>');
+  });
+
+  it('separación por procedencia: edit y restore tras un autosave NO coalescen; autosave tras restore tampoco', async () => {
+    const h = harness();
+    const gen = await generatedDraft(h);
+    // autosave → v2; un PUT edit NO coalesce (procedencia distinta) → v3.
+    await h.call('put', DRAFT_PATHS.draft, { content: '<p>Autosave previo.</p>', content_format: 'html', origin: 'autosave', base_revision: 1 }, { draftId: gen.body.draft.id });
+    const edit = await h.call('put', DRAFT_PATHS.draft, { content: 'Edición manual real del abogado.', origin: 'edit', base_revision: 2 }, { draftId: gen.body.draft.id });
+    expect(edit.body.version).toEqual({ version_no: 3 });
+    // Restauración de v1: origin restore, append-only SIEMPRE → v4.
+    const restore = await h.call('post', DRAFT_PATHS.restore, {}, { draftId: gen.body.draft.id, versionNo: 1 });
+    expect(restore.statusCode).toBe(200);
+    expect(restore.body.version).toEqual({ version_no: 4, origin: 'restore', restored_from: 1 });
+    // Un autosave tras el restore de v4 (no-autosave en head) inserta v5, no coalesce.
+    const s = await h.call('put', DRAFT_PATHS.draft, { content: '<p>Autosave tras restore.</p>', content_format: 'html', origin: 'autosave', base_revision: 4 }, { draftId: gen.body.draft.id });
+    expect(s.body.version).toEqual({ version_no: 5 });
+    const nos = h.rows.ai_case_draft_versions.map((v) => v.version_no);
+    expect(nos).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it('edit/autosave tras edit inmediato: la coalescencia evalúa solo el head (no versiones autosave más viejas)', async () => {
+    const h = harness();
+    const gen = await generatedDraft(h);
+    // v2 autosave (reciente) seguida de v3 edit (head actual).
+    await h.call('put', DRAFT_PATHS.draft, { content: '<p>AS1.</p>', content_format: 'html', origin: 'autosave', base_revision: 1 }, { draftId: gen.body.draft.id });
+    await h.call('put', DRAFT_PATHS.draft, { content: 'Edito encima del autosave.', origin: 'edit', base_revision: 2 }, { draftId: gen.body.draft.id });
+    // head es v3 edit → aunque v2 autosave sea reciente, un autosave inserta v4
+    // y jamás actualiza la fila v2 que dejó de ser head.
+    const before = JSON.parse(JSON.stringify(h.rows.ai_case_draft_versions.find((v) => v.version_no === 2)));
+    const s = await h.call('put', DRAFT_PATHS.draft, { content: '<p>Nuevo autosave con head edit.</p>', content_format: 'html', origin: 'autosave', base_revision: 3 }, { draftId: gen.body.draft.id });
+    expect(s.body.version).toEqual({ version_no: 4 });
+    const v2Row = h.rows.ai_case_draft_versions.find((v) => v.version_no === 2);
+    expect(v2Row).toEqual(before);
+    expect(v2Row.content).toBe('<p>AS1.</p>');
+  });
+
+  it('draft legacy: primer autosave crea v1; el segundo coalesce en v1 sin base fantasma', async () => {
+    const h = harness();
+    h.rows.ai_case_drafts.push({
+      id: 'leg-e', lawyer_case_id: caseId, workspace_id: workspaceId, lawyer_id: user,
+      draft_type: 'escrito', title: 'Antiguo', instruction: '', status: 'completed',
+      content: 'Contenido previo de la vía antigua.', content_format: 'markdown',
+      sources: [], model: null, intelligence_snapshot_id: null,
+      revision: 1, created_at: '2026-06-01T00:00:00Z', updated_at: '2026-06-01T00:00:00Z',
+    });
+    const s1 = await h.call('put', DRAFT_PATHS.draft, { content: 'Primer autosave del legacy.', origin: 'autosave', base_revision: 1 }, { draftId: 'leg-e' });
+    expect(s1.statusCode).toBe(200);
+    expect(h.rows.ai_case_draft_versions.map((v) => [v.version_no, v.origin])).toEqual([[0, 'legacy'], [1, 'autosave']]);
+    const v1CreatedAt = h.rows.ai_case_draft_versions.find((v) => v.version_no === 1).created_at;
+    const s2 = await h.call('put', DRAFT_PATHS.draft, { content: 'Segundo autosave del legacy.', origin: 'autosave', base_revision: 2 }, { draftId: 'leg-e' });
+    expect(s2.statusCode).toBe(200);
+    expect(s2.body.version).toEqual({ version_no: 1, coalesced: true });
+    const versions = h.rows.ai_case_draft_versions;
+    expect(versions).toHaveLength(2);
+    expect(versions.find((v) => v.version_no === 0).content).toBe('Contenido previo de la vía antigua.');
+    expect(versions.find((v) => v.version_no === 1).content).toBe('Segundo autosave del legacy.');
+    expect(versions.find((v) => v.version_no === 1).created_at).toBe(v1CreatedAt);
+  });
+
+  it('guard de carrera documentado en source: el update de coalescencia lleva eq(version_no) + eq(origin autosave)', () => {
+    // Contrato en código: la actualización solo puede matchear la fila autosave
+    // que era head al leerla; una carrera que la deje de ser head matchea 0
+    // filas y cae al insert append-only. Verificación de fuente (la carrera
+    // síncrona completa no es reproducible con el fake secuencial).
+    const coalesceStart = src.indexOf('origin === \'autosave\' && DRAFT_AUTOSAVE_COALESCE_MS > 0');
+    expect(coalesceStart).toBeGreaterThan(0);
+    const block = src.slice(coalesceStart, coalesceStart + 2200);
+    expect(block).toContain(".eq('version_no', headNo)");
+    expect(block).toContain(".eq('origin', 'autosave')");
+    expect(block).toContain('if (coalesced) return { version_no: headNo, coalesced: true };');
+  });
+
+  it('concurrencia: dos autosaves sobre la misma cabeza autosave terminan en UNA fila con el contenido más reciente; la escritura de versión es POST-CAS', async () => {
+    // Semántica de carrera real (documentada): la escritura de versiones solo
+    // corre tras ganar el CAS de revisión en ai_case_drafts, así que dos PUT
+    // con la misma base_revision nunca llegan ambos a coalescer: el perdedor
+    // sale 409 sin tocar versiones. Dos autosaves SECUENCIALES (bases
+    // monotónicas, lo único que el cliente envía) coalescen sobre la misma
+    // fila: el contenido más reciente siempre gana dentro de la fila.
+    const h = harness();
+    const gen = await generatedDraft(h);
+    let revision = 1;
+    for (let i = 1; i <= 3; i += 1) {
+      const s = await h.call('put', DRAFT_PATHS.draft, { content: `Autosave concurrente ${i}.`, origin: 'autosave', base_revision: revision }, { draftId: gen.body.draft.id });
+      expect(s.statusCode).toBe(200);
+      // Todos tocan la MISMA versión (coalescencia), nunca nuevas filas.
+      expect(s.body.version).toEqual({ version_no: 2, ...(i > 1 ? { coalesced: true } : {}) });
+      revision = s.body.draft.revision;
+    }
+    const versions = h.rows.ai_case_draft_versions;
+    expect(versions).toHaveLength(2);
+    expect(versions.map((v) => [v.version_no, v.origin])).toEqual([[1, 'generation'], [2, 'autosave']]);
+    // Contenido más reciente preservado; head con revisión monotónica.
+    expect(versions.find((v) => v.version_no === 2).content).toBe('Autosave concurrente 3.');
+    expect(h.rows.ai_case_drafts[0].content).toBe('Autosave concurrente 3.');
+    expect(h.rows.ai_case_drafts[0].revision).toBe(4);
+    // Nada se perdió: los contenidos intermedios no eran cabeza (coalescidos
+    // por diseño); el head siempre reflejó el último guardado confirmado.
+  });
+
+  it('concurrencia: un PUT con base desfasada en carrera sale 409 ANTES de la escritura de versiones (CAS precede al versionado)', async () => {
+    const h = harness();
+    const gen = await generatedDraft(h);
+    await h.call('put', DRAFT_PATHS.draft, { content: 'Guardado que gana la carrera.', base_revision: 1 }, { draftId: gen.body.draft.id });
+    const beforeRows = h.rows.ai_case_draft_versions.length;
+    // Segundo escritor (otra pestaña/otra instancia) con base obsoleta:
+    // el CAS eq(revision) no matchea → 409 y NINGUNA fila nueva de versión.
+    const loser = await h.call('put', DRAFT_PATHS.draft, { content: 'Carrerón desfasado no persiste.', base_revision: 1 }, { draftId: gen.body.draft.id });
+    expect(loser.statusCode).toBe(409);
+    expect(loser.body.code).toBe('AI_DRAFT_REVISION_CONFLICT');
+    expect(h.rows.ai_case_draft_versions).toHaveLength(beforeRows);
+    // Contenido más reciente intacto: el head lo tiene el ganador.
+    expect(h.rows.ai_case_drafts[0].content).toBe('Guardado que gana la carrera.');
+  });
+});
+
+describe('4.62E paginación del historial de versiones', () => {
+  const EDIT_TEXT = (n) => `Edición número ${n} del escrito.`;
+  async function draftWithManyVersions(h, n = 205) {
+    const gen = await generatedDraft(h);
+    let revision = 1;
+    for (let i = 1; i <= n; i += 1) {
+      const r = await h.call('put', DRAFT_PATHS.draft, { content: EDIT_TEXT(i), origin: 'edit', base_revision: revision }, { draftId: gen.body.draft.id });
+      expect(r.statusCode).toBe(200);
+      revision = r.body.draft.revision;
+    }
+    return gen;
+  }
+
+  it('total_count refleja todas las versiones y BEFORE pagina las anteriores sin repetir', async () => {
+    const h = harness();
+    const gen = await draftWithManyVersions(h);
+    // v1 generation + 205 edits = 206 versiones totales.
+    const page1 = await h.call('get', DRAFT_PATHS.versions, {}, { draftId: gen.body.draft.id });
+    expect(page1.statusCode).toBe(200);
+    expect(page1.body.total_count).toBe(206);
+    expect(page1.body.versions).toHaveLength(200);
+    expect(page1.body.versions[0].version_no).toBe(206);
+    expect(page1.body.versions.at(-1).version_no).toBe(7);
+    expect(page1.body.versions.every((v) => v.version_no > 6)).toBe(true);
+    // Página 2 vía cursor: solo la cola < 7.
+    const minNo = page1.body.versions.at(-1).version_no;
+    const page2 = await h.call('get', `${DRAFT_PATHS.versions}?before=${minNo}`, {}, { draftId: gen.body.draft.id });
+    expect(page2.statusCode).toBe(200);
+    expect(page2.body.total_count).toBe(206);
+    expect(page2.body.versions.map((v) => v.version_no)).toEqual([6, 5, 4, 3, 2, 1]);
+    // Sin solapamiento entre páginas: unión completa sin duplicados.
+    const union = [...page1.body.versions.map((v) => v.version_no), ...page2.body.versions.map((v) => v.version_no)];
+    expect(union).toHaveLength(206);
+    expect(new Set(union).size).toBe(206);
+    // La numeración no se altera: restore de una versión antigua de página 2
+    // sigue operando igual sobre version_no sin cursor.
+    // version_no = i + 1 (v1 es la generación): la versión 3 guarda la
+    // edición #2.
+    const restore = await h.call('post', DRAFT_PATHS.restore, {}, { draftId: gen.body.draft.id, versionNo: 3 });
+    expect(restore.statusCode).toBe(200);
+    expect(restore.body.version).toEqual({ version_no: 207, origin: 'restore', restored_from: 3 });
+    expect(restore.body.draft.content).toBe(EDIT_TEXT(2));
+  });
+
+  it('cursor inválido: 400 INVALID_REQUEST sin listar', async () => {
+    const h = harness();
+    const gen = await generatedDraft(h);
+    for (const bad of ['-1', 'x', '1.5']) {
+      const r = await h.call('get', `${DRAFT_PATHS.versions}?before=${bad}`, {}, { draftId: gen.body.draft.id });
+      expect(r.statusCode).toBe(400);
+      expect(r.body.code).toBe('INVALID_REQUEST');
+    }
+    const ok = await h.call('get', `${DRAFT_PATHS.versions}?before=0`, {}, { draftId: gen.body.draft.id });
+    expect(ok.statusCode).toBe(200);
+    expect(ok.body.versions).toHaveLength(0);
+  });
+
+  it('historial corto: total_count == listado; sin cursor el contrato previo intacto', async () => {
+    const h = harness();
+    const gen = await generatedDraft(h);
+    await h.call('put', DRAFT_PATHS.draft, { content: 'Cambio posterior.', origin: 'edit', base_revision: 1 }, { draftId: gen.body.draft.id });
+    const list = await h.call('get', DRAFT_PATHS.versions, {}, { draftId: gen.body.draft.id });
+    expect(list.body.versions).toHaveLength(2);
+    expect(list.body.total_count).toBe(2);
   });
 });

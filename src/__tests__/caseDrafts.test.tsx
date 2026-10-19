@@ -123,6 +123,10 @@ const DRAFT = makeDraft();
 let fetchMock: ReturnType<typeof vi.fn>;
 let usageAllowance: unknown = { plan: 'pro_limited', drafting: { used: 12, limit: 30 } };
 let versionsPayload: unknown[] = [];
+// FASE 4.62E: página(s) anteriores del historial (solo con ?before=) y total.
+let olderVersionsPayload: unknown[] = [];
+let versionsTotalPayload: number | null = null;
+let olderVersionsFailure = false;
 let versionDetail: unknown = null;
 let putFailure: { status: number; body: Record<string, unknown> } | null = null;
 // FASE 4.62D: retiene PUTs en vuelo para congelar el estado 'saving' de forma determinista.
@@ -140,6 +144,9 @@ const putBody = (call: ApiCall) => JSON.parse(String(call[1].body)) as Record<st
 beforeEach(() => {
   usageAllowance = { plan: 'pro_limited', drafting: { used: 12, limit: 30 } };
   versionsPayload = [];
+  olderVersionsPayload = [];
+  versionsTotalPayload = null;
+  olderVersionsFailure = false;
   versionDetail = null;
   putFailure = null;
   holdPutGate = null;
@@ -175,11 +182,15 @@ beforeEach(() => {
         json: async () => ({ draft: makeDraft({ content: body.content ?? '', content_format: 'html', revision }) }),
       } as Response;
     }
+    if (/\/drafts\/[^/]+\/versions(\?.*|$)/.test(urlStr)) {
+      if (urlStr.includes('before=')) {
+        if (olderVersionsFailure) return { ok: false, status: 503, json: async () => ({ error: 'No se pudo abrir el historial.' }) } as unknown as Response;
+        return { ok: true, json: async () => ({ versions: olderVersionsPayload, total_count: versionsTotalPayload }) } as Response;
+      }
+      return { ok: true, json: async () => ({ versions: versionsPayload, total_count: versionsTotalPayload }) } as Response;
+    }
     if (/\/drafts\/[^/]+\/versions\/\d+$/.test(urlStr)) {
       return { ok: true, json: async () => ({ version: versionDetail }) } as Response;
-    }
-    if (/\/drafts\/[^/]+\/versions$/.test(urlStr)) {
-      return { ok: true, json: async () => ({ versions: versionsPayload }) } as Response;
     }
     if (/\/drafts\/[^/]+$/.test(urlStr)) {
       return { ok: true, json: async () => ({ draft: DRAFT }) } as Response;
@@ -1716,4 +1727,214 @@ describe('FASE 4.62D.35 flush de emergencia al desmontar el editor', () => {
     expect(flushCalls()).toHaveLength(1);
     expect(flushCalls()[0][0]).toContain(`/drafts/${A_ID35}`);
   }, 20000);
+});
+
+// — FASE 4.62E: paginación del historial de versiones —
+describe('FASE 4.62E paginación del historial de versiones', () => {
+  const meta = (no: number, origin = 'edit', created = '2026-09-02T00:00:00Z') => ({
+    version_no: no, origin, content_format: 'html', model: null, title: 'Borrador de contestación', created_at: created,
+  });
+
+  it('muestra total, carga páginas anteriores anexadas y no duplica filas', async () => {
+    versionsPayload = [meta(3), meta(2, 'autosave')];
+    versionsTotalPayload = 3;
+    olderVersionsPayload = [meta(1, 'generation')];
+    renderDrafts();
+    await openFirstDraft();
+    await screen.findByText('Historial de versiones');
+    expect(screen.getByText('Mostrando 2 de 3 versiones')).toBeTruthy();
+    const loadMore = await screen.findByTestId('draft-versions-load-more');
+    fireEvent.click(loadMore);
+    // Fetched con cursor before=2 (la versión mínima mostrada antes de anexar).
+    await waitFor(() => expect(
+      (fetchMock.mock.calls as unknown[][]).some((c) => String(c[0]).includes('/versions?before=2'))
+    ).toBe(true));
+    // v3, v2, v1 presentes y SIN duplicados de ninguna.
+    expect(screen.getAllByRole('button', { name: /(^|[^0-9])v3 ·/ }).length).toBe(1);
+    expect(screen.getAllByRole('button', { name: /(^|[^0-9])v2 ·/ }).length).toBe(1);
+    await screen.findByText(/v1 ·/);
+    expect(screen.getAllByRole('button', { name: /(^|[^0-9])v1 ·/ }).length).toBe(1);
+    // Unión completa: el texto de total desaparece al llegar al total.
+    await waitFor(() => expect(screen.queryByText('Mostrando 2 de 3 versiones')).toBeNull());
+    expect(screen.queryByTestId('draft-versions-load-more')).toBeNull();
+  });
+
+  it('fallo de la página anterior: error visible sin perder lo ya mostrado y reintento posible', async () => {
+    versionsPayload = [meta(3), meta(2, 'autosave')];
+    versionsTotalPayload = 4;
+    olderVersionsPayload = [meta(1, 'generation')];
+    olderVersionsFailure = true;
+    renderDrafts();
+    await openFirstDraft();
+    fireEvent.click(await screen.findByTestId('draft-versions-load-more'));
+    await screen.findByRole('alert');
+    expect(screen.getByText('No se pudo abrir el historial.')).toBeTruthy();
+    // v3 y v2 siguen listados tras el fallo.
+    expect(screen.getAllByRole('button', { name: /(^|[^0-9])v3 ·/ }).length).toBe(1);
+    // Reintento exitoso con la misma presión del usuario.
+    olderVersionsFailure = false;
+    fireEvent.click(screen.getByTestId('draft-versions-load-more'));
+    await screen.findByText(/v1 ·/);
+    expect(screen.getByText('Mostrando 3 de 4 versiones')).toBeTruthy();
+  });
+
+  it('cambio de borrador reinicia el historial paginado', async () => {
+    const a = makeDraft({ id: 'a1', title: 'Borrador uno', content: 'Contenido uno.' });
+    const b = makeDraft({ id: 'b2', title: 'Borrador dos', content: 'Contenido dos.', revision: 2 });
+    versionsPayload = [meta(3), meta(2, 'autosave')];
+    versionsTotalPayload = 5;
+    olderVersionsPayload = [meta(1, 'generation')];
+    fetchMock = vi.fn(async (url: string, opts?: RequestInit) => {
+      const urlStr = String(url);
+      if (urlStr.includes('/api/ai/usage')) {
+        return { ok: true, json: async () => ({ allowance: usageAllowance }) } as Response;
+      }
+      if (opts?.method === 'POST') {
+        return { ok: true, json: async () => ({ draft: b, snapshot: { version: 1 } }) } as Response;
+      }
+      if (/\/drafts\/a1\/versions/.test(urlStr)) {
+        if (urlStr.includes('before=')) {
+          return { ok: true, json: async () => ({ versions: [meta(1, 'generation')], total_count: 3 }) } as Response;
+        }
+        return { ok: true, json: async () => ({ versions: [meta(3), meta(2, 'autosave')], total_count: 3 }) } as Response;
+      }
+      if (/\/drafts\/b2\/versions/.test(urlStr)) {
+        if (urlStr.includes('before=')) {
+          return { ok: true, json: async () => ({ versions: [meta(1, 'legacy', '2026-08-01T00:00:00Z')], total_count: 2 }) } as Response;
+        }
+        return { ok: true, json: async () => ({ versions: [meta(1, 'generation', '2026-08-01T00:00:00Z')], total_count: 2 }) } as Response;
+      }
+      if (/\/drafts\/[^/]+$/.test(urlStr)) {
+        // Abrir: responder según el id pedido.
+        return { ok: true, json: async () => ({ draft: urlStr.includes('/a1') ? a : b }) } as Response;
+      }
+      return { ok: true, json: async () => ({ drafts: [a, b] }) } as Response;
+    });
+    (globalThis as unknown as { fetch: typeof fetch }).fetch = fetchMock as unknown as typeof fetch;
+    renderDrafts();
+    fireEvent.click(await screen.findByText('Borrador uno'));
+    await screen.findByText(/Contenido uno\./);
+    await screen.findByText('Mostrando 2 de 3 versiones');
+    fireEvent.click(await screen.findByTestId('draft-versions-load-more'));
+    await screen.findByText(/v1 ·/);
+    // Historial completo: el aviso de paginación desaparece (igualdad de total).
+    await waitFor(() => expect(screen.queryByText('Mostrando 3 de 3 versiones')).toBeNull());
+    expect(screen.queryByTestId('draft-versions-load-more')).toBeNull();
+    // Cambio al otro borrador: la paginación anexada se limpia.
+    fireEvent.click(screen.getByText('Borrador dos'));
+    await screen.findByText(/Contenido dos\./);
+    await screen.findByText('Mostrando 1 de 2 versiones');
+    expect(screen.queryByText('Mostrando 3 de 3 versiones')).toBeNull();
+    expect(screen.queryByRole('button', { name: /(^|[^0-9])v2 ·/ })).toBeNull();
+  });
+});
+
+// — FASE 4.62E.1: regresión del borde de paginación — combos guardado +
+// páginas cargadas; el ancla de frontera impide omitir la fila mínima cuando
+// el refetch de página 1 la expulsa del top-200.
+describe('FASE 4.62E.1 borde de paginación con nuevos guardados', () => {
+  const meta = (no: number, origin = 'edit', created = '2026-09-02T00:00:00Z') => ({
+    version_no: no, origin, content_format: 'html', model: null, title: 'Borrador de contestación', created_at: created,
+  });
+
+  it('guardar tras cargar páginas anteriores no omite versiones en la unión (refetch de página 1 expulsa la frontera)', async () => {
+    // Escenario miniatura del top-200: total=4; la "página 1" inicial es [3,2].
+    // Tras el primer guardado el servidor expone v4 y el refetch de página 1
+    // devuelve [4,3]: la frontera v2 sale del top simulado. Sin el ancla de
+    // frontera, la unión sería [4,3,1] — v2 omitida. Con el ancla, unión
+    // completa [4,3,2,1] sin duplicados.
+    let page1 = [meta(3), meta(2, 'autosave')];
+    versionsTotalPayload = 4;
+    fetchMock = vi.fn(async (url: string, opts?: RequestInit) => {
+      const urlStr = String(url);
+      if (urlStr.includes('/api/ai/usage')) {
+        return { ok: true, json: async () => ({ allowance: usageAllowance }) } as Response;
+      }
+      if (opts?.method === 'PUT') {
+        return {
+          ok: true,
+          // Al leer la respuesta del PUT el servidor ya publicó v4; el
+          // componente invalida la query de versiones y el refetch de página 1
+          // verá la ventana [4,3] (v2 expulsada).
+          json: async () => {
+            page1 = [meta(4), meta(3, 'edit')];
+            return { draft: makeDraft({ content: '<p>guardado posterior</p>', content_format: 'html', revision: 3 }) };
+          },
+        } as Response;
+      }
+      if (/\/drafts\/[^/]+\/versions(\?.*|$)/.test(urlStr)) {
+        if (urlStr.includes('before=')) {
+          return { ok: true, json: async () => ({ versions: [meta(1, 'generation')], total_count: 4 }) } as Response;
+        }
+        return { ok: true, json: async () => ({ versions: [...page1], total_count: 4 }) } as Response;
+      }
+      if (/\/drafts\/[^/]+$/.test(urlStr)) {
+        return { ok: true, json: async () => ({ draft: DRAFT }) } as Response;
+      }
+      return { ok: true, json: async () => ({ drafts: [DRAFT] }) } as Response;
+    });
+    (globalThis as unknown as { fetch: typeof fetch }).fetch = fetchMock as unknown as typeof fetch;
+    renderDrafts();
+    await openFirstDraft();
+    await screen.findByText('Mostrando 2 de 4 versiones');
+    // Cargar anteriores: se ancla v2 (frontera) y llega v1.
+    fireEvent.click(await screen.findByTestId('draft-versions-load-more'));
+    await screen.findByText(/v1 ·/);
+    expect(screen.getByText('Mostrando 3 de 4 versiones')).toBeTruthy();
+    // Primer guardado: PUT dispara el refetch de página 1 → [4,3].
+    const ed = mainEditor();
+    expect(ed).toBeTruthy();
+    act(() => { ed!.commands.setContent('<p>guardado posterior al historial</p>', { emitUpdate: true }); });
+    await waitFor(() => expect(putCalls().length).toBeGreaterThan(0), { timeout: 3000, interval: 50 });
+    await waitFor(() => expect(screen.getByText(/v4 ·/)).toBeTruthy(), { timeout: 3000, interval: 50 });
+    // Regresión concreta: v2 sigue presente después del refetch (pinned), y
+    // TODAS las versiones 1-4 están listadas, cada una UNA sola vez.
+    for (const no of [4, 3, 2, 1]) {
+      expect(screen.getAllByRole('button', { name: new RegExp(`(^|[^0-9])v${no} ·`) }).length).toBe(1);
+    }
+    // union == total: aviso y botón desaparecen, sin omisiones ni duplicados.
+    await waitFor(() => expect(screen.queryByText('Mostrando 3 de 4 versiones')).toBeNull());
+    expect(screen.queryByTestId('draft-versions-load-more')).toBeNull();
+  });
+
+  it('total_count se reinterpreta al refetch de página 1 tras un guardado no coalescido', async () => {
+    let total = 3;
+    let page1 = [meta(3), meta(2, 'autosave')];
+    fetchMock = vi.fn(async (url: string, opts?: RequestInit) => {
+      const urlStr = String(url);
+      if (urlStr.includes('/api/ai/usage')) {
+        return { ok: true, json: async () => ({ allowance: usageAllowance }) } as Response;
+      }
+      if (opts?.method === 'PUT') {
+        return {
+          ok: true,
+          // Guardado NOT coalescido: el total crece a 4 y aparece v4.
+          json: async () => {
+            total = 4;
+            page1 = [meta(4), ...page1];
+            return { draft: makeDraft({ content: '<p>v4 del editor</p>', content_format: 'html', revision: 3 }) };
+          },
+        } as Response;
+      }
+      if (/\/drafts\/[^/]+\/versions(\?.*|$)/.test(urlStr)) {
+        if (urlStr.includes('before=')) {
+          return { ok: true, json: async () => ({ versions: [], total_count: total }) } as Response;
+        }
+        return { ok: true, json: async () => ({ versions: [...page1], total_count: total }) } as Response;
+      }
+      if (/\/drafts\/[^/]+$/.test(urlStr)) {
+        return { ok: true, json: async () => ({ draft: DRAFT }) } as Response;
+      }
+      return { ok: true, json: async () => ({ drafts: [DRAFT] }) } as Response;
+    });
+    (globalThis as unknown as { fetch: typeof fetch }).fetch = fetchMock as unknown as typeof fetch;
+    renderDrafts();
+    await openFirstDraft();
+    await screen.findByText('Mostrando 2 de 3 versiones');
+    const ed = mainEditor();
+    act(() => { ed!.commands.setContent('<p>edición no coalescida</p>', { emitUpdate: true }); });
+    await waitFor(() => expect(screen.getByText(/v4 ·/)).toBeTruthy(), { timeout: 3000, interval: 50 });
+    // El refetch trajo total_count=4: el contador, no el estado viejo de 3.
+    await waitFor(() => expect(screen.getByText('Mostrando 3 de 4 versiones')).toBeTruthy(), { timeout: 3000, interval: 50 });
+  });
 });

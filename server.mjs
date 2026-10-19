@@ -12138,6 +12138,14 @@ app.get('/api/ai/cases/:caseId/drafts/:draftId', async (req, res) => {
 // (generation/restore/legacy/others los fija el servidor).
 const DRAFT_CLIENT_SAVE_ORIGINS = new Set(['edit', 'autosave']);
 const DRAFT_CONTENT_FORMATS = new Set(['markdown', 'html']);
+// FASE 4.62E — coalescencia de autosaves consecutivos. El debounce de 800 ms
+// del editor insertaba una fila completa (content + sources) por cada pausa de
+// teclado, sin política de retención (append-only puro). Ahora, si la versión
+// más reciente del borrador es origin='autosave' y fue creada dentro de esta
+// ventana, el PUT autosave la ACTUALIZA en sitio preservando version_no y
+// created_at (la ventana corre desde el primer autosave, sin deslizar).
+// generation/edit/restore/legacy siguen siendo append-only. 0 desactiva.
+const DRAFT_AUTOSAVE_COALESCE_MS = Number(process.env.DRAFT_AUTOSAVE_COALESCE_MS ?? 10 * 60 * 1000);
 
 /**
  * Baseline 0 para draft legacy sin versiones: preserva el contenido PREVIO al
@@ -12187,8 +12195,59 @@ async function ensureDraftLegacyBaseline(draft) {
  * actualizado: jamás persiste contenido que la base rechazó. UNIQUE(draft_id,
  * version_no) con una carrera reintenta recalculando; segunda violación sale
  * como 409 del guard de revisión del head, nunca como pérdida.
+ *
+ * FASE 4.62E: si origin='autosave' y la versión más reciente también es
+ * 'autosave' dentro de DRAFT_AUTOSAVE_COALESCE_MS, en lugar de insertar se
+ * ACTUALIZA esa fila preservando version_no y created_at. La actualización
+ * lleva eq(version_no) eq(origin='autosave') (y detección de 0 filas
+ * matcheadas): una carrera no puede mutar una fila que ya dejó de ser head
+ * ni sobrescribir una versión de procedencia distinta; si el head cambió, el
+ * autosave cae al camino append-only con max+1. Devuelve
+ * { version_no, coalesced }.
  */
 async function insertDraftVersionHead({ draft, content, contentFormat, origin }) {
+  const readHead = async () => {
+    const { data: last, error } = await supabase
+      .from('ai_case_draft_versions')
+      .select('version_no, origin, created_at')
+      .eq('draft_id', draft.id)
+      .eq('lawyer_id', draft.lawyer_id)
+      .order('version_no', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    return last;
+  };
+  if (origin === 'autosave' && DRAFT_AUTOSAVE_COALESCE_MS > 0) {
+    const head = await readHead();
+    const headNo = head ? Number(head.version_no) : null;
+    const createdAt = head?.created_at ? Date.parse(head.created_at) : NaN;
+    if (
+      headNo !== null &&
+      head?.origin === 'autosave' &&
+      Number.isFinite(createdAt) &&
+      Date.now() - createdAt <= DRAFT_AUTOSAVE_COALESCE_MS
+    ) {
+      const { data: coalesced, error: coalesceError } = await supabase
+        .from('ai_case_draft_versions')
+        .update({
+          content,
+          content_format: contentFormat,
+          sources: draft.sources || [],
+          title: draft.title,
+        })
+        .eq('draft_id', draft.id)
+        .eq('lawyer_id', draft.lawyer_id)
+        .eq('version_no', headNo)
+        .eq('origin', 'autosave')
+        .maybeSingle();
+      if (coalesceError) throw coalesceError;
+      // 0 filas matcheadas: el head cambió bajo el read (o ya no es autosave).
+      // No se fuerza la escritura: cae al insert append-only como cualquier
+      // otro guardado.
+      if (coalesced) return { version_no: headNo, coalesced: true };
+    }
+  }
   const readMax = async () => {
     const { data: last, error } = await supabase
       .from('ai_case_draft_versions')
@@ -12220,12 +12279,12 @@ async function insertDraftVersionHead({ draft, content, contentFormat, origin })
   const { error } = await insertOne(first);
   if (!error || error?.code !== '23505') {
     if (error) throw error;
-    return first;
+    return { version_no: first, coalesced: false };
   }
   const retryNo = ((await readMax()) ?? 0) + 1;
   const { error: retryError } = await insertOne(retryNo);
   if (retryError) throw retryError;
-  return retryNo;
+  return { version_no: retryNo, coalesced: false };
 }
 
 app.put('/api/ai/cases/:caseId/drafts/:draftId', async (req, res) => {
@@ -12298,8 +12357,8 @@ app.put('/api/ai/cases/:caseId/drafts/:draftId', async (req, res) => {
         current_revision: Number(rebound?.revision) || currentRevision + 1,
       });
     }
-    const versionNo = await insertDraftVersionHead({ draft: existing, content, contentFormat, origin });
-    res.json({ draft: data, version: { version_no: versionNo } });
+    const saved = await insertDraftVersionHead({ draft: existing, content, contentFormat, origin });
+    res.json({ draft: data, version: { version_no: saved.version_no, ...(saved.coalesced ? { coalesced: true } : {}) } });
   } catch (error) {
     console.error('[LegalUpAI] draft update error:', error?.code && error.code !== '23505' ? `code=${error.code}` : error);
     if (error?.code === '23505') {
@@ -12321,6 +12380,17 @@ app.get('/api/ai/cases/:caseId/drafts/:draftId/versions', async (req, res) => {
     if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
     const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
     if (entitlement.res) return entitlement.res;
+    // FASE 4.62E — paginación descendente: `before` devuelve las versiones con
+    // version_no < before (mismo orden DESC, páginas de hasta 200). `before` no
+    // altera numeración ni restauración; es solo un cursor de lectura.
+    const rawBefore = req.query?.before;
+    let beforeNo = null;
+    if (rawBefore !== undefined) {
+      beforeNo = Number(rawBefore);
+      if (!Number.isInteger(beforeNo) || beforeNo < 0) {
+        return res.status(400).json({ error: 'Cursor inválido.', code: 'INVALID_REQUEST' });
+      }
+    }
     const { data: draft, error: draftError } = await supabase
       .from('ai_case_drafts')
       .select('id')
@@ -12330,15 +12400,26 @@ app.get('/api/ai/cases/:caseId/drafts/:draftId/versions', async (req, res) => {
       .maybeSingle();
     if (draftError) throw draftError;
     if (!draft) return res.status(404).json({ error: 'Borrador no encontrado.' });
-    const { data, error } = await supabase
+    // total_count filtra solo ownership (sin cursor): el cliente sabe si hay
+    // más páginas allá de lo listado. version_no es la única columna; es una
+    // lectura liviana y evita depender de count exacto del cliente.
+    const { data: allNos, error: countError } = await supabase
+      .from('ai_case_draft_versions')
+      .select('version_no')
+      .eq('draft_id', req.params.draftId)
+      .eq('lawyer_id', userId);
+    if (countError) throw countError;
+    let query = supabase
       .from('ai_case_draft_versions')
       .select('version_no, origin, content_format, model, title, created_at')
       .eq('draft_id', req.params.draftId)
-      .eq('lawyer_id', userId)
+      .eq('lawyer_id', userId);
+    if (beforeNo !== null) query = query.lt('version_no', beforeNo);
+    const { data, error } = await query
       .order('version_no', { ascending: false })
       .limit(200);
     if (error) throw error;
-    res.json({ versions: data || [] });
+    res.json({ versions: data || [], total_count: (allNos || []).length });
   } catch (error) {
     console.error('[LegalUpAI] draft versions list error:', error);
     res.status(500).json({ error: 'No se pudo abrir el historial.' });
@@ -12433,7 +12514,7 @@ app.post('/api/ai/cases/:caseId/drafts/:draftId/versions/:versionNo/restore', as
         current_revision: currentRevision + 1,
       });
     }
-    const restoredVersionNo = await insertDraftVersionHead({
+    const restored = await insertDraftVersionHead({
       draft: existing,
       content: version.content,
       contentFormat: version.content_format || 'markdown',
@@ -12441,7 +12522,7 @@ app.post('/api/ai/cases/:caseId/drafts/:draftId/versions/:versionNo/restore', as
     });
     res.json({
       draft: data,
-      version: { version_no: restoredVersionNo, origin: 'restore', restored_from: versionNo },
+      version: { version_no: restored.version_no, origin: 'restore', restored_from: versionNo },
     });
   } catch (error) {
     console.error('[LegalUpAI] draft restore error:', error);

@@ -585,17 +585,81 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   }, []);
 
   // Historial de versiones del borrador abierto.
+  // FASE 4.62E — primera página (hasta 200, DESC) via React Query; páginas
+  // anteriores se anexan manualmente (olderVersions) con el cursor
+  // ?before=<min version_no>. total_count permite saber si quedan más.
   const versionsQuery = useQuery<CaseDraftVersionMeta[]>({
     queryKey: [...AI_CASE_DRAFTS_QUERY_KEY, workspaceId, openId, 'versions'],
     enabled: !!openId,
     queryFn: async () => {
-      const body = await requestJson<{ versions?: CaseDraftVersionMeta[] }>(
+      const body = await requestJson<{ versions?: CaseDraftVersionMeta[]; total_count?: number }>(
         `${getApiBaseUrl()}/api/ai/cases/${workspaceId}/drafts/${openId}/versions`,
         { method: 'GET' }
       );
+      if (typeof body?.total_count === 'number') setVersionsTotal(body.total_count);
       return body?.versions ?? [];
     },
   });
+  const [olderVersions, setOlderVersions] = useState<CaseDraftVersionMeta[]>([]);
+  const [olderLoading, setOlderLoading] = useState(false);
+  const [olderError, setOlderError] = useState<string | null>(null);
+  const [versionsTotal, setVersionsTotal] = useState<number | null>(null);
+  // Dedupe por version_no: los refetch de página 1 tras cada guardado no
+  // pueden duplicar filas frente a las páginas ya anexadas. Se conserva el
+  // orden DESC del servidor.
+  const mergedVersions = useMemo(() => {
+    const seen = new Set<number>();
+    const out: CaseDraftVersionMeta[] = [];
+    for (const v of [...(versionsQuery.data ?? []), ...olderVersions]) {
+      if (seen.has(v.version_no)) continue;
+      seen.add(v.version_no);
+      out.push(v);
+    }
+    return out;
+  }, [versionsQuery.data, olderVersions]);
+  useEffect(() => {
+    // Cambio de borrador: el historial paginado/paginación se reinicia.
+    setOlderVersions([]);
+    setOlderError(null);
+    setVersionsTotal(null);
+    setOlderLoading(false);
+  }, [openId]);
+  const loadOlderVersions = async () => {
+    if (!openId || olderLoading) return;
+    // Ancla de frontera: la fila mínima ya mostrada se fija en el estado anexo
+    // ANTES del fetch; así, si un guardado refresca la página 1 y esta fila
+    // sale fuera del top-200, no decae en el corte entre páginas. Regresión
+    // cubierta por 'no omite versiones en la unión' (fase 4.62E.1).
+    setOlderVersions((prev) => {
+      const minRow = mergedVersions[mergedVersions.length - 1];
+      if (!minRow || prev.some((v) => v.version_no === minRow.version_no)) return prev;
+      return [...prev, minRow];
+    });
+    const minShown = mergedVersions.length ? mergedVersions[mergedVersions.length - 1].version_no : null;
+    if (minShown === null || minShown <= 0) return;
+    setOlderLoading(true);
+    setOlderError(null);
+    try {
+      const body = await requestJson<{ versions?: CaseDraftVersionMeta[]; total_count?: number }>(
+        `${getApiBaseUrl()}/api/ai/cases/${workspaceId}/drafts/${openId}/versions?before=${minShown}`,
+        { method: 'GET' }
+      );
+      if (typeof body?.total_count === 'number') setVersionsTotal(body.total_count);
+      const arrived = body?.versions ?? [];
+      if (openIdRef.current !== openId) return;
+      setOlderVersions((prev) => {
+        const seen = new Set<number>([
+          ...(versionsQuery.data ?? []).map((v) => v.version_no),
+          ...prev.map((v) => v.version_no),
+        ]);
+        return [...prev, ...arrived.filter((v) => !seen.has(v.version_no))];
+      });
+    } catch (e) {
+      setOlderError(e instanceof Error ? e.message : 'No se pudo cargar el historial anterior.');
+    } finally {
+      if (openIdRef.current === openId) setOlderLoading(false);
+    }
+  };
 
   const generate = useMutation({
     mutationFn: async () => {
@@ -928,24 +992,47 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                   </p>
                   {versionsQuery.isLoading ? (
                     <p className="text-xs text-muted-foreground">Cargando historial…</p>
-                  ) : (versionsQuery.data ?? []).length === 0 ? (
+                  ) : mergedVersions.length === 0 ? (
                     <p className="text-xs text-muted-foreground">Aún no hay versiones registradas.</p>
                   ) : (
-                    <ul className="space-y-1">
-                      {(versionsQuery.data ?? []).map((v) => (
-                        <li key={v.version_no}>
-                          <button
-                            onClick={() => void openVersionDetail(v.version_no)}
-                            className="w-full text-left rounded border px-2 py-1 text-xs hover:bg-gray-50"
+                    <>
+                      {versionsTotal != null && versionsTotal > mergedVersions.length ? (
+                        <p className="text-xs text-muted-foreground mb-1">
+                          Mostrando {mergedVersions.length} de {versionsTotal} versiones
+                        </p>
+                      ) : null}
+                      <ul className="space-y-1">
+                        {mergedVersions.map((v) => (
+                          <li key={v.version_no}>
+                            <button
+                              onClick={() => void openVersionDetail(v.version_no)}
+                              className="w-full text-left rounded border px-2 py-1 text-xs hover:bg-gray-50"
+                            >
+                              v{v.version_no} · {VERSION_ORIGIN_LABEL[v.origin] ?? v.origin}
+                              <span className="text-muted-foreground ml-1">
+                                {new Date(v.created_at).toLocaleString('es-CL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                      {versionsTotal != null && versionsTotal > mergedVersions.length ? (
+                        <div className="mt-2 space-y-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            data-testid="draft-versions-load-more"
+                            disabled={olderLoading}
+                            onClick={() => void loadOlderVersions()}
                           >
-                            v{v.version_no} · {VERSION_ORIGIN_LABEL[v.origin] ?? v.origin}
-                            <span className="text-muted-foreground ml-1">
-                              {new Date(v.created_at).toLocaleString('es-CL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
+                            {olderLoading ? 'Cargando…' : 'Cargar versiones anteriores'}
+                          </Button>
+                          {olderError ? (
+                            <p className="text-xs text-red-600" role="alert">{olderError}</p>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </>
                   )}
                 </div>
               ) : null}
