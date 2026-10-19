@@ -1274,3 +1274,252 @@ describe('FASE 4.62D.33 switch durante guardado en curso: el texto local no se d
     expect(mainEditor()!.getHTML()).toContain('Párrafo bajo de B.');
   }, 20000);
 });
+
+// FASE 4.62D.34 — cierre del editor: closeDraft desmontaba el editor sin
+// advertir contenido no confirmado en el servidor (dirty/saving/error/
+// conflict). La matriz A–H prueba el flujo de resolución explícita:
+// Seguir editando / Guardar y cerrar / Descartar y cerrar.
+describe('FASE 4.62D.34 cierre del editor no descarta contenido sin confirmación', () => {
+  const A_ID34 = 'dA';
+  const B_ID34 = 'dB';
+  const TITLE_A34 = 'Contestación revisión alta';
+  const TITLE_B34 = 'Carta revisión baja';
+  const draftA34 = makeDraft({ id: A_ID34, title: TITLE_A34, revision: 1, content: '# TextoA\n\nPárrafo alto de A.' });
+  const draftB34 = makeDraft({ id: B_ID34, title: TITLE_B34, revision: 1, content: '# TextoB\n\nPárrafo bajo de B.' });
+  const LOCAL_HTML34 = '<p>cierre con texto en vuelo</p>';
+  let gateRelease34: (() => void) | null = null;
+
+  beforeEach(() => {
+    const byId: Record<string, unknown> = { [A_ID34]: draftA34, [B_ID34]: draftB34 };
+    gateRelease34 = null;
+    fetchMock = vi.fn(async (url: string, opts?: RequestInit) => {
+      const urlStr = String(url);
+      if (urlStr.includes('/api/ai/usage')) {
+        return { ok: true, json: async () => ({ allowance: usageAllowance }) } as Response;
+      }
+      if (opts?.method === 'PUT') {
+        if (holdPutGate) {
+          const gate = holdPutGate;
+          holdPutGate = null;
+          await gate;
+        }
+        if (putFailure) {
+          const fail = putFailure;
+          return { ok: false, status: fail.status, json: async () => fail.body } as unknown as Response;
+        }
+        const body = JSON.parse(String(opts?.body ?? '{}')) as { content?: string; base_revision?: number };
+        return {
+          ok: true,
+          json: async () => ({ draft: makeDraft({ content: body.content ?? '', content_format: 'html', revision: (body.base_revision ?? 1) + 1 }) }),
+        } as Response;
+      }
+      if (/\/drafts\/[^/]+\/versions\/\d+$/.test(urlStr)) {
+        return { ok: true, json: async () => ({ version: versionDetail }) } as Response;
+      }
+      if (/\/drafts\/[^/]+\/versions$/.test(urlStr)) {
+        return { ok: true, json: async () => ({ versions: versionsPayload }) } as Response;
+      }
+      if (/\/drafts\/[^/]+$/.test(urlStr)) {
+        const m = urlStr.match(/\/drafts\/([^/?]+)$/) as RegExpMatchArray;
+        return { ok: true, json: async () => ({ draft: byId[m[1]] ?? draftA34 }) } as Response;
+      }
+      return { ok: true, json: async () => ({ drafts: [draftA34, draftB34] }) } as Response;
+    });
+    (globalThis as unknown as { fetch: typeof fetch }).fetch = fetchMock as unknown as typeof fetch;
+  });
+
+  const abrirA34 = async () => {
+    renderDrafts();
+    fireEvent.click(await screen.findByText(TITLE_A34));
+    await screen.findByText(/Párrafo alto de A\./);
+  };
+  const panelDeCierre = async () => {
+    fireEvent.click(screen.getByText('Cerrar'));
+    await screen.findByText(/Tienes cambios sin guardar en Contestación revisión alta/);
+    expect(await screen.findByText('Seguir editando')).toBeTruthy();
+    expect(screen.getByText('Guardar y cerrar')).toBeTruthy();
+    expect(screen.getByText('Descartar y cerrar')).toBeTruthy();
+    expect(screen.getByTestId('draft-editor-pane')).toBeTruthy();
+    expect(mainEditor()!.getHTML()).toContain('cierre con texto en vuelo');
+  };
+
+  it('1. dirty: Cerrar no desmonta y exige resolución explícita', async () => {
+    await abrirA34();
+    act(() => { mainEditor()!.commands.setContent(LOCAL_HTML34, { emitUpdate: true }); });
+    await panelDeCierre();
+  }, 20000);
+
+  it('2. dirty: Guardar y cerrar confirma el contenido y vuelve a la lista', async () => {
+    await abrirA34();
+    act(() => { mainEditor()!.commands.setContent(LOCAL_HTML34, { emitUpdate: true }); });
+    fireEvent.click(screen.getByText('Cerrar'));
+    await screen.findByText('Guardar y cerrar', {}, { timeout: 4000, interval: 50 });
+    fireEvent.click(screen.getByText('Guardar y cerrar'));
+    await screen.findByText(TITLE_A34, {}, { timeout: 4000, interval: 50 });
+    expect(screen.getByText('Editor de borrador')).toBeTruthy();
+    await waitFor(() => expect(putCalls()).toHaveLength(1), { timeout: 3000, interval: 50 });
+    expect(putBody(putCalls()[0]).base_revision).toBe(1);
+    expect(putBody(putCalls()[0]).content).toContain('cierre con texto en vuelo');
+  }, 20000);
+
+  it('3. saving en vuelo: Guardar y cerrar se une al PUT y cierra al confirmar el éxito', async () => {
+    await abrirA34();
+    holdPutGate = new Promise<void>((r) => { gateRelease34 = r; });
+    act(() => { mainEditor()!.commands.setContent(LOCAL_HTML34, { emitUpdate: true }); });
+    await screen.findByText('Guardando…', {}, { timeout: 4000, interval: 50 });
+    fireEvent.click(screen.getByText('Cerrar'));
+    await screen.findByText('Guardar y cerrar', {}, { timeout: 4000, interval: 50 });
+    fireEvent.click(screen.getByText('Guardar y cerrar'));
+    gateRelease34?.();
+    await screen.findByText(TITLE_A34, {}, { timeout: 4000, interval: 50 });
+    expect(screen.getByText('Editor de borrador')).toBeTruthy();
+    expect(putCalls()).toHaveLength(1);
+  }, 20000);
+
+  it('4. saving en vuelo que fracasa en 500: el cierre no avanza, A conserva el texto', async () => {
+    await abrirA34();
+    holdPutGate = new Promise<void>((r) => { gateRelease34 = r; });
+    act(() => { mainEditor()!.commands.setContent(LOCAL_HTML34, { emitUpdate: true }); });
+    await screen.findByText('Guardando…', {}, { timeout: 4000, interval: 50 });
+    fireEvent.click(screen.getByText('Cerrar'));
+    await screen.findByText('Guardar y cerrar', {}, { timeout: 4000, interval: 50 });
+    fireEvent.click(screen.getByText('Guardar y cerrar'));
+    putFailure = { status: 500, body: { error: 'No se pudo guardar el borrador.' } };
+    gateRelease34?.();
+    await screen.findByText('Error al guardar', {}, { timeout: 4000, interval: 50 });
+    expect(screen.queryByTestId('draft-editor-pane')).toBeTruthy();
+    expect(mainEditor()!.getHTML()).toContain('cierre con texto en vuelo');
+    expect(screen.getByText('Descartar y cerrar')).toBeTruthy();
+  }, 20000);
+
+  it('5. error previo: Cerrar ofrece resolución y Descartar y cerrar limpia sin PUT extra', async () => {
+    putFailure = { status: 500, body: { error: 'No se pudo guardar el borrador.' } };
+    await abrirA34();
+    act(() => { mainEditor()!.commands.setContent(LOCAL_HTML34, { emitUpdate: true }); });
+    await screen.findByText('Error al guardar', {}, { timeout: 4000, interval: 50 });
+    putFailure = null;
+    fireEvent.click(screen.getByText('Cerrar'));
+    fireEvent.click(screen.getByText('Descartar y cerrar'));
+    await screen.findByText(TITLE_A34);
+    expect(screen.getByText('Editor de borrador')).toBeTruthy();
+    expect(putCalls()).toHaveLength(1);
+  }, 20000);
+
+  it('6. conflict: Cerrar no descarta; Guardar y cerrar sin force mantiene el 409; solo el descarte cierra', async () => {
+    await abrirA34();
+    putFailure = { status: 409, body: { error: 'El documento cambió en otro dispositivo o pestaña.', code: 'AI_DRAFT_REVISION_CONFLICT', current_revision: 3 }, statusLabel: 'Cambios en conflicto' };
+    act(() => { mainEditor()!.commands.setContent(LOCAL_HTML34, { emitUpdate: true }); });
+    await screen.findByText('Cambios en conflicto', {}, { timeout: 4000, interval: 50 });
+    fireEvent.click(screen.getByText('Cerrar'));
+    fireEvent.click(screen.getByText('Guardar y cerrar'));
+    await screen.findByText(/tú decides qué pasa/, {}, { timeout: 4000, interval: 50 });
+    await waitFor(() => expect(putCalls()).toHaveLength(2), { timeout: 3000, interval: 50 });
+    // Sin fuerza: la nota "no asumir" sobre la revisión del servidor.
+    expect(putBody(putCalls()[1]).force).not.toBe(true);
+    expect(screen.queryByText('Editor de borrador')).toBeNull();
+    expect(mainEditor()!.getHTML()).toContain('cierre con texto en vuelo');
+    fireEvent.click(screen.getByText('Descartar y cerrar'));
+    await screen.findByText(TITLE_A34);
+    expect(screen.getByText('Editor de borrador')).toBeTruthy();
+  }, 20000);
+
+  it('7. saved e idle: cierre directo sin panel y sin PUT extra', async () => {
+    // idle sin ediciones.
+    await abrirA34();
+    fireEvent.click(screen.getByText('Cerrar'));
+    await screen.findByText(TITLE_A34);
+    expect(screen.getByText('Editor de borrador')).toBeTruthy();
+    expect(putCalls()).toHaveLength(0);
+    // saved tras un PUT confirmado.
+    fireEvent.click(await screen.findByText(TITLE_A34));
+    await screen.findByText(/Párrafo alto de A\./);
+    act(() => { mainEditor()!.commands.setContent('<p>boceto guardado</p>', { emitUpdate: true }); });
+    await screen.findByText('Guardado', {}, { timeout: 4000, interval: 50 });
+    fireEvent.click(screen.getByText('Cerrar'));
+    await screen.findByText(TITLE_A34);
+    expect(screen.getByText('Editor de borrador')).toBeTruthy();
+    expect(putCalls()).toHaveLength(1);
+  }, 20000);
+
+  it('8. cancelar: Seguir editando conserva el editor y el autosave persiste el texto', async () => {
+    await abrirA34();
+    act(() => { mainEditor()!.commands.setContent(LOCAL_HTML34, { emitUpdate: true }); });
+    fireEvent.click(screen.getByText('Cerrar'));
+    await panelDeCierre();
+    fireEvent.click(screen.getByText('Seguir editando'));
+    expect(screen.queryByText('Guardar y cerrar')).toBeNull();
+    expect(screen.getByTestId('draft-editor-pane')).toBeTruthy();
+    await waitFor(() => expect(putBody(putCalls()[0]).content).toContain('cierre con texto en vuelo'), { timeout: 3000, interval: 50 });
+    expect(screen.getByTestId('draft-editor-pane')).toBeTruthy();
+  }, 20000);
+
+  it('9. descarte con PUT en vuelo: la respuesta tardía no contamina la lista ni otro borrador', async () => {
+    await abrirA34();
+    holdPutGate = new Promise<void>((r) => { gateRelease34 = r; });
+    act(() => { mainEditor()!.commands.setContent(LOCAL_HTML34, { emitUpdate: true }); });
+    await screen.findByText('Guardando…', {}, { timeout: 4000, interval: 50 });
+    fireEvent.click(screen.getByText('Cerrar'));
+    await screen.findByText('Guardar y cerrar', {}, { timeout: 4000, interval: 50 });
+    fireEvent.click(screen.getByText('Descartar y cerrar'));
+    await screen.findByText(TITLE_A34);
+    gateRelease34?.();
+    await new Promise((r) => setTimeout(r, 300));
+    expect(putCalls()).toHaveLength(1);
+    expect(screen.queryByText(/Tienes cambios sin guardar/)).toBeNull();
+    // La lista sigue usable: abrir B funciona tras la respuesta tardía.
+    fireEvent.click((await screen.findAllByText(TITLE_B34))[0]);
+    await screen.findByText(/Párrafo bajo de B\./);
+    act(() => { mainEditor()!.commands.setContent('<p>edición de B después del descarte</p>', { emitUpdate: true }); });
+    await waitFor(() => expect(putCalls()).toHaveLength(2), { timeout: 3000, interval: 50 });
+    expect(putBody(putCalls().find((c) => String(c[0]).includes(`/drafts/${B_ID34}`))!).base_revision).toBe(1);
+  }, 20000);
+
+  it('A1. PUT de A confirma mientras un debounce rescata edición posterior: Cerrar no descarta el texto vivo', async () => {
+    await abrirA34();
+    holdPutGate = new Promise<void>((r) => { gateRelease34 = r; });
+    act(() => { mainEditor()!.commands.setContent('<p>primer borrador guardado</p>', { emitUpdate: true }); });
+    await waitFor(() => expect(putCalls()).toHaveLength(1), { timeout: 3000, interval: 50 });
+    // Edición durante el vuelo: scheduleSave marca dirty y arma el debounce.
+    act(() => { mainEditor()!.commands.setContent('<p>edición posterior no confirmada</p>', { emitUpdate: true }); });
+    gateRelease34?.();
+    await screen.findByText('Guardado', {}, { timeout: 4000, interval: 50 });
+    // statusRef quedó 'saved' con el debounce de la edición posterior vigente.
+    fireEvent.click(screen.getByText('Cerrar'));
+    // El gate de cierre exige HTML vivo === confirmado, no solo 'saved'.
+    await screen.findByText('Guardar y cerrar', {}, { timeout: 4000, interval: 50 });
+    expect(mainEditor()!.getHTML()).toContain('edición posterior no confirmada');
+    fireEvent.click(screen.getByText('Guardar y cerrar'));
+    await screen.findByText(TITLE_A34, {}, { timeout: 4000, interval: 50 });
+    expect(screen.getByText('Editor de borrador')).toBeTruthy();
+    await waitFor(() => expect(putCalls()).toHaveLength(2), { timeout: 3000, interval: 50 });
+    expect(putBody(putCalls()[1]).content).toContain('edición posterior no confirmada');
+  }, 20000);
+
+  it('A2. cambiar de borrador desde el panel de cierre no arrastra el panel ni su identidad a B', async () => {
+    await abrirA34();
+    act(() => { mainEditor()!.commands.setContent(LOCAL_HTML34, { emitUpdate: true }); });
+    fireEvent.click(screen.getByText('Cerrar'));
+    await screen.findByText('Guardar y cerrar', {}, { timeout: 4000, interval: 50 });
+    // Transición real permitida: desde el panel de cierre el usuario elige
+    // otro borrador: aparece el gate de pendingSwitch (dirty) y el descarte
+    // y apertura limpia también el panel de cierre.
+    fireEvent.click((await screen.findAllByText(TITLE_B34))[0]);
+    // Cierre pendiente y switch conviven en A; ambos paneles muestran el
+    // mismo titular: basta con que el gate esté presente.
+    await screen.findAllByText(/Tienes cambios sin guardar en Contestación revisión alta/);
+    fireEvent.click(screen.getByText('Descartar cambios y abrir'));
+    // B abre limpio: el panel de cierre de A no persiste sobre el nuevo.
+    await screen.findByText(/Párrafo bajo de B\./);
+    expect(screen.queryByText('Guardar y cerrar')).toBeNull();
+    expect(screen.queryByText(/Tienes cambios sin guardar en Carta revisión baja/)).toBeNull();
+    // El B abierto sigue operativo: autosave normal, base 1.
+    holdPutGate = new Promise<void>((r) => { gateRelease34 = r; });
+    act(() => { mainEditor()!.commands.setContent('<p>edición de B tras el cambio de panel</p>', { emitUpdate: true }); });
+    await screen.findByText('Guardando…', {}, { timeout: 4000, interval: 50 });
+    gateRelease34?.();
+    await screen.findByText('Guardado', {}, { timeout: 4000, interval: 50 });
+    expect(mainEditor()!.getHTML()).toContain('edición de B tras el cambio de panel');
+    expect(putCalls()).toHaveLength(1);
+    expect(putBody(putCalls().find((c) => String(c[0]).includes(`/drafts/${B_ID34}`))!).base_revision).toBe(1);
+  }, 20000);
+});

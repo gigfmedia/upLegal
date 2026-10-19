@@ -233,6 +233,10 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [saveConflict, setSaveConflict] = useState<{ current_revision: number; message: string } | null>(null);
   const [pendingSwitch, setPendingSwitch] = useState<{ targetId: string; targetTitle: string } | null>(null);
+  // FASE 4.62D.34: cierre del editor con contenido no confirmado exige
+  // resolución explícita; el panel se monta sobre el mismo patrón de
+  // acciones (Continuar / Guardar / Descartar) que pendingSwitch.
+  const [pendingClose, setPendingClose] = useState(false);
   const [previewVersion, setPreviewVersion] = useState<CaseDraftVersionDetail | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
   const [restoring, setRestoring] = useState(false);
@@ -298,6 +302,9 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
     }
     setError(null);
     setPendingSwitch(null);
+    // FASE 4.62D.34.2 (A2): un panel de cierre ya no pertenece al borrador
+    // nuevo; el desmonte del editor por apertura normal lo limpia.
+    setPendingClose(false);
     setPreviewVersion(null);
     setDetailError(null);
     setSaveConflict(null);
@@ -683,7 +690,38 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
     }
   };
 
-  const closeDraft = () => {
+  const closeDraft = (opts?: { force?: boolean }) => {
+    // FASE 4.62D.34: el cierre también contiene la única copia local cuando
+    // hay texto sin confirmar (dirty), un PUT en vuelo (saving), un guardado
+    // fallido (error) o un conflicto OCC (conflict). Igual que el cambio de
+    // borrador (FASE 4.62D.33), el desmonte exige elegir con certeza, y el
+    // reglamento del PUT o el trailing save en vuelo se resuelve como en
+    // Guardar y abrir.
+    // FASE 4.62D.34.2 (A1): 'saved' por sí solo no es prueba de cierre seguro
+    // — un PUT que confirma mientras el debounce de una edición posterior
+    // sigue armado deja statusRef 'saved' con HTML no confirmado. La fuente
+    // de verdad del cierre es el HTML vivo contra lastSavedHtmlRef. Las
+    // demás escrituras pendientes se manifiestan en statusRef: el PUT en
+    // vuelo y el trailing setean 'saving' de forma síncrona antes de
+    // cualquier await, y el debounce solo vive junto a un campo si está en
+    // ese estado 'saved' obsoleto, por lo que la comparación de HTML cierra
+    // todas las ventanas observables sin sistema de estado paralelo.
+    const liveEditor = editorRef.current;
+    const liveHtml = liveEditor && !liveEditor.isDestroyed ? liveEditor.getHTML() : null;
+    if (
+      !opts?.force
+      && (
+        statusRef.current === 'dirty'
+        || statusRef.current === 'saving'
+        || statusRef.current === 'error'
+        || statusRef.current === 'conflict'
+        || (liveHtml !== null && liveHtml !== lastSavedHtmlRef.current)
+      )
+    ) {
+      setPendingClose(true);
+      return;
+    }
+    setPendingClose(false);
     if (debounceRef.current) { clearTimeout(debounceRef.current); debounceRef.current = null; }
     openIdRef.current = null;
     setOpenId(null);
@@ -819,7 +857,7 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                       <button
                         key={d.id}
                         onClick={() => void openDraftById(d.id)}
-                        className={`w-full text-left rounded border px-3 py-2 hover:bg-gray-50 ${openId === d.id ? 'border-green-700' : ''}`}
+                        className={`w-full text-left rounded border px-3 py-2 hover:bg-gray-50 ${openId === d.id ? 'border-green-300' : ''}`}
                       >
                         <span className="text-sm font-medium">{d.title}</span>
                         <span className="text-xs text-muted-foreground ml-2">
@@ -915,6 +953,55 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                           }}
                         >
                           Descartar cambios y abrir
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {pendingClose ? (
+                    <div className="rounded border border-amber-300 bg-amber-50 p-3 space-y-2" role="alert">
+                      <p className="text-sm">Tienes cambios sin guardar en {openDraft.title}.</p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button size="sm" variant="outline" onClick={() => setPendingClose(false)}>
+                          Seguir editando
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            if (debounceRef.current) { clearTimeout(debounceRef.current); debounceRef.current = null; }
+                            // FASE 4.62D.34.2 (A2): identidad al momento del clic.
+                            // Si el usuario cancela y abre otro borrador antes
+                            // de que la unión resuelva, el .then no actúa y las
+                            // guards de openIdRef asilan la respuesta tardía.
+                            const forCloseId = openIdRef.current;
+                            // FASE 4.62D.34: mismas reglas que «Guardar y abrir»
+                            // (FASE 4.62D.30): el cierre solo procede con
+                            // 'saved' real; la unión espera el PUT en vuelo y
+                            // sin fuerza el conflicto 409 pide la decisión
+                            // explícita del panel de conflicto.
+                            setStatus('saving');
+                            void runSave({ origin: 'edit' }).then(() => {
+                              if (statusRef.current !== 'saved') return;
+                              if (openIdRef.current !== forCloseId || forCloseId === null) return;
+                              setPendingClose(false);
+                              closeDraft({ force: true });
+                            });
+                          }}
+                        >
+                          Guardar y cerrar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            // Descarte explícito: el cierre procede igual que
+                            // «Descartar cambios y abrir»; la respuesta tardía
+                            // del PUT en vuelo queda aislada por los guards de
+                            // identidad.
+                            closeDraft({ force: true });
+                          }}
+                        >
+                          Descartar y cerrar
                         </Button>
                       </div>
                     </div>
