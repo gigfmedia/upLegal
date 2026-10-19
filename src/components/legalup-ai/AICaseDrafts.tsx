@@ -277,10 +277,19 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
     // que el servidor. Tras un guardado fallido ('error') o un conflicto OCC
     // ('conflict'), el contenido del editor tampoco vive en el servidor:
     // abrir otro borrador sin confirmación descartaba el texto en silencio.
-    // La resolución explícita (Guardar y abrir / Descartar cambios y abrir)
-    // es la misma panelflow ya probada para 'dirty' (FASE 4.62D.30).
+    // FASE 4.62D.33: 'saving' entra en el mismo guard — el PUT en vuelo lleva
+    // el único contenido local capturado; si termina en fallo después de un
+    // cambio de borrador, la única copia se pierde (ruido de respuesta tardía
+    // ya aislado por los guards de identidad). La resolución explícita
+    // (Guardar y abrir / Descartar cambios y abrir) es la misma panelflow ya
+    // probada para 'dirty' (FASE 4.62D.30).
     if (
-      (statusRef.current === 'dirty' || statusRef.current === 'error' || statusRef.current === 'conflict')
+      (
+        statusRef.current === 'dirty'
+        || statusRef.current === 'saving'
+        || statusRef.current === 'error'
+        || statusRef.current === 'conflict'
+      )
       && !opts?.force
     ) {
       const target = drafts.find((d) => d.id === id);

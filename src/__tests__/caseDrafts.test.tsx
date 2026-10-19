@@ -753,7 +753,7 @@ describe('FASE 4.62D.11 cambio de borrador: la base OCC es la del borrador abier
     expect(putCalls().some((c) => putBody(c).base_revision === 1)).toBe(false);
   }, 20000);
 
-  it('respuesta tardía del PUT de A no contamina B: sin PUT extra, sin estado falsos y base de B intacta', async () => {
+  it('respuesta tardía del PUT de A no contamina B: resolución explícita durante el vuelo, sin PUT extra y base de B intacta', async () => {
     let releaseHold = () => {};
     renderDrafts();
     fireEvent.click(await screen.findByText(TITLE_A));
@@ -763,13 +763,19 @@ describe('FASE 4.62D.11 cambio de borrador: la base OCC es la del borrador abier
     act(() => { ed.commands.setContent('<p>edición de A en vuelo</p>', { emitUpdate: true }); });
     await waitFor(() => expect(putCalls()).toHaveLength(1), { timeout: 3000, interval: 50 });
     expect(putBody(putCalls()[0]).base_revision).toBe(10);
-    // Cambio a B mientras el PUT de A sigue retenido ('saving' no bloquea el switch).
+    // FASE 4.62D.33: 'saving' también exige resolución explícita; el switch
+    // directo de la fase 4.62D.11 era la ventana de pérdida que se corrige.
     fireEvent.click((await screen.findAllByText(TITLE_B))[0]);
-    await screen.findByText(/Párrafo bajo de B\./);
+    await screen.findByText(/Tienes cambios sin guardar/);
+    // Guardar y abrir: runSave se une al vuelo retenido y espera su resultado.
+    fireEvent.click(screen.getByText('Guardar y abrir'));
     releaseHold();
+    await screen.findByText(/Párrafo bajo de B\./);
     await new Promise((r) => setTimeout(r, 1200));
-    // La respuesta tardía de A (rev 11) resultó ignorada: sin trailing save ni PUT por B.
+    // La respuesta tardía de A (rev 11) fue la que CONFIRMÓ el contenido vía
+    // la unión: sin PUT extra (ni re-envío redundante ni PUT por B).
     expect(putCalls()).toHaveLength(1);
+    // Sin estado falso de guardado tras abrir B ('idle' → label vacío).
     expect(screen.getByTestId('save-status').textContent).toBe('');
     // La base OCC de B sigue siendo su propia revisión (1), no la de la respuesta tardía.
     act(() => { ed.commands.setContent('<p>edición de B tardía</p>', { emitUpdate: true }); });
@@ -1123,5 +1129,148 @@ describe('FASE 4.62D.32 recuperación tras fallo y conflicto: el texto local exi
     await screen.findByText(/Párrafo bajo de B\./);
     expect(mainEditor()!.getHTML()).toContain('Párrafo bajo de B.');
     expect(mainEditor()!.getHTML()).not.toContain('texto crítico');
+  }, 20000);
+});
+
+// FASE 4.62D.33 — ventana 'saving': un PUT en vuelo también contiene el
+// contenido local exclusivo mientras no confirme el servidor. Cambiar de
+// borrador en esa ventana sin resolución explícita expone el texto si el
+// vuelo termina en fallo. Deferred promise (holdPutGate) congela el vuelo
+// de forma determinista, sin sleeps arbitrarios.
+describe('FASE 4.62D.33 switch durante guardado en curso: el texto local no se descarta', () => {
+  const A_ID = 'dA';
+  const B_ID = 'dB';
+  const TITLE_A = 'Contestación revisión alta';
+  const TITLE_B = 'Carta revisión baja';
+  const draftA = makeDraft({ id: A_ID, title: TITLE_A, revision: 1, content: '# TextoA\n\nPárrafo alto de A.' });
+  const draftB = makeDraft({ id: B_ID, title: TITLE_B, revision: 1, content: '# TextoB\n\nPárrafo bajo de B.' });
+  const LOCAL_HTML = '<p>texto en vuelo no confirmado</p>';
+  let gateRelease: (() => void) | null = null;
+  let putNetworkFail = false;
+
+  beforeEach(() => {
+    const byId: Record<string, unknown> = { [A_ID]: draftA, [B_ID]: draftB };
+    gateRelease = null;
+    putNetworkFail = false;
+    fetchMock = vi.fn(async (url: string, opts?: RequestInit) => {
+      const urlStr = String(url);
+      if (urlStr.includes('/api/ai/usage')) {
+        return { ok: true, json: async () => ({ allowance: usageAllowance }) } as Response;
+      }
+      if (opts?.method === 'PUT') {
+        if (holdPutGate) {
+          const gate = holdPutGate;
+          holdPutGate = null;
+          await gate;
+        }
+        if (putNetworkFail) throw new TypeError('network down');
+        if (putFailure) {
+          const fail = putFailure;
+          return { ok: false, status: fail.status, json: async () => fail.body } as unknown as Response;
+        }
+        const body = JSON.parse(String(opts?.body ?? '{}')) as { content?: string; base_revision?: number };
+        return {
+          ok: true,
+          json: async () => ({ draft: makeDraft({ content: body.content ?? '', content_format: 'html', revision: (body.base_revision ?? 1) + 1 }) }),
+        } as Response;
+      }
+      if (/\/drafts\/[^/]+\/versions\/\d+$/.test(urlStr)) {
+        return { ok: true, json: async () => ({ version: versionDetail }) } as Response;
+      }
+      if (/\/drafts\/[^/]+\/versions$/.test(urlStr)) {
+        return { ok: true, json: async () => ({ versions: versionsPayload }) } as Response;
+      }
+      if (/\/drafts\/[^/]+$/.test(urlStr)) {
+        const m = urlStr.match(/\/drafts\/([^/?]+)$/) as RegExpMatchArray;
+        return { ok: true, json: async () => ({ draft: byId[m[1]] ?? draftA }) } as Response;
+      }
+      return { ok: true, json: async () => ({ drafts: [draftA, draftB] }) } as Response;
+    });
+    (globalThis as unknown as { fetch: typeof fetch }).fetch = fetchMock as unknown as typeof fetch;
+  });
+
+  // Vuelo congelado: PUT pendiente congelado con deferred promise.
+  const abrirAConVuelo = async () => {
+    renderDrafts();
+    fireEvent.click(await screen.findByText(TITLE_A));
+    await screen.findByText(/Párrafo alto de A\./);
+    holdPutGate = new Promise<void>((r) => { gateRelease = r; });
+    const ed = mainEditor()!;
+    act(() => { ed.commands.setContent(LOCAL_HTML, { emitUpdate: true }); });
+    await screen.findByText('Guardando…', {}, { timeout: 4000, interval: 50 });
+  };
+  const panelDeResolucion = async () => {
+    fireEvent.click((await screen.findAllByText(TITLE_B))[0]);
+    await screen.findByText(/Tienes cambios sin guardar en Contestación revisión alta/);
+    expect(screen.getByText('Guardar y abrir')).toBeTruthy();
+    expect(screen.getByText('Descartar cambios y abrir')).toBeTruthy();
+    expect(mainEditor()!.getHTML()).toContain('texto en vuelo no confirmado');
+  };
+
+  it('1. A. PUT pendiente + intento de abrir B: resolución explícita, texto local intacto', async () => {
+    await abrirAConVuelo();
+    await panelDeResolucion();
+    gateRelease?.();
+  }, 20000);
+
+  it('2. B. PUT pendiente termina en 500: A conserva el texto y B no se abre', async () => {
+    await abrirAConVuelo();
+    await panelDeResolucion();
+    putFailure = { status: 500, body: { error: 'No se pudo guardar el borrador.' } };
+    gateRelease?.();
+    await screen.findByText('Error al guardar', {}, { timeout: 4000, interval: 50 });
+    expect(mainEditor()!.getHTML()).toContain('texto en vuelo no confirmado');
+    expect(screen.queryByText(/Párrafo bajo de B\./)).toBeNull();
+    expect(screen.getByText(/Tienes cambios sin guardar/)).toBeTruthy();
+    expect(screen.getByText('Guardar y abrir')).toBeTruthy();
+  }, 20000);
+
+  it('3. C. PUT pendiente falla por red: A conserva el texto con recuperaciones explícitas', async () => {
+    await abrirAConVuelo();
+    await panelDeResolucion();
+    putNetworkFail = true;
+    gateRelease?.();
+    await screen.findByText('Error al guardar', {}, { timeout: 4000, interval: 50 });
+    expect(mainEditor()!.getHTML()).toContain('texto en vuelo no confirmado');
+    expect(screen.queryByText(/Párrafo bajo de B\./)).toBeNull();
+    expect(screen.getByText(/Tienes cambios sin guardar/)).toBeTruthy();
+    expect(screen.getByText('Descartar cambios y abrir')).toBeTruthy();
+  }, 20000);
+
+  it('4. D. PUT pendiente termina en 409: contenido local conservado, sin navegación silenciosa a B', async () => {
+    await abrirAConVuelo();
+    await panelDeResolucion();
+    putFailure = { status: 409, body: { error: 'El documento cambió en otro dispositivo o pestaña.', code: 'AI_DRAFT_REVISION_CONFLICT', current_revision: 2 }, statusLabel: 'Cambios en conflicto' };
+    gateRelease?.();
+    await screen.findByText('Cambios en conflicto', {}, { timeout: 4000, interval: 50 });
+    expect(await screen.findByText(/tú decides qué pasa/)).toBeTruthy();
+    expect(mainEditor()!.getHTML()).toContain('texto en vuelo no confirmado');
+    expect(screen.queryByText(/Párrafo bajo de B\./)).toBeNull();
+  }, 20000);
+
+  it('5. E. PUT pendiente termina en éxito: Guardado confirmado, sin navegación automática; destino solo por Guardar y abrir', async () => {
+    await abrirAConVuelo();
+    await panelDeResolucion();
+    gateRelease?.();
+    await screen.findByText('Guardado', {}, { timeout: 4000, interval: 50 });
+    expect(mainEditor()!.getHTML()).toContain('texto en vuelo no confirmado');
+    expect(screen.queryByText(/Párrafo bajo de B\./)).toBeNull();
+    expect(screen.getByText(/Tienes cambios sin guardar/)).toBeTruthy();
+    fireEvent.click(screen.getByText('Guardar y abrir'));
+    await screen.findByText(/Párrafo bajo de B\./);
+    expect(mainEditor()!.getHTML()).toContain('Párrafo bajo de B.');
+  }, 20000);
+
+  it('6. F. Descartar y abrir: puerta única del descarte, sin PUT accidental tras la acción', async () => {
+    await abrirAConVuelo();
+    await panelDeResolucion();
+    const putsAlVuelo = putCalls().length;
+    expect(putsAlVuelo).toBe(1);
+    fireEvent.click(screen.getByText('Descartar cambios y abrir'));
+    await screen.findByText(/Párrafo bajo de B\./);
+    gateRelease?.();
+    await new Promise((r) => setTimeout(r, 300));
+    expect(putCalls().length).toBe(putsAlVuelo);
+    expect(mainEditor()!.getHTML()).toContain('Párrafo bajo de B.');
   }, 20000);
 });
