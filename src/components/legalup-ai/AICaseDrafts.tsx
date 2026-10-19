@@ -255,15 +255,67 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   const saveInFlightRef = useRef(false);
   const saveInFlightPromiseRef = useRef<Promise<void> | null>(null);
   const savePendingRef = useRef(false);
+  // FASE 4.62D.35: HTML vivo visto mientras el editor existía (fallback de
+  // emergencia si TipTap ya destruyó el editor al desmontar) y llave de
+  // deduplicación del flush de emergencia (borrador + contenido + revisión).
+  const liveHtmlRef = useRef<string | null>(null);
+  const emergencyFlushSentRef = useRef<{ draftId: string; html: string; revision: number } | null>(null);
 
   const setStatus = useCallback((next: SaveStatus) => {
     statusRef.current = next;
     setSaveStatus(next);
   }, []);
 
+  // FASE 4.62D.35: intento de guardado de emergencia reutilizable por
+  // beforeunload, pagehide y el desmontaje del editor. Mitigación best-effort,
+  // NUNCA una garantía de persistencia: dispara un PUT keepalive sin await ni
+  // reintentos; la única confirmación válida sigue siendo la respuesta del
+  // guardado normal (OCC single-writer en el servidor). Reglas:
+  // - dirty/error intentan; saving se omite (el PUT en vuelo ya lleva ese
+  //   contenido: duplicado con la misma base ⇒ 409) y conflict se omite (la
+  //   base_revision local está desfasada por definición).
+  // - saved también intenta si el HTML vivo difiere del último confirmado
+  //   (debounce pendiente de la carrera 4.62D.34 A1).
+  // - Deduplicación: mismas llave (borrador, contenido, revisión) dispara un
+  //   solo PUT aunque beforeunload, pagehide y cleanup coincidan. La llave se
+  //   libera al cambiar el contenido o la revisión (llave nueva natural) o
+  //   cuando un guardado normal confirma contenido (runSave la anula).
+  const tryEmergencyFlush = useCallback(() => {
+    const draftId = openIdRef.current;
+    if (!draftId || !tokenRef.current) return;
+    const st = statusRef.current;
+    if (st === 'saving' || st === 'conflict') return;
+    const current = editorRef.current;
+    const liveHtml = current && !current.isDestroyed ? current.getHTML() : liveHtmlRef.current;
+    if (!liveHtml) return;
+    const pendingNew = liveHtml !== lastSavedHtmlRef.current;
+    if (st !== 'dirty' && st !== 'error' && !(st === 'saved' && pendingNew)) return;
+    const revision = openRevisionRef.current;
+    const sent = emergencyFlushSentRef.current;
+    if (sent && sent.draftId === draftId && sent.html === liveHtml && sent.revision === revision) return;
+    emergencyFlushSentRef.current = { draftId, html: liveHtml, revision };
+    void fetch(`${getApiBaseUrl()}/api/ai/cases/${workspaceId}/drafts/${draftId}`, {
+      method: 'PUT',
+      keepalive: true,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${tokenRef.current}`,
+      },
+      body: JSON.stringify({
+        content: liveHtml,
+        content_format: 'html',
+        origin: 'autosave',
+        base_revision: revision,
+      }),
+    }).catch(() => { /* best-effort */ });
+  }, [workspaceId]);
+
   const setEditorFromDraft = useCallback((draft: CaseDraft) => {
     const html = draftContentToEditorHtml(draft);
     lastSavedHtmlRef.current = html;
+    // FASE 4.62D.35: el fallback de emergencia arranca con el contenido del
+    // borrador recién abierto (válido aunque el editor muera antes).
+    liveHtmlRef.current = html;
     // FASE 4.62D.11: la base OCC es SIEMPRE la del borrador que se abre. El GET
     // de apertura ya trajo la revisión fresca; asignación directa evita heredar
     // la revisión del borrador anterior (Math.max acumulativo causó 409 real
@@ -364,6 +416,9 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
       const currentEditor = editorRef.current;
       if (!currentEditor || currentEditor.isDestroyed) return;
       const html = currentEditor.getHTML();
+      // FASE 4.62D.35: el PUT normal también es la vía más fiable: registra el
+      // HTML vivo si el editor muere a continuación.
+      liveHtmlRef.current = html;
       if (!config.force && html === lastSavedHtmlRef.current) {
         setSaveConflict(null);
         savePendingRef.current = false;
@@ -391,6 +446,10 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
           // Revisión monotónica: una respuesta tardía nunca degrada la base OCC.
           openRevisionRef.current = Math.max(openRevisionRef.current, Number(body?.draft?.revision) || openRevisionRef.current + 1);
           lastSavedHtmlRef.current = html;
+          // FASE 4.62D.35: el servidor confirmó este contenido; libera la
+          // deduplicación del flush de emergencia (una nueva salida re-evalúa
+          // desde cero, y 'saved' con HTML confirmado no la necesita).
+          emergencyFlushSentRef.current = null;
           setSaveConflict(null);
           setStatus('saved');
           setOpenDraft((prev) => (prev && prev.id === id ? { ...prev, content: html, content_format: 'html', revision: body?.draft?.revision } : prev));
@@ -438,6 +497,8 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
 
   const scheduleSave = useCallback(() => {
     if (openIdRef.current == null) return;
+    const liveEd = editorRef.current;
+    if (liveEd && !liveEd.isDestroyed) liveHtmlRef.current = liveEd.getHTML();
     if (statusRef.current === 'conflict') {
       // En conflicto no se escribe más: el usuario resuelve que prevalece.
       if (editorRef.current?.getHTML() !== lastSavedHtmlRef.current) setStatus('dirty');
@@ -472,14 +533,18 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
     editorRef.current = editor;
   }, [editor]);
 
-  // Desmontaje: cancela el debounce de autosave pendiente y limpia la cola de
-  // escrituras del borrador abierto. Nunca dispara un guardado tras el unmount.
+  // Desmontaje: FASE 4.62D.35 cancela el debounce de autosave pendiente,
+  // limpia la cola de escrituras del borrador abierto y hace UN intento de
+  // flush de emergencia (best-effort) si esta instancia sigue siendo la
+  // propietaria del borrador abierto con contenido realmente pendiente. Nunca
+  // dispara un guardado normal tras el unmount: el debounce se corta antes.
   useEffect(() => () => {
+    tryEmergencyFlush();
     if (debounceRef.current) { clearTimeout(debounceRef.current); debounceRef.current = null; }
     saveInFlightRef.current = false;
     saveInFlightPromiseRef.current = null;
     savePendingRef.current = false;
-  }, []);
+  }, [tryEmergencyFlush]);
 
   // Flush best-effort al abandonar la página. keepalive sin await: lo que
   // llegue llega; el autosave normal sigue siendo la vía principal.
@@ -487,30 +552,17 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   // sigue sin llegar al servidor y la base_revision local sigue siendo la
   // vigente — el flush puede persistirla. Con 'conflict' se omite: la
   // base_revision está desfasada por definición (409 garantizado).
+  // FASE 4.62D.35: helper compartido con el desmontaje; pagehide se añade como
+  // segundo evento de salida (móvil/BFCache) y la deduplicación del helper
+  // evita PUT repetidos con el mismo contenido en el mismo tick de salida.
   useEffect(() => {
-    const onBeforeUnload = () => {
-      const st = statusRef.current;
-      if ((st !== 'dirty' && st !== 'error') || !openIdRef.current || !tokenRef.current) return;
-      const current = editorRef.current;
-      if (!current || current.isDestroyed) return;
-      void fetch(`${getApiBaseUrl()}/api/ai/cases/${workspaceId}/drafts/${openIdRef.current}`, {
-        method: 'PUT',
-        keepalive: true,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${tokenRef.current}`,
-        },
-        body: JSON.stringify({
-          content: current.getHTML(),
-          content_format: 'html',
-          origin: 'autosave',
-          base_revision: openRevisionRef.current,
-        }),
-      }).catch(() => { /* best-effort */ });
+    window.addEventListener('beforeunload', tryEmergencyFlush);
+    window.addEventListener('pagehide', tryEmergencyFlush);
+    return () => {
+      window.removeEventListener('beforeunload', tryEmergencyFlush);
+      window.removeEventListener('pagehide', tryEmergencyFlush);
     };
-    window.addEventListener('beforeunload', onBeforeUnload);
-    return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  }, [workspaceId]);
+  }, [tryEmergencyFlush]);
 
   // Token en caché para el flush de beforeunload (getSession es async).
   // FASE 4.62D.31: el token del montaje caduca (TTL ≈1h con rotación de GoTrue)

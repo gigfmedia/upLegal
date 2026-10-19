@@ -1523,3 +1523,197 @@ describe('FASE 4.62D.34 cierre del editor no descarta contenido sin confirmació
     expect(putBody(putCalls().find((c) => String(c[0]).includes(`/drafts/${B_ID34}`))!).base_revision).toBe(1);
   }, 20000);
 });
+
+// FASE 4.62D.35 — flush de emergencia al desmontar el editor. Los handlers de
+// salida (unmount, beforeunload, pagehide) reutilizan un helper con
+// deduplicación por (borrador, contenido, revisión). Mitigación best-effort:
+// las pruebas afirman SOLO el comportamiento de handlers y mocks, no que un
+// navegador real garantice la entrega de la petición.
+describe('FASE 4.62D.35 flush de emergencia al desmontar el editor', () => {
+  const A_ID35 = 'dA';
+  const B_ID35 = 'dB';
+  const TITLE_A35 = 'Salida revisión alta';
+  const TITLE_B35 = 'Salida revisión baja';
+  const draftA35 = makeDraft({ id: A_ID35, title: TITLE_A35, revision: 1, content: '# SalidaA\n\nPárrafo alto de A.' });
+  const draftB35 = makeDraft({ id: B_ID35, title: TITLE_B35, revision: 1, content: '# SalidaB\n\nPárrafo bajo de B.' });
+  const LOCAL_HTML35 = '<p>texto de salida no confirmado</p>';
+  let gateRelease35: (() => void) | null = null;
+
+  beforeEach(() => {
+    const byId: Record<string, unknown> = { [A_ID35]: draftA35, [B_ID35]: draftB35 };
+    gateRelease35 = null;
+    fetchMock = vi.fn(async (url: string, opts?: RequestInit) => {
+      const urlStr = String(url);
+      if (urlStr.includes('/api/ai/usage')) {
+        return { ok: true, json: async () => ({ allowance: usageAllowance }) } as Response;
+      }
+      if (opts?.method === 'PUT') {
+        if (holdPutGate) {
+          const gate = holdPutGate;
+          holdPutGate = null;
+          await gate;
+        }
+        if (putFailure) {
+          const fail = putFailure;
+          return { ok: false, status: fail.status, json: async () => fail.body } as unknown as Response;
+        }
+        const body = JSON.parse(String(opts?.body ?? '{}')) as { content?: string; base_revision?: number };
+        return {
+          ok: true,
+          json: async () => ({ draft: makeDraft({ content: body.content ?? '', content_format: 'html', revision: (body.base_revision ?? 1) + 1 }) }),
+        } as Response;
+      }
+      if (/\/drafts\/[^/]+\/versions\/\d+$/.test(urlStr)) {
+        return { ok: true, json: async () => ({ version: versionDetail }) } as Response;
+      }
+      if (/\/drafts\/[^/]+\/versions$/.test(urlStr)) {
+        return { ok: true, json: async () => ({ versions: versionsPayload }) } as Response;
+      }
+      if (/\/drafts\/[^/]+$/.test(urlStr)) {
+        const m = urlStr.match(/\/drafts\/([^/?]+)$/) as RegExpMatchArray;
+        return { ok: true, json: async () => ({ draft: byId[m[1]] ?? draftA35 }) } as Response;
+      }
+      return { ok: true, json: async () => ({ drafts: [draftA35, draftB35] }) } as Response;
+    });
+    (globalThis as unknown as { fetch: typeof fetch }).fetch = fetchMock as unknown as typeof fetch;
+  });
+
+  const flushCalls = (): ApiCall[] =>
+    (fetchMock.mock.calls as unknown[][]).filter((c) => (c[1] as RequestInit).keepalive === true) as ApiCall[];
+  const abrirA35 = async () => {
+    renderDrafts();
+    fireEvent.click(await screen.findByText(TITLE_A35));
+    await screen.findByText(/Párrafo alto de A\./);
+  };
+
+  it('1. dirty + desmontaje: un solo flush con HTML vivo y keepalive, sin autosave tardío', async () => {
+    const { unmount } = renderDrafts();
+    fireEvent.click(await screen.findByText(TITLE_A35));
+    await screen.findByText(/Párrafo alto de A\./);
+    act(() => { mainEditor()!.commands.setContent(LOCAL_HTML35, { emitUpdate: true }); });
+    unmount();
+    expect(flushCalls()).toHaveLength(1);
+    const [url, opts] = flushCalls()[0];
+    expect(String(url)).toContain('/api/ai/cases/w1/drafts/dA');
+    expect((opts as RequestInit & { keepalive?: boolean }).keepalive).toBe(true);
+    const body = putBody(flushCalls()[0]);
+    expect(body.content).toBe(LOCAL_HTML35);
+    expect(body.base_revision).toBe(1);
+    expect(body.origin).toBe('autosave');
+    // El debounce pendiente quedó cancelado: el flush es el único PUT.
+    expect(putCalls()).toHaveLength(1);
+  }, 20000);
+
+  it('2. error + desmontaje: intento best-effort con el contenido sin confirmar', async () => {
+    putFailure = { status: 500, body: { error: 'No se pudo guardar el borrador.' } };
+    const { unmount } = renderDrafts();
+    fireEvent.click(await screen.findByText(TITLE_A35));
+    await screen.findByText(/Párrafo alto de A\./);
+    act(() => { mainEditor()!.commands.setContent(LOCAL_HTML35, { emitUpdate: true }); });
+    await screen.findByText('Error al guardar', {}, { timeout: 4000, interval: 50 });
+    putFailure = null;
+    unmount();
+    expect(flushCalls()).toHaveLength(1);
+    const body = putBody(flushCalls()[0]);
+    expect(body.content).toBe(LOCAL_HTML35);
+    expect(body.base_revision).toBe(1);
+  }, 20000);
+
+  it('3. conflict + desmontaje: ningún PUT con revisión obsoleta', async () => {
+    const { unmount } = renderDrafts();
+    fireEvent.click(await screen.findByText(TITLE_A35));
+    await screen.findByText(/Párrafo alto de A\./);
+    putFailure = { status: 409, body: { error: 'El documento cambió en otro dispositivo o pestaña.', code: 'AI_DRAFT_REVISION_CONFLICT', current_revision: 3 }, statusLabel: 'Cambios en conflicto' };
+    act(() => { mainEditor()!.commands.setContent(LOCAL_HTML35, { emitUpdate: true }); });
+    await screen.findByText('Cambios en conflicto', {}, { timeout: 4000, interval: 50 });
+    unmount();
+    expect(flushCalls()).toHaveLength(0);
+    expect(putCalls()).toHaveLength(1);
+  }, 20000);
+
+  it('4. saving en vuelo + desmontaje: sin PUT duplicado y la respuesta tardía no añade flush', async () => {
+    const { unmount } = renderDrafts();
+    fireEvent.click(await screen.findByText(TITLE_A35));
+    await screen.findByText(/Párrafo alto de A\./);
+    holdPutGate = new Promise<void>((r) => { gateRelease35 = r; });
+    act(() => { mainEditor()!.commands.setContent(LOCAL_HTML35, { emitUpdate: true }); });
+    await screen.findByText('Guardando…', {}, { timeout: 4000, interval: 50 });
+    unmount();
+    expect(flushCalls()).toHaveLength(0);
+    gateRelease35?.();
+    await new Promise((r) => setTimeout(r, 300));
+    expect(putCalls()).toHaveLength(1);
+    expect(flushCalls()).toHaveLength(0);
+  }, 20000);
+
+  it('5. saved con HTML confirmado + desmontaje: ningún flush', async () => {
+    const { unmount } = renderDrafts();
+    fireEvent.click(await screen.findByText(TITLE_A35));
+    await screen.findByText(/Párrafo alto de A\./);
+    act(() => { mainEditor()!.commands.setContent(LOCAL_HTML35, { emitUpdate: true }); });
+    await screen.findByText('Guardado', {}, { timeout: 4000, interval: 50 });
+    unmount();
+    expect(flushCalls()).toHaveLength(0);
+    expect(putCalls()).toHaveLength(1);
+  }, 20000);
+
+  it('6. saved con debounce pendiente (carrera A1): flush aunque el estado sea Guardado', async () => {
+    const { unmount } = renderDrafts();
+    fireEvent.click(await screen.findByText(TITLE_A35));
+    await screen.findByText(/Párrafo alto de A\./);
+    holdPutGate = new Promise<void>((r) => { gateRelease35 = r; });
+    act(() => { mainEditor()!.commands.setContent('<p>primer borrador guardado</p>', { emitUpdate: true }); });
+    await waitFor(() => expect(putCalls()).toHaveLength(1), { timeout: 3000, interval: 50 });
+    gateRelease35?.();
+    await screen.findByText('Guardado', {}, { timeout: 4000, interval: 50 });
+    // Edición posterior re-arma el debounce con contenido distinto del
+    // confirmado; el desmontaje lo rescata con la revisión ya actualizada.
+    act(() => { mainEditor()!.commands.setContent('<p>edición posterior no confirmada</p>', { emitUpdate: true }); });
+    unmount();
+    expect(flushCalls()).toHaveLength(1);
+    const body = putBody(flushCalls()[0]);
+    expect(body.content).toBe('<p>edición posterior no confirmada</p>');
+    expect(body.base_revision).toBe(2);
+  }, 20000);
+
+  it('7. pagehide + beforeunload: deduplicación de la misma salida y liberación ante contenido nuevo', async () => {
+    const { unmount } = renderDrafts();
+    fireEvent.click(await screen.findByText(TITLE_A35));
+    await screen.findByText(/Párrafo alto de A\./);
+    act(() => { mainEditor()!.commands.setContent(LOCAL_HTML35, { emitUpdate: true }); });
+    fireEvent(window, new Event('pagehide'));
+    await waitFor(() => expect(flushCalls()).toHaveLength(1), { timeout: 3000, interval: 50 });
+    fireEvent(window, new Event('beforeunload'));
+    await new Promise((r) => setTimeout(r, 200));
+    expect(flushCalls()).toHaveLength(1);
+    // Un guardado normal posterior confirma LOCAL; la edición siguiente
+    // (contenido nuevo, llave distinta) vuelve a permitir el flush.
+    await waitFor(() => expect(screen.getByTestId('save-status').textContent).toContain('Guardado'), { timeout: 4000, interval: 50 });
+    act(() => { mainEditor()!.commands.setContent('<p>segunda edición de salida</p>', { emitUpdate: true }); });
+    unmount();
+    expect(flushCalls()).toHaveLength(2);
+    expect(putBody(flushCalls()[1]).content).toBe('<p>segunda edición de salida</p>');
+  }, 20000);
+
+  it('8. desmontajes de borradores distintos y listeners fuera de ciclo: sin contenido ajeno ni petición repetida', async () => {
+    let unmountA = renderDrafts();
+    fireEvent.click(await screen.findByText(TITLE_A35));
+    await screen.findByText(/Párrafo alto de A\./);
+    act(() => { mainEditor()!.commands.setContent(LOCAL_HTML35, { emitUpdate: true }); });
+    unmountA.unmount();
+    expect(flushCalls()).toHaveLength(1);
+    expect(putBody(flushCalls()[0]).content).toBe(LOCAL_HTML35);
+    // Evento de salida tras el unmount: el listener ya está desuscrito.
+    fireEvent(window, new Event('beforeunload'));
+    await new Promise((r) => setTimeout(r, 200));
+    expect(flushCalls()).toHaveLength(1);
+    // Nueva instancia con B sin ediciones: el desmontaje no reenvía contenido
+    // del borrador antiguo A ni flush espurio de B.
+    unmountA = renderDrafts();
+    fireEvent.click((await screen.findByText(TITLE_B35)));
+    await screen.findByText(/Párrafo bajo de B\./);
+    unmountA.unmount();
+    expect(flushCalls()).toHaveLength(1);
+    expect(flushCalls()[0][0]).toContain(`/drafts/${A_ID35}`);
+  }, 20000);
+});
