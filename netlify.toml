@@ -23,6 +23,14 @@
   force = true
   headers = {Access-Control-Allow-Origin = "*"}
 
+# FASE UA-2 — API en deploy-previews: la env "/" normaliza la base a ""
+# en getApiBaseUrl (replace(/\/+$/,'')) y toda la app consume /api relativo:
+# el rewrite /api/* de lo proxifica a Render y las peticiones son
+# same-origin, sin bloqueo CORS del allowlist del backend. Solo contexto
+# deploy-preview; production conserva su configuración.
+[context.deploy-preview.environment]
+  VITE_API_BASE_URL = "/"
+
 # Fallback para Netlify Functions si existen
 [[redirects]]
   from = "/api/*"
