@@ -159,6 +159,11 @@ export function useCaseDrafts(workspaceId: string | undefined) {
   const { data, ...rest } = useQuery<CaseDraftListItem[]>({
     queryKey: [...AI_CASE_DRAFTS_QUERY_KEY, workspaceId],
     enabled: !!workspaceId,
+    // FASE 4.62J: la config global congela el refetch al volver a la pestaña
+    // (App.tsx refetchOnWindowFocus:false). Para los borradores se necesita lo
+    // contrario: la lista de otros dispositivos/pestañas debe verse al regresar,
+    // sin refetches por render (solo por foco real).
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const body = await requestJson<{ drafts?: CaseDraftListItem[] }>(
         `${getApiBaseUrl()}/api/ai/cases/${workspaceId}/drafts`,
@@ -328,7 +333,8 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
     }
   }, []);
 
-  const openDraftById = useCallback(async (id: string, opts?: { force?: boolean }) => {
+  const openDraftById = useCallback(
+    async (id: string, opts?: { force?: boolean; ifStillOpen?: boolean }) => {
     // FASE 4.62D.32: 'dirty' no es el único estado con texto local más nuevo
     // que el servidor. Tras un guardado fallido ('error') o un conflicto OCC
     // ('conflict'), el contenido del editor tampoco vive en el servidor:
@@ -368,6 +374,12 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
       );
       const draft = body?.draft;
       if (!draft) throw new DraftApiError('Borrador no encontrado.', 404);
+      // FASE 4.62J-C: el refresco por foco es un GET automático; si mientras
+      // volaba el usuario cerró el borrador (openIdRef.current === null) o
+      // abrió otro (id distinto), la respuesta tardía no debe reabrir ni
+      // pisar la UI: reabrir tras un cierre solo pertenece a los flujos por
+      // intención explícita (click de apertura, generar, Guardar y abrir).
+      if (opts?.ifStillOpen && openIdRef.current !== id) return null;
       openIdRef.current = id;
       setStatus('idle');
       setOpenDraft(draft);
@@ -378,7 +390,9 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
       setError(e instanceof Error ? e.message : 'No se pudo abrir el borrador.');
       return null;
     }
-  }, [drafts, workspaceId, setEditorFromDraft, setStatus]);
+    },
+    [drafts, workspaceId, setEditorFromDraft, setStatus],
+  );
 
   const runSave = useCallback(
     async (config: { origin: 'autosave' | 'edit'; force?: boolean } = { origin: 'autosave' }) => {
@@ -591,6 +605,9 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   const versionsQuery = useQuery<CaseDraftVersionMeta[]>({
     queryKey: [...AI_CASE_DRAFTS_QUERY_KEY, workspaceId, openId, 'versions'],
     enabled: !!openId,
+    // FASE 4.62J: mismo criterio que la lista — al regresar el foco el
+    // historial debe reflejar el servidor (p. ej. autosaves de otra pestaña).
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const body = await requestJson<{ versions?: CaseDraftVersionMeta[]; total_count?: number }>(
         `${getApiBaseUrl()}/api/ai/cases/${workspaceId}/drafts/${openId}/versions`,
@@ -660,6 +677,40 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
       if (openIdRef.current === openId) setOlderLoading(false);
     }
   };
+
+  // FASE 4.62J: al recuperar visibilidad/foco, el encabezado del borrador
+  // abierto debe reflejar el servidor (otra pestaña/dispositivo pudo guardar).
+  // El refresco reutiliza el GET de apertura (openDraftById con force), que
+  // ya re-basa occ y el contenido. Reglas de seguridad, en este orden:
+  // - dirty/saving/error/conflict: hay contenido local más nuevo que el
+  //   servidor (o desfasado) — el refresco NUNCA pisa texto local ni
+  //   interrumpe un PUT en vuelo; la resolución queda en flujos existentes.
+  // - restauración en vuelo (restoringRef): el POST ya re-basará todo.
+  // - preview de versión abierta: la vista previa es una porción inmutable del
+  //   historial; el openDraftById cerraría la preview sin motivo.
+  // - Dedupe: visibilitychange + focus disparan juntos; ventana de 1500 ms.
+  const lastHeadVisibleRefreshRef = useRef(0);
+  useEffect(() => {
+    if (!openId) return;
+    const refreshHeadOnVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (openIdRef.current !== openId) return;
+      const st = statusRef.current;
+      if (st === 'dirty' || st === 'saving' || st === 'error' || st === 'conflict') return;
+      if (restoringRef.current) return;
+      if (previewVersion) return;
+      const now = Date.now();
+      if (now - lastHeadVisibleRefreshRef.current < 1500) return;
+      lastHeadVisibleRefreshRef.current = now;
+      void openDraftById(openId, { force: true, ifStillOpen: true });
+    };
+    document.addEventListener('visibilitychange', refreshHeadOnVisible);
+    window.addEventListener('focus', refreshHeadOnVisible);
+    return () => {
+      document.removeEventListener('visibilitychange', refreshHeadOnVisible);
+      window.removeEventListener('focus', refreshHeadOnVisible);
+    };
+  }, [openId, openDraftById, previewVersion]);
 
   const generate = useMutation({
     mutationFn: async () => {

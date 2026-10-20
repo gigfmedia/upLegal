@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup, fireEvent, waitFor, act } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, focusManager } from '@tanstack/react-query';
 import { AICaseDrafts } from '@/components/legalup-ai/AICaseDrafts';
 
 // FASE 4.59D + 4.62C — Draft/document workspace UI: lista, creación validada,
@@ -131,6 +131,7 @@ let versionDetail: unknown = null;
 let putFailure: { status: number; body: Record<string, unknown> } | null = null;
 // FASE 4.62D: retiene PUTs en vuelo para congelar el estado 'saving' de forma determinista.
 let holdPutGate: Promise<void> | null = null;
+let headGate: Promise<void> | null = null;
 // FASE 4.62D.6: cola de revisiones "tardías" que el mock devuelve para
 // simular respuestas con revisiones más antiguas que la vigente (Caso 5).
 let putStaleRevisions: number[] = [];
@@ -150,6 +151,7 @@ beforeEach(() => {
   versionDetail = null;
   putFailure = null;
   holdPutGate = null;
+  headGate = null;
   putStaleRevisions = [];
   authState.reset();
   resetEditors();
@@ -193,6 +195,11 @@ beforeEach(() => {
       return { ok: true, json: async () => ({ version: versionDetail }) } as Response;
     }
     if (/\/drafts\/[^/]+$/.test(urlStr)) {
+      if (headGate) {
+        const headGateAt = headGate;
+        headGate = null;
+        await headGateAt;
+      }
       return { ok: true, json: async () => ({ draft: DRAFT }) } as Response;
     }
     return { ok: true, json: async () => ({ drafts: [DRAFT] }) } as Response;
@@ -1937,4 +1944,225 @@ describe('FASE 4.62E.1 borde de paginación con nuevos guardados', () => {
     // El refetch trajo total_count=4: el contador, no el estado viejo de 3.
     await waitFor(() => expect(screen.getByText('Mostrando 3 de 4 versiones')).toBeTruthy(), { timeout: 3000, interval: 50 });
   });
+});
+
+describe('FASE 4.62J — refresco al recuperar foco (lista, historial y encabezado)', () => {
+  const listCalls = () => (fetchMock.mock.calls as unknown[][]).filter((c) => /\/drafts$/.test(String(c[0])) && (c[1] as RequestInit)?.method === 'GET');
+  const versionsCalls = () => (fetchMock.mock.calls as unknown[][]).filter((c) => /\/drafts\/d1\/versions(\?.*|$)/.test(String(c[0])));
+  const headCalls = () => (fetchMock.mock.calls as unknown[][]).filter((c) => /\/drafts\/d1$/.test(String(c[0])) && (c[1] as RequestInit)?.method === 'GET');
+  // jsdom ya reporta visibilityState 'visible' y focusManager focused:true: el
+  // flip focused:false→true es lo que React Query interpreta como recuperación
+  // de foco y dispara el refetch de las consultas activas.
+  const setVisible = () => {
+    act(() => {
+      focusManager.setFocused(false);
+      document.dispatchEvent(new Event('visibilitychange'));
+      window.dispatchEvent(new Event('focus'));
+      focusManager.setFocused(true);
+    });
+  };
+
+  it('lista e historial se refetchan al recuperar visibilidad', async () => {
+    versionsPayload = [
+      { version_no: 1, origin: 'generation', content_format: 'markdown', model: 'm', title: 'v1', created_at: '2026-10-01T10:00:00Z' },
+    ];
+    renderDrafts();
+    await screen.findByText('Borrador de contestación');
+    await openFirstDraft();
+    const ver0 = versionsCalls().length;
+    await waitFor(() => expect(ver0).toBeGreaterThanOrEqual(1), { timeout: 3000, interval: 50 });
+    const list0 = listCalls().length;
+    setVisible();
+    await waitFor(() => expect(listCalls().length).toBeGreaterThan(list0), { timeout: 3000, interval: 50 });
+    await waitFor(() => expect(versionsCalls().length).toBeGreaterThan(ver0), { timeout: 3000, interval: 50 });
+  }, 20000);
+
+  it('encabezado abierto se refresca con el head del servidor (estado seguro)', async () => {
+    let headCount = 0;
+    fetchMock = vi.fn(async (url: string) => {
+      const urlStr = String(url);
+      if (urlStr.includes('/api/ai/usage')) {
+        return { ok: true, json: async () => ({ allowance: usageAllowance }) } as Response;
+      }
+      if (/\/drafts\/[^/]+$/.test(urlStr)) {
+        headCount += 1;
+        const content = headCount <= 1 ? '# Uno\n\nPrimera lectura.' : '# Dos\n\nHead actualizado en el servidor.';
+        return { ok: true, json: async () => ({ draft: makeDraft({ content, revision: headCount }) }) } as Response;
+      }
+      return { ok: true, json: async () => ({ drafts: [DRAFT] }) } as Response;
+    });
+    (globalThis as unknown as { fetch: typeof fetch }).fetch = fetchMock as unknown as typeof fetch;
+    renderDrafts();
+    fireEvent.click(await screen.findByText('Borrador de contestación'));
+    expect(await screen.findByText('Primera lectura.')).toBeTruthy();
+    expect(headCalls()).toHaveLength(1);
+    setVisible();
+    await waitFor(() => expect(headCalls().length).toBeGreaterThanOrEqual(2), { timeout: 3000, interval: 50 });
+    expect(await screen.findByText(/Head actualizado en el servidor\./)).toBeTruthy();
+  }, 20000);
+
+  it('dedupe visibilitychange+focus: ráfaga doble refresca el head UNA sola vez', async () => {
+    renderDrafts();
+    await openFirstDraft();
+    const base = headCalls().length;
+    setVisible();
+    setVisible();
+    await waitFor(() => expect(headCalls().length).toBeGreaterThan(base), { timeout: 3000, interval: 50 });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(headCalls().length).toBe(base + 1);
+  }, 20000);
+
+  it('dirty: el refresco de foco jamás pisa contenido local sin confirmar', async () => {
+    renderDrafts();
+    await openFirstDraft();
+    const base = headCalls().length;
+    const ed = mainEditor()!;
+    act(() => { ed.commands.setContent('<p>texto local 4.62J</p>', { emitUpdate: true }); });
+    expect(await screen.findByText('Cambios sin guardar')).toBeTruthy();
+    setVisible();
+    await new Promise((r) => setTimeout(r, 100));
+    expect(headCalls()).toHaveLength(base);
+    expect(screen.getByText(/texto local 4\.62J/)).toBeTruthy();
+  }, 20000);
+
+  it('saving: PUT en vuelo no se interrumpe ni se re-abre el borrador', async () => {
+    renderDrafts();
+    await openFirstDraft();
+    const base = headCalls().length;
+    const ed = mainEditor()!;
+    holdPutGate = new Promise<void>(() => {});
+    act(() => { ed.commands.setContent('<p>en vuelo</p>', { emitUpdate: true }); });
+    expect(await screen.findByText('Guardando…')).toBeTruthy();
+    setVisible();
+    await new Promise((r) => setTimeout(r, 100));
+    expect(headCalls()).toHaveLength(base);
+  }, 20000);
+
+  it('error: tras fallo del PUT el head no se refresca y el texto local persiste', async () => {
+    renderDrafts();
+    await openFirstDraft();
+    const base = headCalls().length;
+    const ed = mainEditor()!;
+    putFailure = { status: 500, body: { error: 'boom' } };
+    act(() => { ed.commands.setContent('<p>trabajo local 4.62J</p>', { emitUpdate: true }); });
+    await waitFor(() => expect(screen.getByText('Error al guardar')).toBeTruthy(), { timeout: 4000, interval: 50 });
+    setVisible();
+    await new Promise((r) => setTimeout(r, 100));
+    expect(headCalls()).toHaveLength(base);
+    expect(screen.getByText(/trabajo local 4\.62J/)).toBeTruthy();
+  }, 20000);
+
+  it('conflict: tras 409 el head no se refresca y el panel de conflicto persiste', async () => {
+    renderDrafts();
+    await openFirstDraft();
+    const base = headCalls().length;
+    const ed = mainEditor()!;
+    putFailure = { status: 409, body: { error: 'conflicto', code: 'AI_DRAFT_REVISION_CONFLICT', current_revision: 7 } };
+    act(() => { ed.commands.setContent('<p>mi versión en conflicto</p>', { emitUpdate: true }); });
+    expect(await screen.findByText('El documento cambió en otro dispositivo o pestaña.')).toBeTruthy();
+    setVisible();
+    await new Promise((r) => setTimeout(r, 100));
+    expect(headCalls()).toHaveLength(base);
+    expect(screen.getByText(/mi versión en conflicto/)).toBeTruthy();
+    expect(screen.getByText('El documento cambió en otro dispositivo o pestaña.')).toBeTruthy();
+  }, 20000);
+
+  it('preview de versión abierta: el foco no re-abre el borrador ni cierra la preview', async () => {
+    versionsPayload = [
+      { version_no: 1, origin: 'generation', content_format: 'markdown', model: 'm', title: 'v1', created_at: '2026-10-01T10:00:00Z' },
+    ];
+    versionDetail = {
+      version_no: 1, origin: 'generation', content_format: 'markdown', model: 'm', title: 'v1',
+      created_at: '2026-10-01T10:00:00Z', content: '# Borrador\n\nTexto histórico v1 4.62J.',
+    };
+    renderDrafts();
+    await openFirstDraft();
+    fireEvent.click((await screen.findAllByText(/v1 · generación IA/))[0]);
+    expect(await screen.findByText(/Texto histórico v1 4\.62J\./)).toBeTruthy();
+    const base = headCalls().length;
+    const ver0 = versionsCalls().length;
+    setVisible();
+    await new Promise((r) => setTimeout(r, 100));
+    expect(headCalls()).toHaveLength(base);
+    expect(screen.getByText(/Texto histórico v1 4\.62J\./)).toBeTruthy();
+    await waitFor(() => expect(versionsCalls().length).toBeGreaterThan(ver0), { timeout: 3000, interval: 50 });
+  }, 20000);
+
+  it('restauración en vuelo: el foco no re-abre el borrador durante el POST', async () => {
+    versionsPayload = [
+      { version_no: 1, origin: 'generation', content_format: 'markdown', model: 'm', title: 'v1', created_at: '2026-10-01T10:00:00Z' },
+    ];
+    versionDetail = {
+      version_no: 1, origin: 'generation', content_format: 'markdown', model: 'm', title: 'v1',
+      created_at: '2026-10-01T10:00:00Z', content: '# Borrador\n\nVersión para restaurar.',
+    };
+    let releaseRestore: (() => void) | null = null;
+    const baseFetch = fetchMock;
+    fetchMock = vi.fn(async (url: string, opts?: RequestInit) => {
+      const urlStr = String(url);
+      if (opts?.method === 'POST' && urlStr.includes('/restore')) {
+        await new Promise<void>((res) => { releaseRestore = res; });
+        return { ok: true, json: async () => ({ draft: makeDraft({ revision: 3 }), version: { version_no: 4, origin: 'restore', restored_from: 1 } }) } as Response;
+      }
+      return baseFetch(url, opts);
+    });
+    (globalThis as unknown as { fetch: typeof fetch }).fetch = fetchMock as unknown as typeof fetch;
+    renderDrafts();
+    await openFirstDraft();
+    fireEvent.click((await screen.findAllByText(/v1 · generación IA/))[0]);
+    fireEvent.click(await screen.findByText('Restaurar esta versión'));
+    await waitFor(() => expect(releaseRestore).toBeTruthy(), { timeout: 3000, interval: 20 });
+    const base = headCalls().length;
+    setVisible();
+    await new Promise((r) => setTimeout(r, 100));
+    expect(headCalls()).toHaveLength(base);
+    releaseRestore!();
+    await waitFor(() => expect(
+      fetchMock.mock.calls.some((c) => String(c[0]).includes('/versions/1/restore'))
+    ).toBe(true), { timeout: 3000, interval: 50 });
+  }, 20000);
+
+  it('limpieza: con borrador cerrado o al desmontar, el foco no genera GETs del head', async () => {
+    const { unmount } = renderDrafts();
+    await openFirstDraft();
+    const cerrar = screen.getAllByText('Cerrar').find((el) => (el as HTMLElement).textContent === 'Cerrar');
+    fireEvent.click(cerrar!);
+    await new Promise((r) => setTimeout(r, 50));
+    const afterClose = headCalls().length;
+    setVisible();
+    await new Promise((r) => setTimeout(r, 100));
+    expect(headCalls().length).toBe(afterClose);
+    unmount();
+    const afterUnmount = headCalls().length;
+    setVisible();
+    await new Promise((r) => setTimeout(r, 100));
+    expect(headCalls().length).toBe(afterUnmount);
+  }, 20000);
+
+  it('FASE 4.62J-C: una respuesta tardía del refresco por foco no reabre el borrador que el usuario cerró mientras volaba', async () => {
+    renderDrafts();
+    await openFirstDraft();
+    await waitFor(() => expect(screen.getByText(/Contenido\./)).toBeTruthy());
+
+    let releaseHead = () => {};
+    headGate = new Promise<void>((resolve) => { releaseHead = resolve; });
+    const base = headCalls().length;
+
+    setVisible();
+    await waitFor(() => expect(headCalls().length).toBe(base + 1), { timeout: 4000 });
+
+    // El usuario cierra mientras el GET del refresco sigue en vuelo (estado
+    // seguro pro el guard: sin panel de cierre, cierre inmediato).
+    fireEvent.click(screen.getByText('Cerrar'));
+    await waitFor(() => expect(screen.queryByText(/Contenido\./)).toBeNull());
+
+    releaseHead();
+    // La respuesta tardía resuelve: sin el guard ifStillOpen reabriría el
+    // editor (openDraftById re-pisaría openId/contendo). Debe seguir cerrado.
+    await waitFor(() => expect(headCalls().length).toBe(base + 1));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.queryByText(/Contenido\./)).toBeNull();
+    expect(screen.queryByText('Borrador de contestación', { selector: 'p' })).toBeNull();
+    headGate = null;
+  }, 20000);
 });
