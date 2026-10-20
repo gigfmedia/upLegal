@@ -23,6 +23,8 @@ import {
   List,
   ListOrdered,
   Eraser,
+  Minus,
+  Plus,
   Redo2,
   Strikethrough,
   Underline,
@@ -200,12 +202,13 @@ const editorExtensions = () => [
 ];
 
 // FASE UA-2 — zoom de documento: 50 %–150 % en pasos de 10 %, 100 % por
-// defecto. Se implementa con CSS `zoom` (no transform): el navegador
-// recalcula el espacio de layout, scroll, cursor y selección de forma
-// nativa. Solo presentación: nunca altera getHTML ni lo persistido.
+// defecto, controlado con botones −/+ y un indicador fijo (sin desplegable).
+// Se implementa con CSS `zoom` (no transform) aplicado SOLO al envoltorio
+// del contenido editable: el navegador recalcula layout, scroll, cursor y
+// selección de forma nativa y la toolbar conserva su tamaño y posición.
+// Solo presentación: nunca altera getHTML ni lo persistido.
 const ZOOM_MIN = 50;
 const ZOOM_MAX = 150;
-const ZOOM_STOPS: number[] = Array.from({ length: (ZOOM_MAX - ZOOM_MIN) / 10 + 1 }, (_, i) => ZOOM_MIN + i * 10);
 type AlignValue = 'left' | 'center' | 'right' | 'justify';
 
 /** Documento de solo lectura aislado (previews de versiones): sanitiza pasando
@@ -1322,10 +1325,12 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                       contenido recibe márgenes de documento (2,5 cm ≈ 72px
                       en escritorio, reducidos en móvil).
                       FASE UA-2: toolbar con grupos (historial, marcas,
-                      estilo, listas, alineación, limpiar) + zoom CSS
-                      aplicado SOLO al envoltorio visual de la hoja. */}
+                      estilo, listas, alineación, limpiar) + control de zoom
+                      −/+/indicador. El CSS zoom se aplica SOLO al
+                      envoltorio del contenido editable: hoja, márgenes y
+                      toolbar quedan a escala 1 y el flujo crece con el
+                      documento ampliado (nativo, sin transform). */}
                   <DraftCanvas>
-                    <div style={{ zoom: draftZoom / 100 }}>
                     <DraftSheet>
                       <div role="toolbar" aria-label="Formato del borrador" className="flex flex-wrap items-center gap-1 border-b bg-gray-50 px-2 py-1.5">
                         {toolbarButton('Deshacer', Undo2, () => chainFocus()?.undo().run(), false, !editor?.can().undo())}
@@ -1360,26 +1365,38 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                         {toolbarButton('Justificar', AlignJustify, () => applyTextAlign('justify'), activeAlign === 'justify')}
                         <ToolbarDivider />
                         {toolbarButton('Limpiar formato', Eraser, () => chainFocus()?.unsetAllMarks().clearNodes().run(), false)}
-                        <div className="ml-auto flex items-center gap-1 pl-2">
-                          <label htmlFor="draft-zoom" className="sr-only">Zoom del documento</label>
-                          <select
-                            id="draft-zoom"
-                            aria-label="Zoom del documento"
-                            value={draftZoom}
-                            onChange={(e) => applyZoom(Number(e.target.value))}
-                            className="rounded border bg-white px-1.5 py-1 text-xs leading-4 hover:bg-gray-50"
+                        <div role="group" aria-label="Zoom del documento" className="ml-auto flex items-center gap-0.5 pl-2">
+                          <button
+                            type="button"
+                            title="Reducir zoom"
+                            aria-label="Reducir zoom"
+                            disabled={draftZoom <= ZOOM_MIN}
+                            onClick={() => applyZoom(draftZoom - 10)}
+                            className="rounded border bg-white px-1.5 py-1 text-xs leading-4 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-700 disabled:opacity-50"
                           >
-                            {ZOOM_STOPS.map((z) => (
-                              <option key={z} value={z}>{z} %</option>
-                            ))}
-                          </select>
+                            <Minus className="h-3.5 w-3.5" aria-hidden="true" />
+                            <span className="sr-only">Reducir zoom</span>
+                          </button>
+                          <span aria-live="polite" className="min-w-[40px] rounded border bg-white px-1.5 py-1 text-center text-xs leading-4">{draftZoom} %</span>
+                          <button
+                            type="button"
+                            title="Aumentar zoom"
+                            aria-label="Aumentar zoom"
+                            disabled={draftZoom >= ZOOM_MAX}
+                            onClick={() => applyZoom(draftZoom + 10)}
+                            className="rounded border bg-white px-1.5 py-1 text-xs leading-4 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-700 disabled:opacity-50"
+                          >
+                            <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                            <span className="sr-only">Aumentar zoom</span>
+                          </button>
                         </div>
                       </div>
                       <div className="px-4 py-8 sm:px-9 md:px-[72px] md:py-[56px]">
-                        <EditorContent editor={editor} />
+                        <div data-testid="draft-zoom-content" style={{ zoom: draftZoom / 100 }}>
+                          <EditorContent editor={editor} />
+                        </div>
                       </div>
                     </DraftSheet>
-                    </div>
                   </DraftCanvas>
 
                   <div className="flex flex-wrap gap-2">

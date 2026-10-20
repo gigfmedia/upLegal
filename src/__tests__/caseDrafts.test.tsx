@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, waitFor, act, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider, focusManager } from '@tanstack/react-query';
 import { AICaseDrafts } from '@/components/legalup-ai/AICaseDrafts';
 
@@ -53,6 +53,10 @@ type FakeEditor = {
   html: string;
   cmdLog: string[];
   canFlags: { undo: boolean; redo: boolean };
+  // FASE UA-2 (corrección): historial simulado para verificar que
+  // undo/redo restauran contenido, no solo habilitan botones.
+  undoStack: string[];
+  redoStack: string[];
   getHTML: () => string;
   isActive: (name: string | Record<string, unknown>, attrs?: Record<string, unknown>) => boolean;
   chain: () => Record<string, (...args: unknown[]) => unknown>;
@@ -81,6 +85,8 @@ vi.mock('@tiptap/react', () => ({
       // (comando + argumentos encodeURIComponent no — JSON directo).
       cmdLog: [],
       canFlags: { undo: false, redo: false },
+      undoStack: [],
+      redoStack: [],
       html: options?.content ?? '<p></p>',
       isActive: (name, attrs) => {
         if (typeof name === 'string') {
@@ -129,8 +135,22 @@ vi.mock('@tiptap/react', () => ({
           state.textAlign = String(args[0]);
           return rec('setTextAlign', args);
         };
-        ret.undo = () => rec('undo');
-        ret.redo = () => rec('redo');
+        // FASE UA-2 (corrección): undo/redo restauran contenido como el
+        // editor real — el html cambia según el historial simulado.
+        ret.undo = () => {
+          if (created.undoStack.length > 0) {
+            created.redoStack.push(created.html);
+            created.html = created.undoStack.pop() as string;
+          }
+          return rec('undo');
+        };
+        ret.redo = () => {
+          if (created.redoStack.length > 0) {
+            created.undoStack.push(created.html);
+            created.html = created.redoStack.pop() as string;
+          }
+          return rec('redo');
+        };
         ret.unsetAllMarks = () => rec('unsetAllMarks');
         ret.clearNodes = () => rec('clearNodes');
         return ret;
@@ -141,6 +161,16 @@ vi.mock('@tiptap/react', () => ({
       }),
       commands: {
         setContent(html: string, opts?: { emitUpdate?: boolean }) {
+          // Emit update = edición del usuario → entra al historial de undo;
+          // emitUpdate false = carga programática (apertura/restauración) →
+          // reinicia el historial, como el editor real.
+          if (opts?.emitUpdate === false) {
+            created.undoStack = [];
+            created.redoStack = [];
+          } else if (created.html !== html) {
+            created.undoStack.push(created.html);
+            created.redoStack = [];
+          }
           created.html = html;
           if (opts?.emitUpdate !== false) (options ?? created.opts)?.onUpdate?.({ editor: created });
         },
@@ -2264,11 +2294,13 @@ describe('FASE UA-2 — toolbar profesional y zoom de presentación', () => {
     for (const o of ['Párrafo', 'Título 1', 'Título 2', 'Título 3']) {
       expect(Array.from(style.options).map((op) => op.textContent)).toContain(o);
     }
-    const zoom = screen.getByLabelText('Zoom del documento') as HTMLSelectElement;
-    expect(zoom.value).toBe('100');
-    expect(Array.from(zoom.options).map((o) => o.value)).toEqual(
-      ['50', '60', '70', '80', '90', '100', '110', '120', '130', '140', '150']
-    );
+    const zoomGroup = screen.getByRole('group', { name: 'Zoom del documento' });
+    expect(zoomGroup).toBeTruthy();
+    expect(screen.getByLabelText('Reducir zoom')).toBeTruthy();
+    expect(screen.getByLabelText('Aumentar zoom')).toBeTruthy();
+    // Indicador fijo sin desplegable: muestra el porcentaje actual.
+    expect(within(zoomGroup).getByText('100 %')).toBeTruthy();
+    expect(within(zoomGroup).queryByRole('combobox')).toBeNull();
   });
 
   it('deshacer/rehacer reservan can(); sin historial quedan deshabilitados y con can() ejecutan undo/redo', async () => {
@@ -2351,31 +2383,161 @@ describe('FASE UA-2 — toolbar profesional y zoom de presentación', () => {
     expect(cmd('clearNodes')).toHaveLength(1);
   });
 
-  it('zoom solo-presentación: CSS zoom aplicado a la hoja, editor no recreado, HTML y PUT intactos, y regreso a 100 % neutraliza', async () => {
+  it('zoom: pasos de 10 puntos, límites 50–150 % e indicador de porcentaje exacto', async () => {
     renderDrafts();
     await openFirstDraft();
-    const before = main();
+    const minus = () => screen.getByLabelText('Reducir zoom');
+    const plus = () => screen.getByLabelText('Aumentar zoom');
+    const indicator = () => within(screen.getByRole('group', { name: 'Zoom del documento' })).getByText(/\d+ %/);
+    expect(indicator().textContent).toBe('100 %');
+    expect(minus()).toBeEnabled();
+    expect(plus()).toBeEnabled();
+
+    // Pasos de 10: 100 → 90 → 80 → 70 → 60 → 50 con clics sucesivos.
+    for (const expected of ['90 %', '80 %', '70 %', '60 %', '50 %']) {
+      fireEvent.click(minus());
+      expect(indicator().textContent).toBe(expected);
+    }
+    // Límite inferior: − deshabilitado y clics extra no cambian el valor.
+    expect(minus()).toBeDisabled();
+    fireEvent.click(minus());
+    expect(indicator().textContent).toBe('50 %');
+    expect(plus()).toBeEnabled();
+
+    // Pasos de 10 de vuelta hasta el tope: 50 → 150.
+    for (let i = 0; i < 10; i++) fireEvent.click(plus());
+    expect(indicator().textContent).toBe('150 %');
+    // Límite superior: + deshabilitado y clics extra no cambian el valor.
+    expect(plus()).toBeDisabled();
+    fireEvent.click(plus());
+    expect(indicator().textContent).toBe('150 %');
+
+    // Regreso al 100 % (predeterminado) restaura la simetría del control.
+    for (let i = 0; i < 5; i++) fireEvent.click(minus());
+    expect(indicator().textContent).toBe('100 %');
+    expect(minus()).toBeEnabled();
+    expect(plus()).toBeEnabled();
+  }, 30000);
+
+  it('zoom afecta solo al documento: toolbar sin estilos de zoom, editor no recreado, sin setContent ni PUT, y formato preexistente conservado', async () => {
+    draftPayloadOverride = makeDraft({
+      id: 'd3',
+      title: 'Formato previo UA-2',
+      content: '<h2>Encabezado persistido</h2><p><strong>negrita</strong> + <u>subrayado</u></p>',
+      content_format: 'html',
+      revision: 5,
+    });
+    renderDrafts();
+    fireEvent.click(await screen.findByText('Formato previo UA-2'));
+    await screen.findByRole('toolbar', { name: 'Formato del borrador' });
+    const before = editorCache.main as FakeEditor;
     const beforeHtml = before.html;
     expect(putCalls()).toHaveLength(0);
 
-    const zoomSel = screen.getByLabelText('Zoom del documento') as HTMLSelectElement;
-    fireEvent.change(zoomSel, { target: { value: '150' } });
-    expect((screen.getByLabelText('Zoom del documento') as HTMLSelectElement).value).toBe('150');
+    const toolbar = screen.getByRole('toolbar', { name: 'Formato del borrador' });
     const content = document.querySelector('[data-testid="tiptap-content"]') as HTMLElement;
     expect(content).toBeTruthy();
-    const zoomWrapper = content.closest('div[style]') as HTMLElement | null;
+    const zoomWrapper = content.closest('[data-testid="draft-zoom-content"]') as HTMLElement | null;
+    expect(zoomWrapper?.style.zoom).toBe('1');
+    // La toolbar (y toda su ascendencia) no recibe zoom: la hoja y sus
+    // márgenes quedan a escala 1 con el contenido ampliado.
+    let ancestor: HTMLElement | null = toolbar;
+    while (ancestor) {
+      expect(ancestor.style.zoom).toBe('');
+      ancestor = ancestor.parentElement;
+    }
+    expect(toolbar.contains(zoomWrapper as HTMLElement)).toBe(false);
+
+    const plus = () => screen.getByLabelText('Aumentar zoom');
+    for (let i = 0; i < 5; i++) fireEvent.click(plus());
     expect(zoomWrapper?.style.zoom).toBe('1.5');
-    // El editor no se reinicia ni se recalcula contenido: misma instancia y HTML idéntico.
+    expect(toolbar.style.zoom).toBe('');
+    // El editor no se reinicia ni se recalcula contenido: misma instancia y
+    // el formato preexistente (h2/strong/u) intacto.
     expect(editorCache.main).toBe(before);
     expect(main().html).toBe(beforeHtml);
+    expect(beforeHtml).toContain('<h2>');
+    expect(beforeHtml).toContain('<strong>');
     expect(cmd('setContent')).toHaveLength(0);
-    // El zoom no es edición: sin PUT.
+    // El zoom no es edición: sin PUT (sin autosave disparado).
     await act(async () => { await new Promise((r) => setTimeout(r, 900)); });
     expect(putCalls()).toHaveLength(0);
 
-    fireEvent.change(zoomSel, { target: { value: '100' } });
+    // La toolbar no se re-renderizó a otra instancia DOM al cambiar el zoom.
+    expect(screen.getByRole('toolbar', { name: 'Formato del borrador' })).toBe(toolbar);
+
+    // Regreso a 100 % neutraliza el zoom y el contenido sigue igual.
+    const minus = () => screen.getByLabelText('Reducir zoom');
+    for (let i = 0; i < 5; i++) fireEvent.click(minus());
     expect(zoomWrapper?.style.zoom).toBe('1');
     expect(main().html).toBe(beforeHtml);
+  }, 30000);
+
+  it('a 50 %, 100 % y 150 % el editor, scroll y selección siguen operables sobre el mismo nodo', async () => {
+    renderDrafts();
+    await openFirstDraft();
+    const content = document.querySelector('[data-testid="tiptap-content"]') as HTMLElement;
+    const toolbar = screen.getByRole('toolbar', { name: 'Formato del borrador' });
+    const minus = () => screen.getByLabelText('Reducir zoom');
+    const plus = () => screen.getByLabelText('Aumentar zoom');
+
+    const checkAtLevels = () => {
+      // El nodo del documento y la toolbar no se recrean: el mock y el DOM
+      // persisten entre cambios de zoom (no hay remount del editor).
+      expect(document.querySelector('[data-testid="tiptap-content"]')).toBe(content);
+      expect(screen.getByRole('toolbar', { name: 'Formato del borrador' })).toBe(toolbar);
+      // El envoltorio de zoom no introduce contenedores con overflow propio:
+      // el scroll sigue siendo el del lienzo/página.
+      const wrapper = content.closest('[data-testid="draft-zoom-content"]') as HTMLElement;
+      expect(wrapper).toBeTruthy();
+      expect(wrapper.getAttribute('class') ?? '').not.toContain('overflow');
+      // Comandos dependientes de caret/selección se ejecutan nivel por nivel.
+      const before = cmd('toggleUnderline').length;
+      fireEvent.click(btn('Subrayado'));
+      expect(cmd('toggleUnderline')).toHaveLength(before + 1);
+    };
+
+    // Lleva a 50 % (5 clics −).
+    for (let i = 0; i < 5; i++) fireEvent.click(minus());
+    checkAtLevels();
+    // Vuelve a 100 %.
+    for (let i = 0; i < 5; i++) fireEvent.click(plus());
+    checkAtLevels();
+    // Sube a 150 %.
+    for (let i = 0; i < 5; i++) fireEvent.click(plus());
+    checkAtLevels();
+  }, 30000);
+
+  it('deshacer/rehacer ejecutan comandos y restauran el contenido esperado, no solo habilitan botones', async () => {
+    const { rerender } = renderDraftsRerenderable();
+    await openFirstDraft();
+    const original = main().html;
+    // Edición equivalente a escribir: entra al historial de undo.
+    const edited = '<h1>Borrador</h1><p>Contenido. Editado tras el borrador.</p>';
+    main().commands.setContent(edited);
+    rerender();
+    expect(main().html).toBe(edited);
+
+    // Sin historial conocido por can(), habilitamos como el editor real +
+    // rerender; el clic ejecuta undo y restaura el contenido anterior.
+    main().canFlags.undo = true;
+    rerender();
+    expect(btn('Deshacer')).toBeEnabled();
+    fireEvent.click(btn('Deshacer'));
+    expect(cmd('undo')).toHaveLength(1);
+    expect(main().html).toBe(original);
+    rerender();
+    expect(screen.getByText('Contenido.')).toBeTruthy();
+
+    // Rehacer repite el contenido editado vía comando real.
+    main().canFlags.redo = true;
+    rerender();
+    expect(btn('Rehacer')).toBeEnabled();
+    fireEvent.click(btn('Rehacer'));
+    expect(cmd('redo')).toHaveLength(1);
+    expect(main().html).toBe(edited);
+    rerender();
+    expect(screen.getByText(/Editado tras el borrador\./)).toBeTruthy();
   }, 30000);
 
   it('compatibilidad de lectura y guardado con subrayado/tachado ya persistidos en un borrador', async () => {
