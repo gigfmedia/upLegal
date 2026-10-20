@@ -7,18 +7,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import StarterTextAlign from '@tiptap/extension-text-align';
 import {
   AlertTriangle,
+  AlignCenter,
+  AlignJustify,
+  AlignLeft,
+  AlignRight,
   Bold,
   Check,
   Copy,
   FilePenLine,
-  Heading as HeadingIcon,
   History as HistoryIcon,
   Italic,
   List,
   ListOrdered,
   Eraser,
+  Redo2,
+  Strikethrough,
+  Underline,
+  Undo2,
 } from 'lucide-react';
 import { aiOperationIdentity } from '@/lib/aiOperationIdentity';
 import { pollTerminalResult } from '@/lib/aiInProgressPoll';
@@ -176,19 +184,29 @@ export function useCaseDrafts(workspaceId: string | undefined) {
 }
 
 // Config del editor para TODOS los usos: solo encabezados 1-3, sin citas,
-// código, tachado, regla horizontal, enlaces ni subrayado (schema acotado).
+// código, regla horizontal ni enlaces (schema acotado). FASE UA-2 habilita
+// subrayado y tachado (ya incluidos en StarterKit 3.x) y añade alineación de
+// bloque restringida a párrafos y títulos — nunca listas.
 const editorExtensions = () => [
   StarterKit.configure({
     heading: { levels: [1, 2, 3] },
     blockquote: false,
     code: false,
     codeBlock: false,
-    strike: false,
     horizontalRule: false,
     link: false,
-    underline: false,
   }),
+  StarterTextAlign.configure({ types: ['paragraph', 'heading'] }),
 ];
+
+// FASE UA-2 — zoom de documento: 50 %–150 % en pasos de 10 %, 100 % por
+// defecto. Se implementa con CSS `zoom` (no transform): el navegador
+// recalcula el espacio de layout, scroll, cursor y selección de forma
+// nativa. Solo presentación: nunca altera getHTML ni lo persistido.
+const ZOOM_MIN = 50;
+const ZOOM_MAX = 150;
+const ZOOM_STOPS: number[] = Array.from({ length: (ZOOM_MAX - ZOOM_MIN) / 10 + 1 }, (_, i) => ZOOM_MIN + i * 10);
+type AlignValue = 'left' | 'center' | 'right' | 'justify';
 
 /** Documento de solo lectura aislado (previews de versiones): sanitiza pasando
  *  por el schema de TipTap, nunca innerHTML crudo. */
@@ -236,6 +254,11 @@ function DraftCanvas({ className = '', children }: { className?: string; childre
   );
 }
 
+/** FASE UA-2 — separador visual entre grupos de la toolbar. */
+function ToolbarDivider() {
+  return <span className="mx-0.5 h-4 w-px shrink-0 bg-gray-300" aria-hidden="true" />;
+}
+
 const SAVE_STATUS_LABEL: Record<SaveStatus, string> = {
   idle: '',
   dirty: 'Cambios sin guardar',
@@ -271,6 +294,9 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   const [previewVersion, setPreviewVersion] = useState<CaseDraftVersionDetail | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
   const [restoring, setRestoring] = useState(false);
+  // FASE UA-2 — zoom del documento (solo presentación); sobrevive al
+  // cierre/reapertura de borradores y nunca toca el HTML guardado.
+  const [draftZoom, setDraftZoom] = useState(100);
 
   const editorRef = useRef<ReturnType<typeof useEditor> | null>(null);
   const tokenRef = useRef<string | null>(null);
@@ -929,29 +955,59 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
 
   const chainFocus = () => (editor && !editor.isDestroyed ? editor.chain().focus() : null);
 
-  const applyHeading = () => {
+  // FASE UA-2 — toolbar profesional: estilo de párrafo/título por select,
+  // alineación de bloque y zoom solo-presentación.
+  const applyBlockStyle = (value: 'p' | 'h1' | 'h2' | 'h3') => {
     if (!editor || editor.isDestroyed) return;
     const chain = editor.chain().focus();
-    const at = (level: number) => editor.isActive('heading', { level });
-    if (at(3)) { chain.setParagraph().run(); return; }
-    const next = at(1) ? 2 : at(2) ? 3 : 1;
-    chain.toggleHeading({ level: next as 1 | 2 | 3 }).run();
+    if (value === 'p') { chain.setParagraph().run(); return; }
+    const level = Number(value.slice(1)) as 1 | 2 | 3;
+    chain.setHeading({ level }).run();
   };
+
+  const applyTextAlign = (value: 'left' | 'center' | 'right' | 'justify') => {
+    if (!editor || editor.isDestroyed) return;
+    editor.chain().focus().setTextAlign(value).run();
+  };
+
+  const applyZoom = (value: number) => {
+    setDraftZoom(Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, value)));
+  };
+
+  // Estados activos de la toolbar (FASE UA-2). Izquierda cuenta como activa
+  // cuando no hay ninguna otra alineación marcada (valor por defecto).
+  const isAlignActive = (value: AlignValue) =>
+    !!editor?.isActive({ textAlign: value });
+  const activeAlign: AlignValue = isAlignActive('center')
+    ? 'center'
+    : isAlignActive('right')
+      ? 'right'
+      : isAlignActive('justify')
+        ? 'justify'
+        : 'left';
+  const blockStyleValue = editor?.isActive('heading', { level: 1 })
+    ? 'h1'
+    : editor?.isActive('heading', { level: 2 })
+      ? 'h2'
+      : editor?.isActive('heading', { level: 3 })
+        ? 'h3'
+        : 'p';
 
   const toolbarButton = (
     title: string,
     Icon: typeof Bold,
     action: () => void,
-    active: boolean
+    active: boolean,
+    disabled: boolean = false
   ) => (
     <button
       type="button"
       title={title}
       aria-label={title}
       aria-pressed={active}
-      disabled={!editor || editor.isDestroyed}
+      disabled={disabled || !editor || editor.isDestroyed}
       onClick={action}
-      className={`rounded border px-2 py-1 text-xs ${active ? 'border-green-700 bg-green-700 text-white' : 'bg-white hover:bg-gray-50'}`}
+      className={`rounded border px-2 py-1 text-xs ${active ? 'border-green-700 bg-green-700 text-white' : 'bg-white hover:bg-gray-50'} ${disabled || !editor || editor.isDestroyed ? 'opacity-50' : ''}`}
     >
       <Icon className="h-3.5 w-3.5" aria-hidden="true" />
       <span className="sr-only">{title}</span>
@@ -1264,21 +1320,66 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                   {/* FASE UA-1: lienzo + hoja de documento; la barra de
                       herramientas queda como franja superior de la hoja y el
                       contenido recibe márgenes de documento (2,5 cm ≈ 72px
-                      en escritorio, reducidos en móvil). */}
+                      en escritorio, reducidos en móvil).
+                      FASE UA-2: toolbar con grupos (historial, marcas,
+                      estilo, listas, alineación, limpiar) + zoom CSS
+                      aplicado SOLO al envoltorio visual de la hoja. */}
                   <DraftCanvas>
+                    <div style={{ zoom: draftZoom / 100 }}>
                     <DraftSheet>
-                      <div className="flex items-center gap-1 border-b bg-gray-50 px-2 py-1.5">
+                      <div role="toolbar" aria-label="Formato del borrador" className="flex flex-wrap items-center gap-1 border-b bg-gray-50 px-2 py-1.5">
+                        {toolbarButton('Deshacer', Undo2, () => chainFocus()?.undo().run(), false, !editor?.can().undo())}
+                        {toolbarButton('Rehacer', Redo2, () => chainFocus()?.redo().run(), false, !editor?.can().redo())}
+                        <ToolbarDivider />
                         {toolbarButton('Negrita', Bold, () => chainFocus()?.toggleBold().run(), !!editor?.isActive('bold'))}
                         {toolbarButton('Cursiva', Italic, () => chainFocus()?.toggleItalic().run(), !!editor?.isActive('italic'))}
+                        {toolbarButton('Subrayado', Underline, () => chainFocus()?.toggleUnderline().run(), !!editor?.isActive('underline'))}
+                        {toolbarButton('Tachado', Strikethrough, () => chainFocus()?.toggleStrike().run(), !!editor?.isActive('strike'))}
+                        <ToolbarDivider />
+                        <label htmlFor="draft-block-style" className="sr-only">Estilo de párrafo o título</label>
+                        <select
+                          id="draft-block-style"
+                          aria-label="Estilo de párrafo o título"
+                          disabled={!editor || editor.isDestroyed}
+                          value={blockStyleValue}
+                          onChange={(e) => applyBlockStyle(e.target.value as 'p' | 'h1' | 'h2' | 'h3')}
+                          className="rounded border bg-white px-1.5 py-1 text-xs leading-4 hover:bg-gray-50 disabled:opacity-50"
+                        >
+                          <option value="p">Párrafo</option>
+                          <option value="h1">Título 1</option>
+                          <option value="h2">Título 2</option>
+                          <option value="h3">Título 3</option>
+                        </select>
+                        <ToolbarDivider />
                         {toolbarButton('Lista con viñetas', List, () => chainFocus()?.toggleBulletList().run(), !!editor?.isActive('bulletList'))}
                         {toolbarButton('Lista numerada', ListOrdered, () => chainFocus()?.toggleOrderedList().run(), !!editor?.isActive('orderedList'))}
-                        {toolbarButton('Título de sección', HeadingIcon, applyHeading, !!editor?.isActive('heading'))}
+                        <ToolbarDivider />
+                        {toolbarButton('Alinear a la izquierda', AlignLeft, () => applyTextAlign('left'), activeAlign === 'left')}
+                        {toolbarButton('Centrar', AlignCenter, () => applyTextAlign('center'), activeAlign === 'center')}
+                        {toolbarButton('Alinear a la derecha', AlignRight, () => applyTextAlign('right'), activeAlign === 'right')}
+                        {toolbarButton('Justificar', AlignJustify, () => applyTextAlign('justify'), activeAlign === 'justify')}
+                        <ToolbarDivider />
                         {toolbarButton('Limpiar formato', Eraser, () => chainFocus()?.unsetAllMarks().clearNodes().run(), false)}
+                        <div className="ml-auto flex items-center gap-1 pl-2">
+                          <label htmlFor="draft-zoom" className="sr-only">Zoom del documento</label>
+                          <select
+                            id="draft-zoom"
+                            aria-label="Zoom del documento"
+                            value={draftZoom}
+                            onChange={(e) => applyZoom(Number(e.target.value))}
+                            className="rounded border bg-white px-1.5 py-1 text-xs leading-4 hover:bg-gray-50"
+                          >
+                            {ZOOM_STOPS.map((z) => (
+                              <option key={z} value={z}>{z} %</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
                       <div className="px-4 py-8 sm:px-9 md:px-[72px] md:py-[56px]">
                         <EditorContent editor={editor} />
                       </div>
                     </DraftSheet>
+                    </div>
                   </DraftCanvas>
 
                   <div className="flex flex-wrap gap-2">
