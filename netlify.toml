@@ -23,6 +23,15 @@
   force = true
   headers = {Access-Control-Allow-Origin = "*"}
 
+# FASE UA-2 — preview del PR funcional: los builds de deploy-preview
+# no deben embeber la URL absoluta de Render (el navegador la usaría
+# cross-origin y el allowlist CORS del backend la bloquea). Con la
+# variable vacía, la app consume /api relativo y el rewrite de arriba
+# lo proxifica a Render: peticiones same-origin, sin CORS. Solo afecta
+# al contexto deploy-preview; production conserva su configuración.
+[context.deploy-preview.environment]
+  VITE_API_BASE_URL = ""
+
 # Fallback para Netlify Functions si existen
 [[redirects]]
   from = "/api/*"
