@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -204,9 +204,35 @@ function StaticDraftDoc({ html }: { html: string }) {
     }
   }, [previewEditor, html]);
   return (
-    <div className="draft-preview max-h-72 overflow-y-auto rounded border bg-gray-50 p-3 text-sm [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_li]:ml-4 [&_p]:my-1">
-      <EditorContent editor={previewEditor} />
+    <div className="draft-preview max-h-80 overflow-y-auto rounded-lg border bg-muted/50 p-2 sm:p-3 text-sm">
+      <div className="mx-auto rounded-md border bg-white px-3 py-3 shadow-sm sm:px-5 sm:py-4 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_li]:ml-4 [&_p]:my-1">
+        <EditorContent editor={previewEditor} />
+      </div>
     </div>
+  );
+}
+
+/** FASE UA-1 — presentación de documento tipo Word: lienzo de trabajo gris
+ *  claro alrededor de una hoja blanca centrada (A4 ≈ 794 px al 100 % en
+ *  escritorio). Envoltorios puramente visuales: no tocan el ciclo de vida de
+ *  TipTap, la serialización HTML, el autosave ni los estados de guardado.
+ *  La hoja usa altura mínima de página real (A4 ≈ 1123 px) y el contenido
+ *  fluye continuo si la excede — sin paginación fingida. */
+function DraftSheet({ className = '', children }: { className?: string; children: ReactNode }) {
+  return (
+    <div
+      className={`mx-auto min-h-[640px] w-full max-w-[794px] overflow-hidden rounded-md border bg-card shadow-sm md:min-h-[1123px] ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** FASE UA-1 — lienzo de trabajo: los márgenes exteriores se reducen en móvil
+ *  para que la hoja ocupe el ancho disponible sin scroll horizontal. */
+function DraftCanvas({ className = '', children }: { className?: string; children: ReactNode }) {
+  return (
+    <div className={`rounded-lg border bg-muted/50 p-2 sm:p-4 md:p-6 ${className}`}>{children}</div>
   );
 }
 
@@ -537,7 +563,9 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-sm max-w-none min-h-[420px] focus:outline-none',
+        // FASE UA-1: tipografía de documento (base 16px, títulos 24/18/16px)
+        // en lugar de prose-sm de UI; la hoja gobierna el ancho de línea.
+        class: 'prose max-w-none min-h-[560px] focus:outline-none [&_h1]:text-2xl [&_h2]:text-lg [&_h3]:text-base [&_p]:leading-relaxed',
         spellcheck: 'true',
       },
     },
@@ -1233,19 +1261,25 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                     </div>
                   ) : null}
 
-                  <div className="rounded border">
-                    <div className="flex items-center gap-1 border-b bg-gray-50 px-2 py-1.5">
-                      {toolbarButton('Negrita', Bold, () => chainFocus()?.toggleBold().run(), !!editor?.isActive('bold'))}
-                      {toolbarButton('Cursiva', Italic, () => chainFocus()?.toggleItalic().run(), !!editor?.isActive('italic'))}
-                      {toolbarButton('Lista con viñetas', List, () => chainFocus()?.toggleBulletList().run(), !!editor?.isActive('bulletList'))}
-                      {toolbarButton('Lista numerada', ListOrdered, () => chainFocus()?.toggleOrderedList().run(), !!editor?.isActive('orderedList'))}
-                      {toolbarButton('Título de sección', HeadingIcon, applyHeading, !!editor?.isActive('heading'))}
-                      {toolbarButton('Limpiar formato', Eraser, () => chainFocus()?.unsetAllMarks().clearNodes().run(), false)}
-                    </div>
-                    <div className="px-3 py-2">
-                      <EditorContent editor={editor} />
-                    </div>
-                  </div>
+                  {/* FASE UA-1: lienzo + hoja de documento; la barra de
+                      herramientas queda como franja superior de la hoja y el
+                      contenido recibe márgenes de documento (2,5 cm ≈ 72px
+                      en escritorio, reducidos en móvil). */}
+                  <DraftCanvas>
+                    <DraftSheet>
+                      <div className="flex items-center gap-1 border-b bg-gray-50 px-2 py-1.5">
+                        {toolbarButton('Negrita', Bold, () => chainFocus()?.toggleBold().run(), !!editor?.isActive('bold'))}
+                        {toolbarButton('Cursiva', Italic, () => chainFocus()?.toggleItalic().run(), !!editor?.isActive('italic'))}
+                        {toolbarButton('Lista con viñetas', List, () => chainFocus()?.toggleBulletList().run(), !!editor?.isActive('bulletList'))}
+                        {toolbarButton('Lista numerada', ListOrdered, () => chainFocus()?.toggleOrderedList().run(), !!editor?.isActive('orderedList'))}
+                        {toolbarButton('Título de sección', HeadingIcon, applyHeading, !!editor?.isActive('heading'))}
+                        {toolbarButton('Limpiar formato', Eraser, () => chainFocus()?.unsetAllMarks().clearNodes().run(), false)}
+                      </div>
+                      <div className="px-4 py-8 sm:px-9 md:px-[72px] md:py-[56px]">
+                        <EditorContent editor={editor} />
+                      </div>
+                    </DraftSheet>
+                  </DraftCanvas>
 
                   <div className="flex flex-wrap gap-2">
                     <Button size="sm" variant="outline" onClick={copyContent}>
