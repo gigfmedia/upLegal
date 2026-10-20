@@ -12348,6 +12348,16 @@ app.put('/api/ai/cases/:caseId/drafts/:draftId', async (req, res) => {
     // head cambió se persiste la versión nueva. El resultado nunca muestra
     // versiones de contenido que la base rechazó.
     await ensureDraftLegacyBaseline(existing);
+    // 4.62H.2: URL 409 reutilizable para la señal real de carrera del CAS.
+    // Reenvía la revisión vigente (otro escritor ya movió el head).
+    const raceConflict = async () => {
+      const { data: rebound } = await supabase.from('ai_case_drafts').select('revision').eq('id', req.params.draftId).maybeSingle();
+      return res.status(409).json({
+        error: 'El documento cambió en otro dispositivo o pestaña. Recarga para ver la versión actual o recupera tus cambios.',
+        code: 'AI_DRAFT_REVISION_CONFLICT',
+        current_revision: Number(rebound?.revision) || currentRevision + 1,
+      });
+    };
     const { data, error } = await supabase
       .from('ai_case_drafts')
       .update({ content, content_format: contentFormat, revision: currentRevision + 1, updated_at: new Date().toISOString() })
@@ -12356,16 +12366,17 @@ app.put('/api/ai/cases/:caseId/drafts/:draftId', async (req, res) => {
       .eq('revision', currentRevision)
       .select()
       .single();
-    if (error) throw error;
-    if (!data) {
-      // Carrera real: otra escritura ganó entre el select y el update.
-      const { data: rebound } = await supabase.from('ai_case_drafts').select('revision').eq('id', req.params.draftId).maybeSingle();
-      return res.status(409).json({
-        error: 'El documento cambió en otro dispositivo o pestaña. Recarga para ver la versión actual o recupera tus cambios.',
-        code: 'AI_DRAFT_REVISION_CONFLICT',
-        current_revision: Number(rebound?.revision) || currentRevision + 1,
-      });
+    // PGRST116 de ESTE CAS es señal específica de carrera: el guard
+    // eq(id)+eq(revision) matchea ≤1 fila, así que no puede ser multi-row,
+    // solo 0 filas (otra escritura ganó entre el select y el update).
+    // Con Accept vnd.pgrst.object+json PostgREST responde 406 PGRST116,
+    // no data null (eso solo ocurre con maybeSingle). Otros errores
+    // conservan su tratamiento habitual.
+    if (error) {
+      if (error.code === 'PGRST116') return raceConflict();
+      throw error;
     }
+    if (!data) return raceConflict();
     const saved = await insertDraftVersionHead({ draft: existing, content, contentFormat, origin });
     res.json({ draft: data, version: { version_no: saved.version_no, ...(saved.coalesced ? { coalesced: true } : {}) } });
   } catch (error) {
@@ -12500,6 +12511,16 @@ app.post('/api/ai/cases/:caseId/drafts/:draftId/versions/:versionNo/restore', as
     if (!existing) return res.status(404).json({ error: 'Borrador no encontrado.' });
 
     const currentRevision = Number(existing.revision) || 1;
+    // 4.62H.3: mismo tratamiento del CAS-perdedor que la ruta PUT (4.62H.2);
+    // reenvía la revisión vigente (otro escritor ya movió el head).
+    const raceConflict = async () => {
+      const { data: rebound } = await supabase.from('ai_case_drafts').select('revision').eq('id', req.params.draftId).maybeSingle();
+      return res.status(409).json({
+        error: 'El documento cambió mientras se restauraba. Reintenta.',
+        code: 'AI_DRAFT_REVISION_CONFLICT',
+        current_revision: Number(rebound?.revision) || currentRevision + 1,
+      });
+    };
     // Restaurar solo head después del guard atómico; la versión nueva entra
     // append-only si la restauración ganó. Jamás borra ni muta el historial.
     const { data, error } = await supabase
@@ -12515,14 +12536,17 @@ app.post('/api/ai/cases/:caseId/drafts/:draftId/versions/:versionNo/restore', as
       .eq('revision', currentRevision)
       .select()
       .single();
-    if (error) throw error;
-    if (!data) {
-      return res.status(409).json({
-        error: 'El documento cambió mientras se restauraba. Reintenta.',
-        code: 'AI_DRAFT_REVISION_CONFLICT',
-        current_revision: currentRevision + 1,
-      });
+    // PGRST116 de ESTE CAS es señal específica de carrera: el guard
+    // eq(id)+eq(revision) matchea ≤1 fila, así que no puede ser multi-row,
+    // solo 0 filas (otra escritura ganó entre el select y el update). Con
+    // Accept vnd.pgrst.object+json PostgREST responde 406 PGRST116, no data
+    // null (eso solo ocurre con maybeSingle). Otros errores mantienen su
+    // tratamiento habitual.
+    if (error) {
+      if (error.code === 'PGRST116') return raceConflict();
+      throw error;
     }
+    if (!data) return raceConflict();
     const restored = await insertDraftVersionHead({
       draft: existing,
       content: version.content,

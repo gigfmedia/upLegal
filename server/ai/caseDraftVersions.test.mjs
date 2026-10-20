@@ -80,11 +80,19 @@ function harness({ plan = 'pro' } = {}) {
   // inyectable: el siguiente UPDATE de versiones matchea 0 filas (carrera del
   // guard de coalescencia: el head cambió bajo el read).
   const updateZeroMatches = [];
+  // inyectable: el siguiente UPDATE CAS de ai_case_drafts matchea 0 filas
+  // (carrera entre el select y el CAS del PUT). Con object+json la respuesta
+  // real es un error PGRST116, no data null.
+  const draftCasZeroMatches = [];
   const supabase = { rpc, storage: { from: () => ({}) }, from(table) {
     let action = 'select', payload, limit = Infinity, filters = [], orderKey = null, orderAsc = true, selCols = null, selChained = false;
     // Nota FASE 4.62H: el project() aplica cuando hubo .select(); también en
     // updates con representación (PATCH .select()).
     const project = (r) => (selCols ? Object.fromEntries(selCols.filter((c) => c in r).map((c) => [c, r[c]])) : r);
+    // Respuesta POSTgREST real (4.62H.2): Accept vnd.pgrst.object+json con 0
+    // filas → 406 PGRST116; supabase-js lo devuelve como error para .single()
+    // y lo normaliza a data null SOLO para .maybeSingle().
+    const zeroRowObjectError = () => ({ message: 'JSON object requested, multiple (or no) rows returned', details: 'Results contain 0 rows', hint: null, code: 'PGRST116' });
     const run = (single = false) => {
       const list = rows[table] ?? (rows[table] = []);
       let matched = list.filter((r) => filters.every((f) => f(r)));
@@ -105,21 +113,25 @@ function harness({ plan = 'pro' } = {}) {
       const projected = matched.map(project);
       const singleData = () => (projected[0] ? { ...projected[0] } : null);
       if (action === 'update') {
-        // Carrera del guard simulada: el UPDATE corre y matchea 0 filas
-        // (el guard eq no encontró la fila), sin mutar nada.
-        if (table === 'ai_case_draft_versions' && updateZeroMatches.length) {
-          updateZeroMatches.shift();
-          return { data: selChained ? (single ? null : []) : null, error: null };
+        // Carreras simuladas: el UPDATE corre y matchea 0 filas (el guard eq
+        // no encontró la fila), sin mutar nada.
+        const zeroMatch = (table === 'ai_case_draft_versions' && updateZeroMatches.length)
+          || (table === 'ai_case_drafts' && draftCasZeroMatches.length && payload?.revision !== undefined);
+        if (zeroMatch) {
+          (table === 'ai_case_draft_versions' ? updateZeroMatches : draftCasZeroMatches).shift();
+          return { data: null, error: selChained && single === 'exactly' ? zeroRowObjectError() : null };
         }
         // Semántica PostgREST real (postgrest-js 2.84): PATCH NO envía
         // Prefer: return=representation por defecto → 204 cuerpo vacío →
         // data null SIEMPRE, matchee o no. Solo con .select() encadenado
-        // PostgREST devuelve la representación de las filas afectadas.
+        // PostgREST devuelve la representación de las filas afectadas, y si
+        // se pidió objeto único (.single()) con 0 filas responde PGRST116.
         matched.forEach((r) => Object.assign(r, payload));
-        return {
-          data: selChained ? (single ? (matched[0] ? singleData() : null) : projected.map((r) => ({ ...r }))) : null,
-          error: null,
-        };
+        if (selChained) {
+          if (single === 'exactly' && !matched.length) return { data: null, error: zeroRowObjectError() };
+          return { data: single ? singleData() : projected.map((r) => ({ ...r })), error: null };
+        }
+        return { data: null, error: null };
       }
       return { data: single ? singleData() : projected.map((r) => ({ ...r })), error: null };
     };
@@ -130,7 +142,7 @@ function harness({ plan = 'pro' } = {}) {
       limit: (n) => { limit = n; return q; },
       insert: (p) => { action = 'insert'; payload = p; return q; },
       update: (p) => { action = 'update'; payload = p; return q; },
-      single: async () => run(true), maybeSingle: async () => run(true),
+      single: async () => run('exactly'), maybeSingle: async () => run('maybe'),
       then: (a, b) => Promise.resolve(run()).then(a, b) };
     return q;
   } };
@@ -175,7 +187,7 @@ function harness({ plan = 'pro' } = {}) {
     return r;
   }
   const asForeign = () => { tokenUser = foreign; };
-  return { rows, provider, rpc, call, asForeign, versionInsertErrors, updateZeroMatches, setPlan: (p) => { currentPlan = p; } };
+  return { rows, provider, rpc, call, asForeign, versionInsertErrors, updateZeroMatches, draftCasZeroMatches, setPlan: (p) => { currentPlan = p; } };
 }
 
 const DRAFT_PATHS = {
@@ -275,21 +287,23 @@ describe('4.62C OCC control de concurrencia optimista', () => {
     expect(put.body.draft.revision).toBe(2);
   });
 
-  it('carrera de escritura entre select y update: 409, sin ghost version', async () => {
+  it('carrera CAS real: el CAS matchea 0 filas → error PGRST116 → 409 con current_revision, sin versión escrita', async () => {
     const h = harness();
     const gen = await generatedDraft(h);
-    // simulación: otro escritor gana justo después del select del PUT;
-    // el guard eq(revision, 1) filtra la fila → update matchea 0 filas.
-    const putRoute = h.call.bind(h);
-    h.rows.__stealOnce = true;
-    const originalFrom = h.rows;
-    void putRoute; void originalFrom;
-    // Simulación directa: base_revision válida al iniciar y revisión cambiada
-    // entre el select y el update NO es observable sin acciones simultáneas;
-    // se cubre por la rama !data con base desactualizada arriba, y por el
-    // 409 de UNIQUE(draft_id, version_no) en el test de carrera de versión.
-    expect(true).toBe(true);
-    void gen;
+    const before = h.rows.ai_case_draft_versions.length;
+    // Otro escritor gana el CAS justo entre el select y el update del PUT:
+    // eq(id)+eq(revision,1) matchea 0 filas. Con Accept vnd.pgrst.object+json
+    // la respuesta real es un ERROR PGRST116 (406), no data null; la ruta
+    // debe degradarlo a 409 OCC, no 500 genérico.
+    h.draftCasZeroMatches.push(true);
+    const loser = await h.call('put', DRAFT_PATHS.draft, { content: 'Escritura de pestaña perdedora.', base_revision: 1 }, { draftId: gen.body.draft.id });
+    expect(loser.statusCode).toBe(409);
+    expect(loser.body.code).toBe('AI_DRAFT_REVISION_CONFLICT');
+    expect(typeof loser.body.current_revision).toBe('number');
+    expect(h.rows.ai_case_draft_versions).toHaveLength(before);
+    // Nada se escribió: ni contenido ni revisión (el CAS perdió).
+    expect(h.rows.ai_case_drafts[0].content).toBe(gen.body.draft.content);
+    expect(h.rows.ai_case_drafts[0].revision).toBe(1);
   });
 
   it('violación UNIQUE en versión: reintento recalcula y guarda; doble fallo → 409', async () => {
@@ -375,6 +389,27 @@ describe('4.62C historial y restauración', () => {
     expect((await h.call('post', DRAFT_PATHS.restore, {}, { draftId: gen.body.draft.id, versionNo: 7 })).statusCode).toBe(404);
     expect(h.rows.ai_case_draft_versions).toHaveLength(1);
     expect(h.rows.ai_case_drafts[0].revision).toBe(1);
+  });
+
+  it('carrera CAS real en restore: el CAS matchea 0 filas → error PGRST116 → 409 con current_revision, sin escrituras', async () => {
+    const h = harness();
+    const gen = await generatedDraft(h);
+    await h.call('put', DRAFT_PATHS.draft, { content: 'Cambio de pestaña activa.', base_revision: 1 }, { draftId: gen.body.draft.id });
+    const versionsBefore = h.rows.ai_case_draft_versions.length;
+    const draftBefore = JSON.parse(JSON.stringify(h.rows.ai_case_drafts[0]));
+    // Otro escritor gana el CAS del restore justo entre el select y el
+    // update: eq(id)+eq(revision,2) matchea 0 filas. Con Accept
+    // vnd.pgrst.object+json la respuesta real es un ERROR PGRST116 (406),
+    // no data null; la ruta debe degradarlo a 409 OCC, no 500 genérico.
+    h.draftCasZeroMatches.push(true);
+    const restore = await h.call('post', DRAFT_PATHS.restore, {}, { draftId: gen.body.draft.id, versionNo: 2 });
+    expect(restore.statusCode).toBe(409);
+    expect(restore.body.code).toBe('AI_DRAFT_REVISION_CONFLICT');
+    expect(typeof restore.body.current_revision).toBe('number');
+    // Sin escritura: head del borrador (contenido y revisión) y versiones
+    // intactos; ninguna fila de restauración creada.
+    expect(h.rows.ai_case_drafts[0]).toEqual(draftBefore);
+    expect(h.rows.ai_case_draft_versions).toHaveLength(versionsBefore);
   });
 
   it('versionNo inválido: 400 en detalle y restore', async () => {
