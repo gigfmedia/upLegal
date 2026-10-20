@@ -2419,7 +2419,7 @@ describe('FASE UA-2 — toolbar profesional y zoom de presentación', () => {
     expect(plus()).toBeEnabled();
   }, 30000);
 
-  it('zoom afecta solo al documento: toolbar sin estilos de zoom, editor no recreado, sin setContent ni PUT, y formato preexistente conservado', async () => {
+  it('zoom escala la hoja completa: toolbar fuera de la hoja y del zoom, editor no recreado, sin setContent ni PUT, y formato preexistente conservado', async () => {
     draftPayloadOverride = makeDraft({
       id: 'd3',
       title: 'Formato previo UA-2',
@@ -2438,20 +2438,26 @@ describe('FASE UA-2 — toolbar profesional y zoom de presentación', () => {
     const content = document.querySelector('[data-testid="tiptap-content"]') as HTMLElement;
     expect(content).toBeTruthy();
     const zoomWrapper = content.closest('[data-testid="draft-zoom-content"]') as HTMLElement | null;
+    const sheet = document.querySelector('[data-testid="draft-sheet"]') as HTMLElement;
     expect(zoomWrapper?.style.zoom).toBe('1');
-    // La toolbar (y toda su ascendencia) no recibe zoom: la hoja y sus
-    // márgenes quedan a escala 1 con el contenido ampliado.
+    // La hoja completa vive dentro del envoltorio de zoom (página, márgenes
+    // y texto escalan juntos) y la toolbar está FUERA de la hoja y del zoom.
+    expect(zoomWrapper?.contains(sheet)).toBe(true);
+    expect(zoomWrapper?.contains(content)).toBe(true);
+    expect(toolbar.contains(content)).toBe(false);
+    expect(zoomWrapper?.contains(toolbar)).toBe(false);
+    // La toolbar (y toda su ascendencia) no recibe zoom: escala 1 siempre.
     let ancestor: HTMLElement | null = toolbar;
     while (ancestor) {
       expect(ancestor.style.zoom).toBe('');
       ancestor = ancestor.parentElement;
     }
-    expect(toolbar.contains(zoomWrapper as HTMLElement)).toBe(false);
 
     const plus = () => screen.getByLabelText('Aumentar zoom');
     for (let i = 0; i < 5; i++) fireEvent.click(plus());
     expect(zoomWrapper?.style.zoom).toBe('1.5');
     expect(toolbar.style.zoom).toBe('');
+    expect(sheet.style.zoom).toBe('');
     // El editor no se reinicia ni se recalcula contenido: misma instancia y
     // el formato preexistente (h2/strong/u) intacto.
     expect(editorCache.main).toBe(before);
