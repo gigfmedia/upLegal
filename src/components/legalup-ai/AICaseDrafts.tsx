@@ -236,12 +236,13 @@ function StaticDraftDoc({ html }: { html: string }) {
   );
 }
 
-/** FASE UA-1 — presentación de documento tipo Word: lienzo de trabajo gris
- *  claro alrededor de una hoja blanca centrada (A4 ≈ 794 px al 100 % en
- *  escritorio). Envoltorios puramente visuales: no tocan el ciclo de vida de
- *  TipTap, la serialización HTML, el autosave ni los estados de guardado.
- *  La hoja usa altura mínima de página real (A4 ≈ 1123 px) y el contenido
- *  fluye continuo si la excede — sin paginación fingida. */
+/** FASE UA-1 — presentación de documento tipo Word: hoja blanca centrada
+ *  (A4 ≈ 794 px al 100 % en escritorio) dentro del box de trabajo gris
+ *  (FASE UA-2C: la toolbar fue promovida a borde superior del box). Hoja
+ *  puramente visual: no toca el ciclo de vida de TipTap, la serialización
+ *  HTML, el autosave ni los estados de guardado. La hoja usa altura mínima
+ *  de página real (A4 ≈ 1123 px) y el contenido fluye continuo si la
+ *  excede — sin paginación fingida. */
 function DraftSheet({ className = '', children }: { className?: string; children: ReactNode }) {
   return (
     <div
@@ -253,15 +254,7 @@ function DraftSheet({ className = '', children }: { className?: string; children
   );
 }
 
-/** FASE UA-1 — lienzo de trabajo: los márgenes exteriores se reducen en móvil
- *  para que la hoja ocupe el ancho disponible sin scroll horizontal. */
-function DraftCanvas({ className = '', children }: { className?: string; children: ReactNode }) {
-  return (
-    <div className={`rounded-lg border bg-muted/50 p-2 sm:p-4 md:p-6 ${className}`}>{children}</div>
-  );
-}
-
-/** FASE UA-2 — separador visual entre grupos de la toolbar. */
+/** FASE UA-2C — separador visual entre grupos de la toolbar. */
 function ToolbarDivider() {
   return <span className="mx-0.5 h-4 w-px shrink-0 bg-gray-300" aria-hidden="true" />;
 }
@@ -1000,9 +993,10 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
         ? 'h3'
         : 'p';
 
-  // FASE UA-2B — botones planos sin borde ni caja (fidelidad a Tiptap
-  // Agent Editor): icono de 16 px sobre superficie transparente, acción y
-  // estado activo en aria-pressed, hover gris neutro y anillo verde en focus.
+  // FASE UA-2C — botones planos fieles a Tiptap Agent Editor: icono de 16 px
+  // sin caja permanente, hover gris SOLO al pasar el cursor y estado activo
+  // como COLOR DEL ICONO (verde acento LegalUp) sin fondo, borde ni chip.
+  // IA/estados y accesibilidad intactos (aria-pressed, sr-only, focus ring).
   const toolbarButton = (
     title: string,
     Icon: typeof Bold,
@@ -1017,7 +1011,7 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
       aria-pressed={active}
       disabled={disabled || !editor || editor.isDestroyed}
       onClick={action}
-      className={`rounded p-1.5 text-gray-800 hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-700 ${active ? 'bg-green-700 text-white hover:bg-green-700' : ''} ${disabled || !editor || editor.isDestroyed ? 'opacity-50' : ''}`}
+      className={`rounded p-1.5 hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-700 ${active ? 'text-green-700' : 'text-gray-800'} ${disabled || !editor || editor.isDestroyed ? 'opacity-50' : ''}`}
     >
       <Icon className="h-4 w-4" aria-hidden="true" />
       <span className="sr-only">{title}</span>
@@ -1327,18 +1321,22 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                     </div>
                   ) : null}
 
-                  {/* FASE UA-2B — fiel a Tiptap Agent Editor: la barra de
-                      herramientas es una barra propia sobre la hoja (fuera de
-                      la hoja y fuera del zoom, a escala 1 siempre, control
-                      centrado de iconos planos con separadores finos y el
-                      zoom − % + integrado como grupo tras historial); la hoja
-                      blanca centrada sobre el lienzo gris empieza debajo de
-                      la barra con separacion minima, y el CSS zoom escala la
-                      HOJA COMPLETA: dimensiones de pagina, margenes y texto
-                      (nativo, sin transform). Márgenes de documento (2,5 cm
-                      ≈ 72 px en escritorio, reducidos en móvil). */}
-                  <DraftCanvas>
-                    <div role="toolbar" aria-label="Formato del borrador" data-testid="draft-toolbar" className="flex flex-wrap items-center justify-center gap-0.5 rounded-md border bg-card px-3 py-1.5 shadow-sm">
+                  {/* FASE UA-2C — fiel a Tiptap Agent Editor: el box de
+                      trabajo es una tarjeta con la toolbar pegada al BORDE
+                      SUPERIOR y FULL WIDTH (primera hija, sin margen ni
+                      inset), separadores finos y controles centrados dentro
+                      de ella; debajo, el lienzo gris contiene la hoja con
+                      separación mínima consistente. El zoom − % + vive en la
+                      barra y no escala nunca. El CSS zoom escala la HOJA
+                      COMPLETA (dimensiones, márgenes y texto) y el ancho del
+                      envoltorio se ajusta a 100/zoom %: el ancho renderizado
+                      queda siempre contenido en el box (sin overflow de la
+                      página ni superposición con la toolbar; nativo, sin
+                      transform). Márgenes de documento (2,5 cm ≈ 72 px en
+                      escritorio, reducidos en móvil). La hoja sigue siendo
+                      visual y de flujo continuo — sin paginación real. */}
+                  <div data-testid="draft-canvas" className="rounded-lg border bg-muted/50 overflow-hidden">
+                    <div role="toolbar" aria-label="Formato del borrador" data-testid="draft-toolbar" className="flex flex-wrap items-center justify-center gap-0.5 border-b bg-card px-3 py-1.5">
                       {toolbarButton('Deshacer', Undo2, () => chainFocus()?.undo().run(), false, !editor?.can().undo())}
                       {toolbarButton('Rehacer', Redo2, () => chainFocus()?.redo().run(), false, !editor?.can().redo())}
                       <ToolbarDivider />
@@ -1398,14 +1396,19 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                       <ToolbarDivider />
                       {toolbarButton('Limpiar formato', Eraser, () => chainFocus()?.unsetAllMarks().clearNodes().run(), false)}
                     </div>
-                    <div data-testid="draft-zoom-content" className="mt-1.5" style={{ zoom: draftZoom / 100 }}>
-                      <DraftSheet>
-                        <div className="px-4 py-8 sm:px-9 md:px-[72px] md:py-[56px]">
-                          <EditorContent editor={editor} />
-                        </div>
-                      </DraftSheet>
+                    <div className="p-2 sm:p-4 md:p-6 overflow-x-clip">
+                      <div
+                        data-testid="draft-zoom-content"
+                        style={{ zoom: draftZoom / 100, width: `${100 / (draftZoom / 100)}%` }}
+                      >
+                        <DraftSheet>
+                          <div className="px-4 py-8 sm:px-9 md:px-[72px] md:py-[56px]">
+                            <EditorContent editor={editor} />
+                          </div>
+                        </DraftSheet>
+                      </div>
                     </div>
-                  </DraftCanvas>
+                  </div>
 
                   <div className="flex flex-wrap gap-2">
                     <Button size="sm" variant="outline" onClick={copyContent}>

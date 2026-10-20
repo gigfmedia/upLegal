@@ -2439,7 +2439,14 @@ describe('FASE UA-2 — toolbar profesional y zoom de presentación', () => {
     expect(content).toBeTruthy();
     const zoomWrapper = content.closest('[data-testid="draft-zoom-content"]') as HTMLElement | null;
     const sheet = document.querySelector('[data-testid="draft-sheet"]') as HTMLElement;
+    const workBox = toolbar.parentElement as HTMLElement;
+    expect(workBox.getAttribute('data-testid')).toBe('draft-canvas');
+    // La toolbar está pegada al borde superior del box y ocupa su ancho:
+    // primera hija, determinada por el contenedor, sin margen propio.
+    expect(workBox.firstElementChild).toBe(toolbar);
+    expect(toolbar.className).toContain('border-b');
     expect(zoomWrapper?.style.zoom).toBe('1');
+    expect(zoomWrapper?.style.width).toBe('100%');
     // La hoja completa vive dentro del envoltorio de zoom (página, márgenes
     // y texto escalan juntos) y la toolbar está FUERA de la hoja y del zoom.
     expect(zoomWrapper?.contains(sheet)).toBe(true);
@@ -2456,7 +2463,11 @@ describe('FASE UA-2 — toolbar profesional y zoom de presentación', () => {
     const plus = () => screen.getByLabelText('Aumentar zoom');
     for (let i = 0; i < 5; i++) fireEvent.click(plus());
     expect(zoomWrapper?.style.zoom).toBe('1.5');
+    // El ancho del envoltorio compensa el zoom (100/zoom %) para que el
+    // ancho renderizado de la hoja quede contenido en el box de trabajo.
+    expect(zoomWrapper?.style.width).toBe(`${100 / 1.5}%`);
     expect(toolbar.style.zoom).toBe('');
+    expect(toolbar.style.width).toBe('');
     expect(sheet.style.zoom).toBe('');
     // El editor no se reinicia ni se recalcula contenido: misma instancia y
     // el formato preexistente (h2/strong/u) intacto.
@@ -2476,7 +2487,45 @@ describe('FASE UA-2 — toolbar profesional y zoom de presentación', () => {
     const minus = () => screen.getByLabelText('Reducir zoom');
     for (let i = 0; i < 5; i++) fireEvent.click(minus());
     expect(zoomWrapper?.style.zoom).toBe('1');
+    expect(zoomWrapper?.style.width).toBe('100%');
     expect(main().html).toBe(beforeHtml);
+  }, 30000);
+
+  it('iconos activos de la toolbar: color de acento en el icono, sin fondo ni caja; hover solo al pasar el cursor', async () => {
+    renderDrafts();
+    await openFirstDraft();
+    const toolbar = screen.getByRole('toolbar', { name: 'Formato del borrador' });
+
+    // Ignora utilidades con prefijo (hover:/focus-visible:): solo cuentan
+    // las clases persistentes (normal y activo) del botón.
+    const flatIconStyle = (el: HTMLElement) =>
+      el.className.replace(/(?:hover:|focus-visible:)[\S]+/g, '');
+    // Alineación izquierda activa por defecto: color de acento, sin fondo.
+    const alignLeft = screen.getByLabelText('Alinear a la izquierda');
+    expect(alignLeft.getAttribute('aria-pressed')).toBe('true');
+    expect(flatIconStyle(alignLeft)).toContain('text-green-700');
+    // Ni fondo coloreado ni caja permanente.
+    expect(flatIconStyle(alignLeft)).not.toMatch(/bg-(green|white|gray)|border/);
+    // El hover existe y es fondo gris discreto, no estilo de estado activo.
+    expect(alignLeft.className).toContain('hover:bg-gray-100');
+
+    // Estado inactivo: icono plano gris, sin fondo.
+    const bold = screen.getByLabelText('Negrita');
+    expect(bold.getAttribute('aria-pressed')).toBe('false');
+    expect(flatIconStyle(bold)).toContain('text-gray-800');
+    expect(flatIconStyle(bold)).not.toMatch(/bg-(green|white|gray)|border/);
+
+    // Activo e inactivo salen de la MISMA plantilla de clases: la única
+    // diferencia es el token de color (verde acento vs gris neutral).
+    expect(bold.className).toBe(alignLeft.className.replace('text-green-700', 'text-gray-800'));
+
+    // Cursiva comparte el patrón inactivo exacto.
+    const italic = screen.getByLabelText('Cursiva');
+    expect(flatIconStyle(italic)).toContain('text-gray-800');
+    expect(flatIconStyle(italic)).not.toMatch(/bg-(green|white|gray)|border/);
+    // La toolbar permanece a escala 1 y su estructura no cambia.
+    expect(toolbar.style.zoom).toBe('');
+    expect((toolbar.parentElement as HTMLElement).firstElementChild).toBe(toolbar);
   }, 30000);
 
   it('a 50 %, 100 % y 150 % el editor, scroll y selección siguen operables sobre el mismo nodo', async () => {
@@ -2497,6 +2546,9 @@ describe('FASE UA-2 — toolbar profesional y zoom de presentación', () => {
       const wrapper = content.closest('[data-testid="draft-zoom-content"]') as HTMLElement;
       expect(wrapper).toBeTruthy();
       expect(wrapper.getAttribute('class') ?? '').not.toContain('overflow');
+      // El ancho compensa el zoom en cada nivel: el ancho renderizado
+      // (ancho × zoom) siempre iguala el ancho del box de trabajo.
+      expect(wrapper.style.width).toBe(`${100 / parseFloat(wrapper.style.zoom)}%`);
       // Comandos dependientes de caret/selección se ejecutan nivel por nivel.
       const before = cmd('toggleUnderline').length;
       fireEvent.click(btn('Subrayado'));
