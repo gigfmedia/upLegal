@@ -12204,6 +12204,12 @@ async function ensureDraftLegacyBaseline(draft) {
  * ni sobrescribir una versión de procedencia distinta; si el head cambió, el
  * autosave cae al camino append-only con max+1. Devuelve
  * { version_no, coalesced }.
+ *
+ * FASE 4.62H: el UPDATE encadena .select() (Prefer: return=representation).
+ * Sin representación, PostgREST responde 204 con cuerpo vacío y el cliente
+ * entrega data=null SIEMPRE: el guard confundía un UPDATE exitoso con una
+ * carrera de 0 filas y degradaba cada autosave al append (defecto 4.62G:
+ * una versión nueva por PUT y mutación in-place silenciosa del head previo).
  */
 async function insertDraftVersionHead({ draft, content, contentFormat, origin }) {
   const readHead = async () => {
@@ -12240,11 +12246,14 @@ async function insertDraftVersionHead({ draft, content, contentFormat, origin })
         .eq('lawyer_id', draft.lawyer_id)
         .eq('version_no', headNo)
         .eq('origin', 'autosave')
+        .select()
         .maybeSingle();
       if (coalesceError) throw coalesceError;
-      // 0 filas matcheadas: el head cambió bajo el read (o ya no es autosave).
-      // No se fuerza la escritura: cae al insert append-only como cualquier
-      // otro guardado.
+      // 0 filas matcheadas (el head cambió bajo el read o ya no es autosave):
+      // con .select() un match devuelve la fila representada y un no-match
+      // devuelve null → este guard distingue ambos; sin representación data
+      // sería null en ambos casos. No se fuerza la escritura: cae al insert
+      // append-only como cualquier otro guardado.
       if (coalesced) return { version_no: headNo, coalesced: true };
     }
   }

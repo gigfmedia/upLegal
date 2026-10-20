@@ -77,16 +77,21 @@ function harness({ plan = 'pro' } = {}) {
   const provider = vi.fn(async () => JSON.parse(JSON.stringify(llmDraft())));
   // inyectables para simular carreras de UNIQUE(draft_id, version_no)
   const versionInsertErrors = [];
+  // inyectable: el siguiente UPDATE de versiones matchea 0 filas (carrera del
+  // guard de coalescencia: el head cambió bajo el read).
+  const updateZeroMatches = [];
   const supabase = { rpc, storage: { from: () => ({}) }, from(table) {
-    let action = 'select', payload, limit = Infinity, filters = [], orderKey = null, orderAsc = true, selCols = null;
-    const project = (r) => (selCols && action === 'select' ? Object.fromEntries(selCols.filter((c) => c in r).map((c) => [c, r[c]])) : r);
+    let action = 'select', payload, limit = Infinity, filters = [], orderKey = null, orderAsc = true, selCols = null, selChained = false;
+    // Nota FASE 4.62H: el project() aplica cuando hubo .select(); también en
+    // updates con representación (PATCH .select()).
+    const project = (r) => (selCols ? Object.fromEntries(selCols.filter((c) => c in r).map((c) => [c, r[c]])) : r);
     const run = (single = false) => {
       const list = rows[table] ?? (rows[table] = []);
-      let found = list.filter((r) => filters.every((f) => f(r))).map(project);
-      if (orderKey) found = [...found].sort((a, b) =>
+      let matched = list.filter((r) => filters.every((f) => f(r)));
+      if (orderKey) matched = [...matched].sort((a, b) =>
         table === 'ai_case_draft_versions' ? Number(a[orderKey]) - Number(b[orderKey]) : String(a[orderKey] ?? '').localeCompare(String(b[orderKey] ?? '')));
-      if (!orderAsc) found = [...found].reverse();
-      found = found.slice(0, limit);
+      if (!orderAsc) matched = [...matched].reverse();
+      matched = matched.slice(0, limit);
             if (action === 'insert') {
         // violación UNIQUE simulada: la fila NO se persiste (semántica real)
         if (table === 'ai_case_draft_versions' && versionInsertErrors.length) {
@@ -94,13 +99,31 @@ function harness({ plan = 'pro' } = {}) {
         }
         const defaults = table === 'ai_case_drafts' ? { revision: 1, content_format: 'markdown' } : {};
         const values = (Array.isArray(payload) ? payload : [payload]).map((p) => ({ id: randomUUID(), created_at: new Date().toISOString(), updated_at: new Date().toISOString(), ...defaults, ...p }));
-        list.push(...values); found = values;
+        list.push(...values); matched = values;
         if (table === 'ai_case_draft_versions') console.log('INSERTV', JSON.stringify(values.map((v) => [v.version_no, v.origin])), 'ROWSBEFORE', JSON.stringify(list.slice(0, -1).map((r) => r.version_no)));
       }
-      if (action === 'update') found.forEach((r) => Object.assign(r, payload));
-      return { data: single ? ((found[0] && { ...found[0] }) || null) : found.map((r) => ({ ...r })), error: null };
+      const projected = matched.map(project);
+      const singleData = () => (projected[0] ? { ...projected[0] } : null);
+      if (action === 'update') {
+        // Carrera del guard simulada: el UPDATE corre y matchea 0 filas
+        // (el guard eq no encontró la fila), sin mutar nada.
+        if (table === 'ai_case_draft_versions' && updateZeroMatches.length) {
+          updateZeroMatches.shift();
+          return { data: selChained ? (single ? null : []) : null, error: null };
+        }
+        // Semántica PostgREST real (postgrest-js 2.84): PATCH NO envía
+        // Prefer: return=representation por defecto → 204 cuerpo vacío →
+        // data null SIEMPRE, matchee o no. Solo con .select() encadenado
+        // PostgREST devuelve la representación de las filas afectadas.
+        matched.forEach((r) => Object.assign(r, payload));
+        return {
+          data: selChained ? (single ? (matched[0] ? singleData() : null) : projected.map((r) => ({ ...r }))) : null,
+          error: null,
+        };
+      }
+      return { data: single ? singleData() : projected.map((r) => ({ ...r })), error: null };
     };
-    const q = { select: (...a) => { selCols = typeof a[0] === 'string' && a[0] && !a[0].includes('*') ? a[0].split(',').map((c) => c.trim()) : null; return q; },
+    const q = { select: (...a) => { selChained = true; selCols = typeof a[0] === 'string' && a[0] && !a[0].includes('*') ? a[0].split(',').map((c) => c.trim()) : null; return q; },
       eq: (k, v) => { filters.push((r) => r[k] === v); return q; },
       lt: (k, v) => { filters.push((r) => Number(r[k]) < v); return q; },
       order: (k, o) => { orderKey = k; orderAsc = !o || o.ascending !== false; return q; },
@@ -152,7 +175,7 @@ function harness({ plan = 'pro' } = {}) {
     return r;
   }
   const asForeign = () => { tokenUser = foreign; };
-  return { rows, provider, rpc, call, asForeign, versionInsertErrors, setPlan: (p) => { currentPlan = p; } };
+  return { rows, provider, rpc, call, asForeign, versionInsertErrors, updateZeroMatches, setPlan: (p) => { currentPlan = p; } };
 }
 
 const DRAFT_PATHS = {
@@ -488,14 +511,22 @@ describe('4.62E coalescencia de autosaves', () => {
     expect(versions.find((v) => v.version_no === 1).created_at).toBe(v1CreatedAt);
   });
 
-  it('guard de carrera documentado en source: el update de coalescencia lleva eq(version_no) + eq(origin autosave)', () => {
+  it('guard de carrera documentado en source: el update de coalescencia lleva .select() (representación), eq(version_no) + eq(origin autosave)', () => {
     // Contrato en código: la actualización solo puede matchear la fila autosave
     // que era head al leerla; una carrera que la deje de ser head matchea 0
     // filas y cae al insert append-only. Verificación de fuente (la carrera
     // síncrona completa no es reproducible con el fake secuencial).
+    // FASE 4.62H (defecto 4.62G): el PATCH DEBE llevar .select() — sin
+    // representación el cliente entrega data=null también en éxito y el guard
+    // degradaba cada autosave al append (una versión nueva por PUT) tras
+    // mutar la fila previa in-place. El primer .maybeSingle() en el bloque
+    // es el del UPDATE de coalescencia (el de readHead queda fuera del slice).
     const coalesceStart = src.indexOf('origin === \'autosave\' && DRAFT_AUTOSAVE_COALESCE_MS > 0');
     expect(coalesceStart).toBeGreaterThan(0);
     const block = src.slice(coalesceStart, coalesceStart + 2200);
+    const firstMaybeSingle = block.indexOf('.maybeSingle()');
+    expect(firstMaybeSingle).toBeGreaterThan(0);
+    expect(block.slice(0, firstMaybeSingle)).toContain('.select()');
     expect(block).toContain(".eq('version_no', headNo)");
     expect(block).toContain(".eq('origin', 'autosave')");
     expect(block).toContain('if (coalesced) return { version_no: headNo, coalesced: true };');
@@ -542,6 +573,26 @@ describe('4.62E coalescencia de autosaves', () => {
     expect(h.rows.ai_case_draft_versions).toHaveLength(beforeRows);
     // Contenido más reciente intacto: el head lo tiene el ganador.
     expect(h.rows.ai_case_drafts[0].content).toBe('Guardado que gana la carrera.');
+  });
+
+  it('carrera del coalesce: el UPDATE de coalescencia que matchea 0 filas (head cambió bajo el read) cae a append SIN mutar la fila del autosave previo', async () => {
+    const h = harness();
+    const gen = await generatedDraft(h);
+    await h.call('put', DRAFT_PATHS.draft, { content: '<p>Autosave ganador de la carrera.</p>', content_format: 'html', origin: 'autosave', base_revision: 1 }, { draftId: gen.body.draft.id });
+    const v2Before = JSON.parse(JSON.stringify(h.rows.ai_case_draft_versions.find((v) => v.version_no === 2)));
+    // Otro escritor cambia el head justo entre el readHead y el UPDATE del
+    // guard: la actualización eq(version_no)+eq(origin) matchea 0 filas.
+    h.updateZeroMatches.push(true);
+    const s = await h.call('put', DRAFT_PATHS.draft, { content: '<p>Autosave concurrente que pierde el head.</p>', content_format: 'html', origin: 'autosave', base_revision: 2 }, { draftId: gen.body.draft.id });
+    expect(s.statusCode).toBe(200);
+    // Fallback append-only correcto: guarda como versión nueva, no coalesce.
+    expect(s.body.version).toEqual({ version_no: 3 });
+    expect(h.rows.ai_case_draft_versions.map((v) => v.version_no)).toEqual([1, 2, 3]);
+    // La fila del autosave previo NO fue mutada (ni sobrescrita): este es el
+    // defecto 4.62G que el guard con representación permite descartar.
+    expect(h.rows.ai_case_draft_versions.find((v) => v.version_no === 2)).toEqual(v2Before);
+    // La fila nueva es la última (head único) con el contenido concurrente.
+    expect(h.rows.ai_case_draft_versions.find((v) => v.version_no === 3).content).toBe('<p>Autosave concurrente que pierde el head.</p>');
   });
 });
 
