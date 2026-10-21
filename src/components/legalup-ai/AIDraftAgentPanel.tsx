@@ -529,7 +529,7 @@ export function AIDraftAgentPanel({
       ref={panelRef}
       data-testid="draft-agent-panel"
       aria-label="Agent AI del borrador"
-      className="pointer-events-none relative z-30 mb-6 mt-auto flex justify-center md:mb-10"
+      className="pointer-events-none relative z-30 mb-6 mt-4 flex justify-center md:mb-10"
       style={{
         // Contra-escala: el ancestro de zoom aplica scale(zoomRatio); este
         // factor neutraliza para que el composer mida visualmente igual a

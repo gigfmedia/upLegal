@@ -2626,3 +2626,63 @@ describe('FASE UA-2 — toolbar profesional y zoom de presentación', () => {
     expect(sent.content).toContain('<strong>añadido</strong>');
   });
 });
+
+describe('UA-4 — páginas carta (Fase 1)', () => {
+  it('presenta una página carta de 816 × 1056 con pie 1 y márgenes de 2,5 cm', async () => {
+    renderDrafts();
+    await openFirstDraft();
+
+    const sheet = screen.getByTestId('draft-sheet');
+    expect(sheet.className).toContain('w-[816px]');
+
+    // El overlay es presentación pura: fuera del documento y sin interacción.
+    const overlay = screen.getByTestId('letter-page-overlay');
+    expect(overlay.getAttribute('aria-hidden')).toBe('true');
+    expect(overlay.className).toContain('pointer-events-none');
+
+    const page = screen.getByTestId('letter-page-1');
+    expect(page.style.width).toBe('816px');
+    expect(page.style.height).toBe('1056px');
+    expect(page.style.top).toBe('0px');
+
+    const number = screen.getByTestId('letter-page-number');
+    expect(number.textContent).toBe('1');
+    expect(number.style.left).toBe('94px');
+    expect(number.style.bottom).toBe('24px');
+
+    // Márgenes 2,5 cm = 94 px y alto de contenido = 868 px.
+    const surface = screen.getByTestId('draft-page-content');
+    expect(surface.style.paddingTop).toBe('94px');
+    expect(surface.style.paddingRight).toBe('94px');
+    expect(surface.style.paddingBottom).toBe('94px');
+    expect(surface.style.paddingLeft).toBe('94px');
+    expect(surface.style.getPropertyValue('--letter-content-height')).toBe('868px');
+    expect(mainEditor()!.opts.editorProps?.attributes?.style).toContain(
+      'var(--letter-content-height, 560px)',
+    );
+  });
+
+  it('el HTML del autosave sigue siendo un único documento sin nodos de página', async () => {
+    renderDrafts();
+    await openFirstDraft();
+    const ed = mainEditor()!;
+    act(() => {
+      ed.commands.setContent(`<p>${'texto '.repeat(400)}</p>`, { emitUpdate: true });
+    });
+    await waitFor(() => expect(putCalls().length).toBeGreaterThan(0), { timeout: 3000, interval: 50 });
+    const sent = String(putBody(putCalls()[0]).content);
+    expect(sent).not.toContain('letter-page-break');
+    expect(sent).not.toContain('data-page-number');
+    expect(sent).toContain('texto texto');
+  });
+
+  it('el composer vive debajo de la última página, dentro de la hoja', async () => {
+    renderDrafts();
+    await openFirstDraft();
+    const sheet = screen.getByTestId('draft-sheet');
+    const panel = screen.getByTestId('draft-agent-panel');
+    expect(panel.parentElement).toBe(sheet);
+    expect(sheet.firstElementChild).toBe(screen.getByTestId('letter-pages'));
+    expect(sheet.lastElementChild).toBe(panel);
+  });
+});

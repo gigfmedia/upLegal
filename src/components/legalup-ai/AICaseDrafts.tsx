@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -34,6 +34,13 @@ import { aiOperationIdentity } from '@/lib/aiOperationIdentity';
 import { pollTerminalResult } from '@/lib/aiInProgressPoll';
 import { convertDraftMarkdownToHtml, htmlToPlainText } from '@/components/legalup-ai/draftEditorMarkup';
 import { AIDraftAgentPanel } from '@/components/legalup-ai/AIDraftAgentPanel';
+import { LetterPagination } from '@/components/legalup-ai/letterPagination';
+import { LetterPageOverlay } from '@/components/legalup-ai/LetterPageOverlay';
+import {
+  LETTER_PAGE_WIDTH,
+  createPageLayout,
+  stackHeight,
+} from '@/components/legalup-ai/letterPageGeometry';
 
 // FASE 4.62C — workspace documental de redacción asistida.
 // Izquierda: generación (IA) + borradores anteriores + historial de versiones.
@@ -237,18 +244,16 @@ function StaticDraftDoc({ html }: { html: string }) {
   );
 }
 
-/** FASE UA-1 — presentación de documento tipo Word: hoja blanca centrada
- *  (A4 ≈ 794 px al 100 % en escritorio) dentro del box de trabajo gris
- *  (FASE UA-2C: la toolbar fue promovida a borde superior del box). Hoja
- *  puramente visual: no toca el ciclo de vida de TipTap, la serialización
- *  HTML, el autosave ni los estados de guardado. La hoja usa altura mínima
- *  de página real (A4 ≈ 1123 px) y el contenido fluye continuo si la
- *  excede — sin paginación fingida. */
+/** UA-4 — hoja de documento con páginas carta reales. El contenedor ya no
+ *  dibuja una sola hoja: agrupa el stack de páginas (fondo, huecos y pies en
+ *  el overlay) y el composer del Agent AI, que vive debajo de la última
+ *  página para no tapar texto ni numeración. Dimensiones y márgenes vienen de
+ *  `letterPageGeometry`; el zoom sigue siendo solo presentación. */
 function DraftSheet({ className = '', children }: { className?: string; children: ReactNode }) {
   return (
     <div
       data-testid="draft-sheet"
-      className={`relative mx-auto flex min-h-[640px] w-full max-w-[794px] flex-col rounded-md border bg-card shadow-sm md:min-h-[1123px] ${className}`}
+      className={`relative mx-auto flex w-[816px] shrink-0 flex-col ${className}`}
     >
       {children}
     </div>
@@ -299,6 +304,15 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   // cierre/reapertura de borradores y nunca toca el HTML guardado.
   const [draftZoom, setDraftZoom] = useState(100);
 
+  // UA-4 FASE 1 — páginas carta. `pageCount` lo publica la extensión de
+  // paginación tras medir el documento; el overlay de React solo dibuja los
+  // fondos y los pies (nunca forman parte del HTML persistido).
+  const [pageCount, setPageCount] = useState(1);
+  const pageLayout = useMemo(() => createPageLayout(), []);
+  const handlePageCount = useCallback((count: number) => {
+    setPageCount((prev) => (prev === count ? prev : count));
+  }, []);
+
   // FASE UA-2D — medición natural del envoltorio de zoom (offsetWidth/Height
   // no incluyen el efecto de transform) vía ResizeObserver: sirve para
   // reservar el espacio de layout escalado (altura) y decidir el modo de
@@ -325,7 +339,9 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   );
   useEffect(() => () => { zoomMeasureDetach.current?.(); zoomMeasureDetach.current = null; }, []);
   const zoomRatio = draftZoom / 100;
-  const zoomOverflow = zoomMeasure ? Math.min(794, zoomMeasure.w) * zoomRatio > zoomMeasure.w : false;
+  const zoomOverflow = zoomMeasure
+    ? Math.min(LETTER_PAGE_WIDTH, zoomMeasure.w) * zoomRatio > zoomMeasure.w
+    : false;
   const zoomReserveHeight = zoomMeasure ? Math.ceil(zoomMeasure.h * zoomRatio) : null;
 
   const editorRef = useRef<ReturnType<typeof useEditor> | null>(null);
@@ -608,7 +624,14 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
     }, 800);
   }, [runSave, setStatus]);
 
-  const extensions = useMemo(() => editorExtensions(), []);
+  const extensions = useMemo(
+    () => [
+      ...editorExtensions(),
+      // UA-4 — paginación de presentación sobre el MISMO documento.
+      LetterPagination.configure({ layout: pageLayout, onPageCount: handlePageCount }),
+    ],
+    [pageLayout, handlePageCount],
+  );
 
   const editor = useEditor({
     extensions,
@@ -621,7 +644,10 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
       attributes: {
         // FASE UA-1: tipografía de documento (base 16px, títulos 24/18/16px)
         // en lugar de prose-sm de UI; la hoja gobierna el ancho de línea.
-        class: 'prose max-w-none min-h-[560px] focus:outline-none [&_h1]:text-2xl [&_h2]:text-lg [&_h3]:text-base [&_p]:leading-relaxed',
+        // UA-4: el alto mínimo es el área de contenido de la página carta, de
+        // modo que el documento vacío ya ofrece una página completa.
+        class: 'prose max-w-none focus:outline-none [&_h1]:text-2xl [&_h2]:text-lg [&_h3]:text-base [&_p]:leading-relaxed',
+        style: 'min-height: var(--letter-content-height, 560px)',
         spellcheck: 'true',
       },
     },
@@ -1401,10 +1427,10 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                       excede el ancho disponible (toolbar intacta). Origen
                       'top center' para crecer/encoger hacia el centro; 'top
                       left' solo cuando hay overflow horizontal para que el
-                      scroll alcance toda la hoja. Márgenes de documento
-                      (2,5 cm ≈ 72 px en escritorio, reducidos en móvil). La
-                      hoja sigue siendo visual y de flujo continuo — sin
-                      paginación real. */}
+                      scroll alcance toda la hoja. UA-4: la hoja es ahora un
+                      stack de páginas carta (816 × 1056 px, márgenes de
+                      2,5 cm) con pies numerados; el contenido sigue siendo un
+                      único documento y los cortes son solo presentación. */}
                   <div data-testid="draft-canvas" className="rounded-lg border bg-muted/50 overflow-hidden">
                     <div role="toolbar" aria-label="Formato del borrador" data-testid="draft-toolbar" className="flex flex-wrap items-center justify-center gap-0.5 border-b bg-card px-3 py-1.5">
                       {toolbarButton('Deshacer', Undo2, () => chainFocus()?.undo().run(), false, !editor?.can().undo())}
@@ -1476,18 +1502,38 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                           style={{ transform: `scale(${zoomRatio})`, transformOrigin: zoomOverflow ? 'top left' : 'top center' }}
                         >
                           <DraftSheet>
-                            <div className="px-4 py-8 sm:px-9 md:px-[72px] md:py-[56px]">
-                              <EditorContent editor={editor} />
+                            {/* UA-4 — stack de páginas: el overlay dibuja las
+                                hojas blancas, los huecos y los pies (1..N).
+                                El contenido editable es un flujo único por
+                                encima; los saltos son decoraciones de
+                                presentación, no nodos del documento. */}
+                            <div
+                              data-testid="letter-pages"
+                              className="relative w-full"
+                              style={{ minHeight: stackHeight(pageLayout, pageCount) }}
+                            >
+                              <LetterPageOverlay pageCount={pageCount} layout={pageLayout} />
+                              <div
+                                data-testid="draft-page-content"
+                                className="relative z-10 text-gray-900"
+                                style={{
+                                  paddingTop: pageLayout.margins.top,
+                                  paddingRight: pageLayout.margins.right,
+                                  paddingBottom: pageLayout.margins.bottom,
+                                  paddingLeft: pageLayout.margins.left,
+                                  ['--letter-content-height' as string]: `${pageLayout.contentHeight}px`,
+                                } as CSSProperties}
+                              >
+                                <EditorContent editor={editor} />
+                              </div>
                             </div>
                             {/* UA-3 — Composer Agent AI: siempre presente al
-                                abrir un borrador, dentro del flujo de la hoja.
-                                `sticky bottom-*` lo mantiene disponible
-                                mientras se escribe en cualquier punto del
-                                documento, pero sin salir de la hoja ni
-                                `fixed` al viewport: al llegar al final de la
-                                página descansa en su posición natural. El
-                                zoom escala la hoja, no el composer (viaja
-                                contra-escalado internamente). */}
+                                abrir un borrador. UA-4 lo deja DEBAJO de la
+                                última página, en su propio espacio: en reposo
+                                no tapa texto ni números de página. Durante el
+                                scroll conserva el seguimiento continuo de
+                                UA-3 (`translate3d`, sin fixed/sticky) y el
+                                zoom escala la hoja, no el composer. */}
                             {openDraft ? (
                               <AIDraftAgentPanel
                                 workspaceId={workspaceId}
