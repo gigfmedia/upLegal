@@ -154,8 +154,12 @@ let chatRequests: { init: RequestInit }[];
 // ('' implies the plain content already; the panel receives composition via
 // composeProposalMessage independent of this reply content).
 let chatReply: { content: string } | null = { content: 'Texto de propuesta.' };
-const chatPostResponse = (status = 200) =>
-  new Response(JSON.stringify(
+// plugin de latencia: si está definido, el POST chat espera a que el test resuelva
+let chatDelay: Promise<void> | null = null;
+let chatRepliesServed = 0;
+const chatPostResponse = (status = 200) => {
+  chatRepliesServed += 1;
+  return new Response(JSON.stringify(
     status === 200 && chatReply
       ? {
           message: { id: `as-${chatRequests.length}`, role: 'assistant', content: chatReply.content, workspace_id: 'ws-a', conversation_id: 'conv', metadata: null },
@@ -164,8 +168,11 @@ const chatPostResponse = (status = 200) =>
         }
       : { error: 'Servicio no disponible' }
   ), { status });
+};
 
 const chatPosts = (): { init: RequestInit }[] => chatRequests;
+
+const makeD2 = () => makeDraft({ id: 'd2', instruction: 'planeacion', title: 'Borrador de planteamiento del caso' });
 
 let client: QueryClient;
 const mountApp = () =>
@@ -202,6 +209,8 @@ beforeEach(() => {
   resetEditors();
   chatRequests = [];
   chatReply = { content: 'Texto de propuesta.' };
+  chatDelay = null;
+  chatRepliesServed = 0;
   client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity }, mutations: { retry: false } } });
   vi.stubGlobal('ResizeObserver', class { observe() { /** noop */ } disconnect() { /** noop */ } });
   fetchMock = vi.fn(async (url: string, opts?: RequestInit) => {
@@ -215,7 +224,14 @@ beforeEach(() => {
     if (opts?.method === 'POST' && urlStr.includes('/chat')) {
       const req = { init: opts };
       chatRequests.push(req);
+      if (chatDelay) await chatDelay;
       return chatPostResponse(chatReply ? 200 : 502);
+    }
+    if (urlStr.includes('/drafts/d2/versions')) {
+      return { ok: true, json: async () => ({ versions: [], total: 0 }) } as Response;
+    }
+    if (urlStr.includes('/drafts/d2')) {
+      return { ok: true, json: async () => ({ draft: makeD2() }) } as Response;
     }
     if (urlStr.includes('/drafts/d1/versions')) {
       return { ok: true, json: async () => ({ versions: [{ version_no: 1, origin: 'generation', content_format: 'markdown', model: 'm', title: 'v1', created_at: '2026-10-01T10:00:00Z' }], total: 1 }) } as Response;
@@ -224,7 +240,7 @@ beforeEach(() => {
       return { ok: true, json: async () => ({ draft: makeDraft() }) } as Response;
     }
     if (urlStr.includes('/drafts')) {
-      return { ok: true, json: async () => ({ drafts: [makeDraft()] }) } as Response;
+      return { ok: true, json: async () => ({ drafts: [makeDraft(), makeD2()] }) } as Response;
     }
     if (urlStr.includes('/chat')) {
       return { ok: true, json: async () => ({ conversation: { id: 'conv' }, messages: [] }) } as Response;
@@ -397,5 +413,124 @@ describe('UA-3 Agent AI — integración en el editor', () => {
     const embed = await screen.findByTestId('agent-chat-embed');
     expect(embed.dataset.workspace).toBe('ws-a');
     expect(JSON.parse(embed.dataset.documents ?? '[]')).toEqual(documentsData.list);
+  });
+
+  it('una respuesta tardía del borrador anterior no se muestra ni se puede insertar en otro borrador', async () => {
+    await openDraftEditor();
+    await openAgentPanel();
+
+    // Envío en curso con respuesta diferida, asociado al borrador d1.
+    let releaseChat: (() => void) | null = null;
+    const gate = new Promise<void>((resolve) => { releaseChat = resolve; });
+    chatDelay = gate;
+    fireEvent.change(proposalInstruction(), { target: { value: 'propuesta transitoria' } });
+    fireEvent.click(screen.getByTestId('agent-attach-draft'));
+    fireEvent.click(screen.getByTestId('agent-proposal-send'));
+    await waitFor(() => expect(chatPosts()).toHaveLength(1));
+
+    // El usuario cambia de borrador mientras la respuesta sigue en vuelo.
+    fireEvent.click(await screen.findByRole('button', { name: /Borrador de planteamiento/ }));
+    await screen.findByTestId('draft-toolbar');
+    expect(mainEditor()!.html).toContain('Contenido.');
+
+    // La respuesta tardía llega CUANDO el borrador abierto ya es d2.
+    releaseChat?.();
+    await waitFor(() => expect(chatRepliesServed).toBe(1)); // la respuesta SÍ se resolvió
+    await new Promise((r) => setTimeout(r, 100)); // margen para setProposal si no hubiera guard
+
+    // Guard: propuesta de d1 no aparece, no hay error, no hay insert, d2 intacto.
+    expect(screen.queryByTestId('agent-proposal-card')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('agent-proposal-error')).not.toBeInTheDocument();
+    expect(mainEditor()!.cmdLog.some((c) => c.startsWith('insertContent('))).toBe(false);
+    expect(mainEditor()!.html).toContain('Contenido.');
+    expect(mainEditor()!.html).not.toContain('Texto de propuesta.');
+
+    // El envío siguiente en el borrador d2 funciona con normalidad (ni el
+    // guard ni el aborto rompen la operación nueva).
+    chatDelay = null;
+    fireEvent.change(proposalInstruction(), { target: { value: 'propuesta para d2' } });
+    fireEvent.click(screen.getByTestId('agent-proposal-send'));
+    const card = await screen.findByTestId('agent-proposal-card');
+    expect(card).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('agent-proposal-accept'));
+    const ed = mainEditor()!;
+    expect(ed.html).toContain('Texto de propuesta.');
+    expect((ed.html.match(/Texto de propuesta\./g) ?? []).length).toBe(1);
+    // El reintento quedó asociado al mensaje nuevo (no al de d1): el error de
+    // d1 nunca reaparece como botón Reintentar.
+    expect(screen.queryByTestId('agent-proposal-retry')).not.toBeInTheDocument();
+  });
+
+  it('doble clic en Aceptar e insertar no produce inserciones duplicadas', async () => {
+    await openDraftEditor();
+    await openAgentPanel();
+    fireEvent.change(proposalInstruction(), { target: { value: 'propuesta única' } });
+    fireEvent.click(screen.getByTestId('agent-proposal-send'));
+    await waitFor(() => expect(screen.getByTestId('agent-proposal-card')).toBeInTheDocument());
+
+    // Doble clic contra el mismo render (mismo tick): el guard evita dos
+    // insertContent con la propuesta duplicada.
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('agent-proposal-accept'));
+      fireEvent.click(screen.getByTestId('agent-proposal-accept'));
+    });
+
+    const ed = mainEditor()!;
+    expect(ed.cmdLog.filter((c) => c.startsWith('insertContent('))).toHaveLength(1);
+    expect((ed.html.match(/Texto de propuesta\./g) ?? []).length).toBe(1);
+    await screen.findByTestId('agent-notice');
+  });
+
+  it('el contexto adjunto se trunca con nota honesta al superar el límite', async () => {
+    const giantContent = `# Borrador\n\nContenido.\n\n${'A'.repeat(25000)}`;
+    const giant = makeDraft({ content: giantContent });
+    // Overridden impl incluida d2 para no romper el routing de la lista.
+    fetchMock.mockImplementation(async (url: string, opts?: RequestInit) => {
+      const urlStr = String(url);
+      if (urlStr.includes('/api/ai/usage')) {
+        return { ok: true, json: async () => ({ allowance: { plan: 'pro_limited', drafting: { used: 12, limit: 30 } } }) } as Response;
+      }
+      if (opts?.method === 'PUT') {
+        return { ok: true, json: async () => ({ draft: { ...giant, revision: 2 } }) } as Response;
+      }
+      if (opts?.method === 'POST' && urlStr.includes('/chat')) {
+        chatRequests.push({ init: opts });
+        return chatPostResponse(chatReply ? 200 : 502);
+      }
+      if (urlStr.includes('/drafts/d2/versions')) {
+        return { ok: true, json: async () => ({ versions: [], total: 0 }) } as Response;
+      }
+      if (urlStr.includes('/drafts/d2')) {
+        return { ok: true, json: async () => ({ draft: makeD2() }) } as Response;
+      }
+      if (urlStr.includes('/drafts/d1/versions')) {
+        return { ok: true, json: async () => ({ versions: [], total: 0 }) } as Response;
+      }
+      if (urlStr.includes('/drafts/d1')) {
+        return { ok: true, json: async () => ({ draft: giant }) } as Response;
+      }
+      if (urlStr.includes('/drafts')) {
+        return { ok: true, json: async () => ({ drafts: [giant, makeD2()] }) } as Response;
+      }
+      if (urlStr.includes('/chat')) {
+        return { ok: true, json: async () => ({ conversation: { id: 'conv' }, messages: [] }) } as Response;
+      }
+      throw new Error(`fetch no cubierto: ${urlStr}`);
+    });
+
+    await openDraftEditor();
+    await openAgentPanel();
+    fireEvent.change(proposalInstruction(), { target: { value: 'algo' } });
+    fireEvent.click(screen.getByTestId('agent-attach-draft'));
+    fireEvent.click(screen.getByTestId('agent-proposal-send'));
+
+    await waitFor(() => expect(chatPosts()).toHaveLength(1));
+    const body = JSON.parse(String(chatPosts()[0].init.body)) as { message: string };
+    expect(body.message).toContain('se truncó por longitud');
+    expect(body.message).toContain('se adjuntaron los primeros 20000 caracteres de');
+    expect(body.message.includes('A'.repeat(20001))).toBe(false);
+    expect(body.message.length).toBeLessThanOrEqual('algo'.length + 20000 + 400);
+    // La propuesta sigue operando con normalidad.
+    await waitFor(() => expect(screen.getByTestId('agent-proposal-card')).toBeInTheDocument());
   });
 });

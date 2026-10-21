@@ -51,11 +51,17 @@ type Tab = 'chat' | 'proposal';
 
 const CONTEXT_SEPARATOR = '---';
 const CONTEXT_HEADER = 'Copia del borrador abierto';
+/** Límite de la copia adjunta: evita payloads gigantes sin ocultarlo al usuario. */
+const MAX_CONTEXT_CHARS = 20000;
 
 function composeProposalMessage(instruction: string, draftTitle: string, draftHtml: string | null): string {
   let message = instruction;
   if (draftHtml !== null) {
-    const plain = htmlToPlainText(draftHtml);
+    let plain = htmlToPlainText(draftHtml);
+    if (plain.length > MAX_CONTEXT_CHARS) {
+      const totalChars = plain.length;
+      plain = `${plain.slice(0, MAX_CONTEXT_CHARS)}\n\n[Nota: la copia del borrador se truncó por longitud: se adjuntaron los primeros ${MAX_CONTEXT_CHARS} caracteres de ${totalChars}.]`;
+    }
     message = `${message}\n\n${CONTEXT_SEPARATOR}\n${CONTEXT_HEADER} «${draftTitle}» (texto plano, tal como estaba al enviar este mensaje):\n\n${plain}`;
   }
   return message;
@@ -74,41 +80,63 @@ export function AIDraftAgentPanel({ workspaceId, draftId, draftTitle, getDraftHt
   const [notice, setNotice] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // Valor vigente del documento abierto en el momento de resolver callbacks:
+  // evita aplicar respuestas de un borrador anterior tras cambiar de borrador.
+  const draftIdRef = useRef(draftId);
+  draftIdRef.current = draftId;
+
   const proposalSend = useSendChatMessage(workspaceId);
   const activeRequestRef = useRef<AbortController | null>(null);
   // Para el reintento: el mensaje compuesto exacto del último intento fallido.
   const lastProposalMessageRef = useRef<string | null>(null);
+  // Guard de inserción: un doble clic en «Aceptar e insertar» no puede
+  // disparar dos insertContent con la misma propuesta.
+  const acceptingRef = useRef(false);
   const sending = proposalSend.isPending;
 
-  // Cambio de borrador: la propuesta/publicación refería a otro documento.
+  // Cambio de borrador: la propuesta/error/reintento en vuelo refería a otro
+  // documento. Cualquier respuesta tardía de ese envío queda invalidada por el
+  // guard de draftId en onSuccess/onError (y se aborta por completitud), así
+  // una respuesta del borrador A nunca puede insertarse en el borrador B.
   useEffect(() => {
+    activeRequestRef.current?.abort();
+    activeRequestRef.current = null;
+    lastProposalMessageRef.current = null;
+    acceptingRef.current = false;
     setProposal(null);
     setError(null);
     setNotice(null);
     setCopied(false);
   }, [draftId]);
 
+  // Borra el guard de inserción cuando la propuesta ya no está en pantalla.
+  useEffect(() => {
+    if (!proposal) acceptingRef.current = false;
+  }, [proposal]);
+
   // Evita un set de estado tras desmonte (chat abortado al cerrar el editor).
   useEffect(() => () => { activeRequestRef.current?.abort(); }, []);
 
   const dispatchProposal = (message: string) => {
     if (!conversationId || sending || activeRequestRef.current) return;
+    const reqDraftId = draftIdRef.current;
     const controller = new AbortController();
     activeRequestRef.current = controller;
     lastProposalMessageRef.current = message;
     setError(null);
+    setNotice(null);
     setCopied(false);
     proposalSend.mutate(
       { conversationId, message, signal: controller.signal },
       {
         onSuccess: (data) => {
-          if (controller.signal.aborted) return;
+          if (controller.signal.aborted || draftIdRef.current !== reqDraftId) return;
           setProposal({ id: data.message.id, text: data.message.content, insertError: false });
           lastProposalMessageRef.current = null;
         },
         onSettled: () => { activeRequestRef.current = null; },
         onError: (err) => {
-          if (controller.signal.aborted) return;
+          if (controller.signal.aborted || draftIdRef.current !== reqDraftId) return;
           setError(err);
         },
       }
@@ -138,13 +166,16 @@ export function AIDraftAgentPanel({ workspaceId, draftId, draftTitle, getDraftHt
   };
 
   const handleAccept = () => {
-    if (!proposal) return;
+    if (!proposal || acceptingRef.current) return;
+    acceptingRef.current = true;
     const ok = onInsertProposal(convertDraftMarkdownToHtml(proposal.text));
     if (ok) {
       setProposal(null);
       setNotice('Propuesta insertada en el cursor. Revisa el documento y usa Guardar cambios cuando quieras.');
     } else {
-      // Sin posición viable: la propuesta se conserva y se informa de forma visible.
+      // Sin posición viable: la propuesta se conserva y se informa de forma
+      // visible. Se permite reintentar la inserción (guard liberado aquí).
+      acceptingRef.current = false;
       setProposal({ ...proposal, insertError: true });
     }
   };
