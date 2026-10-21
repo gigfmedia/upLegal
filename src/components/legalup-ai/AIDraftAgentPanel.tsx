@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   AlertTriangle,
   ArrowUp,
@@ -117,6 +118,16 @@ const MAX_CONTEXT_CHARS = 20000;
 
 const SELECTION_QUOTE_HEADER = 'Selección citada del borrador';
 
+/** rAF con respaldo por timeout (jsdom sin modo visual en tests). */
+const raf: (cb: () => void) => number =
+  typeof requestAnimationFrame === 'function'
+    ? (cb) => requestAnimationFrame(cb)
+    : (cb) => window.setTimeout(cb, 16);
+const caf = (id: number) => {
+  if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(id);
+  else window.clearTimeout(id);
+};
+
 function composeProposalMessage(instruction: string, draftTitle: string, draftHtml: string | null): string {
   let message = instruction;
   if (draftHtml !== null) {
@@ -161,16 +172,31 @@ export function AIDraftAgentPanel({
   const [error, setError] = useState<AIChatError | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  // Desplazamiento «sticky» calculado dentro de la hoja: la caja del composer
-  // conserva su lugar en el flujo de la página (nada de `fixed` ni de tapar el
-  // documento al final) y solo se pinta más arriba mientras la hoja siga en
-  // pantalla. Se calcula con geometría real (offsetTop/offsetHeight, que no
-  // dependen del zoom) porque `position: sticky` no es fiable dentro del
-  // `transform: scale()` del zoom del documento.
+  // Desplazamiento «sticky» calculado dentro de la hoja. Estrategia: la caja
+  // del composer permanece en el flujo de la hoja (su espacio queda reservado y
+  // al final de la página descansa en su posición natural, sin tapar nada de
+  // forma permanente) y el movimiento se aplica como UNA traslación continua
+  // (`translate3d`) sobre el stack interno; nunca se alternan `fixed`,
+  // `absolute` ni `sticky` durante el scroll.
+  //
+  // Por qué no `position: sticky`: dentro de `transform: scale()` el cálculo
+  // del scrollport en Chrome queda en coordenadas locales y el elemento se
+  // descoloca (a 150 % aterrizaba fuera del viewport), y el contenedor de
+  // scroll real es el propio documento sobre ancestros con `overflow` (canvas
+  // y padder), que crean scrollports propios donde sticky no pega. La
+  // traslación continua sí es independiente del zoom: se lee la geometría en
+  // píxeles locales (`offsetTop`/`offsetHeight`, que NO cambian por
+  // transforms) y se convierte a píxeles visuales multiplicando por el zoom.
+  // El cálculo es lineal (→0 al llegar al final de la hoja), así que no hay
+  // saltos ni oscilaciones, y se escribe el estilo directamente (sin re-render
+  // de React por frame) para que el seguimiento sea fluido.
   const panelRef = useRef<HTMLElement>(null);
-  const appliedShiftRef = useRef(0);
-  const [offsetY, setOffsetY] = useState(0);
-  const [offsetX, setOffsetX] = useState(0);
+  const stackRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const toolkitRef = useRef<HTMLDivElement>(null);
+  const zoomRef = useRef(zoomRatio);
+  zoomRef.current = zoomRatio;
+  const syncPositionRef = useRef<() => void>(() => {});
 
   // Valor vigente del documento abierto en el momento de resolver callbacks:
   // evita aplicar respuestas de un borrador anterior tras cambiar de borrador.
@@ -383,65 +409,120 @@ export function AIDraftAgentPanel({
   const draftAvailable = getDraftHtml() !== null;
   const canRequest = !sending && !!conversationId && !activeRequestRef.current;
 
+  // Seguimiento continuo del composer dentro de la hoja. Ver el comentario de
+  // `panelRef` para la justificación de la estrategia.
   useLayoutEffect(() => {
     const el = panelRef.current;
     if (!el) return;
     const sheet = el.closest('[data-testid="draft-sheet"]') as HTMLElement | null;
     if (!sheet) return;
+    const canvas = el.closest('[data-testid="draft-canvas"]') as HTMLElement | null;
     let frame = 0;
     const GAP = 16; // separación visual al borde inferior del viewport / hoja
     const update = () => {
       frame = 0;
-      const z = zoomRatio || 1;
-      const sheetTop = sheet.getBoundingClientRect().top;
-      const naturalTop = el.offsetTop + appliedShiftRef.current;
-      const h = el.offsetHeight;
+      const stack = stackRef.current;
+      if (!stack) return;
+      const z = zoomRef.current || 1;
+      const h = el.offsetHeight; // alto local; a escala neta 1, visual = local
       if (!h) return;
-      const naturalTopVisual = sheetTop + naturalTop * z;
-      const sheetTopVisual = sheetTop;
-      const maxTopVisual = window.innerHeight - GAP - h * z;
-      const minTopVisual = Math.max(sheetTopVisual, 0) + GAP;
-      const desired = Math.min(Math.max(naturalTopVisual, minTopVisual), maxTopVisual);
-      const shiftLocal = Math.max(0, (naturalTopVisual - desired) / z);
-      appliedShiftRef.current = shiftLocal;
-      setOffsetY((prev) => (Math.abs(prev - shiftLocal) < 0.5 ? prev : shiftLocal));
-
-      // A zoom > 100 % la hoja puede exceder el canvas y quedar recortada.
-      // El composer sigue perteneciendo a la hoja, pero se mantiene centrado
-      // en la zona realmente visible para que nunca se corte su botón de
-      // envío; el desplazamiento se expresa en píxeles locales (÷ zoom).
-      const canvas = el.closest('[data-testid="draft-canvas"]') as HTMLElement | null;
-      const stack = el.firstElementChild as HTMLElement | null;
-      if (canvas && stack) {
-        const c = canvas.getBoundingClientRect();
-        const s2 = sheet.getBoundingClientRect();
+      const sheetRect = sheet.getBoundingClientRect();
+      // La contra-escala ancla el contenido al borde INFERIOR de su caja de
+      // flujo, así que la posición natural se mide como borde inferior local
+      // (`offsetTop + offsetHeight`, inmunes a los transforms) mapeado a
+      // píxeles visuales; el alto visual de la caja es `h` (escala neta 1).
+      const naturalBottomV = sheetRect.top + (el.offsetTop + h) * z;
+      const maxBottomV = Math.min(window.innerHeight, sheetRect.bottom) - GAP;
+      const minTopV = Math.max(sheetRect.top, 0) + GAP;
+      // Traslación lineal: crece al desplazar el documento y vuelve a 0 justo
+      // al llegar al final de la hoja. Sin branches por evento de scroll.
+      let shift = Math.max(0, naturalBottomV - maxBottomV);
+      if (naturalBottomV - shift - h < minTopV) {
+        shift = Math.max(0, naturalBottomV - h - minTopV);
+      }
+      // A zoom > 100 % la hoja puede exceder el canvas y quedar recortada; el
+      // composer sigue perteneciendo a la hoja pero se mantiene dentro de la
+      // zona visible para que nunca se corte su botón de envío.
+      let dx = 0;
+      const canvasRect = canvas?.getBoundingClientRect();
+      if (canvasRect) {
         const w = stack.getBoundingClientRect().width;
-        const sheetCenter = s2.left + s2.width / 2;
-        if (w + GAP * 2 > c.width) {
-          setOffsetX((prev) => (Math.abs(prev) < 0.5 ? 0 : 0));
-        } else {
-          const minC = c.left + GAP + w / 2;
-          const maxC = c.right - GAP - w / 2;
-          const target = Math.min(Math.max(sheetCenter, minC), maxC);
-          const dxLocal = (target - sheetCenter) / z;
-          setOffsetX((prev) => (Math.abs(prev - dxLocal) < 0.5 ? prev : dxLocal));
+        const sheetCenterV = sheetRect.left + sheetRect.width / 2;
+        if (w > 0 && w + GAP * 2 <= canvasRect.width) {
+          const target = Math.min(
+            Math.max(sheetCenterV, canvasRect.left + GAP + w / 2),
+            canvasRect.right - GAP - w / 2
+          );
+          dx = target - sheetCenterV;
         }
       }
+      const transform = `translate3d(${Math.round(dx * 100) / 100}px, ${Math.round(-shift * 100) / 100}px, 0)`;
+      if (stack.style.transform !== transform) stack.style.transform = transform;
     };
-    const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
+    const schedule = () => { if (!frame) frame = raf(update); };
+    stackRef.current?.style.setProperty('will-change', 'transform');
     update();
-    window.addEventListener('scroll', schedule, { passive: true });
+    // `capture` recoge también el scroll horizontal del padder del canvas.
+    window.addEventListener('scroll', schedule, { passive: true, capture: true });
     window.addEventListener('resize', schedule);
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(schedule) : null;
     ro?.observe(el);
     ro?.observe(sheet);
+    if (canvas) ro?.observe(canvas);
+    syncPositionRef.current = schedule;
     return () => {
-      if (frame) cancelAnimationFrame(frame);
-      window.removeEventListener('scroll', schedule);
+      if (frame) caf(frame);
+      window.removeEventListener('scroll', schedule, { capture: true });
+      window.removeEventListener('resize', schedule);
+      ro?.disconnect();
+      syncPositionRef.current = () => {};
+    };
+  }, [zoomRatio]);
+
+  // Tras cada render, re-sincroniza (cambio de alto por foco/toolkit/propuesta,
+  // cambio de borrador, etc.) sin esperar a un evento del usuario.
+  useLayoutEffect(() => {
+    syncPositionRef.current();
+  });
+
+  // Toolkit flotante en portal: los ancestros del composer recortan
+  // (`overflow` en la hoja/canvas/padder) y crean contextos de apilamiento, así
+  // que el menú se renderiza en `document.body` y se ancla por coordenadas al
+  // composer. Conserva su sitio al hacer scroll, se voltea debajo si no cabe
+  // arriba (nunca queda fuera del viewport) y no altera el z-index global.
+  useLayoutEffect(() => {
+    if (!toolkitVisible) return;
+    const card = cardRef.current;
+    const menu = toolkitRef.current;
+    if (!card || !menu) return;
+    let frame = 0;
+    const place = () => {
+      frame = 0;
+      const r = card.getBoundingClientRect();
+      const mh = menu.offsetHeight;
+      const mw = Math.min(r.width, window.innerWidth - 16);
+      if (!mh || !mw) return;
+      const left = Math.min(Math.max(r.left, 8), Math.max(8, window.innerWidth - mw - 8));
+      const above = r.top - 8;
+      const top = above >= mh ? above - mh : Math.min(r.bottom + 8, window.innerHeight - mh - 8);
+      menu.style.left = `${Math.round(left)}px`;
+      menu.style.top = `${Math.max(8, Math.round(top))}px`;
+      menu.style.width = `${Math.round(mw)}px`;
+    };
+    const schedule = () => { if (!frame) frame = raf(place); };
+    place();
+    window.addEventListener('scroll', schedule, { passive: true, capture: true });
+    window.addEventListener('resize', schedule);
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(schedule) : null;
+    ro?.observe(card);
+    ro?.observe(menu);
+    return () => {
+      if (frame) caf(frame);
+      window.removeEventListener('scroll', schedule, { capture: true });
       window.removeEventListener('resize', schedule);
       ro?.disconnect();
     };
-  }, [zoomRatio]);
+  }, [toolkitVisible]);
 
   return (
     <section
@@ -452,42 +533,48 @@ export function AIDraftAgentPanel({
       style={{
         // Contra-escala: el ancestro de zoom aplica scale(zoomRatio); este
         // factor neutraliza para que el composer mida visualmente igual a
-        // cualquier zoom (regla: solo la hoja se escala).
+        // cualquier zoom (regla: solo la hoja se escala). La traslación del
+        // seguimiento se escribe aparte sobre el stack interno.
         transform: `scale(${1 / zoomRatio})`,
         transformOrigin: 'bottom center',
-        top: offsetY ? `${-offsetY}px` : undefined,
-        left: offsetX ? `${offsetX}px` : undefined,
       }}
     >
-      <div className="pointer-events-auto flex w-[calc(100%-2rem)] max-w-[531px] flex-col gap-2">
+      <div ref={stackRef} className="pointer-events-auto flex w-[calc(100%-2rem)] max-w-[531px] flex-col gap-2">
         {/* Estado focus — menú flotante «Ejemplos de AI Toolkit» encima del
-            composer, anclado a él (no tooltip ni diálogo genérico). Solo se
-            muestran acciones con ejecución real en LegalUp. */}
-        {toolkitVisible ? (
-          <div
-            data-testid="agent-toolkit"
-            aria-label="Ejemplos de AI Toolkit"
-            className="rounded-xl border border-gray-200 bg-card p-1.5 shadow-[0_16px_48px_rgba(17,24,39,0.12),0_4px_12px_rgba(17,24,39,0.08)]"
-          >
-            <p className="px-2 pb-1 pt-1.5 text-xs font-medium text-muted-foreground">
-              Ejemplos de AI Toolkit
-            </p>
-            {TOOLKIT_ACTIONS.map((action) => (
-              <button
-                key={action.key}
-                type="button"
-                data-testid={`agent-toolkit-${action.key}`}
-                disabled={!canRequest}
-                onMouseDown={keepTextareaFocus}
-                onClick={() => runToolkitAction(action)}
-                className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm text-gray-800 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+            composer, anclado a él (no tooltip ni diálogo genérico). Se
+            renderiza en un portal para que ningún `overflow` de la hoja, del
+            canvas o del padder lo recorte. Solo se muestran acciones con
+            ejecución real en LegalUp. */}
+        {toolkitVisible
+          ? createPortal(
+              <div
+                ref={toolkitRef}
+                data-testid="agent-toolkit"
+                aria-label="Ejemplos de AI Toolkit"
+                style={{ position: 'fixed', left: 0, top: 0, zIndex: 80 }}
+                className="pointer-events-auto max-h-[70vh] overflow-y-auto rounded-xl border border-gray-200 bg-card p-1.5 shadow-[0_16px_48px_rgba(17,24,39,0.12),0_4px_12px_rgba(17,24,39,0.08)]"
               >
-                <action.icon className="h-4 w-4 shrink-0 text-gray-500" aria-hidden="true" />
-                {action.label}
-              </button>
-            ))}
-          </div>
-        ) : null}
+                <p className="px-2 pb-1 pt-1.5 text-xs font-medium text-muted-foreground">
+                  Ejemplos de AI Toolkit
+                </p>
+                {TOOLKIT_ACTIONS.map((action) => (
+                  <button
+                    key={action.key}
+                    type="button"
+                    data-testid={`agent-toolkit-${action.key}`}
+                    disabled={!canRequest}
+                    onMouseDown={keepTextareaFocus}
+                    onClick={() => runToolkitAction(action)}
+                    className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm text-gray-800 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <action.icon className="h-4 w-4 shrink-0 text-gray-500" aria-hidden="true" />
+                    {action.label}
+                  </button>
+                ))}
+              </div>,
+              document.body
+            )
+          : null}
 
         {chatOpen ? (
           <div className="rounded-xl border bg-card shadow-lg" data-testid="agent-chat-card">
@@ -574,11 +661,9 @@ export function AIDraftAgentPanel({
         {/* Composer compacto → expandido. Sin encabezado: directamente el
             input con el botón de envío DENTRO, a la derecha (Tiptap Agent). */}
         <div
+          ref={cardRef}
           data-testid="agent-composer-card"
-          className={cn(
-            'rounded-xl border bg-card shadow-[0_12px_36px_rgba(15,23,42,0.10),0_3px_10px_rgba(15,23,42,0.06)] transition-[border-color] duration-150',
-            expanded ? 'border-green-300' : 'border-input hover:border-green-300'
-          )}
+          className="rounded-xl border border-green-300 bg-card shadow-[0_12px_36px_rgba(15,23,42,0.10),0_3px_10px_rgba(15,23,42,0.06)]"
         >
           {/* Kit contextual del expandido: acciones reales, nunca decorativas.
               Siempre en el DOM (tests y foco estable), visualmente plegado sin
@@ -653,7 +738,19 @@ export function AIDraftAgentPanel({
           </div>
 
           <div data-testid="agent-input-row" className="flex items-center gap-2 px-2.5 py-2">
-            <Sparkles className="h-4 w-4 shrink-0 text-gray-400" aria-hidden="true" />
+            {/* Al enfocar se oculta el destello y el área de escritura queda
+                limpia; el hueco se reserva (mismo tamaño, `opacity`) para que
+                el texto y la flecha no se muevan al transicionar. */}
+            <span
+              data-testid="agent-sparkles"
+              aria-hidden="true"
+              className={cn(
+                'flex h-4 w-4 shrink-0 items-center justify-center transition-opacity duration-150',
+                focused ? 'opacity-0' : 'opacity-100'
+              )}
+            >
+              <Sparkles className="h-4 w-4 text-gray-400" aria-hidden="true" />
+            </span>
             <label htmlFor="agent-proposal-instruction" className="sr-only">
               Instrucción para la propuesta
             </label>
@@ -682,7 +779,7 @@ export function AIDraftAgentPanel({
               onClick={handleSend}
               title="Enviar"
               className={cn(
-                'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full p-0 transition-colors',
+                'inline-flex h-8 w-8 shrink-0 select-none items-center justify-center self-center rounded-full p-0 transition-colors',
                 sending || input.trim().length === 0 || !conversationId
                   ? 'bg-[rgba(15,22,36,0.05)] text-[rgba(15,22,36,0.4)]'
                   : 'bg-green-300 text-green-950 hover:bg-green-300/90'

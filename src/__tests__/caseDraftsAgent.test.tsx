@@ -430,33 +430,144 @@ describe('UA-3 Agent AI — integración en el editor', () => {
     expect(second.message).not.toContain('Borrador de contestación');
   });
 
-  it('los iconos quedan centrados y el estado activo usa green-300 (sin morado)', async () => {
+  it('los iconos quedan centrados, Sparkles se oculta al enfocar y el borde es green-300 en todos los estados', async () => {
     await openDraftEditor();
     await openAgentPanel();
     const row = screen.getByTestId('agent-input-row');
     expect(row.className).toContain('items-center');
     expect(row.className).not.toContain('items-end');
-    const sparkles = row.querySelector('svg');
-    expect(sparkles?.getAttribute('class') ?? '').not.toContain('mt-1.5');
 
-    // Reposo: borde neutro, sin acentos morados en el composer.
-    const card = screen.getByTestId('agent-composer-card');
-    expect(card.className).toContain('border-input');
-    expect(card.className).not.toContain('rgb(98,41,255)');
+    // Hueco del destello reservado (mismo tamaño) para que nada se desplace.
+    const slot = screen.getByTestId('agent-sparkles');
+    expect(slot.className).toContain('h-4');
+    expect(slot.className).toContain('w-4');
+    expect(slot.className).toContain('items-center');
+    expect(slot.className).toContain('opacity-100');
+    expect(row.querySelector('svg')?.getAttribute('class') ?? '').not.toContain('mt-1.5');
 
-    // Activo: foco del input → borde green-300; adjunto pressed → green-300.
-    fireEvent.focus(proposalInstruction());
-    expect(screen.getByTestId('agent-composer-card').className).toContain('border-green-300');
-    fireEvent.change(proposalInstruction(), { target: { value: 'hola' } });
+    // La flecha vive centrada en su botón circular y nunca pegada al borde inferior.
     const send = screen.getByTestId('agent-proposal-send');
-    expect(send.className).toContain('bg-green-300');
-    expect(send.className).not.toContain('rgb(98,41,255)');
+    expect(send.className).toContain('h-8');
+    expect(send.className).toContain('w-8');
+    expect(send.className).toContain('items-center');
+    expect(send.className).toContain('justify-center');
+    expect(send.className).toContain('self-center');
+    expect(send.className).not.toContain('items-end');
+
+    // Reposo, hover y foco: borde green-300 siempre; nunca morado.
+    const card = screen.getByTestId('agent-composer-card');
+    expect(card.className).toContain('border-green-300');
+    expect(card.className).not.toContain('border-input');
+    expect(card.className).not.toContain('hover:border');
+    fireEvent.mouseEnter(card);
+    expect(screen.getByTestId('agent-composer-card').className).toContain('border-green-300');
+    fireEvent.mouseLeave(card);
+
+    // Foco: Sparkles oculto (con su espacio intacto) y borde aún verde.
+    fireEvent.focus(proposalInstruction());
+    expect(await screen.findByTestId('agent-toolkit')).toBeInTheDocument();
+    const slotFocused = screen.getByTestId('agent-sparkles');
+    expect(slotFocused.className).toContain('opacity-0');
+    expect(slotFocused.className).toContain('h-4');
+    expect(slotFocused.className).toContain('w-4');
+    expect(screen.getByTestId('agent-proposal-send').className).toContain('self-center');
+    expect(screen.getByTestId('agent-composer-card').className).toContain('border-green-300');
+
+    fireEvent.change(proposalInstruction(), { target: { value: 'hola' } });
+    const sendAfter = screen.getByTestId('agent-proposal-send');
+    expect(sendAfter.className).toContain('bg-green-300');
+    expect(sendAfter.className).not.toContain('rgb(98,41,255)');
     fireEvent.click(screen.getByTestId('agent-attach-draft'));
     const attach = screen.getByTestId('agent-attach-draft');
     expect(attach.className).toContain('border-green-300');
     expect(attach.className).toContain('bg-green-300');
     expect(document.body.innerHTML).not.toContain('rgb(98,41,255)');
   });
+
+  it('el seguimiento del composer es una traslación continua dentro de la hoja, sin fixed/sticky ni saltos', async () => {
+    await openDraftEditor();
+    await openAgentPanel();
+    const panel = screen.getByTestId('draft-agent-panel');
+    const stack = panel.firstElementChild as HTMLElement;
+    const sheet = screen.getByTestId('draft-sheet');
+    expect(panel.className).not.toContain('fixed');
+    expect(panel.className).not.toContain('sticky');
+    expect(panel.className).not.toContain('absolute');
+
+    const innerHeightDescriptor = Object.getOwnPropertyDescriptor(window, 'innerHeight');
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 });
+    Object.defineProperty(panel, 'offsetHeight', { configurable: true, value: 60 });
+    Object.defineProperty(panel, 'offsetTop', { configurable: true, value: 1200 });
+    let sheetTop = -200;
+    sheet.getBoundingClientRect = () =>
+      ({
+        top: sheetTop, bottom: sheetTop + 2800, left: 0, right: 800, width: 800, height: 2800, x: 0, y: sheetTop,
+        toJSON: () => ({}),
+      }) as DOMRect;
+
+    const at = async (top: number) => {
+      sheetTop = top;
+      fireEvent.scroll(window);
+      await waitFor(() => expect(stack.style.transform).not.toBe(''));
+      return stack.style.transform;
+    };
+
+    // Documento largo: se pega al borde inferior visible (800 - 16 = 784).
+    expect(await at(-200)).toBe('translate3d(0px, -276px, 0)');
+    // Continuidad: cada píxel de scroll mueve exactamente un píxel la traslación.
+    expect(await at(-210)).toBe('translate3d(0px, -266px, 0)');
+    expect(await at(-220)).toBe('translate3d(0px, -256px, 0)');
+    // Al llegar al final de la hoja vuelve a su posición natural (reposo).
+    expect(await at(-1000)).toBe('translate3d(0px, 0px, 0)');
+
+    if (innerHeightDescriptor) Object.defineProperty(window, 'innerHeight', innerHeightDescriptor);
+    else Object.defineProperty(window, 'innerHeight', { configurable: true, value: 768 });
+  });
+
+  it('a zoom 150 % el anclaje inferior sigue siendo exacto (el envío nunca se recorta)', async () => {
+    await openDraftEditor();
+    await openAgentPanel();
+    for (let i = 0; i < 5; i++) fireEvent.click(screen.getByLabelText('Aumentar zoom'));
+    const panel = screen.getByTestId('draft-agent-panel');
+    const stack = panel.firstElementChild as HTMLElement;
+    const sheet = screen.getByTestId('draft-sheet');
+    const innerHeightDescriptor = Object.getOwnPropertyDescriptor(window, 'innerHeight');
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 });
+    Object.defineProperty(panel, 'offsetHeight', { configurable: true, value: 60 });
+    Object.defineProperty(panel, 'offsetTop', { configurable: true, value: 1200 });
+    const sheetTop = -300;
+    sheet.getBoundingClientRect = () =>
+      ({
+        top: sheetTop, bottom: sheetTop + 4200, left: 0, right: 800, width: 800, height: 4200, x: 0, y: sheetTop,
+        toJSON: () => ({}),
+      }) as DOMRect;
+    // La contra-escala ancla al borde inferior del flujo: borde visual =
+    // sheetTop + (offsetTop + offsetHeight) * zoom → -300 + 1260 * 1.5 = 1590.
+    fireEvent.scroll(window);
+    await waitFor(() => expect(stack.style.transform).not.toBe(''));
+    // Límite visible = 800 - 16 = 784 → traslación exacta 1590 - 784 = 806.
+    expect(stack.style.transform).toBe('translate3d(0px, -806px, 0)');
+    if (innerHeightDescriptor) Object.defineProperty(window, 'innerHeight', innerHeightDescriptor);
+  });
+
+  it('el toolkit se ancla al composer desde un portal, fuera de los ancestros que recortan', async () => {    await openDraftEditor();
+    await openAgentPanel();
+    fireEvent.focus(proposalInstruction());
+    const toolkit = await screen.findByTestId('agent-toolkit');
+    const sheet = screen.getByTestId('draft-sheet');
+    const card = screen.getByTestId('agent-composer-card');
+    // Ni la hoja (`overflow`) ni el canvas/padder pueden recortarlo: vive en body.
+    expect(sheet.contains(toolkit)).toBe(false);
+    expect(card.contains(toolkit)).toBe(false);
+    expect(document.body.contains(toolkit)).toBe(true);
+    expect(toolkit.style.position).toBe('fixed');
+    expect(Number(toolkit.style.zIndex)).toBeGreaterThanOrEqual(50);
+    // El composer sigue perteneciendo al flujo de la hoja (no se vuelve overlay).
+    expect(panelBelongsToSheet()).toBe(true);
+  });
+
+  const panelBelongsToSheet = () =>
+    screen.getByTestId('draft-sheet').contains(screen.getByTestId('draft-agent-panel'));
 
   it('no envía nada si el usuario pide contexto y el contenido del editor no se puede leer', async () => {
     await openDraftEditor();

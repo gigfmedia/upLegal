@@ -248,7 +248,7 @@ function DraftSheet({ className = '', children }: { className?: string; children
   return (
     <div
       data-testid="draft-sheet"
-      className={`relative mx-auto flex min-h-[640px] w-full max-w-[794px] flex-col overflow-hidden rounded-md border bg-card shadow-sm md:min-h-[1123px] ${className}`}
+      className={`relative mx-auto flex min-h-[640px] w-full max-w-[794px] flex-col rounded-md border bg-card shadow-sm md:min-h-[1123px] ${className}`}
     >
       {children}
     </div>
