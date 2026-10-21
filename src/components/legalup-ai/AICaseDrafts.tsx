@@ -26,6 +26,7 @@ import {
   Minus,
   Plus,
   Redo2,
+  Sparkles,
   Strikethrough,
   Underline,
   Undo2,
@@ -33,6 +34,7 @@ import {
 import { aiOperationIdentity } from '@/lib/aiOperationIdentity';
 import { pollTerminalResult } from '@/lib/aiInProgressPoll';
 import { convertDraftMarkdownToHtml, htmlToPlainText } from '@/components/legalup-ai/draftEditorMarkup';
+import { AIDraftAgentPanel } from '@/components/legalup-ai/AIDraftAgentPanel';
 
 // FASE 4.62C — workspace documental de redacción asistida.
 // Izquierda: generación (IA) + borradores anteriores + historial de versiones.
@@ -294,6 +296,8 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   const [previewVersion, setPreviewVersion] = useState<CaseDraftVersionDetail | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
   const [restoring, setRestoring] = useState(false);
+  // UA-3 — panel Agent AI junto al editor (siempre fuera del lienzo escalado).
+  const [agentOpen, setAgentOpen] = useState(false);
   // FASE UA-2 — zoom del documento (solo presentación); sobrevive al
   // cierre/reapertura de borradores y nunca toca el HTML guardado.
   const [draftZoom, setDraftZoom] = useState(100);
@@ -984,6 +988,26 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
 
   const chainFocus = () => (editor && !editor.isDestroyed ? editor.chain().focus() : null);
 
+  // UA-3 — inserción de propuestas del Agent AI: edición del usuario en la
+  // posición del cursor por el camino normal de Tiptap (onUpdate → autosave
+  // con debounce → OCC base_revision). Nunca setContent del documento completo.
+  const insertProposalHtml = useCallback((html: string): boolean => {
+    const ed = editorRef.current;
+    if (!ed || ed.isDestroyed) return false;
+    try {
+      ed.chain().focus().insertContent(html).run();
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  // Al cerrar el editor no queda ningún target para insertar: panel cerrado.
+  useEffect(() => {
+    if (!openDraft) setAgentOpen(false);
+  }, [openDraft]);
+
+
   // FASE UA-2 — toolbar profesional: estilo de párrafo/título por select,
   // alineación de bloque y zoom solo-presentación.
   const applyBlockStyle = (value: 'p' | 'h1' | 'h2' | 'h3') => {
@@ -1220,6 +1244,16 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                       >
                         {SAVE_STATUS_LABEL[saveStatus]}
                       </span>
+                      <Button
+                        size="sm"
+                        variant={agentOpen ? 'default' : 'outline'}
+                        aria-expanded={agentOpen}
+                        data-testid="draft-agent-toggle"
+                        onClick={() => setAgentOpen((v) => !v)}
+                      >
+                        <Sparkles className="h-4 w-4 mr-1" aria-hidden="true" />
+                        Agent AI
+                      </Button>
                       <Button size="sm" variant="outline" onClick={closeDraft}>Cerrar</Button>
                     </div>
                   </div>
@@ -1465,6 +1499,21 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                       Guardar cambios
                     </Button>
                   </div>
+
+                  {/* UA-3 — Agent AI: hermano del canvas, NUNCA dentro de
+                      draft-zoom-content (el zoom solo escala la hoja). */}
+                  {agentOpen && openDraft ? (
+                    <AIDraftAgentPanel
+                      workspaceId={workspaceId}
+                      draftId={openDraft.id}
+                      draftTitle={openDraft.title}
+                      getDraftHtml={() => {
+                        const ed = editorRef.current;
+                        return ed && !ed.isDestroyed ? ed.getHTML() : null;
+                      }}
+                      onInsertProposal={insertProposalHtml}
+                    />
+                  ) : null}
                 </>
               ) : (
                 <div className="rounded border border-dashed p-6 text-center">
