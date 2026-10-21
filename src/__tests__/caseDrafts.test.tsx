@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, waitFor, act, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider, focusManager } from '@tanstack/react-query';
 import { AICaseDrafts } from '@/components/legalup-ai/AICaseDrafts';
 
@@ -51,9 +51,16 @@ type FakeEditor = {
   isDestroyed: boolean;
   opts: { content?: string; editable?: boolean; onUpdate?: (e: { editor: unknown }) => void };
   html: string;
+  cmdLog: string[];
+  canFlags: { undo: boolean; redo: boolean };
+  // FASE UA-2 (corrección): historial simulado para verificar que
+  // undo/redo restauran contenido, no solo habilitan botones.
+  undoStack: string[];
+  redoStack: string[];
   getHTML: () => string;
-  isActive: (name: string) => boolean;
+  isActive: (name: string | Record<string, unknown>, attrs?: Record<string, unknown>) => boolean;
   chain: () => Record<string, (...args: unknown[]) => unknown>;
+  can: () => { undo: () => boolean; redo: () => boolean };
   commands: { setContent: (html: string, opts?: { emitUpdate?: boolean }) => void };
 };
 const fakeEditors: FakeEditor[] = [];
@@ -68,25 +75,102 @@ vi.mock('@tiptap/react', () => ({
       ed.opts = options ?? ed.opts;
       return ed;
     }
-    const state: Record<string, boolean> = {};
+    // Necesario para isActive() del mock. Los valores no booleanos
+    // (headingLevel, textAlign) replican atributos reales del schema.
+    const state: Record<string, boolean | number | string | undefined> = {};
     const created: FakeEditor = {
       isDestroyed: false,
       opts: options ?? {},
+      // FASE UA-2: registro de comandos de cadena para aserciones fieles
+      // (comando + argumentos encodeURIComponent no — JSON directo).
+      cmdLog: [],
+      canFlags: { undo: false, redo: false },
+      undoStack: [],
+      redoStack: [],
       html: options?.content ?? '<p></p>',
-      isActive: (name: string) => !!state[name],
+      isActive: (name, attrs) => {
+        if (typeof name === 'string') {
+          if (name === 'heading' && attrs && 'level' in attrs) {
+            return !!state.heading && state.headingLevel === attrs.level;
+          }
+          return !!state[name];
+        }
+        if ('textAlign' in name) return state.textAlign === name.textAlign;
+        return false;
+      },
       chain: () => {
         type ChainFn = (...args: unknown[]) => unknown;
-        const ret: ChainFn & Record<string, ChainFn> = (() => ret) as ChainFn & Record<string, ChainFn>;
-        const mark = (n: string): ChainFn => { state[n] = true; return ret; };
+        const ret: ChainFn & Record<string, (...args: unknown[]) => unknown> = (() => ret) as ChainFn & Record<string, ChainFn>;
+        const rec = (name: string, args?: unknown[]): unknown => {
+          created.cmdLog.push(args?.length ? `${name}(${JSON.stringify(args)})` : name);
+          return ret;
+        };
+        // Toggle fiel: marca no activa → activa; activa → desactiva (como
+        // el editor real). El nombre grabado es el comando de cadena.
+        const toggle = (cmdName: string, key: string): ChainFn => () => {
+          state[key] = state[key] === true ? undefined : true;
+          return rec(cmdName);
+        };
         ret.focus = ret; ret.run = ret;
-        ret.toggleBold = mark('bold'); ret.toggleItalic = mark('italic');
-        ret.toggleBulletList = mark('bulletList'); ret.toggleOrderedList = mark('orderedList');
-        ret.toggleHeading = mark('heading'); ret.setParagraph = ret;
-        ret.unsetAllMarks = ret; ret.clearNodes = ret;
+        ret.toggleBold = toggle('toggleBold', 'bold'); ret.toggleItalic = toggle('toggleItalic', 'italic');
+        ret.toggleUnderline = toggle('toggleUnderline', 'underline'); ret.toggleStrike = toggle('toggleStrike', 'strike');
+        ret.toggleBulletList = toggle('toggleBulletList', 'bulletList'); ret.toggleOrderedList = toggle('toggleOrderedList', 'orderedList');
+        ret.toggleHeading = (...args: unknown[]) => {
+          state.heading = true;
+          state.headingLevel = args[0] && typeof args[0] === 'object' ? (args[0] as { level: number }).level : state.headingLevel;
+          return rec('toggleHeading', args);
+        };
+        ret.setHeading = (...args: unknown[]) => {
+          state.heading = true;
+          state.headingLevel = args[0] && typeof args[0] === 'object' ? (args[0] as { level: number }).level : state.headingLevel;
+          return rec('setHeading', args);
+        };
+        ret.setParagraph = (..._args: unknown[]) => {
+          state.heading = false;
+          state.headingLevel = undefined;
+          state.paragraph = true;
+          return rec('setParagraph');
+        };
+        ret.setTextAlign = (...args: unknown[]) => {
+          state.textAlign = String(args[0]);
+          return rec('setTextAlign', args);
+        };
+        // FASE UA-2 (corrección): undo/redo restauran contenido como el
+        // editor real — el html cambia según el historial simulado.
+        ret.undo = () => {
+          if (created.undoStack.length > 0) {
+            created.redoStack.push(created.html);
+            created.html = created.undoStack.pop() as string;
+          }
+          return rec('undo');
+        };
+        ret.redo = () => {
+          if (created.redoStack.length > 0) {
+            created.undoStack.push(created.html);
+            created.html = created.redoStack.pop() as string;
+          }
+          return rec('redo');
+        };
+        ret.unsetAllMarks = () => rec('unsetAllMarks');
+        ret.clearNodes = () => rec('clearNodes');
         return ret;
       },
+      can: () => ({
+        undo: () => created.canFlags.undo,
+        redo: () => created.canFlags.redo,
+      }),
       commands: {
         setContent(html: string, opts?: { emitUpdate?: boolean }) {
+          // Emit update = edición del usuario → entra al historial de undo;
+          // emitUpdate false = carga programática (apertura/restauración) →
+          // reinicia el historial, como el editor real.
+          if (opts?.emitUpdate === false) {
+            created.undoStack = [];
+            created.redoStack = [];
+          } else if (created.html !== html) {
+            created.undoStack.push(created.html);
+            created.redoStack = [];
+          }
           created.html = html;
           if (opts?.emitUpdate !== false) (options ?? created.opts)?.onUpdate?.({ editor: created });
         },
@@ -129,6 +213,9 @@ let versionsTotalPayload: number | null = null;
 let olderVersionsFailure = false;
 let versionDetail: unknown = null;
 let putFailure: { status: number; body: Record<string, unknown> } | null = null;
+// FASE UA-2: reemplaza el DRAFT servido por lista y detalle (compatibilidad
+// con contenido que activa marcas nuevas).
+let draftPayloadOverride: unknown = null;
 // FASE 4.62D: retiene PUTs en vuelo para congelar el estado 'saving' de forma determinista.
 let holdPutGate: Promise<void> | null = null;
 let headGate: Promise<void> | null = null;
@@ -149,6 +236,7 @@ beforeEach(() => {
   versionsTotalPayload = null;
   olderVersionsFailure = false;
   versionDetail = null;
+  draftPayloadOverride = null;
   putFailure = null;
   holdPutGate = null;
   headGate = null;
@@ -200,9 +288,9 @@ beforeEach(() => {
         headGate = null;
         await headGateAt;
       }
-      return { ok: true, json: async () => ({ draft: DRAFT }) } as Response;
+      return { ok: true, json: async () => ({ draft: draftPayloadOverride ?? DRAFT }) } as Response;
     }
-    return { ok: true, json: async () => ({ drafts: [DRAFT] }) } as Response;
+    return { ok: true, json: async () => ({ drafts: [draftPayloadOverride ?? DRAFT] }) } as Response;
   });
   (globalThis as unknown as { fetch: typeof fetch }).fetch = fetchMock as unknown as typeof fetch;
 });
@@ -2165,4 +2253,376 @@ describe('FASE 4.62J — refresco al recuperar foco (lista, historial y encabeza
     expect(screen.queryByText('Borrador de contestación', { selector: 'p' })).toBeNull();
     headGate = null;
   }, 20000);
+});
+
+describe('FASE UA-2 — toolbar profesional y zoom de presentación', () => {
+  // Versión de renderDrafts con client accesible para rerender y para
+  // forzar re-evaluación de estados derivados del editor mockeado.
+  const renderDraftsRerenderable = () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const view = render(<QueryClientProvider client={client}><AICaseDrafts workspaceId="w1" /></QueryClientProvider>);
+    // Elemento nuevo por llamada: RTL no re-renderiza un árbol idéntico.
+    return { ...view, rerender: () => view.rerender(<QueryClientProvider client={client}><AICaseDrafts workspaceId="w1" /></QueryClientProvider>) };
+  };
+  const main = () => editorCache.main as FakeEditor;
+  const btn = (name: string) => screen.getByRole('button', { name });
+  const cmd = (needle: string) => main().cmdLog.filter((c) => c.startsWith(needle));
+  const parseCmdArgs = (cmdName: string) => {
+    const entries = cmd(cmdName);
+    const last = entries[entries.length - 1];
+    return JSON.parse(last.slice(cmdName.length + 1, last.length - 1));
+  };
+  const openToolbar = async () => {
+    renderDrafts();
+    await openFirstDraft();
+    return screen.getByRole('toolbar', { name: 'Formato del borrador' });
+  };
+
+  it('toolbar completa: grupos de historial, marcas, estilo, listas, alineación, limpiar y zoom', async () => {
+    await openToolbar();
+    for (const n of [
+      'Deshacer', 'Rehacer', 'Negrita', 'Cursiva', 'Subrayado', 'Tachado',
+      'Lista con viñetas', 'Lista numerada',
+      'Alinear a la izquierda', 'Centrar', 'Alinear a la derecha', 'Justificar',
+      'Limpiar formato',
+    ]) {
+      expect(btn(n)).toBeTruthy();
+    }
+    const style = screen.getByLabelText('Estilo de párrafo o título') as HTMLSelectElement;
+    expect(style).toBeTruthy();
+    expect(style.value).toBe('p');
+    for (const o of ['Párrafo', 'Título 1', 'Título 2', 'Título 3']) {
+      expect(Array.from(style.options).map((op) => op.textContent)).toContain(o);
+    }
+    const zoomGroup = screen.getByRole('group', { name: 'Zoom del documento' });
+    expect(zoomGroup).toBeTruthy();
+    expect(screen.getByLabelText('Reducir zoom')).toBeTruthy();
+    expect(screen.getByLabelText('Aumentar zoom')).toBeTruthy();
+    // Indicador fijo sin desplegable: muestra el porcentaje actual.
+    expect(within(zoomGroup).getByText('100 %')).toBeTruthy();
+    expect(within(zoomGroup).queryByRole('combobox')).toBeNull();
+  });
+
+  it('deshacer/rehacer reservan can(); sin historial quedan deshabilitados y con can() ejecutan undo/redo', async () => {
+    const { rerender } = renderDraftsRerenderable();
+    await openFirstDraft();
+    expect(btn('Deshacer')).toBeDisabled();
+    expect(btn('Rehacer')).toBeDisabled();
+    main().canFlags.undo = true;
+    main().canFlags.redo = true;
+    rerender();
+    expect(btn('Deshacer')).toBeEnabled();
+    expect(btn('Rehacer')).toBeEnabled();
+    fireEvent.click(btn('Deshacer'));
+    fireEvent.click(btn('Rehacer'));
+    expect(cmd('undo')).toHaveLength(1);
+    expect(cmd('redo')).toHaveLength(1);
+  });
+
+  it('marcas: subrayado/tachado ejecutan toggle y reflejan estado activo por aria-pressed', async () => {
+    const { rerender } = renderDraftsRerenderable();
+    await openFirstDraft();
+    // Nota: el mock no replica el suscript por transacción de TipTap real
+    // (que re-renderiza la toolbar); el test compensa con rerender() para
+    // evaluar la derivación de isActive en render.
+    expect(btn('Subrayado')).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(btn('Subrayado'));
+    expect(cmd('toggleUnderline')).toHaveLength(1);
+    rerender();
+    expect(btn('Subrayado')).toHaveAttribute('aria-pressed', 'true');
+    expect(btn('Tachado')).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(btn('Tachado'));
+    expect(cmd('toggleStrike')).toHaveLength(1);
+    rerender();
+    expect(btn('Tachado')).toHaveAttribute('aria-pressed', 'true');
+    // Toggle off: segundo clic desactiva la marca como el editor real.
+    fireEvent.click(btn('Subrayado'));
+    rerender();
+    expect(btn('Subrayado')).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('estilo de bloque: el select aplica setHeading con nivel exacto y setParagraph al volver a párrafo', async () => {
+    const { rerender } = renderDraftsRerenderable();
+    await openFirstDraft();
+    const style = screen.getByLabelText('Estilo de párrafo o título') as HTMLSelectElement;
+    fireEvent.change(style, { target: { value: 'h2' } });
+    const h2 = cmd('setHeading');
+    expect(h2).toHaveLength(1);
+    expect(parseCmdArgs('setHeading')).toEqual([{ level: 2 }]);
+    // el estado del mock replica atributos de schema: el select muestra Título 2
+    rerender();
+    expect((screen.getByLabelText('Estilo de párrafo o título') as HTMLSelectElement).value).toBe('h2');
+    fireEvent.change(style, { target: { value: 'p' } });
+    expect(cmd('setParagraph')).toHaveLength(1);
+    rerender();
+    expect((screen.getByLabelText('Estilo de párrafo o título') as HTMLSelectElement).value).toBe('p');
+  });
+
+  it('alineación: setTextAlign con valor exacto y grupo con alineación activa única (izquierda por defecto)', async () => {
+    const { rerender } = renderDraftsRerenderable();
+    await openFirstDraft();
+    expect(btn('Alinear a la izquierda')).toHaveAttribute('aria-pressed', 'true');
+    const parse = () => parseCmdArgs('setTextAlign')[0] as string;
+    fireEvent.click(btn('Centrar'));
+    expect(cmd('setTextAlign')).toHaveLength(1);
+    expect(parse()).toBe('center');
+    rerender();
+    expect(btn('Centrar')).toHaveAttribute('aria-pressed', 'true');
+    expect(btn('Alinear a la izquierda')).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(btn('Justificar'));
+    expect(parse()).toBe('justify');
+    rerender();
+    expect(btn('Justificar')).toHaveAttribute('aria-pressed', 'true');
+    expect(btn('Centrar')).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('limpiar formato mantiene su comando compuesto', async () => {
+    await openToolbar();
+    fireEvent.click(btn('Limpiar formato'));
+    expect(cmd('unsetAllMarks')).toHaveLength(1);
+    expect(cmd('clearNodes')).toHaveLength(1);
+  });
+
+  it('zoom: pasos de 10 puntos, límites 50–150 % e indicador de porcentaje exacto', async () => {
+    renderDrafts();
+    await openFirstDraft();
+    const minus = () => screen.getByLabelText('Reducir zoom');
+    const plus = () => screen.getByLabelText('Aumentar zoom');
+    const indicator = () => within(screen.getByRole('group', { name: 'Zoom del documento' })).getByText(/\d+ %/);
+    expect(indicator().textContent).toBe('100 %');
+    expect(minus()).toBeEnabled();
+    expect(plus()).toBeEnabled();
+
+    // Pasos de 10: 100 → 90 → 80 → 70 → 60 → 50 con clics sucesivos.
+    for (const expected of ['90 %', '80 %', '70 %', '60 %', '50 %']) {
+      fireEvent.click(minus());
+      expect(indicator().textContent).toBe(expected);
+    }
+    // Límite inferior: − deshabilitado y clics extra no cambian el valor.
+    expect(minus()).toBeDisabled();
+    fireEvent.click(minus());
+    expect(indicator().textContent).toBe('50 %');
+    expect(plus()).toBeEnabled();
+
+    // Pasos de 10 de vuelta hasta el tope: 50 → 150.
+    for (let i = 0; i < 10; i++) fireEvent.click(plus());
+    expect(indicator().textContent).toBe('150 %');
+    // Límite superior: + deshabilitado y clics extra no cambian el valor.
+    expect(plus()).toBeDisabled();
+    fireEvent.click(plus());
+    expect(indicator().textContent).toBe('150 %');
+
+    // Regreso al 100 % (predeterminado) restaura la simetría del control.
+    for (let i = 0; i < 5; i++) fireEvent.click(minus());
+    expect(indicator().textContent).toBe('100 %');
+    expect(minus()).toBeEnabled();
+    expect(plus()).toBeEnabled();
+  }, 30000);
+
+  it('zoom escala la hoja completa: toolbar fuera de la hoja y del zoom, editor no recreado, sin setContent ni PUT, y formato preexistente conservado', async () => {
+    draftPayloadOverride = makeDraft({
+      id: 'd3',
+      title: 'Formato previo UA-2',
+      content: '<h2>Encabezado persistido</h2><p><strong>negrita</strong> + <u>subrayado</u></p>',
+      content_format: 'html',
+      revision: 5,
+    });
+    renderDrafts();
+    fireEvent.click(await screen.findByText('Formato previo UA-2'));
+    await screen.findByRole('toolbar', { name: 'Formato del borrador' });
+    const before = editorCache.main as FakeEditor;
+    const beforeHtml = before.html;
+    expect(putCalls()).toHaveLength(0);
+
+    const toolbar = screen.getByRole('toolbar', { name: 'Formato del borrador' });
+    const content = document.querySelector('[data-testid="tiptap-content"]') as HTMLElement;
+    expect(content).toBeTruthy();
+    const zoomWrapper = content.closest('[data-testid="draft-zoom-content"]') as HTMLElement | null;
+    const sheet = document.querySelector('[data-testid="draft-sheet"]') as HTMLElement;
+    const workBox = toolbar.parentElement as HTMLElement;
+    expect(workBox.getAttribute('data-testid')).toBe('draft-canvas');
+    // La toolbar está pegada al borde superior del box y ocupa su ancho:
+    // primera hija, determinada por el contenedor, sin margen propio.
+    expect(workBox.firstElementChild).toBe(toolbar);
+    expect(toolbar.className).toContain('border-b');
+    expect(zoomWrapper?.style.transform).toBe('scale(1)');
+    expect(zoomWrapper?.style.transformOrigin).toBe('top center');
+    // Zoom real: sin CSS zoom ni compensación de ancho (escala pura).
+    expect(zoomWrapper?.style.zoom).toBe('');
+    expect(zoomWrapper?.style.width).toBe('');
+    // La hoja completa vive dentro del envoltorio de zoom (página, márgenes
+    // y texto escalan juntos) y la toolbar está FUERA de la hoja y del zoom.
+    expect(zoomWrapper?.contains(sheet)).toBe(true);
+    expect(zoomWrapper?.contains(content)).toBe(true);
+    expect(toolbar.contains(content)).toBe(false);
+    expect(zoomWrapper?.contains(toolbar)).toBe(false);
+    // La toolbar (y toda su ascendencia) no recibe zoom ni transform:
+    // escala 1 y ancho completo siempre.
+    let ancestor: HTMLElement | null = toolbar;
+    while (ancestor) {
+      expect(ancestor.style.zoom).toBe('');
+      expect(ancestor.style.transform).toBe('');
+      ancestor = ancestor.parentElement;
+    }
+
+    const plus = () => screen.getByLabelText('Aumentar zoom');
+    for (let i = 0; i < 5; i++) fireEvent.click(plus());
+    expect(zoomWrapper?.style.transform).toBe('scale(1.5)');
+    expect(toolbar.style.zoom).toBe('');
+    expect(toolbar.style.width).toBe('');
+    expect(toolbar.style.transform).toBe('');
+    expect(sheet.style.zoom).toBe('');
+    expect(sheet.style.transform).toBe('');
+    // El editor no se reinicia ni se recalcula contenido: misma instancia y
+    // el formato preexistente (h2/strong/u) intacto.
+    expect(editorCache.main).toBe(before);
+    expect(main().html).toBe(beforeHtml);
+    expect(beforeHtml).toContain('<h2>');
+    expect(beforeHtml).toContain('<strong>');
+    expect(cmd('setContent')).toHaveLength(0);
+    // El zoom no es edición: sin PUT (sin autosave disparado).
+    await act(async () => { await new Promise((r) => setTimeout(r, 900)); });
+    expect(putCalls()).toHaveLength(0);
+
+    // La toolbar no se re-renderizó a otra instancia DOM al cambiar el zoom.
+    expect(screen.getByRole('toolbar', { name: 'Formato del borrador' })).toBe(toolbar);
+
+    // Regreso a 100 % neutraliza el zoom y el contenido sigue igual.
+    const minus = () => screen.getByLabelText('Reducir zoom');
+    for (let i = 0; i < 5; i++) fireEvent.click(minus());
+    expect(zoomWrapper?.style.transform).toBe('scale(1)');
+    expect(main().html).toBe(beforeHtml);
+  }, 30000);
+
+  it('iconos activos de la toolbar: color de acento en el icono, sin fondo ni caja; hover solo al pasar el cursor', async () => {
+    renderDrafts();
+    await openFirstDraft();
+    const toolbar = screen.getByRole('toolbar', { name: 'Formato del borrador' });
+
+    // Ignora utilidades con prefijo (hover:/focus-visible:): solo cuentan
+    // las clases persistentes (normal y activo) del botón.
+    const flatIconStyle = (el: HTMLElement) =>
+      el.className.replace(/(?:hover:|focus-visible:)[\S]+/g, '');
+    // Alineación izquierda activa por defecto: color de acento, sin fondo.
+    const alignLeft = screen.getByLabelText('Alinear a la izquierda');
+    expect(alignLeft.getAttribute('aria-pressed')).toBe('true');
+    expect(flatIconStyle(alignLeft)).toContain('text-green-700');
+    // Ni fondo coloreado ni caja permanente.
+    expect(flatIconStyle(alignLeft)).not.toMatch(/bg-(green|white|gray)|border/);
+    // El hover existe y es fondo gris discreto, no estilo de estado activo.
+    expect(alignLeft.className).toContain('hover:bg-gray-100');
+
+    // Estado inactivo: icono plano gris, sin fondo.
+    const bold = screen.getByLabelText('Negrita');
+    expect(bold.getAttribute('aria-pressed')).toBe('false');
+    expect(flatIconStyle(bold)).toContain('text-gray-800');
+    expect(flatIconStyle(bold)).not.toMatch(/bg-(green|white|gray)|border/);
+
+    // Activo e inactivo salen de la MISMA plantilla de clases: la única
+    // diferencia es el token de color (verde acento vs gris neutral).
+    expect(bold.className).toBe(alignLeft.className.replace('text-green-700', 'text-gray-800'));
+
+    // Cursiva comparte el patrón inactivo exacto.
+    const italic = screen.getByLabelText('Cursiva');
+    expect(flatIconStyle(italic)).toContain('text-gray-800');
+    expect(flatIconStyle(italic)).not.toMatch(/bg-(green|white|gray)|border/);
+    // La toolbar permanece a escala 1 y su estructura no cambia.
+    expect(toolbar.style.zoom).toBe('');
+    expect((toolbar.parentElement as HTMLElement).firstElementChild).toBe(toolbar);
+  }, 30000);
+
+  it('a 50 %, 100 % y 150 % el editor, scroll y selección siguen operables sobre el mismo nodo', async () => {
+    renderDrafts();
+    await openFirstDraft();
+    const content = document.querySelector('[data-testid="tiptap-content"]') as HTMLElement;
+    const toolbar = screen.getByRole('toolbar', { name: 'Formato del borrador' });
+    const minus = () => screen.getByLabelText('Reducir zoom');
+    const plus = () => screen.getByLabelText('Aumentar zoom');
+
+    const checkAtLevels = (ratio: number) => {
+      // El nodo del documento y la toolbar no se recrean: el mock y el DOM
+      // persisten entre cambios de zoom (no hay remount del editor).
+      expect(document.querySelector('[data-testid="tiptap-content"]')).toBe(content);
+      expect(screen.getByRole('toolbar', { name: 'Formato del borrador' })).toBe(toolbar);
+      // El envoltorio de zoom no introduce contenedores con overflow propio:
+      // el scroll sigue siendo el del lienzo/página y la escala es pura.
+      const wrapper = content.closest('[data-testid="draft-zoom-content"]') as HTMLElement;
+      expect(wrapper).toBeTruthy();
+      expect(wrapper.getAttribute('class') ?? '').not.toContain('overflow');
+      // Escala real de la hoja: transform con el nivel activo y sin zoom CSS
+      // ni compensación de ancho.
+      expect(wrapper.style.transform).toBe(`scale(${ratio})`);
+      expect(wrapper.style.zoom).toBe('');
+      expect(wrapper.style.width).toBe('');
+      // Comandos dependientes de caret/selección se ejecutan nivel por nivel.
+      const before = cmd('toggleUnderline').length;
+      fireEvent.click(btn('Subrayado'));
+      expect(cmd('toggleUnderline')).toHaveLength(before + 1);
+    };
+
+    // Lleva a 50 % (5 clics −).
+    for (let i = 0; i < 5; i++) fireEvent.click(minus());
+    checkAtLevels(0.5);
+    // Vuelve a 100 %.
+    for (let i = 0; i < 5; i++) fireEvent.click(plus());
+    checkAtLevels(1);
+    // Sube a 150 %.
+    for (let i = 0; i < 5; i++) fireEvent.click(plus());
+    checkAtLevels(1.5);
+  }, 30000);
+
+  it('deshacer/rehacer ejecutan comandos y restauran el contenido esperado, no solo habilitan botones', async () => {
+    const { rerender } = renderDraftsRerenderable();
+    await openFirstDraft();
+    const original = main().html;
+    // Edición equivalente a escribir: entra al historial de undo.
+    const edited = '<h1>Borrador</h1><p>Contenido. Editado tras el borrador.</p>';
+    main().commands.setContent(edited);
+    rerender();
+    expect(main().html).toBe(edited);
+
+    // Sin historial conocido por can(), habilitamos como el editor real +
+    // rerender; el clic ejecuta undo y restaura el contenido anterior.
+    main().canFlags.undo = true;
+    rerender();
+    expect(btn('Deshacer')).toBeEnabled();
+    fireEvent.click(btn('Deshacer'));
+    expect(cmd('undo')).toHaveLength(1);
+    expect(main().html).toBe(original);
+    rerender();
+    expect(screen.getByText('Contenido.')).toBeTruthy();
+
+    // Rehacer repite el contenido editado vía comando real.
+    main().canFlags.redo = true;
+    rerender();
+    expect(btn('Rehacer')).toBeEnabled();
+    fireEvent.click(btn('Rehacer'));
+    expect(cmd('redo')).toHaveLength(1);
+    expect(main().html).toBe(edited);
+    rerender();
+    expect(screen.getByText(/Editado tras el borrador\./)).toBeTruthy();
+  }, 30000);
+
+  it('compatibilidad de lectura y guardado con subrayado/tachado ya persistidos en un borrador', async () => {
+    draftPayloadOverride = makeDraft({
+      id: 'd2',
+      title: 'Con marcas UA-2',
+      content: '<p><u>subrayado</u> y <s>tachado</s></p>',
+      content_format: 'html',
+      revision: 2,
+    });
+    renderDrafts();
+    fireEvent.click(await screen.findByText('Con marcas UA-2'));
+    // El contenido con marcas nuevas se muestra (schema ahora lo admite).
+    await screen.findByText(/subrayado/);
+    // Edición real (el guard de runSave no persiste contenido idéntico):
+    // el HTML con las marcas nuevas más una edición se conserva entero.
+    main().commands.setContent('<p><u>subrayado</u> y <s>tachado</s> y <strong>añadido</strong></p>');
+    fireEvent.click(screen.getByText('Guardar cambios'));
+    await waitFor(() => expect(putCalls()).toHaveLength(1));
+    const sent = putBody(putCalls()[0]);
+    expect(sent.content).toContain('<u>subrayado</u>');
+    expect(sent.content).toContain('<s>tachado</s>');
+    expect(sent.content).toContain('<strong>añadido</strong>');
+  });
 });
