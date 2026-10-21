@@ -201,3 +201,17 @@ All colors MUST be HSL.
 .sidebar-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
+/* UA-4 — espaciador de salto de página. Es una decoración de ProseMirror
+   (solo vista): no existe en el documento, no se serializa y no se puede
+   seleccionar ni editar. Debe ser un bloque real para empujar el contenido
+   a la página siguiente. */
+.letter-page-break {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  line-height: 0;
+  user-select: none;
+  pointer-events: none;
+}
