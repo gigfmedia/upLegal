@@ -198,8 +198,8 @@ const openDraftEditor = async () => {
   return app;
 };
 
+// El composer no depende de ningún toggle: al abrir un borrador ya está ahí.
 const openAgentPanel = async () => {
-  fireEvent.click(screen.getByTestId('draft-agent-toggle'));
   await screen.findByTestId('draft-agent-panel');
 };
 
@@ -270,28 +270,26 @@ const sendProposal = async (instruction: string, attach: boolean) => {
 };
 
 describe('UA-3 Agent AI — integración en el editor', () => {
-  it('el toggle muestra/oculta el composer Agent AI dentro de la hoja, sin tocar el zoom ni la toolbar', async () => {
+  it('el composer está siempre visible al abrir un borrador, dentro de la hoja y sin botón extra', async () => {
     await openDraftEditor();
-    expect(screen.queryByTestId('draft-agent-panel')).not.toBeInTheDocument();
-    expect(screen.getByTestId('draft-agent-toggle')).toHaveAttribute('aria-expanded', 'false');
-    fireEvent.click(screen.getByTestId('draft-agent-toggle'));
-    await screen.findByTestId('draft-agent-panel');
-    expect(screen.getByTestId('draft-agent-toggle')).toHaveAttribute('aria-expanded', 'true');
-    // El composer pertenece al flujo de la hoja: vive dentro de
-    // draft-zoom-content y de la propia hoja, anclado al final del documento
-    // (no flota pegado al viewport). Viaja contra-escalado con transición de
-    // escala, así el zoom de la hoja nunca lo agranda ni encoge.
+    // Ni toggle ni clic previo: el input ya está disponible (plegado).
+    expect(screen.queryByTestId('draft-agent-toggle')).not.toBeInTheDocument();
+    const panel = screen.getByTestId('draft-agent-panel');
+    expect(proposalInstruction()).toBeInTheDocument();
+    // Pertenece al flujo de la hoja: vive dentro de draft-zoom-content y de la
+    // propia hoja. Se desplaza dentro de ella (sticky simulado con geometría
+    // real) para seguir disponible al escribir, sin pegarse al viewport y sin
+    // `fixed`; al final de la página vuelve a su lugar natural.
     const zoom = screen.getByTestId('draft-zoom-content');
     const sheet = screen.getByTestId('draft-sheet');
-    const panel = screen.getByTestId('draft-agent-panel');
     expect(sheet.contains(panel)).toBe(true);
     expect(zoom.contains(panel)).toBe(true);
-    expect(panel.className).toContain('absolute');
+    expect(panel.className).toContain('relative');
+    expect(panel.className).not.toContain('fixed');
+    expect(panel.className).not.toContain('sticky');
     expect(panel.style.transformOrigin).toBe('bottom center');
     expect(screen.getByTestId('draft-toolbar')).toBeInTheDocument();
     expect(zoom).toHaveStyle({ transform: 'scale(1)' });
-    fireEvent.click(screen.getByTestId('draft-agent-toggle'));
-    await waitFor(() => expect(screen.queryByTestId('draft-agent-panel')).not.toBeInTheDocument());
   });
 
   it('el zoom escala solo la hoja: el composer no crece ni encoge', async () => {
@@ -398,6 +396,66 @@ describe('UA-3 Agent AI — integración en el editor', () => {
     expect(body.message).toContain('Contenido');
     expect(body.message).not.toContain('<h1>');
     expect(body.message).not.toContain('<p>');
+  });
+
+  it('al cambiar de borrador el contexto adjunto NO reutiliza el anterior y usa el borrador abierto', async () => {
+    await openDraftEditor();
+    await openAgentPanel();
+    // d1: el usuario activa el adjunto pero todavía no envía.
+    fireEvent.click(screen.getByTestId('agent-attach-draft'));
+    expect(screen.getByTestId('agent-attach-draft')).toHaveAttribute('aria-pressed', 'true');
+
+    // Cambio de borrador: el adjunto se resetea (nunca hereda estado).
+    fireEvent.click(await screen.findByRole('button', { name: /Borrador de planteamiento/ }));
+    await screen.findByTestId('draft-toolbar');
+    await screen.findByTestId('draft-agent-panel');
+    expect(screen.getByTestId('agent-attach-draft')).toHaveAttribute('aria-pressed', 'false');
+
+    // Envío sin volver a activar: mensaje sin contexto (nada de d1).
+    fireEvent.change(proposalInstruction(), { target: { value: 'instrucción para d2' } });
+    fireEvent.click(screen.getByTestId('agent-proposal-send'));
+    await waitFor(() => expect(chatPosts()).toHaveLength(1));
+    const first = JSON.parse(String(chatPosts()[0].init.body)) as { message: string };
+    expect(first.message).not.toContain('Copia del borrador abierto');
+    await screen.findByTestId('agent-proposal-card');
+
+    // Activado en d2: el contexto es el del borrador AHORA abierto.
+    fireEvent.click(screen.getByTestId('agent-attach-draft'));
+    fireEvent.change(proposalInstruction(), { target: { value: 'instrucción con contexto de d2' } });
+    fireEvent.click(screen.getByTestId('agent-proposal-send'));
+    await waitFor(() => expect(chatPosts()).toHaveLength(2));
+    const second = JSON.parse(String(chatPosts()[1].init.body)) as { message: string };
+    expect(second.message).toContain('Copia del borrador abierto');
+    expect(second.message).toContain('Borrador de planteamiento del caso');
+    expect(second.message).not.toContain('Borrador de contestación');
+  });
+
+  it('los iconos quedan centrados y el estado activo usa green-300 (sin morado)', async () => {
+    await openDraftEditor();
+    await openAgentPanel();
+    const row = screen.getByTestId('agent-input-row');
+    expect(row.className).toContain('items-center');
+    expect(row.className).not.toContain('items-end');
+    const sparkles = row.querySelector('svg');
+    expect(sparkles?.getAttribute('class') ?? '').not.toContain('mt-1.5');
+
+    // Reposo: borde neutro, sin acentos morados en el composer.
+    const card = screen.getByTestId('agent-composer-card');
+    expect(card.className).toContain('border-input');
+    expect(card.className).not.toContain('rgb(98,41,255)');
+
+    // Activo: foco del input → borde green-300; adjunto pressed → green-300.
+    fireEvent.focus(proposalInstruction());
+    expect(screen.getByTestId('agent-composer-card').className).toContain('border-green-300');
+    fireEvent.change(proposalInstruction(), { target: { value: 'hola' } });
+    const send = screen.getByTestId('agent-proposal-send');
+    expect(send.className).toContain('bg-green-300');
+    expect(send.className).not.toContain('rgb(98,41,255)');
+    fireEvent.click(screen.getByTestId('agent-attach-draft'));
+    const attach = screen.getByTestId('agent-attach-draft');
+    expect(attach.className).toContain('border-green-300');
+    expect(attach.className).toContain('bg-green-300');
+    expect(document.body.innerHTML).not.toContain('rgb(98,41,255)');
   });
 
   it('no envía nada si el usuario pide contexto y el contenido del editor no se puede leer', async () => {

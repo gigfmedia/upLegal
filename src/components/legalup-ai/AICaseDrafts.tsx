@@ -26,7 +26,6 @@ import {
   Minus,
   Plus,
   Redo2,
-  Sparkles,
   Strikethrough,
   Underline,
   Undo2,
@@ -249,7 +248,7 @@ function DraftSheet({ className = '', children }: { className?: string; children
   return (
     <div
       data-testid="draft-sheet"
-      className={`mx-auto min-h-[640px] w-full max-w-[794px] overflow-hidden rounded-md border bg-card shadow-sm md:min-h-[1123px] ${className}`}
+      className={`relative mx-auto flex min-h-[640px] w-full max-w-[794px] flex-col overflow-hidden rounded-md border bg-card shadow-sm md:min-h-[1123px] ${className}`}
     >
       {children}
     </div>
@@ -296,8 +295,6 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   const [previewVersion, setPreviewVersion] = useState<CaseDraftVersionDetail | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
   const [restoring, setRestoring] = useState(false);
-  // UA-3 — panel Agent AI junto al editor (siempre fuera del lienzo escalado).
-  const [agentOpen, setAgentOpen] = useState(false);
   // FASE UA-2 — zoom del documento (solo presentación); sobrevive al
   // cierre/reapertura de borradores y nunca toca el HTML guardado.
   const [draftZoom, setDraftZoom] = useState(100);
@@ -1022,11 +1019,6 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
     }
   }, []);
 
-  // Al cerrar el editor no queda ningún target para insertar: panel cerrado.
-  useEffect(() => {
-    if (!openDraft) setAgentOpen(false);
-  }, [openDraft]);
-
 
   // FASE UA-2 — toolbar profesional: estilo de párrafo/título por select,
   // alineación de bloque y zoom solo-presentación.
@@ -1264,16 +1256,6 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                       >
                         {SAVE_STATUS_LABEL[saveStatus]}
                       </span>
-                      <Button
-                        size="sm"
-                        variant={agentOpen ? 'default' : 'outline'}
-                        aria-expanded={agentOpen}
-                        data-testid="draft-agent-toggle"
-                        onClick={() => setAgentOpen((v) => !v)}
-                      >
-                        <Sparkles className="h-4 w-4 mr-1" aria-hidden="true" />
-                        Agent AI
-                      </Button>
                       <Button size="sm" variant="outline" onClick={closeDraft}>Cerrar</Button>
                     </div>
                   </div>
@@ -1494,26 +1476,19 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                           style={{ transform: `scale(${zoomRatio})`, transformOrigin: zoomOverflow ? 'top left' : 'top center' }}
                         >
                           <DraftSheet>
-                            {/* El composer del Agent AI vive dentro de la hoja y
-                                necesita margen inferior propio: el padding del
-                                contenido reserva ese espacio en el flujo de la
-                                página (nunca reduce la altura del documento). */}
-                            <div
-                              className={
-                                agentOpen
-                                  ? 'px-4 py-8 pb-[104px] sm:px-9 sm:pb-[120px] md:px-[72px] md:py-[56px] md:pb-[136px]'
-                                  : 'px-4 py-8 sm:px-9 md:px-[72px] md:py-[56px]'
-                              }
-                            >
+                            <div className="px-4 py-8 sm:px-9 md:px-[72px] md:py-[56px]">
                               <EditorContent editor={editor} />
                             </div>
-                            {/* UA-3 — Composer Agent AI: parte del flujo de la
-                                hoja (absoluto contra su extremo inferior, no
-                                `fixed` ni `sticky` al viewport). El zoom de
-                                la hoja sí escala la página, pero el composer
-                                viaja contra-escalado internamente y la regla
-                                UA-2 (solo la hoja escala) se conserva. */}
-                            {agentOpen && openDraft ? (
+                            {/* UA-3 — Composer Agent AI: siempre presente al
+                                abrir un borrador, dentro del flujo de la hoja.
+                                `sticky bottom-*` lo mantiene disponible
+                                mientras se escribe en cualquier punto del
+                                documento, pero sin salir de la hoja ni
+                                `fixed` al viewport: al llegar al final de la
+                                página descansa en su posición natural. El
+                                zoom escala la hoja, no el composer (viaja
+                                contra-escalado internamente). */}
+                            {openDraft ? (
                               <AIDraftAgentPanel
                                 workspaceId={workspaceId}
                                 draftId={openDraft.id}

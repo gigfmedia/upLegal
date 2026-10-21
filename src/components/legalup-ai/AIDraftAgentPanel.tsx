@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   AlertTriangle,
   ArrowUp,
@@ -130,6 +130,15 @@ function composeProposalMessage(instruction: string, draftTitle: string, draftHt
   return message;
 }
 
+/** Chat del caso embebido: `useAIDocuments` solo se monta cuando el usuario
+ *  abre la consulta (no en el render inicial del composer), de modo que el
+ *  composer puede estar siempre visible sin depender de AuthProvider ni de
+ *  cargar documentos del caso que nadie pidió. */
+function AgentCaseChat({ workspaceId }: { workspaceId: string }) {
+  const { data: documents } = useAIDocuments(workspaceId);
+  return <AIChat workspaceId={workspaceId} documents={documents ?? []} hideBorder />;
+}
+
 export function AIDraftAgentPanel({
   workspaceId,
   draftId,
@@ -139,7 +148,6 @@ export function AIDraftAgentPanel({
   zoomRatio,
   onInsertProposal,
 }: AIDraftAgentPanelProps) {
-  const { data: documents } = useAIDocuments(workspaceId);
   const chatQuery = useAICaseChat(workspaceId, true);
   const conversationId = chatQuery.data?.conversation?.id ?? null;
 
@@ -153,6 +161,16 @@ export function AIDraftAgentPanel({
   const [error, setError] = useState<AIChatError | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  // Desplazamiento «sticky» calculado dentro de la hoja: la caja del composer
+  // conserva su lugar en el flujo de la página (nada de `fixed` ni de tapar el
+  // documento al final) y solo se pinta más arriba mientras la hoja siga en
+  // pantalla. Se calcula con geometría real (offsetTop/offsetHeight, que no
+  // dependen del zoom) porque `position: sticky` no es fiable dentro del
+  // `transform: scale()` del zoom del documento.
+  const panelRef = useRef<HTMLElement>(null);
+  const appliedShiftRef = useRef(0);
+  const [offsetY, setOffsetY] = useState(0);
+  const [offsetX, setOffsetX] = useState(0);
 
   // Valor vigente del documento abierto en el momento de resolver callbacks:
   // evita aplicar respuestas de un borrador anterior tras cambiar de borrador.
@@ -365,17 +383,80 @@ export function AIDraftAgentPanel({
   const draftAvailable = getDraftHtml() !== null;
   const canRequest = !sending && !!conversationId && !activeRequestRef.current;
 
+  useLayoutEffect(() => {
+    const el = panelRef.current;
+    if (!el) return;
+    const sheet = el.closest('[data-testid="draft-sheet"]') as HTMLElement | null;
+    if (!sheet) return;
+    let frame = 0;
+    const GAP = 16; // separación visual al borde inferior del viewport / hoja
+    const update = () => {
+      frame = 0;
+      const z = zoomRatio || 1;
+      const sheetTop = sheet.getBoundingClientRect().top;
+      const naturalTop = el.offsetTop + appliedShiftRef.current;
+      const h = el.offsetHeight;
+      if (!h) return;
+      const naturalTopVisual = sheetTop + naturalTop * z;
+      const sheetTopVisual = sheetTop;
+      const maxTopVisual = window.innerHeight - GAP - h * z;
+      const minTopVisual = Math.max(sheetTopVisual, 0) + GAP;
+      const desired = Math.min(Math.max(naturalTopVisual, minTopVisual), maxTopVisual);
+      const shiftLocal = Math.max(0, (naturalTopVisual - desired) / z);
+      appliedShiftRef.current = shiftLocal;
+      setOffsetY((prev) => (Math.abs(prev - shiftLocal) < 0.5 ? prev : shiftLocal));
+
+      // A zoom > 100 % la hoja puede exceder el canvas y quedar recortada.
+      // El composer sigue perteneciendo a la hoja, pero se mantiene centrado
+      // en la zona realmente visible para que nunca se corte su botón de
+      // envío; el desplazamiento se expresa en píxeles locales (÷ zoom).
+      const canvas = el.closest('[data-testid="draft-canvas"]') as HTMLElement | null;
+      const stack = el.firstElementChild as HTMLElement | null;
+      if (canvas && stack) {
+        const c = canvas.getBoundingClientRect();
+        const s2 = sheet.getBoundingClientRect();
+        const w = stack.getBoundingClientRect().width;
+        const sheetCenter = s2.left + s2.width / 2;
+        if (w + GAP * 2 > c.width) {
+          setOffsetX((prev) => (Math.abs(prev) < 0.5 ? 0 : 0));
+        } else {
+          const minC = c.left + GAP + w / 2;
+          const maxC = c.right - GAP - w / 2;
+          const target = Math.min(Math.max(sheetCenter, minC), maxC);
+          const dxLocal = (target - sheetCenter) / z;
+          setOffsetX((prev) => (Math.abs(prev - dxLocal) < 0.5 ? prev : dxLocal));
+        }
+      }
+    };
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
+    update();
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(schedule) : null;
+    ro?.observe(el);
+    ro?.observe(sheet);
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+      ro?.disconnect();
+    };
+  }, [zoomRatio]);
+
   return (
     <section
+      ref={panelRef}
       data-testid="draft-agent-panel"
       aria-label="Agent AI del borrador"
-      className="pointer-events-none absolute inset-x-0 bottom-4 z-30 flex justify-center"
+      className="pointer-events-none relative z-30 mb-6 mt-auto flex justify-center md:mb-10"
       style={{
         // Contra-escala: el ancestro de zoom aplica scale(zoomRatio); este
         // factor neutraliza para que el composer mida visualmente igual a
         // cualquier zoom (regla: solo la hoja se escala).
         transform: `scale(${1 / zoomRatio})`,
         transformOrigin: 'bottom center',
+        top: offsetY ? `${-offsetY}px` : undefined,
+        left: offsetX ? `${offsetX}px` : undefined,
       }}
     >
       <div className="pointer-events-auto flex w-[calc(100%-2rem)] max-w-[531px] flex-col gap-2">
@@ -426,7 +507,7 @@ export function AIDraftAgentPanel({
               </button>
             </div>
             <div className="max-h-[380px] overflow-y-auto">
-              <AIChat workspaceId={workspaceId} documents={documents ?? []} hideBorder />
+              <AgentCaseChat workspaceId={workspaceId} />
             </div>
           </div>
         ) : null}
@@ -493,9 +574,10 @@ export function AIDraftAgentPanel({
         {/* Composer compacto → expandido. Sin encabezado: directamente el
             input con el botón de envío DENTRO, a la derecha (Tiptap Agent). */}
         <div
+          data-testid="agent-composer-card"
           className={cn(
             'rounded-xl border bg-card shadow-[0_12px_36px_rgba(15,23,42,0.10),0_3px_10px_rgba(15,23,42,0.06)] transition-[border-color] duration-150',
-            expanded ? 'border-[rgb(98,41,255)]' : 'border-[rgb(195,189,255)] hover:border-[rgb(157,138,255)]'
+            expanded ? 'border-green-300' : 'border-input hover:border-green-300'
           )}
         >
           {/* Kit contextual del expandido: acciones reales, nunca decorativas.
@@ -524,12 +606,12 @@ export function AIDraftAgentPanel({
                 className={cn(
                   'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors',
                   attachDraft
-                    ? 'border-[rgb(98,41,255)] bg-[rgb(98,41,255)] text-white'
+                    ? 'border-green-300 bg-green-300 text-green-950'
                     : 'bg-muted/60 hover:bg-muted disabled:opacity-50'
                 )}
               >
                 <Paperclip className="h-3.5 w-3.5" aria-hidden="true" />
-                Adjuntar borrador
+                Adjuntar contexto
               </button>
               <button
                 type="button"
@@ -552,7 +634,7 @@ export function AIDraftAgentPanel({
                 className={cn(
                   'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors',
                   chatOpen
-                    ? 'border-[rgb(98,41,255)] bg-[rgb(98,41,255)] text-white'
+                    ? 'border-green-300 bg-green-300 text-green-950'
                     : 'bg-muted/60 hover:bg-muted'
                 )}
               >
@@ -570,8 +652,8 @@ export function AIDraftAgentPanel({
             </div>
           </div>
 
-          <div className="flex items-end gap-2 px-2.5 py-2">
-            <Sparkles className="h-4 w-4 shrink-0 text-gray-400 mt-1.5" aria-hidden="true" />
+          <div data-testid="agent-input-row" className="flex items-center gap-2 px-2.5 py-2">
+            <Sparkles className="h-4 w-4 shrink-0 text-gray-400" aria-hidden="true" />
             <label htmlFor="agent-proposal-instruction" className="sr-only">
               Instrucción para la propuesta
             </label>
@@ -603,7 +685,7 @@ export function AIDraftAgentPanel({
                 'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full p-0 transition-colors',
                 sending || input.trim().length === 0 || !conversationId
                   ? 'bg-[rgba(15,22,36,0.05)] text-[rgba(15,22,36,0.4)]'
-                  : 'bg-[rgb(98,41,255)] text-white hover:bg-[rgb(88,35,229)]'
+                  : 'bg-green-300 text-green-950 hover:bg-green-300/90'
               )}
             >
               {sending ? (
