@@ -298,6 +298,35 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   // cierre/reapertura de borradores y nunca toca el HTML guardado.
   const [draftZoom, setDraftZoom] = useState(100);
 
+  // FASE UA-2D — medición natural del envoltorio de zoom (offsetWidth/Height
+  // no incluyen el efecto de transform) vía ResizeObserver: sirve para
+  // reservar el espacio de layout escalado (altura) y decidir el modo de
+  // centrado. Sin ResizeObserver (jsdom) se usa la maqueta sin medidas.
+  const [zoomMeasure, setZoomMeasure] = useState<{ w: number; h: number } | null>(null);
+  const zoomMeasureDetach = useRef<(() => void) | null>(null);
+  const attachZoomMeasure = useCallback(
+    (node: HTMLDivElement | null) => {
+      zoomMeasureDetach.current?.();
+      zoomMeasureDetach.current = null;
+      if (!node) return;
+      const apply = () => {
+        const w = node.offsetWidth;
+        const h = node.offsetHeight;
+        setZoomMeasure((prev) => (prev && prev.w === w && prev.h === h ? prev : { w, h }));
+      };
+      apply();
+      if (typeof ResizeObserver === 'undefined') return;
+      const ro = new ResizeObserver(apply);
+      ro.observe(node);
+      zoomMeasureDetach.current = () => ro.disconnect();
+    },
+    [],
+  );
+  useEffect(() => () => { zoomMeasureDetach.current?.(); zoomMeasureDetach.current = null; }, []);
+  const zoomRatio = draftZoom / 100;
+  const zoomOverflow = zoomMeasure ? Math.min(794, zoomMeasure.w) * zoomRatio > zoomMeasure.w : false;
+  const zoomReserveHeight = zoomMeasure ? Math.ceil(zoomMeasure.h * zoomRatio) : null;
+
   const editorRef = useRef<ReturnType<typeof useEditor> | null>(null);
   const tokenRef = useRef<string | null>(null);
   const openRevisionRef = useRef(1);
@@ -1321,20 +1350,25 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                     </div>
                   ) : null}
 
-                  {/* FASE UA-2C — fiel a Tiptap Agent Editor: el box de
+                  {/* FASE UA-2C/UA-2D — fiel a Tiptap Agent Editor: el box de
                       trabajo es una tarjeta con la toolbar pegada al BORDE
                       SUPERIOR y FULL WIDTH (primera hija, sin margen ni
                       inset), separadores finos y controles centrados dentro
                       de ella; debajo, el lienzo gris contiene la hoja con
                       separación mínima consistente. El zoom − % + vive en la
-                      barra y no escala nunca. El CSS zoom escala la HOJA
-                      COMPLETA (dimensiones, márgenes y texto) y el ancho del
-                      envoltorio se ajusta a 100/zoom %: el ancho renderizado
-                      queda siempre contenido en el box (sin overflow de la
-                      página ni superposición con la toolbar; nativo, sin
-                      transform). Márgenes de documento (2,5 cm ≈ 72 px en
-                      escritorio, reducidos en móvil). La hoja sigue siendo
-                      visual y de flujo continuo — sin paginación real. */}
+                      barra y no escala nunca. El zoom escala la HOJA
+                      COMPLETA con transform: scale (dimensiones, márgenes,
+                      bordes y texto juntos, escala real sin compensación de
+                      ancho): el contenedor del lienzo reserva la altura
+                      escalada medida (ResizeObserver) y mantiene el scroll
+                      horizontal DENTRO del canvas cuando la hoja escalada
+                      excede el ancho disponible (toolbar intacta). Origen
+                      'top center' para crecer/encoger hacia el centro; 'top
+                      left' solo cuando hay overflow horizontal para que el
+                      scroll alcance toda la hoja. Márgenes de documento
+                      (2,5 cm ≈ 72 px en escritorio, reducidos en móvil). La
+                      hoja sigue siendo visual y de flujo continuo — sin
+                      paginación real. */}
                   <div data-testid="draft-canvas" className="rounded-lg border bg-muted/50 overflow-hidden">
                     <div role="toolbar" aria-label="Formato del borrador" data-testid="draft-toolbar" className="flex flex-wrap items-center justify-center gap-0.5 border-b bg-card px-3 py-1.5">
                       {toolbarButton('Deshacer', Undo2, () => chainFocus()?.undo().run(), false, !editor?.can().undo())}
@@ -1396,16 +1430,21 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                       <ToolbarDivider />
                       {toolbarButton('Limpiar formato', Eraser, () => chainFocus()?.unsetAllMarks().clearNodes().run(), false)}
                     </div>
-                    <div className="p-2 sm:p-4 md:p-6 overflow-x-clip">
-                      <div
-                        data-testid="draft-zoom-content"
-                        style={{ zoom: draftZoom / 100, width: `${100 / (draftZoom / 100)}%` }}
-                      >
-                        <DraftSheet>
-                          <div className="px-4 py-8 sm:px-9 md:px-[72px] md:py-[56px]">
-                            <EditorContent editor={editor} />
-                          </div>
-                        </DraftSheet>
+                    <div className="p-2 sm:p-4 md:p-6 overflow-x-auto">
+                      {/* Reserva vertical = altura natural medida x zoom;
+                          el contenido transformado llena esa caja a la vista. */}
+                      <div style={zoomReserveHeight ? { height: zoomReserveHeight } : undefined}>
+                        <div
+                          data-testid="draft-zoom-content"
+                          ref={attachZoomMeasure}
+                          style={{ transform: `scale(${zoomRatio})`, transformOrigin: zoomOverflow ? 'top left' : 'top center' }}
+                        >
+                          <DraftSheet>
+                            <div className="px-4 py-8 sm:px-9 md:px-[72px] md:py-[56px]">
+                              <EditorContent editor={editor} />
+                            </div>
+                          </DraftSheet>
+                        </div>
                       </div>
                     </div>
                   </div>

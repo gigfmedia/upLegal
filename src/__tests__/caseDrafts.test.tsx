@@ -2445,30 +2445,34 @@ describe('FASE UA-2 — toolbar profesional y zoom de presentación', () => {
     // primera hija, determinada por el contenedor, sin margen propio.
     expect(workBox.firstElementChild).toBe(toolbar);
     expect(toolbar.className).toContain('border-b');
-    expect(zoomWrapper?.style.zoom).toBe('1');
-    expect(zoomWrapper?.style.width).toBe('100%');
+    expect(zoomWrapper?.style.transform).toBe('scale(1)');
+    expect(zoomWrapper?.style.transformOrigin).toBe('top center');
+    // Zoom real: sin CSS zoom ni compensación de ancho (escala pura).
+    expect(zoomWrapper?.style.zoom).toBe('');
+    expect(zoomWrapper?.style.width).toBe('');
     // La hoja completa vive dentro del envoltorio de zoom (página, márgenes
     // y texto escalan juntos) y la toolbar está FUERA de la hoja y del zoom.
     expect(zoomWrapper?.contains(sheet)).toBe(true);
     expect(zoomWrapper?.contains(content)).toBe(true);
     expect(toolbar.contains(content)).toBe(false);
     expect(zoomWrapper?.contains(toolbar)).toBe(false);
-    // La toolbar (y toda su ascendencia) no recibe zoom: escala 1 siempre.
+    // La toolbar (y toda su ascendencia) no recibe zoom ni transform:
+    // escala 1 y ancho completo siempre.
     let ancestor: HTMLElement | null = toolbar;
     while (ancestor) {
       expect(ancestor.style.zoom).toBe('');
+      expect(ancestor.style.transform).toBe('');
       ancestor = ancestor.parentElement;
     }
 
     const plus = () => screen.getByLabelText('Aumentar zoom');
     for (let i = 0; i < 5; i++) fireEvent.click(plus());
-    expect(zoomWrapper?.style.zoom).toBe('1.5');
-    // El ancho del envoltorio compensa el zoom (100/zoom %) para que el
-    // ancho renderizado de la hoja quede contenido en el box de trabajo.
-    expect(zoomWrapper?.style.width).toBe(`${100 / 1.5}%`);
+    expect(zoomWrapper?.style.transform).toBe('scale(1.5)');
     expect(toolbar.style.zoom).toBe('');
     expect(toolbar.style.width).toBe('');
+    expect(toolbar.style.transform).toBe('');
     expect(sheet.style.zoom).toBe('');
+    expect(sheet.style.transform).toBe('');
     // El editor no se reinicia ni se recalcula contenido: misma instancia y
     // el formato preexistente (h2/strong/u) intacto.
     expect(editorCache.main).toBe(before);
@@ -2486,8 +2490,7 @@ describe('FASE UA-2 — toolbar profesional y zoom de presentación', () => {
     // Regreso a 100 % neutraliza el zoom y el contenido sigue igual.
     const minus = () => screen.getByLabelText('Reducir zoom');
     for (let i = 0; i < 5; i++) fireEvent.click(minus());
-    expect(zoomWrapper?.style.zoom).toBe('1');
-    expect(zoomWrapper?.style.width).toBe('100%');
+    expect(zoomWrapper?.style.transform).toBe('scale(1)');
     expect(main().html).toBe(beforeHtml);
   }, 30000);
 
@@ -2536,19 +2539,21 @@ describe('FASE UA-2 — toolbar profesional y zoom de presentación', () => {
     const minus = () => screen.getByLabelText('Reducir zoom');
     const plus = () => screen.getByLabelText('Aumentar zoom');
 
-    const checkAtLevels = () => {
+    const checkAtLevels = (ratio: number) => {
       // El nodo del documento y la toolbar no se recrean: el mock y el DOM
       // persisten entre cambios de zoom (no hay remount del editor).
       expect(document.querySelector('[data-testid="tiptap-content"]')).toBe(content);
       expect(screen.getByRole('toolbar', { name: 'Formato del borrador' })).toBe(toolbar);
       // El envoltorio de zoom no introduce contenedores con overflow propio:
-      // el scroll sigue siendo el del lienzo/página.
+      // el scroll sigue siendo el del lienzo/página y la escala es pura.
       const wrapper = content.closest('[data-testid="draft-zoom-content"]') as HTMLElement;
       expect(wrapper).toBeTruthy();
       expect(wrapper.getAttribute('class') ?? '').not.toContain('overflow');
-      // El ancho compensa el zoom en cada nivel: el ancho renderizado
-      // (ancho × zoom) siempre iguala el ancho del box de trabajo.
-      expect(wrapper.style.width).toBe(`${100 / parseFloat(wrapper.style.zoom)}%`);
+      // Escala real de la hoja: transform con el nivel activo y sin zoom CSS
+      // ni compensación de ancho.
+      expect(wrapper.style.transform).toBe(`scale(${ratio})`);
+      expect(wrapper.style.zoom).toBe('');
+      expect(wrapper.style.width).toBe('');
       // Comandos dependientes de caret/selección se ejecutan nivel por nivel.
       const before = cmd('toggleUnderline').length;
       fireEvent.click(btn('Subrayado'));
@@ -2557,13 +2562,13 @@ describe('FASE UA-2 — toolbar profesional y zoom de presentación', () => {
 
     // Lleva a 50 % (5 clics −).
     for (let i = 0; i < 5; i++) fireEvent.click(minus());
-    checkAtLevels();
+    checkAtLevels(0.5);
     // Vuelve a 100 %.
     for (let i = 0; i < 5; i++) fireEvent.click(plus());
-    checkAtLevels();
+    checkAtLevels(1);
     // Sube a 150 %.
     for (let i = 0; i < 5; i++) fireEvent.click(plus());
-    checkAtLevels();
+    checkAtLevels(1.5);
   }, 30000);
 
   it('deshacer/rehacer ejecutan comandos y restauran el contenido esperado, no solo habilitan botones', async () => {
