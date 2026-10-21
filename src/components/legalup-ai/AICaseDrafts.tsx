@@ -1484,13 +1484,7 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                       <ToolbarDivider />
                       {toolbarButton('Limpiar formato', Eraser, () => chainFocus()?.unsetAllMarks().clearNodes().run(), false)}
                     </div>
-                    <div
-                      className={
-                        agentOpen
-                          ? 'px-2 pt-2 pb-24 sm:px-4 sm:pt-4 sm:pb-28 md:px-6 md:pt-6 md:pb-32 overflow-x-auto'
-                          : 'p-2 sm:p-4 md:p-6 overflow-x-auto'
-                      }
-                    >
+                    <div className="p-2 sm:p-4 md:p-6 overflow-x-auto">
                       {/* Reserva vertical = altura natural medida x zoom;
                           el contenido transformado llena esa caja a la vista. */}
                       <div style={zoomReserveHeight ? { height: zoomReserveHeight } : undefined}>
@@ -1500,9 +1494,39 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                           style={{ transform: `scale(${zoomRatio})`, transformOrigin: zoomOverflow ? 'top left' : 'top center' }}
                         >
                           <DraftSheet>
-                            <div className="px-4 py-8 sm:px-9 md:px-[72px] md:py-[56px]">
+                            {/* El composer del Agent AI vive dentro de la hoja y
+                                necesita margen inferior propio: el padding del
+                                contenido reserva ese espacio en el flujo de la
+                                página (nunca reduce la altura del documento). */}
+                            <div
+                              className={
+                                agentOpen
+                                  ? 'px-4 py-8 pb-[104px] sm:px-9 sm:pb-[120px] md:px-[72px] md:py-[56px] md:pb-[136px]'
+                                  : 'px-4 py-8 sm:px-9 md:px-[72px] md:py-[56px]'
+                              }
+                            >
                               <EditorContent editor={editor} />
                             </div>
+                            {/* UA-3 — Composer Agent AI: parte del flujo de la
+                                hoja (absoluto contra su extremo inferior, no
+                                `fixed` ni `sticky` al viewport). El zoom de
+                                la hoja sí escala la página, pero el composer
+                                viaja contra-escalado internamente y la regla
+                                UA-2 (solo la hoja escala) se conserva. */}
+                            {agentOpen && openDraft ? (
+                              <AIDraftAgentPanel
+                                workspaceId={workspaceId}
+                                draftId={openDraft.id}
+                                draftTitle={openDraft.title}
+                                zoomRatio={zoomRatio}
+                                getDraftHtml={() => {
+                                  const ed = editorRef.current;
+                                  return ed && !ed.isDestroyed ? ed.getHTML() : null;
+                                }}
+                                getSelectionText={getEditorSelectionText}
+                                onInsertProposal={insertProposalHtml}
+                              />
+                            ) : null}
                           </DraftSheet>
                         </div>
                       </div>
@@ -1526,21 +1550,6 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                     </Button>
                   </div>
 
-                  {/* UA-3 — Agent AI: hermano del canvas, NUNCA dentro de
-                      draft-zoom-content (el zoom solo escala la hoja). */}
-                  {agentOpen && openDraft ? (
-                    <AIDraftAgentPanel
-                      workspaceId={workspaceId}
-                      draftId={openDraft.id}
-                      draftTitle={openDraft.title}
-                      getDraftHtml={() => {
-                        const ed = editorRef.current;
-                        return ed && !ed.isDestroyed ? ed.getHTML() : null;
-                      }}
-                      getSelectionText={getEditorSelectionText}
-                      onInsertProposal={insertProposalHtml}
-                    />
-                  ) : null}
                 </>
               ) : (
                 <div className="rounded border border-dashed p-6 text-center">

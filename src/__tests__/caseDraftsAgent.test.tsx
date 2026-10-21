@@ -270,20 +270,113 @@ const sendProposal = async (instruction: string, attach: boolean) => {
 };
 
 describe('UA-3 Agent AI — integración en el editor', () => {
-  it('el toggle muestra/oculta el panel Agent AI dentro del panel del editor, sin tocar el zoom ni la toolbar', async () => {
+  it('el toggle muestra/oculta el composer Agent AI dentro de la hoja, sin tocar el zoom ni la toolbar', async () => {
     await openDraftEditor();
     expect(screen.queryByTestId('draft-agent-panel')).not.toBeInTheDocument();
     expect(screen.getByTestId('draft-agent-toggle')).toHaveAttribute('aria-expanded', 'false');
     fireEvent.click(screen.getByTestId('draft-agent-toggle'));
     await screen.findByTestId('draft-agent-panel');
     expect(screen.getByTestId('draft-agent-toggle')).toHaveAttribute('aria-expanded', 'true');
-    // El panel vive FUERA del lienzo escalado.
+    // El composer pertenece al flujo de la hoja: vive dentro de
+    // draft-zoom-content y de la propia hoja, anclado al final del documento
+    // (no flota pegado al viewport). Viaja contra-escalado con transición de
+    // escala, así el zoom de la hoja nunca lo agranda ni encoge.
     const zoom = screen.getByTestId('draft-zoom-content');
-    expect(zoom.querySelector('[data-testid="draft-agent-panel"]')).toBeNull();
+    const sheet = screen.getByTestId('draft-sheet');
+    const panel = screen.getByTestId('draft-agent-panel');
+    expect(sheet.contains(panel)).toBe(true);
+    expect(zoom.contains(panel)).toBe(true);
+    expect(panel.className).toContain('absolute');
+    expect(panel.style.transformOrigin).toBe('bottom center');
     expect(screen.getByTestId('draft-toolbar')).toBeInTheDocument();
-    expect(screen.getByTestId('draft-zoom-content')).toHaveStyle({ transform: 'scale(1)' });
+    expect(zoom).toHaveStyle({ transform: 'scale(1)' });
     fireEvent.click(screen.getByTestId('draft-agent-toggle'));
     await waitFor(() => expect(screen.queryByTestId('draft-agent-panel')).not.toBeInTheDocument());
+  });
+
+  it('el zoom escala solo la hoja: el composer no crece ni encoge', async () => {
+    await openDraftEditor();
+    await openAgentPanel();
+    const panel = screen.getByTestId('draft-agent-panel');
+    const plus = () => screen.getByLabelText('Aumentar zoom');
+    for (let i = 0; i < 5; i++) fireEvent.click(plus());
+    const zoom = screen.getByTestId('draft-zoom-content');
+    expect(zoom).toHaveStyle({ transform: 'scale(1.5)' });
+    // Contra-escala exacta: neutraliza la escala del ancestro de zoom.
+    expect(panel.style.transform).toBe(`scale(${1 / 1.5})`);
+    expect(panel.style.transformOrigin).toBe('bottom center');
+    // Regreso al 100 % vuelve a la neutralidad exacta.
+    const minus = () => screen.getByLabelText('Reducir zoom');
+    for (let i = 0; i < 5; i++) fireEvent.click(minus());
+    expect(panel.style.transform).toBe('scale(1)');
+  });
+
+  it('al enfocar el input se expande y abre el menú de ejemplos; al tipear el menú se cierra sin descartar el texto', async () => {
+    await openDraftEditor();
+    await openAgentPanel();
+    const ta = proposalInstruction();
+    fireEvent.focus(ta);
+    expect(await screen.findByTestId('agent-toolkit')).toBeInTheDocument();
+    // Las cuatro acciones del toolkit son reales y están listadas.
+    expect(screen.getByTestId('agent-toolkit-proofread-selection')).toHaveTextContent('Revisar la selección');
+    expect(screen.getByTestId('agent-toolkit-rewrite-selection')).toHaveTextContent('Reescribir la selección');
+    expect(screen.getByTestId('agent-toolkit-shorten-selection')).toHaveTextContent('Acortar la selección');
+    expect(screen.getByTestId('agent-toolkit-new-paragraph')).toHaveTextContent('Escribir un párrafo nuevo');
+    // Tipear cierra el menú y conserva todo lo escrito.
+    fireEvent.change(ta, { target: { value: 'texto del usuario' } });
+    expect(screen.queryByTestId('agent-toolkit')).not.toBeInTheDocument();
+    expect(ta.value).toBe('texto del usuario');
+  });
+
+  it('acción del toolkit con selección: envía instrucción real + cita, cierra el menú y la propuesta queda revisable', async () => {
+    await openDraftEditor();
+    await openAgentPanel();
+    const ed = mainEditor();
+    if (ed) {
+      ed.state = { selection: { from: 0, to: 10, empty: false }, doc: { textBetween: () => 'Se notificó al demandado el 3 de enero' } };
+    }
+    const ta = proposalInstruction();
+    fireEvent.focus(ta);
+    const row = await screen.findByTestId('agent-toolkit-proofread-selection');
+    await waitFor(() => expect(row).toBeEnabled()); // la conversación del caso ya está lista
+    fireEvent.click(row);
+    await waitFor(() => expect(chatPosts()).toHaveLength(1));
+    const body = JSON.parse(String(chatPosts()[0].init.body)) as { message: string };
+    expect(body.message).toContain('Revisa la ortografía y gramática');
+    expect(body.message).toContain('Selección citada del borrador');
+    expect(body.message).toContain('Se notificó al demandado el 3 de enero');
+    expect(screen.queryByTestId('agent-toolkit')).not.toBeInTheDocument();
+    // Revisable antes de insertar: el pipeline de propuesta no cambia.
+    expect(await screen.findByTestId('agent-proposal-card')).toBeInTheDocument();
+  });
+
+  it('acción del toolkit sin selección activa explica qué falta y no envía nada', async () => {
+    await openDraftEditor();
+    await openAgentPanel();
+    const ta = proposalInstruction();
+    fireEvent.focus(ta);
+    const row = await screen.findByTestId('agent-toolkit-shorten-selection');
+    await waitFor(() => expect(row).toBeEnabled());
+    fireEvent.click(row);
+    expect(screen.getByTestId('agent-selection-hint')).toHaveTextContent('Selecciona el texto en el editor para «Acortar la selección».');
+    expect(chatPosts()).toHaveLength(0);
+  });
+
+  it('«Escribir un párrafo nuevo» adjunta la copia real del borrador como contexto y queda revisable', async () => {
+    await openDraftEditor();
+    await openAgentPanel();
+    const ta = proposalInstruction();
+    fireEvent.focus(ta);
+    const row = await screen.findByTestId('agent-toolkit-new-paragraph');
+    await waitFor(() => expect(row).toBeEnabled());
+    fireEvent.click(row);
+    await waitFor(() => expect(chatPosts()).toHaveLength(1));
+    const body = JSON.parse(String(chatPosts()[0].init.body)) as { message: string };
+    expect(body.message).toContain('Redacta un párrafo nuevo');
+    expect(body.message).toContain('Copia del borrador abierto');
+    expect(body.message).toContain('Contenido');
+    expect(body.message).not.toContain('<p>');
+    expect(await screen.findByTestId('agent-proposal-card')).toBeInTheDocument();
   });
 
   it('envía la instrucción SIN contexto del borrador cuando el adjunto está desactivado', async () => {
