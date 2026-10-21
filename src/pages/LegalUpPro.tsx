@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
 import { useProSubscription } from "@/hooks/useProSubscription";
+import { useLawyerCases } from "@/hooks/useLawyerCases";
 import { ProPricingModal } from "@/components/legalup-pro/ProPricingModal";
 import { TestimonialsSection } from "@/components/pro/TestimonialsSection";
 import { AuthModal } from "@/components/AuthModal";
@@ -361,6 +362,7 @@ export default function LegalUpPro() {
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
   const pro = useProSubscription();
+  const { cases } = useLawyerCases();
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
   const [pricingOpen, setPricingOpen] = useState(false);
@@ -371,6 +373,10 @@ export default function LegalUpPro() {
   const isPlusUser = pro.canonicalPlan === 'plus' && pro.hasProAccess;
 
   const userRole = (user?.user_metadata?.role as string | undefined) ?? (user as any)?.role ?? (user as any)?.profile?.role ?? null;
+
+  // Determine if lawyer has cases (any record in lawyer_cases table for this lawyer_id)
+  // This includes all statuses; no filter for archived/deleted as per existing product behavior
+  const hasCases = userRole === 'lawyer' && cases.length > 0;
 
   const scrollToId = (id: string) => {
     const el = document.getElementById(id);
@@ -598,7 +604,16 @@ export default function LegalUpPro() {
             ) : pro.hasProAccess ? (
               <Button onClick={() => navigate("/lawyer/dashboard")} className="rounded-full bg-gray-900 shadow-sm hover:bg-green-900">Ir al dashboard</Button>
             ) : userRole === "lawyer" ? (
-              <Button onClick={() => setPricingOpen(true)} className="rounded-full bg-gray-900 shadow-sm hover:bg-green-900">Activar Pro</Button>
+              hasCases ? (
+                <Button onClick={() => setPricingOpen(true)} className="rounded-full bg-gray-900 shadow-sm hover:bg-green-900">Activar Pro</Button>
+              ) : (
+                <Button
+                  onClick={() => navigate("/lawyer/cases")}
+                  className="rounded-full bg-gray-900 shadow-sm hover:bg-green-900"
+                >
+                  Ir a mis casos
+                </Button>
+              )
             ) : (
               <Button onClick={() => navigate("/")} variant="outline">Volver a LegalUp</Button>
             )}
@@ -625,7 +640,16 @@ export default function LegalUpPro() {
                 ) : pro.hasProAccess ? (
                   <Button onClick={() => { setMobileMenuOpen(false); navigate("/lawyer/dashboard"); }} className="rounded-full bg-gray-900 hover:bg-green-900">Ir al dashboard</Button>
                 ) : userRole === "lawyer" ? (
-                  <Button onClick={() => { setMobileMenuOpen(false); setPricingOpen(true); }} className="rounded-full bg-gray-900 hover:bg-green-900">Activar Pro</Button>
+                  hasCases ? (
+                    <Button onClick={() => { setMobileMenuOpen(false); setPricingOpen(true); }} className="rounded-full bg-gray-900 hover:bg-green-900">Activar Pro</Button>
+                  ) : (
+                    <Button
+                      onClick={() => { setMobileMenuOpen(false); navigate("/lawyer/cases"); }}
+                      className="rounded-full bg-gray-900 hover:bg-green-900"
+                    >
+                      Ir a mis casos
+                    </Button>
+                  )
                 ) : (
                   <Button onClick={() => { setMobileMenuOpen(false); navigate("/"); }} variant="outline">Volver a LegalUp</Button>
                 )}
