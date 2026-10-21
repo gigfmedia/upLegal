@@ -598,7 +598,12 @@ export default function LegalUpPro() {
             ) : pro.hasProAccess ? (
               <Button onClick={() => navigate("/lawyer/dashboard")} className="rounded-full bg-gray-900 shadow-sm hover:bg-green-900">Ir al dashboard</Button>
             ) : userRole === "lawyer" ? (
-              <Button onClick={() => setPricingOpen(true)} className="rounded-full bg-gray-900 shadow-sm hover:bg-green-900">Activar Pro</Button>
+              <Button
+                onClick={() => navigate("/lawyer/cases")}
+                className="rounded-full bg-gray-900 shadow-sm hover:bg-green-900"
+              >
+                Ir a mis casos
+              </Button>
             ) : (
               <Button onClick={() => navigate("/")} variant="outline">Volver a LegalUp</Button>
             )}
@@ -625,7 +630,12 @@ export default function LegalUpPro() {
                 ) : pro.hasProAccess ? (
                   <Button onClick={() => { setMobileMenuOpen(false); navigate("/lawyer/dashboard"); }} className="rounded-full bg-gray-900 hover:bg-green-900">Ir al dashboard</Button>
                 ) : userRole === "lawyer" ? (
-                  <Button onClick={() => { setMobileMenuOpen(false); setPricingOpen(true); }} className="rounded-full bg-gray-900 hover:bg-green-900">Activar Pro</Button>
+                  <Button
+                    onClick={() => { setMobileMenuOpen(false); navigate("/lawyer/cases"); }}
+                    className="rounded-full bg-gray-900 hover:bg-green-900"
+                  >
+                    Ir a mis casos
+                  </Button>
                 ) : (
                   <Button onClick={() => { setMobileMenuOpen(false); navigate("/"); }} variant="outline">Volver a LegalUp</Button>
                 )}
