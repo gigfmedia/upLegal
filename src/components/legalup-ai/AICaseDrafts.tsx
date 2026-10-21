@@ -33,6 +33,7 @@ import {
 import { aiOperationIdentity } from '@/lib/aiOperationIdentity';
 import { pollTerminalResult } from '@/lib/aiInProgressPoll';
 import { convertDraftMarkdownToHtml, htmlToPlainText } from '@/components/legalup-ai/draftEditorMarkup';
+import { AIDraftAgentPanel } from '@/components/legalup-ai/AIDraftAgentPanel';
 
 // FASE 4.62C — workspace documental de redacción asistida.
 // Izquierda: generación (IA) + borradores anteriores + historial de versiones.
@@ -247,7 +248,7 @@ function DraftSheet({ className = '', children }: { className?: string; children
   return (
     <div
       data-testid="draft-sheet"
-      className={`mx-auto min-h-[640px] w-full max-w-[794px] overflow-hidden rounded-md border bg-card shadow-sm md:min-h-[1123px] ${className}`}
+      className={`relative mx-auto flex min-h-[640px] w-full max-w-[794px] flex-col rounded-md border bg-card shadow-sm md:min-h-[1123px] ${className}`}
     >
       {children}
     </div>
@@ -984,6 +985,41 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
 
   const chainFocus = () => (editor && !editor.isDestroyed ? editor.chain().focus() : null);
 
+  // UA-3 — inserción de propuestas del Agent AI: edición del usuario en la
+  // posición del cursor por el camino normal de Tiptap (onUpdate → autosave
+  // con debounce → OCC base_revision). Nunca setContent del documento completo.
+  const insertProposalHtml = useCallback((html: string): boolean => {
+    const ed = editorRef.current;
+    if (!ed || ed.isDestroyed) return false;
+    try {
+      ed.chain().focus().insertContent(html).run();
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  // UA-3 (rediseño del composer) — selección REAL del editor para el kit del
+  // Agent AI: texto plano actual, nunca una simulación. Sin editor, sin
+  // documento o sin selección activa devuelve null y el panel comunica.
+  const getEditorSelectionText = useCallback((): string | null => {
+    const ed = editorRef.current;
+    if (!ed || ed.isDestroyed) return null;
+    try {
+      const state = (ed as unknown as {
+        state?: { selection?: { from: number; to: number; empty: boolean }; doc?: { textBetween?: (a: number, b: number, bs?: string) => string } };
+      }).state;
+      const sel = state?.selection;
+      const doc = state?.doc;
+      if (!sel || !doc?.textBetween || sel.empty) return null;
+      const text = doc.textBetween(sel.from, sel.to, '\n');
+      return text.trim().length > 0 ? text : null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+
   // FASE UA-2 — toolbar profesional: estilo de párrafo/título por select,
   // alineación de bloque y zoom solo-presentación.
   const applyBlockStyle = (value: 'p' | 'h1' | 'h2' | 'h3') => {
@@ -1443,6 +1479,29 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                             <div className="px-4 py-8 sm:px-9 md:px-[72px] md:py-[56px]">
                               <EditorContent editor={editor} />
                             </div>
+                            {/* UA-3 — Composer Agent AI: siempre presente al
+                                abrir un borrador, dentro del flujo de la hoja.
+                                `sticky bottom-*` lo mantiene disponible
+                                mientras se escribe en cualquier punto del
+                                documento, pero sin salir de la hoja ni
+                                `fixed` al viewport: al llegar al final de la
+                                página descansa en su posición natural. El
+                                zoom escala la hoja, no el composer (viaja
+                                contra-escalado internamente). */}
+                            {openDraft ? (
+                              <AIDraftAgentPanel
+                                workspaceId={workspaceId}
+                                draftId={openDraft.id}
+                                draftTitle={openDraft.title}
+                                zoomRatio={zoomRatio}
+                                getDraftHtml={() => {
+                                  const ed = editorRef.current;
+                                  return ed && !ed.isDestroyed ? ed.getHTML() : null;
+                                }}
+                                getSelectionText={getEditorSelectionText}
+                                onInsertProposal={insertProposalHtml}
+                              />
+                            ) : null}
                           </DraftSheet>
                         </div>
                       </div>
@@ -1465,6 +1524,7 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                       Guardar cambios
                     </Button>
                   </div>
+
                 </>
               ) : (
                 <div className="rounded border border-dashed p-6 text-center">
