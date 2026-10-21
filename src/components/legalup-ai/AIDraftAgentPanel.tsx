@@ -3,35 +3,33 @@ import {
   AlertTriangle,
   Check,
   ClipboardCopy,
-  FileText,
   Loader2,
   MessageSquare,
+  Paperclip,
   RefreshCw,
   Send,
   Sparkles,
+  TextQuote,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 import { AIChat } from './AIChat';
 import { useAICaseChat, useSendChatMessage, type AIChatError } from '@/hooks/useAIChat';
 import { useAIDocuments } from '@/hooks/useAIDocuments';
 import { convertDraftMarkdownToHtml, htmlToPlainText } from './draftEditorMarkup';
 
-// UA-3 — Panel Agent AI del editor de borradores. Fuera del lienzo escalado
-// por el zoom (hermano del canvas, nunca dentro de draft-zoom-content). Dos
-// modos claramente separados:
-//  1. «Consultar el caso»: el chat del caso existente (AIChat) reutilizado tal
-//     cual — consulta, nunca edita el borrador.
-//  2. «Proponer cambios»: tras contento del usuario, envía una instrucción por
-//     el chat del caso (opcionalmente adjuntando una COPIA en texto plano del
-//     borrador abierto, compuesta aquí en el cliente). El backend siempre
-//     vira una propuesta NUEVA como mensaje del chat: el resultado se presenta
-//     como «propuesta de texto generada por IA» con Aceptar e insertar (siempre
-//     en el cursor vía comandos Tiptap normales, autosave/OCC intactos),
-//     Copiar texto y Descartar. Nunca reemplaza el documento completo ni
-//     sincroniza redacciones automáticamente.
+// UA-3 — Composer Agent AI del editor de borradores (patrón Tiptap Agent
+// Editor). Sin encabezado ni subtítulo: un composer compacto anclado a la
+// parte inferior del área visible del documento (`sticky bottom`), que se
+// expande verticalmente al obtener foco y muestra un kit contextual con solo
+// acciones reales (adjuntar copia del borrador, citar la selección actual del
+// editor, abrir el chat del caso). El botón de envío vive DENTRO del input,
+// alineado a la derecha. Las propuestas se presentan como tarjetas flotantes
+// sobre el composer y mantienen Aceptar/Copiar/Descartar. El composer es un
+// hermano del lienzo (nunca escalado por el zoom). El anclaje no tapa el
+// contenido de forma permanente: el lienzo compensa con padding inferior y al
+// llegar al final del scroll el composer queda en su posición natural.
 
 export type AIDraftAgentPanelProps = {
   workspaceId: string;
@@ -40,6 +38,11 @@ export type AIDraftAgentPanelProps = {
   /** HTML vivo del editor en el momento del envío (null si no disponible). */
   getDraftHtml: () => string | null;
   /**
+   * Texto plano de la selección actual del editor (null/sin selección).
+   * Se usa en el kit contextual para citar texto real en la instrucción.
+   */
+  getSelectionText: () => string | null;
+  /**
    * Inserta HTML de la propuesta en la posición actual del cursor Tiptap
    * (mecanismo normal de edición). Devuelve false si no hay posición viable.
    */
@@ -47,12 +50,13 @@ export type AIDraftAgentPanelProps = {
 };
 
 type ProposalState = { id: string; text: string; insertError: boolean };
-type Tab = 'chat' | 'proposal';
 
 const CONTEXT_SEPARATOR = '---';
 const CONTEXT_HEADER = 'Copia del borrador abierto';
 /** Límite de la copia adjunta: evita payloads gigantes sin ocultarlo al usuario. */
 const MAX_CONTEXT_CHARS = 20000;
+
+const SELECTION_QUOTE_HEADER = 'Selección citada del borrador';
 
 function composeProposalMessage(instruction: string, draftTitle: string, draftHtml: string | null): string {
   let message = instruction;
@@ -67,14 +71,23 @@ function composeProposalMessage(instruction: string, draftTitle: string, draftHt
   return message;
 }
 
-export function AIDraftAgentPanel({ workspaceId, draftId, draftTitle, getDraftHtml, onInsertProposal }: AIDraftAgentPanelProps) {
+export function AIDraftAgentPanel({
+  workspaceId,
+  draftId,
+  draftTitle,
+  getDraftHtml,
+  getSelectionText,
+  onInsertProposal,
+}: AIDraftAgentPanelProps) {
   const { data: documents } = useAIDocuments(workspaceId);
   const chatQuery = useAICaseChat(workspaceId, true);
   const conversationId = chatQuery.data?.conversation?.id ?? null;
 
-  const [tab, setTab] = useState<Tab>('proposal');
   const [input, setInput] = useState('');
   const [attachDraft, setAttachDraft] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const [selectionHint, setSelectionHint] = useState<string | null>(null);
   const [proposal, setProposal] = useState<ProposalState | null>(null);
   const [error, setError] = useState<AIChatError | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -94,6 +107,44 @@ export function AIDraftAgentPanel({ workspaceId, draftId, draftTitle, getDraftHt
   const acceptingRef = useRef(false);
   const sending = proposalSend.isPending;
 
+  // El kit contextual solo se muestra con el composer expandido (foco) o con
+  // una interacción activa: casi igual al patrón Tiptap, que expande onFocus
+  // y colapsa al salir; aquí se conservan los modos en curso (adjunto,
+  // chat abierto, hint de selección, envío en vuelo, texto del input).
+  const expanded =
+    focused || sending || chatOpen || attachDraft || selectionHint !== null || input.trim().length > 0;
+
+  // Colapso diferido al perder foco: al hacer clic en un chip del kit el
+  // textarea pierde foco ANTES de que el clic se resuelva; un colapso
+  // inmediato esconde/afeita el chip durante la propia pulsación. El retraso
+  // corto anula ese race y cualquier focus-in lo cancela (navegación por
+  // teclado incluida).
+  const collapseTimerRef = useRef<number | null>(null);
+  const cancelPendingCollapse = () => {
+    if (collapseTimerRef.current !== null) {
+      window.clearTimeout(collapseTimerRef.current);
+      collapseTimerRef.current = null;
+    }
+  };
+  const handleBackgroundBlur = () => {
+    cancelPendingCollapse();
+    collapseTimerRef.current = window.setTimeout(() => {
+      collapseTimerRef.current = null;
+      setFocused(false);
+    }, 200);
+  };
+  const handleBackgroundFocus = () => {
+    cancelPendingCollapse();
+    setFocused(true);
+  };
+  useEffect(() => () => {
+    if (collapseTimerRef.current !== null) window.clearTimeout(collapseTimerRef.current);
+  }, []);
+
+  // El pointerdown de los chips anula el default para que el textarea no
+  // pierda la selección ni dispare blur; el click sigue resolviéndose igual.
+  const keepTextareaFocus = (e: React.MouseEvent) => e.preventDefault();
+
   // Cambio de borrador: la propuesta/error/reintento en vuelo refería a otro
   // documento. Cualquier respuesta tardía de ese envío queda invalidada por el
   // guard de draftId en onSuccess/onError (y se aborta por completitud), así
@@ -107,6 +158,10 @@ export function AIDraftAgentPanel({ workspaceId, draftId, draftTitle, getDraftHt
     setError(null);
     setNotice(null);
     setCopied(false);
+    setChatOpen(false);
+    setInput('');
+    setAttachDraft(false);
+    setSelectionHint(null);
   }, [draftId]);
 
   // Borra el guard de inserción cuando la propuesta ya no está en pantalla.
@@ -160,6 +215,24 @@ export function AIDraftAgentPanel({ workspaceId, draftId, draftTitle, getDraftHt
     setInput('');
   };
 
+  // Acción real del kit: cita la selección ACTUAL del editor en el input.
+  // Si no hay selección, se feedback honesto (nunca cita texto inexistente).
+  const handleUseSelection = () => {
+    let sel: string | null = null;
+    try {
+      sel = getSelectionText();
+    } catch {
+      sel = null;
+    }
+    if (!sel) {
+      setSelectionHint('No hay texto seleccionado en el editor.');
+      return;
+    }
+    setSelectionHint(null);
+    const quote = `[${SELECTION_QUOTE_HEADER}]\n«${sel}»`;
+    setInput((prev) => (prev.trim().length > 0 ? `${prev}\n\n${quote}` : quote));
+  };
+
   const handleRetry = () => {
     if (!lastProposalMessageRef.current || sending || activeRequestRef.current) return;
     dispatchProposal(lastProposalMessageRef.current);
@@ -199,178 +272,212 @@ export function AIDraftAgentPanel({ workspaceId, draftId, draftTitle, getDraftHt
     <section
       data-testid="draft-agent-panel"
       aria-label="Agent AI del borrador"
-      className="rounded-lg border bg-card p-4 space-y-3"
+      className="sticky bottom-3 z-30 mt-1"
     >
-      <div className="flex items-start gap-2">
-        <Sparkles className="h-4 w-4 text-green-700 mt-0.5" aria-hidden="true" />
-        <div>
-          <p className="text-sm font-medium">Agent AI</p>
-          <p className="text-xs text-muted-foreground">
-            Asistente del caso junto al borrador. Genera borradores nuevos en el panel izquierdo; aquí solo consulta
-            y propuestas de texto que tú decides insertar.
-          </p>
-        </div>
-      </div>
+      <div className="space-y-2">
+        {chatOpen ? (
+          <div className="rounded-xl border bg-card shadow-lg" data-testid="agent-chat-card">
+            <div className="flex items-center justify-between border-b px-3 py-2">
+              <p className="text-xs font-medium flex items-center gap-1.5">
+                <MessageSquare className="h-3.5 w-3.5 text-green-700" aria-hidden="true" />
+                Consultar el caso
+              </p>
+              <button
+                type="button"
+                aria-label="Cerrar consulta del caso"
+                data-testid="agent-chat-close"
+                onClick={() => setChatOpen(false)}
+                className="rounded p-1 text-muted-foreground hover:bg-muted"
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </div>
+            <div className="max-h-[380px] overflow-y-auto">
+              <AIChat workspaceId={workspaceId} documents={documents ?? []} hideBorder />
+            </div>
+          </div>
+        ) : null}
 
-      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Modos del Agent AI">
-        <Button
-          size="sm"
-          variant={tab === 'proposal' ? 'default' : 'outline'}
-          role="tab"
-          aria-selected={tab === 'proposal'}
-          data-testid="agent-tab-proposal"
-          onClick={() => setTab('proposal')}
-        >
-          <FileText className="h-4 w-4 mr-1" aria-hidden="true" />
-          Proponer cambios
-        </Button>
-        <Button
-          size="sm"
-          variant={tab === 'chat' ? 'default' : 'outline'}
-          role="tab"
-          aria-selected={tab === 'chat'}
-          data-testid="agent-tab-chat"
-          onClick={() => setTab('chat')}
-        >
-          <MessageSquare className="h-4 w-4 mr-1" aria-hidden="true" />
-          Consultar el caso
-        </Button>
-      </div>
+        {notice ? (
+          <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-1.5" role="status" data-testid="agent-notice">
+            <p className="text-xs text-green-800 flex items-center gap-1">
+              <Check className="h-3.5 w-3.5" aria-hidden="true" />
+              {notice}
+            </p>
+          </div>
+        ) : null}
 
-      {tab === 'chat' ? (
-        <div>
-          <AIChat workspaceId={workspaceId} documents={documents ?? []} hideBorder />
-        </div>
-      ) : (
-        <div className="space-y-3" data-testid="agent-proposal-form">
-          <div className="rounded border bg-muted/40 px-3 py-2">
+        {error ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 space-y-1.5 shadow-lg" role="alert" data-testid="agent-proposal-error">
+            <p className="text-xs text-amber-900 flex items-start gap-1">
+              <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" aria-hidden="true" />
+              {errorText}
+            </p>
+            {lastProposalMessageRef.current ? (
+              <Button size="sm" variant="outline" data-testid="agent-proposal-retry" onClick={handleRetry} disabled={sending}>
+                <RefreshCw className="h-3.5 w-3.5 mr-1" aria-hidden="true" />
+                Reintentar
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
+
+        {proposal ? (
+          <div className="rounded-xl border bg-card p-3 space-y-2 shadow-lg" data-testid="agent-proposal-card">
+            <p className="text-xs font-medium text-green-800 flex items-center gap-1">
+              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+              Propuesta de texto generada por IA · revísala antes de insertar
+            </p>
+            {proposal.insertError ? (
+              <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2" role="alert" data-testid="agent-insert-error">
+                <p className="text-xs text-amber-800 flex items-center gap-1">
+                  <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+                  No se pudo insertar en el editor. Usa «Copiar texto» y pégalo donde corresponda.
+                </p>
+              </div>
+            ) : null}
+            <div className="max-h-56 overflow-y-auto rounded-lg bg-muted/40 px-3 py-2" data-testid="agent-proposal-text">
+              <p className="text-sm whitespace-pre-wrap">{proposal.text}</p>
+            </div>
             <p className="text-xs text-muted-foreground">
-              Propuesta basada en el caso, no aplica cambios automáticos al documento.
+              Aceptar inserta el texto en la posición del cursor sin reemplazar el resto del documento.
             </p>
-            {!attachDraft && (
-              <p className="mt-1 text-xs text-muted-foreground" data-testid="agent-context-off-note">
-                Sin contexto del borrador: la IA usa los antecedentes del caso, no el contenido del editor.
-              </p>
-            )}
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" data-testid="agent-proposal-accept" onClick={handleAccept}>
+                Aceptar e insertar
+              </Button>
+              <Button size="sm" variant="outline" data-testid="agent-proposal-copy" onClick={handleCopy}>
+                <ClipboardCopy className="h-4 w-4 mr-1" aria-hidden="true" />
+                {copied ? 'Copiado' : 'Copiar texto'}
+              </Button>
+              <Button size="sm" variant="ghost" data-testid="agent-proposal-discard" onClick={() => setProposal(null)}>
+                Descartar
+              </Button>
+            </div>
           </div>
+        ) : null}
 
-          <div className="flex items-start gap-2">
-            <Checkbox
-              id="agent-attach-draft"
-              data-testid="agent-attach-draft"
-              checked={attachDraft}
-              disabled={!draftAvailable}
-              onCheckedChange={(v) => setAttachDraft(v === true)}
-            />
-            <Label htmlFor="agent-attach-draft" className="text-xs font-normal leading-4 cursor-pointer">
-              Adjuntar copia en texto del borrador «{draftTitle}» como contexto de este mensaje
-            </Label>
-          </div>
-          {attachDraft && (
-            <p className="text-xs text-muted-foreground" data-testid="agent-context-on-note">
-              Se adjuntará una copia en texto plano de «{draftTitle}» tal como está al enviar este mensaje; no
-              incluye cambios posteriores.
-            </p>
+        {/* Composer compacto → expandido. Sin encabezado: directamente el
+            input con el botón de envío DENTRO, a la derecha (Tiptap Agent). */}
+        <div
+          className={cn(
+            'rounded-xl border bg-card shadow-[0_12px_36px_rgba(15,23,42,0.10),0_3px_10px_rgba(15,23,42,0.06)] transition-[border-color] duration-150',
+            expanded ? 'border-green-700' : 'border-input hover:border-green-700/50'
           )}
-
-          {notice ? (
-            <div className="rounded border border-green-200 bg-green-50 px-3 py-2" role="status" data-testid="agent-notice">
-              <p className="text-xs text-green-800 flex items-center gap-1">
-                <Check className="h-3.5 w-3.5" aria-hidden="true" />
-                {notice}
+        >
+          {/* Kit contextual: acciones reales, nunca decorativas. Siempre en el
+              DOM (tests y foco estable), visualmente plegado sin foco. */}
+          <div
+            className={cn(
+              'overflow-hidden transition-[max-height,opacity] duration-200 ease-out',
+              expanded ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0'
+            )}
+          >
+            {selectionHint ? (
+              <p className="px-3 pt-2 text-xs text-amber-700" data-testid="agent-selection-hint">
+                {selectionHint}
               </p>
-            </div>
-          ) : null}
-
-          {proposal ? (
-            <div className="rounded border border-green-200 bg-white p-3 space-y-2" data-testid="agent-proposal-card">
-              <p className="text-xs font-medium text-green-800 flex items-center gap-1">
-                <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-                Propuesta de texto generada por IA · revísala antes de insertar
-              </p>
-              {proposal.insertError ? (
-                <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2" role="alert" data-testid="agent-insert-error">
-                  <p className="text-xs text-amber-800 flex items-center gap-1">
-                    <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
-                    No se pudo insertar en el editor. Usa «Copiar texto» y pégalo donde corresponda.
-                  </p>
-                </div>
+            ) : null}
+            <div className="flex flex-wrap items-center gap-1.5 px-2.5 pt-2">
+              <button
+                type="button"
+                data-testid="agent-attach-draft"
+                aria-pressed={attachDraft}
+                onMouseDown={keepTextareaFocus}
+                disabled={!draftAvailable}
+                title={`Adjuntar copia en texto de «${draftTitle}» como contexto de este mensaje`}
+                onClick={() => setAttachDraft((v) => !v)}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors',
+                  attachDraft
+                    ? 'border-green-700 bg-green-700 text-white'
+                    : 'bg-muted/60 hover:bg-muted disabled:opacity-50'
+                )}
+              >
+                <Paperclip className="h-3.5 w-3.5" aria-hidden="true" />
+                Adjuntar borrador
+              </button>
+              <button
+                type="button"
+                data-testid="agent-use-selection"
+                onMouseDown={keepTextareaFocus}
+                title="Citar la selección actual del editor dentro de la instrucción"
+                onClick={handleUseSelection}
+                className="inline-flex items-center gap-1.5 rounded-full border bg-muted/60 px-2.5 py-1 text-xs transition-colors hover:bg-muted"
+              >
+                <TextQuote className="h-3.5 w-3.5" aria-hidden="true" />
+                Usar selección
+              </button>
+              <button
+                type="button"
+                data-testid="agent-chat-toggle"
+                onMouseDown={keepTextareaFocus}
+                aria-pressed={chatOpen}
+                title="Abrir el chat del caso para consultar antecedentes (no edita el borrador)"
+                onClick={() => setChatOpen((v) => !v)}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors',
+                  chatOpen
+                    ? 'border-green-700 bg-green-700 text-white'
+                    : 'bg-muted/60 hover:bg-muted'
+                )}
+              >
+                <MessageSquare className="h-3.5 w-3.5" aria-hidden="true" />
+                Consultar el caso
+              </button>
+              {sending ? (
+                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground" data-testid="agent-sending-hint">
+                  <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
+                  Generando propuesta…
+                </span>
+              ) : !conversationId ? (
+                <span className="text-xs text-muted-foreground">Cargando conversación del caso…</span>
               ) : null}
-              <div className="max-h-64 overflow-y-auto rounded border bg-muted/30 px-3 py-2" data-testid="agent-proposal-text">
-                <p className="text-sm whitespace-pre-wrap">{proposal.text}</p>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Aceptar inserta el texto en la posición del cursor sin reemplazar el resto del documento.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Button size="sm" data-testid="agent-proposal-accept" onClick={handleAccept}>
-                  Aceptar e insertar
-                </Button>
-                <Button size="sm" variant="outline" data-testid="agent-proposal-copy" onClick={handleCopy}>
-                  <ClipboardCopy className="h-4 w-4 mr-1" aria-hidden="true" />
-                  {copied ? 'Copiado' : 'Copiar texto'}
-                </Button>
-                <Button size="sm" variant="ghost" data-testid="agent-proposal-discard" onClick={() => setProposal(null)}>
-                  Descartar
-                </Button>
-              </div>
             </div>
-          ) : null}
+          </div>
 
-          {error ? (
-            <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 space-y-1.5" role="alert" data-testid="agent-proposal-error">
-              <p className="text-xs text-amber-900 flex items-start gap-1">
-                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" aria-hidden="true" />
-                {errorText}
-              </p>
-              {lastProposalMessageRef.current ? (
-                <Button size="sm" variant="outline" data-testid="agent-proposal-retry" onClick={handleRetry} disabled={sending}>
-                  <RefreshCw className="h-3.5 w-3.5 mr-1" aria-hidden="true" />
-                  Reintentar
-                </Button>
-              ) : null}
-            </div>
-          ) : null}
-
-          <div>
-            <Label htmlFor="agent-proposal-instruction" className="sr-only">
+          <div className="flex items-end gap-2 px-2.5 py-2">
+            <Sparkles className="h-4 w-4 shrink-0 text-green-700 mt-1.5" aria-hidden="true" />
+            <label htmlFor="agent-proposal-instruction" className="sr-only">
               Instrucción para la propuesta
-            </Label>
-            <Textarea
+            </label>
+            <textarea
               id="agent-proposal-instruction"
               data-testid="agent-proposal-instruction"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ej: redacta un párrafo fundado en la falta de requerimiento previo para el cursor actual…"
-              rows={3}
-              className="w-full"
+              onChange={(e) => {
+                setInput(e.target.value);
+                setSelectionHint(null);
+              }}
+              onFocus={handleBackgroundFocus}
+              onBlur={handleBackgroundBlur}
+              placeholder="Pregunta sobre este borrador o solicita un cambio…"
+              rows={expanded ? 3 : 1}
+              className="min-h-6 flex-1 resize-none border-0 bg-transparent p-0 text-sm leading-6 text-foreground outline-none placeholder:text-muted-foreground/80"
             />
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
+            <button
+              type="button"
               data-testid="agent-proposal-send"
               disabled={sending || !conversationId || input.trim().length === 0}
               onClick={handleSend}
+              title="Generar propuesta"
+              className={cn(
+                'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full p-0 transition-colors',
+                sending || input.trim().length === 0 || !conversationId
+                  ? 'bg-muted/70 text-muted-foreground'
+                  : 'bg-green-700 text-white hover:bg-green-800'
+              )}
             >
               {sending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-1 animate-spin" aria-hidden="true" />
-                  Generando propuesta…
-                </>
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
               ) : (
-                <>
-                  <Send className="h-4 w-4 mr-1" aria-hidden="true" />
-                  Enviar
-                </>
+                <Send className="h-4 w-4" aria-hidden="true" />
               )}
-            </Button>
-            {!conversationId ? (
-              <span className="text-xs text-muted-foreground">Cargando conversación del caso…</span>
-            ) : null}
+              <span className="sr-only">Enviar</span>
+            </button>
           </div>
         </div>
-      )}
+      </div>
     </section>
   );
 }

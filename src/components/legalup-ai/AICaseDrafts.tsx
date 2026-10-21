@@ -1002,6 +1002,26 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
     }
   }, []);
 
+  // UA-3 (rediseño del composer) — selección REAL del editor para el kit del
+  // Agent AI: texto plano actual, nunca una simulación. Sin editor, sin
+  // documento o sin selección activa devuelve null y el panel comunica.
+  const getEditorSelectionText = useCallback((): string | null => {
+    const ed = editorRef.current;
+    if (!ed || ed.isDestroyed) return null;
+    try {
+      const state = (ed as unknown as {
+        state?: { selection?: { from: number; to: number; empty: boolean }; doc?: { textBetween?: (a: number, b: number, bs?: string) => string } };
+      }).state;
+      const sel = state?.selection;
+      const doc = state?.doc;
+      if (!sel || !doc?.textBetween || sel.empty) return null;
+      const text = doc.textBetween(sel.from, sel.to, '\n');
+      return text.trim().length > 0 ? text : null;
+    } catch {
+      return null;
+    }
+  }, []);
+
   // Al cerrar el editor no queda ningún target para insertar: panel cerrado.
   useEffect(() => {
     if (!openDraft) setAgentOpen(false);
@@ -1464,7 +1484,13 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                       <ToolbarDivider />
                       {toolbarButton('Limpiar formato', Eraser, () => chainFocus()?.unsetAllMarks().clearNodes().run(), false)}
                     </div>
-                    <div className="p-2 sm:p-4 md:p-6 overflow-x-auto">
+                    <div
+                      className={
+                        agentOpen
+                          ? 'px-2 pt-2 pb-24 sm:px-4 sm:pt-4 sm:pb-28 md:px-6 md:pt-6 md:pb-32 overflow-x-auto'
+                          : 'p-2 sm:p-4 md:p-6 overflow-x-auto'
+                      }
+                    >
                       {/* Reserva vertical = altura natural medida x zoom;
                           el contenido transformado llena esa caja a la vista. */}
                       <div style={zoomReserveHeight ? { height: zoomReserveHeight } : undefined}>
@@ -1511,6 +1537,7 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                         const ed = editorRef.current;
                         return ed && !ed.isDestroyed ? ed.getHTML() : null;
                       }}
+                      getSelectionText={getEditorSelectionText}
                       onInsertProposal={insertProposalHtml}
                     />
                   ) : null}

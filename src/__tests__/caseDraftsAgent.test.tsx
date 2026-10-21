@@ -3,10 +3,11 @@ import { render, screen, cleanup, fireEvent, waitFor, act } from '@testing-libra
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AICaseDrafts } from '@/components/legalup-ai/AICaseDrafts';
 
-// UA-3 — Panel Agent AI del editor de borradores: chat del caso reutilizado,
-// propuestas de texto con adjunto de contexto explícito, aceptar/descartar/
-// copiar, inserción en cursor por el pipeline normal de guardado, sin
-// duplicaciones, y sin tocar el zoom ni la disposición de la hoja.
+// UA-3 — Composer Agent AI del editor de borradores (patrón Tiptap Agent
+// Editor): kit contextual con acciones reales (adjuntar copia del borrador,
+// citar selección del editor, chat del caso), propuestas de texto con
+// aceptar/descartar/copiar e inserción en cursor por el pipeline normal de
+// guardado, sin duplicaciones, y sin tocar el zoom ni la disposición de la hoja.
 
 const authState = vi.hoisted(() => {
   const currentToken = { value: 'tok' };
@@ -57,6 +58,7 @@ type FakeEditor = {
   opts: { content?: string; editable?: boolean; onUpdate?: (e: { editor: unknown }) => void };
   html: string;
   cmdLog: string[];
+  state?: { selection?: { from: number; to: number; empty: boolean }; doc?: { textBetween?: (a: number, b: number, bs?: string) => string } };
   getHTML: () => string;
   isActive: (name: string | Record<string, unknown>, attrs?: Record<string, unknown>) => boolean;
   chain: () => Record<string, (...args: unknown[]) => unknown>;
@@ -259,7 +261,7 @@ afterEach(() => {
 const sendProposal = async (instruction: string, attach: boolean) => {
   await openDraftEditor();
   await openAgentPanel();
-  // Por defecto la pestaña activa es «Proponer cambios».
+  // El composer llega en modo «proponer cambios» (es su único canal).
   fireEvent.change(proposalInstruction(), { target: { value: instruction } });
   if (attach) {
     fireEvent.click(screen.getByTestId('agent-attach-draft'));
@@ -406,13 +408,44 @@ describe('UA-3 Agent AI — integración en el editor', () => {
     expect(puts.length === 0 || !String(JSON.parse(String((puts[0][1] as RequestInit).body)).content).includes('Texto de propuesta alternativa.')).toBe(true);
   });
 
-  it('la pestaña de chat integra el chat del caso reutilizado con los documentos del workspace', async () => {
+  it('el botón de chat del composer abre el chat del caso reutilizado con los documentos del workspace', async () => {
     await openDraftEditor();
     await openAgentPanel();
-    fireEvent.click(screen.getByTestId('agent-tab-chat'));
+    fireEvent.click(screen.getByTestId('agent-chat-toggle'));
     const embed = await screen.findByTestId('agent-chat-embed');
     expect(embed.dataset.workspace).toBe('ws-a');
     expect(JSON.parse(embed.dataset.documents ?? '[]')).toEqual(documentsData.list);
+    // El over del chat se cierra explícitamente.
+    fireEvent.click(screen.getByTestId('agent-chat-close'));
+    await waitFor(() => expect(screen.queryByTestId('agent-chat-embed')).not.toBeInTheDocument());
+  });
+
+  it('«Usar selección» cita la selección real del editor en la instrucción y viaja en el mensaje', async () => {
+    await openDraftEditor();
+    await openAgentPanel();
+    const ed = mainEditor();
+    if (ed) {
+      ed.state = { selection: { from: 0, to: 5, empty: false }, doc: { textBetween: () => 'El demandado no fue notificado' } };
+    }
+    fireEvent.click(screen.getByTestId('agent-use-selection'));
+    const textarea = proposalInstruction();
+    expect(textarea.value).toContain('Selección citada del borrador');
+    expect(textarea.value).toContain('El demandado no fue notificado');
+    fireEvent.change(textarea, { target: { value: `${textarea.value}\n\nReescribe este pasaje` } });
+    fireEvent.click(screen.getByTestId('agent-proposal-send'));
+    await waitFor(() => expect(chatPosts()).toHaveLength(1));
+    const body = JSON.parse(String(chatPosts()[0].init.body)) as { message: string };
+    expect(body.message).toContain('Selección citada del borrador');
+    expect(body.message).toContain('El demandado no fue notificado');
+    expect(body.message).toContain('Reescribe este pasaje');
+  });
+
+  it('«Usar selección» sin selección activa da feedback honesto y no cita texto inexistente', async () => {
+    await openDraftEditor();
+    await openAgentPanel();
+    fireEvent.click(screen.getByTestId('agent-use-selection'));
+    expect(screen.getByTestId('agent-selection-hint')).toHaveTextContent('No hay texto seleccionado en el editor.');
+    expect(proposalInstruction().value).toBe('');
   });
 
   it('una respuesta tardía del borrador anterior no se muestra ni se puede insertar en otro borrador', async () => {
