@@ -12,17 +12,19 @@ describe('4.57D Plus v1 — allowances and server wiring', () => {
       chatPerMonth: 750,
       analysisPerMonth: 100,
       researchPerMonth: 25,
+      draftsPerMonth: 75,
       storedDocuments: 150,
     });
     expect(PAID_CASE_LIMITS).toEqual({ pro: 20, plus: 40 });
   });
 
   it('commercialQuotaForPlan: plus pools, pro unchanged, else null', () => {
-    expect(commercialQuotaForPlan('plus')).toEqual({ chat: 750, analysis: 100, research: 25 });
+    expect(commercialQuotaForPlan('plus')).toEqual({ chat: 750, analysis: 100, research: 25, drafting: 75 });
     expect(commercialQuotaForPlan('pro_limited')).toEqual({
       chat: PRO_AI_ALLOWANCE.chatPerMonth,
       analysis: PRO_AI_ALLOWANCE.analysisPerMonth,
       research: PRO_AI_ALLOWANCE.researchPerMonth,
+      drafting: PRO_AI_ALLOWANCE.draftsPerMonth,
     });
     expect(commercialQuotaForPlan('free_case')).toBeNull();
     expect(commercialQuotaForPlan('essential')).toBeNull();

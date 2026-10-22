@@ -12,7 +12,8 @@ import { Check, Loader2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { posthog } from '@/lib/posthogLoader';
 import { useProSubscription, useProSubscribe, useProFounderStatus } from '@/hooks/useProSubscription';
-import { PRO_PRICE_CLP_DISPLAY, PLUS_PRICE_CLP_DISPLAY } from '@/lib/planDisplay';
+import { PRO_PRICE_CLP_DISPLAY, PLUS_PRICE_CLP_DISPLAY, PRO_INTRO_PRICE_CLP_DISPLAY } from '@/lib/planDisplay';
+import { resolveFounderAvailability } from '@/lib/proFounderDisplay';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -93,10 +94,25 @@ export function ProPricingModal({ open, onOpenChange, triggerAction, targetPlan 
 
   // 4.32B.4: display-only preview; POST /api/pro/subscribe is the authority.
   // Founder preview only ever applies to Pro; Plus never touches it.
-  const founderStatus = useProFounderStatus(open && selected === 'pro' && !isProCurrent);
-  const previewPrice = founderStatus.data?.previewPriceClp ?? 19990;
-  const slotsRemaining = founderStatus.data?.founderSlotsRemaining ?? null;
-  const isFounderRate = previewPrice === 19990;
+  const founderPreviewEnabled = open && selected === 'pro' && !isProCurrent;
+  const founderStatus = useProFounderStatus(founderPreviewEnabled);
+  const founderAvailability = resolveFounderAvailability({
+    loading: founderPreviewEnabled && founderStatus.isLoading,
+    error: founderPreviewEnabled && (founderStatus.isError || (!founderStatus.isLoading && founderStatus.data == null)),
+    remaining: founderPreviewEnabled ? founderStatus.data?.founderSlotsRemaining : undefined,
+    max: founderPreviewEnabled ? founderStatus.data?.maxFounderSlots : undefined,
+    priceClp: founderPreviewEnabled ? founderStatus.data?.previewPriceClp : undefined,
+  });
+  const founderUnconfirmed = founderPreviewEnabled
+    && (founderAvailability.state === 'loading' || founderAvailability.state === 'unavailable');
+  const isFounderRate = !isProCurrent
+    && founderAvailability.state === 'available'
+    && founderAvailability.priceClp === PRO_INTRO_PRICE_CLP_DISPLAY;
+  const founderSoldOut = !isProCurrent && founderAvailability.state === 'sold_out';
+  const founderStandard = !isProCurrent
+    && founderAvailability.state === 'available'
+    && founderAvailability.priceClp === PRO_PRICE_CLP_DISPLAY;
+  const founderSlotsRemaining = founderAvailability.state === 'available' ? founderAvailability.remaining : null;
   const fmtPrice = (v: number) => `$${v.toLocaleString('es-CL')}`;
   const proPriceLabel = fmtPrice(PRO_PRICE_CLP_DISPLAY);
   const plusPriceLabel = fmtPrice(PLUS_PRICE_CLP_DISPLAY);
@@ -191,26 +207,37 @@ export function ProPricingModal({ open, onOpenChange, triggerAction, targetPlan 
               {isProCurrent ? (
                 <Badge className="bg-gray-900 text-white">Plan actual</Badge>
               ) : (
-                isFounderRate && <Badge className="bg-green-100 text-green-800">Founder 15</Badge>
+                <>
+                  {isFounderRate && <Badge className="bg-green-100 text-green-800">Founder 15</Badge>}
+                  {founderSoldOut && <Badge variant="outline" className="border-gray-300 text-gray-600">Cupos agotados</Badge>}
+                </>
               )}
             </div>
-            <p className="mt-1 text-3xl font-bold text-gray-900">
-              {isFounderRate && !isProCurrent ? fmtPrice(previewPrice) : proPriceLabel}
-              <span className="text-sm font-medium text-muted-foreground">/mes</span>
-            </p>
-            {isFounderRate && !isProCurrent ? (
+            {founderUnconfirmed ? (
+              <p className="mt-1 text-lg font-bold text-gray-500">Precio según disponibilidad</p>
+            ) : (
+              <p className="mt-1 text-3xl font-bold text-gray-900">
+                {founderAvailability.state === 'available' ? fmtPrice(founderAvailability.priceClp) : proPriceLabel}
+                <span className="text-sm font-medium text-muted-foreground">/mes</span>
+              </p>
+            )}
+            {isFounderRate ? (
               <>
-                <p className="text-sm text-muted-foreground">por tus primeros 3 cobros exitosos</p>
+                <p className="text-sm text-muted-foreground">$19.990/mes por tus primeros 3 cobros exitosos</p>
                 <p className="mt-1 text-xs text-muted-foreground">Desde el cuarto cobro, $49.990/mes.</p>
                 <p className="mt-2 text-xs text-green-700 font-medium">
-                  {slotsRemaining != null && slotsRemaining > 0
-                    ? `¡Quedan ${slotsRemaining} cupos Founder! Los primeros 15 abogados con pago exitoso obtienen el badge Founder permanente.`
-                    : 'Los primeros 15 abogados con pago exitoso obtienen el badge Founder permanente.'}
+                  ¡Quedan {founderSlotsRemaining ?? 0} cupos Founder! Los primeros 15 abogados con pago exitoso obtienen el badge Founder permanente.
                 </p>
               </>
+            ) : founderSoldOut ? (
+              <p className="mt-1 text-xs text-muted-foreground">$49.990/mes. Los cupos Founder ya fueron asignados.</p>
+            ) : founderStandard ? (
+              <p className="mt-1 text-xs text-muted-foreground">$49.990/mes. Precio estándar aplicable a tu cuenta.</p>
+            ) : founderUnconfirmed && !isProCurrent ? (
+              <p className="mt-1 text-xs text-muted-foreground">No pudimos confirmar la disponibilidad Founder. El precio final se muestra en el checkout.</p>
             ) : (
               !isProCurrent && (
-                <p className="mt-1 text-xs text-muted-foreground">$49.990/mes. Los cupos Founder ya fueron asignados.</p>
+                <p className="mt-1 text-xs text-muted-foreground">$49.990/mes.</p>
               )
             )}
             {isProCurrent && (

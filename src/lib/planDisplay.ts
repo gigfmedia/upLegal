@@ -11,6 +11,10 @@ import { normalizePlanCode, type PlanCode } from './aiFeatures';
 export const PLUS_PRICE_CLP_DISPLAY = 79990;
 /** Display-only Pro standard price. */
 export const PRO_PRICE_CLP_DISPLAY = 49990;
+/** Display-only Pro Founder intro price (first 3 successful payments). */
+export const PRO_INTRO_PRICE_CLP_DISPLAY = 19990;
+/** Hard commercial cap for the Pro Founder cohort. */
+export const PRO_FOUNDER_MAX_SLOTS = 15;
 
 export type PlanQuotaDisplay = {
   cases: number;

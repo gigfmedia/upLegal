@@ -10,22 +10,93 @@ export const PRO_INTRO_PRICE_CLP = 19990;
 export const PRO_STANDARD_PRICE_CLP = 49990;
 export const PRO_INTRO_SUCCESSFUL_PAYMENTS = 3;
 
+/** Every value the atomic reservation RPC may return. */
+export const PRO_RESERVATION_RESULTS = Object.freeze([
+  'reserved',
+  'already_founder',
+  'standard_no_slot',
+]);
+
 /**
  * Server-authoritative checkout price.
- * - Existing Founder: intro-count rule (reactivation never resets).
- * - Otherwise: price follows the atomic reservation result.
- * - Fail-closed: unknown/failed reservation → standard (retry re-reserves).
+ * - Founder cohort (existing Founder or an atomic reservation) follows the
+ *   lifetime approved-payment rule: first 3 intro, then standard.
+ * - no slot → standard.
+ * The checkout route never reaches this with a failed/unknown reservation:
+ * that must be handled as an infrastructure error before any charge.
  */
 export function decideCheckoutPrice({ isFounder, lifetimeApproved, reservation }) {
-  if (isFounder) {
-    return lifetimeApproved >= PRO_INTRO_SUCCESSFUL_PAYMENTS
-      ? PRO_STANDARD_PRICE_CLP
-      : PRO_INTRO_PRICE_CLP;
+  const inFounderCohort = isFounder === true
+    || reservation === 'reserved'
+    || reservation === 'already_founder';
+  if (!inFounderCohort) return PRO_STANDARD_PRICE_CLP;
+  return lifetimeApproved >= PRO_INTRO_SUCCESSFUL_PAYMENTS
+    ? PRO_STANDARD_PRICE_CLP
+    : PRO_INTRO_PRICE_CLP;
+}
+
+/**
+ * Resolve checkout price + Founder state from the atomic reservation result.
+ * The RPC is authoritative: a failed/unknown result is an error, never a
+ * silent fallback that could charge without a slot.
+ */
+export function resolveProCheckoutPricing({ isFounder, lifetimeApproved, reservationResult }) {
+  if (!reservationResult || reservationResult.error) {
+    return {
+      ok: false,
+      code: 'FOUNDER_RESERVATION_FAILED',
+      error: reservationResult?.error ?? null,
+    };
   }
-  if (reservation === 'reserved' || reservation === 'already_founder') {
-    return PRO_INTRO_PRICE_CLP;
+  const reservation = typeof reservationResult.data === 'string' ? reservationResult.data : null;
+  if (!PRO_RESERVATION_RESULTS.includes(reservation)) {
+    return { ok: false, code: 'FOUNDER_RESERVATION_INVALID', reservation };
   }
-  return PRO_STANDARD_PRICE_CLP;
+  const approved = lifetimeApproved;
+  if (typeof approved !== 'number' || !Number.isFinite(approved) || approved < 0) {
+    return { ok: false, code: 'LIFETIME_COUNT_INVALID', lifetimeApproved };
+  }
+  const amountClp = decideCheckoutPrice({ isFounder: isFounder === true, lifetimeApproved: approved, reservation });
+  const isFounderSlot = isFounder === true || reservation === 'reserved' || reservation === 'already_founder';
+  return {
+    ok: true,
+    reservation,
+    amountClp,
+    isFounderSlot,
+    founderTrack: isFounderSlot,
+  };
+}
+
+/**
+ * Coherence gate for reusing an existing pending checkout.
+ * Never reuse a preapproval whose real provider amount differs from the
+ * persisted amount/price, nor an intro amount without Founder state.
+ */
+export function validateReusableCheckout({
+  amountClp,
+  isFounder,
+  providerAmount,
+  allowedAmounts,
+  introPriceClp = PRO_INTRO_PRICE_CLP,
+}) {
+  const amount = Number(amountClp);
+  if (!Number.isFinite(amount) || !Array.isArray(allowedAmounts) || !allowedAmounts.includes(amount)) {
+    return { ok: false, code: 'PENDING_AMOUNT_INVALID', amountClp: amountClp ?? null };
+  }
+  if (providerAmount === null || providerAmount === undefined || providerAmount === '') {
+    return { ok: false, code: 'PROVIDER_AMOUNT_MISSING' };
+  }
+  const provider = Number(providerAmount);
+  if (!Number.isFinite(provider)) {
+    return { ok: false, code: 'PROVIDER_AMOUNT_MISSING', providerAmount };
+  }
+  if (provider !== amount) {
+    return { ok: false, code: 'PENDING_PRICE_MISMATCH', amountClp: amount, providerAmount: provider };
+  }
+  if (amount === introPriceClp && isFounder !== true) {
+    return { ok: false, code: 'PENDING_FOUNDER_STATE_INVALID', amountClp: amount };
+  }
+  return { ok: true, amountClp: amount };
 }
 
 /** Only approved payments can qualify. Never trust redirect/checkout/pending. */

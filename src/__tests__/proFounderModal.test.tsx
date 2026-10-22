@@ -47,6 +47,31 @@ describe('4.32B.4 — modal reflects server-authoritative price track', () => {
     expect(screen.getByText(/Los cupos Founder ya fueron asignados/)).toBeInTheDocument();
     expect(screen.queryByText(/Quedan \d+ cupos Founder/)).not.toBeInTheDocument();
   });
+
+  it('loading state never promises 19.990', () => {
+    mocks.founderStatus.mockReturnValue({ isLoading: true, isError: false, data: undefined });
+    render(<ProPricingModal open onOpenChange={() => {}} />);
+    expect(screen.queryByText(/\$19\.990/)).not.toBeInTheDocument();
+    expect(screen.getByText('Precio según disponibilidad')).toBeInTheDocument();
+    expect(screen.queryByText(/Quedan \d+ cupos Founder/)).not.toBeInTheDocument();
+  });
+
+  it('error state never promises 19.990', () => {
+    mocks.founderStatus.mockReturnValue({ isLoading: false, isError: true, data: undefined });
+    render(<ProPricingModal open onOpenChange={() => {}} />);
+    expect(screen.queryByText(/\$19\.990/)).not.toBeInTheDocument();
+    expect(screen.getByText('Precio según disponibilidad')).toBeInTheDocument();
+  });
+
+  it('available slots + standard preview (post-intro founder) shows 49.990, not Founder 15', () => {
+    mocks.founderStatus.mockReturnValue({
+      data: { isFounder: true, founderSlotsRemaining: 5, previewPriceClp: 49990, introPriceClp: 19990, standardPriceClp: 49990 },
+    });
+    render(<ProPricingModal open onOpenChange={() => {}} />);
+    expect(screen.queryByText(/\$19\.990/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Precio estándar aplicable a tu cuenta/)).toBeInTheDocument();
+    expect(screen.queryByText(/Founder 15/)).not.toBeInTheDocument();
+  });
 });
 
 describe('4.37C — modal benefits reflect current Pro product', () => {  beforeEach(() => {

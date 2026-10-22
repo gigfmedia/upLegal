@@ -12,7 +12,8 @@ vi.mock('@/contexts/AuthContext/clean/useAuth', () => ({ useAuth: () => ({ user:
 vi.mock('@/hooks/useProSubscription', () => ({
   useProSubscription: () => ({ hasProAccess: false }),
   useProSubscribe: () => ({ mutateAsync: vi.fn() }),
-  useProFounderStatus: () => ({ data: { previewPriceClp: state.price, founderSlotsRemaining: state.price === 19990 ? 5 : 0 } }),
+  useProFounderStatus: () => ({ data: { previewPriceClp: state.price, founderSlotsRemaining: state.price === 19990 ? 5 : 0 }, isLoading: false, isError: false }),
+  useProFounderCapacity: () => ({ data: { remaining: state.price === 19990 ? 5 : 0, max: 15 }, isLoading: false, isError: false }),
 }));
 vi.mock('@/components/AuthModal', () => ({ AuthModal: () => null }));
 vi.mock('@/components/pro/TestimonialsSection', () => ({ TestimonialsSection: () => null }));

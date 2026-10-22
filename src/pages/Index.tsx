@@ -30,6 +30,8 @@ import { getCompletedCasesCount } from "@/lib/caseServiceCounter";
 import { HomeGrowthHacks } from "@/components/HomeGrowthHacks";
 import { detectEspecialidad } from "@/utils/askLLM";
 import { useLegalCategoryClassifier } from "@/hooks/useLegalCategoryClassifier";
+import { useProFounderCapacity } from "@/hooks/useProSubscription";
+import { resolveFounderAvailability } from "@/lib/proFounderDisplay";
 
 import { PaymentMethods as MPbadge } from '@/components/MercadoPagoBadge';
 
@@ -38,6 +40,13 @@ const TestimonialsSection = lazy(() => import("@/components/TestimonialsSection"
 
 const Index = () => {
   const { user, isLoading } = useAuth();
+  const founderCapacity = useProFounderCapacity();
+  const founderAvailability = resolveFounderAvailability({
+    loading: founderCapacity.isLoading,
+    error: founderCapacity.isError,
+    remaining: founderCapacity.data?.remaining,
+    max: founderCapacity.data?.max,
+  });
 
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -1138,7 +1147,11 @@ const Index = () => {
               Conocer LegalUp Pro →
             </button>
           <p className="mt-4 text-xs font-medium text-green-900">
-            Plan Free disponible · Pro desde $19.990/mes
+            {founderAvailability.state === 'available'
+              ? `Plan Free disponible · Pro desde $19.990/mes · ${founderAvailability.remaining} cupos Founder`
+              : founderAvailability.state === 'sold_out'
+                ? 'Plan Free disponible · Pro $49.990/mes · Cupos Founder agotados'
+                : 'Plan Free disponible · Precio Pro según disponibilidad de cupos Founder'}
           </p>
         </div>
           </div>
