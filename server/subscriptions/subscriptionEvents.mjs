@@ -77,3 +77,19 @@ export async function shouldApplyEvent(supabase, { productType, subscriptionId, 
   if (isNaN(latestAt) || isNaN(incomingAt)) return true;
   return incomingAt >= latestAt;
 }
+
+// Identity guard for provider webhooks that are resolved indirectly (e.g. a Pro
+// preapproval is looked up by external_reference → lawyer_id, not by the
+// preapproval id). Returns true when `providerId` matches either the canonical
+// or the in-flight provider subscription on the row. When nothing is linked yet
+// it returns true, so a first authorization racing the id persistence is never
+// blocked. Empty/missing providerId is always rejected.
+export function matchesActiveProvider(subscription, providerId) {
+  const candidate = providerId == null ? '' : String(providerId);
+  if (!candidate) return false;
+  const active = [subscription?.provider_subscription_id, subscription?.pending_provider_subscription_id]
+    .filter((v) => v != null && String(v) !== '')
+    .map(String);
+  if (active.length === 0) return true;
+  return active.includes(candidate);
+}

@@ -45,7 +45,7 @@ BEGIN
     RETURN 'reserved';
   END IF;
   SELECT count(*) INTO v_taken FROM (
-    SELECT lawyer_id FROM public.profiles WHERE role = 'lawyer' AND is_founder = true
+    SELECT id AS lawyer_id FROM public.profiles WHERE role = 'lawyer' AND is_founder = true
     UNION
     SELECT lawyer_id FROM public.pro_founder_reservations WHERE expires_at > now()
   ) s;

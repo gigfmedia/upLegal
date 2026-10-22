@@ -1,5 +1,11 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const serverSrc = readFileSync(resolve(__dirname, '../server.mjs'), 'utf8');
 
 function mockGetProAccess(subscription) {
   const now = Date.now();
@@ -48,5 +54,17 @@ describe('FASE 3D — Pro pending', () => {
     const effective = hasAI ? 'ai_trial' : (proAccess ? 'pro_limited' : 'free');
     expect(effective).toBe('ai_trial');
     expect(proAccess).toBe(false);
+  });
+});
+
+describe('FASE 4.57D — Pro webhook residual-state fixes (source contract)', () => {
+  it('reactivation clears the stale terminal cancelled_at marker', () => {
+    expect(serverSrc).toMatch(/Reactivar pending\/cancelled\/expired[\s\S]*?cancelled_at: null/);
+  });
+  it('Pro preapproval webhook verifies the linked preapproval id before mutating', () => {
+    expect(serverSrc).toMatch(/if \(!matchesActiveProvider\(subscription, preapprovalId\)\)/);
+  });
+  it('cancelled preapproval releases the unpaid Founder reservation', () => {
+    expect(serverSrc).toMatch(/mpStatus === 'cancelled'\)[\s\S]{0,1500}?from\('pro_founder_reservations'\)\.delete\(\)\.eq\('lawyer_id', lawyerId\)/);
   });
 });

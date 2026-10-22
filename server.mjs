@@ -6070,6 +6070,22 @@ const handleProPreapprovalWebhook = async (preapproval) => {
   if (!lawyerId) return;
   let { data: subscription } = await supabase.from('lawyer_subscriptions').select('*').eq('lawyer_id', lawyerId).maybeSingle();
   if (!subscription) return;
+  // Identity guard (4.57D follow-up): the row is resolved by external_reference
+  // (lawyer_id), NOT by the preapproval id, so we must confirm this event
+  // belongs to the preapproval currently linked to the row (canonical or the
+  // in-flight Plus upgrade) before mutating any record. This keeps a late or
+  // foreign event — an old cancelled preapproval, a Plus preapproval mid-plan
+  // change, or a webhook redelivery — from touching a different preapproval.
+  // Ignored events are recorded with ids only (no PII/tokens).
+  const { matchesActiveProvider } = await import('./server/subscriptions/subscriptionEvents.mjs');
+  if (!matchesActiveProvider(subscription, preapprovalId)) {
+    console.log('[LegalUpPro] preapproval event ignored (provider id mismatch)', {
+      subscription_id: subscription.id,
+      provider_status: mpStatus,
+      received_preapproval_id: String(preapprovalId),
+    });
+    return;
+  }
   // Reconcile scheduled downgrades + stale old-Pro cancellations on every
   // Pro-family webhook event (no cron dependency).
   subscription = await maybeApplyScheduledDowngrade(subscription) ?? subscription;
@@ -6101,7 +6117,19 @@ const handleProPreapprovalWebhook = async (preapproval) => {
       try { await sendAIEmail(userData.email, '¡Bienvenido a LegalUp Pro!', '<p>Tu suscripción Pro está activa.</p>'); } catch {}
     }
   } else if (mpStatus === 'cancelled') {
+    // MP sends `cancelled` for an abandoned (never-authorized) checkout as well
+    // as for a real cancellation. The preapproval status enum is
+    // pending|authorized|paused|cancelled — rejected/expired are payment/order
+    // statuses, never preapprovals (verified against Mercado Pago docs), so no
+    // branch is added for them here. Identity was verified above, so this only
+    // affects the preapproval linked to this row. Release the unpaid Founder
+    // hold so an abandoned checkout cannot squat a slot for its TTL (mirrors
+    // POST /api/pro/subscription/cancel); a claimed badge (profiles.is_founder)
+    // and any live subscription are never touched by this path.
     await supabase.from('lawyer_subscriptions').update({ status: 'cancelled', cancelled_at: now.toISOString(), cancel_at_period_end: true, updated_at: now.toISOString() }).eq('id', subscription.id);
+    if (subscription.plan !== 'plus') {
+      try { await supabase.from('pro_founder_reservations').delete().eq('lawyer_id', lawyerId); } catch {}
+    }
   } else if (mpStatus === 'paused') {
     await supabase.from('lawyer_subscriptions').update({ status: 'past_due', updated_at: now.toISOString() }).eq('id', subscription.id);
   }
@@ -9664,6 +9692,12 @@ app.post('/api/pro/subscribe', async (req, res) => {
           plan: isPlusTarget ? 'plus' : PRO_SUBSCRIPTION_PLAN,
           status: 'pending',
           amount_clp: initialPrice,
+          // Reactivation must clear the terminal marker: cancelled_at doubles as
+          // an out-of-order guard (stale events are dropped while a later
+          // cancelled_at exists — see handleProPreapprovalWebhook /
+          // handleProAuthorizedPayment). Leaving it set on a brand-new pending
+          // checkout would let a redelivered terminal event strand the row.
+          cancelled_at: null,
           // Existing rows keep their earned is_founder value; only fresh
           // Pro rows may take a free slot. Plus never flips it to true here
           // (a historical Founder keeps true; anyone else stays as-is).
