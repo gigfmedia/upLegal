@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { resolveFounderAvailability } from '@/lib/proFounderDisplay';
+import { resolveFounderAvailability, type FounderAvailability } from '@/lib/proFounderDisplay';
+
+const isAvailable = (
+  value: FounderAvailability
+): value is Extract<FounderAvailability, { state: 'available' }> => value.state === 'available';
 
 describe('Founder availability display (server is authority)', () => {
   it('loading is neutral (never a price)', () => {
@@ -44,6 +48,8 @@ describe('Founder availability display (server is authority)', () => {
   });
 
   it('caps remaining at the 15-slot commercial maximum', () => {
-    expect(resolveFounderAvailability({ remaining: 40, max: 40 }).remaining).toBe(15);
+    const result = resolveFounderAvailability({ remaining: 40, max: 40 });
+    if (!isAvailable(result)) throw new Error(`expected available, got ${result.state}`);
+    expect(result.remaining).toBe(15);
   });
 });
