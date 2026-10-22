@@ -480,7 +480,6 @@ const PRO_EXTERNAL_REF_PREFIX = 'PRO_';
 const PLUS_EXTERNAL_REF_PREFIX = 'PLUS_';
 const PLUS_SUBSCRIPTION_PRICE_CLP = PLUS_PRICE_CLP;
 const PRO_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
-const PRO_FOUNDER_LIMIT = 15;
 
 // ---- Pro billing intro → standard (4.28B.2) helpers ----
 async function ensureProStandardPrice(subscription) {
@@ -9209,20 +9208,27 @@ app.get('/api/pro/founder-status', async (req, res) => {
   try {
     const userId = await requireAILawyer(req, res);
     if (!userId) return;
-    const { decideCheckoutPrice } = await import('./server/proFounder.mjs');
-    const [{ data: prof }, lifetimeRes, capRes] = await Promise.all([
+    const { decideCheckoutPrice, PRO_FOUNDER_MAX } = await import('./server/proFounder.mjs');
+    const [profRes, lifetimeRes, capRes] = await Promise.all([
       supabase.from('profiles').select('is_founder').eq('id', userId).maybeSingle(),
-      supabase.from('pro_subscription_payments').select('id', { count: 'exact', head: true }).eq('lawyer_id', userId).eq('status', 'approved'),
+      supabase.from('pro_subscription_payments').select('id', { count: 'exact', head: true }).eq('lawyer_id', userId).eq('status', 'approved').or('plan.is.null,plan.eq.pro'),
       supabase.rpc('pro_founder_capacity'),
     ]);
-    // If the capacity helper is missing (older DB), fall back to standard.
-    let remaining = 0;
-    if (!capRes?.error && capRes?.data) {
-      const row = Array.isArray(capRes.data) ? capRes.data[0] : capRes.data;
-      remaining = Number(row?.remaining ?? 0) || 0;
+    // A failed read is NOT "no capacity": never advertise a sold-out state
+    // (or a price) from an infrastructure error.
+    const capRow = Array.isArray(capRes.data) ? capRes.data[0] : capRes.data;
+    const remainingRaw = Number(capRow?.remaining);
+    if (profRes.error || !profRes.data || lifetimeRes.error || typeof lifetimeRes.count !== 'number' || capRes.error || !capRow || !Number.isFinite(remainingRaw)) {
+      console.error('[LegalUpPro] founder-status unavailable', {
+        profile: profRes.error?.message || null,
+        payments: lifetimeRes.error?.message || null,
+        capacity: capRes.error?.message || null,
+      });
+      return res.status(503).json({ error: 'No se pudo confirmar la disponibilidad Founder.', code: 'FOUNDER_STATUS_UNAVAILABLE' });
     }
-    const isFounder = prof?.is_founder === true;
-    const lifetimeApproved = lifetimeRes?.count ?? 0;
+    const remaining = Math.max(0, remainingRaw);
+    const isFounder = profRes.data.is_founder === true;
+    const lifetimeApproved = lifetimeRes.count;
     // Preview only: assume a slot is available when capacity remains.
     const previewPrice = decideCheckoutPrice({
       isFounder,
@@ -9232,13 +9238,39 @@ app.get('/api/pro/founder-status', async (req, res) => {
     res.json({
       isFounder,
       founderSlotsRemaining: remaining,
+      maxFounderSlots: PRO_FOUNDER_MAX,
       previewPriceClp: previewPrice,
       introPriceClp: PRO_INTRO_PRICE_CLP,
       standardPriceClp: PRO_STANDARD_PRICE_CLP,
     });
   } catch (e) {
     console.error('[LegalUpPro] founder-status error:', e);
-    res.status(500).json({ error: 'No se pudo obtener el estado Founder.' });
+    res.status(503).json({ error: 'No se pudo confirmar la disponibilidad Founder.', code: 'FOUNDER_STATUS_UNAVAILABLE' });
+  }
+});
+
+// Public, cacheable commercial capacity. No PII, no per-user data: the
+// landing needs the real 15-slot state without requiring a session.
+app.get('/api/pro/founder-capacity', async (_req, res) => {
+  try {
+    const { PRO_FOUNDER_MAX } = await import('./server/proFounder.mjs');
+    const { data, error } = await supabase.rpc('pro_founder_capacity');
+    if (error || !data) throw error || new Error('empty capacity');
+    const row = Array.isArray(data) ? data[0] : data;
+    const claimedRaw = Number(row?.claimed);
+    const reservedRaw = Number(row?.reserved);
+    const remainingRaw = Number(row?.remaining);
+    if (!row || !Number.isFinite(claimedRaw) || !Number.isFinite(reservedRaw) || !Number.isFinite(remainingRaw)) {
+      throw new Error('invalid capacity payload');
+    }
+    const claimed = Math.max(0, claimedRaw);
+    const reserved = Math.max(0, reservedRaw);
+    const remaining = Math.max(0, remainingRaw);
+    res.set('Cache-Control', 'public, max-age=30, stale-while-revalidate=60');
+    res.json({ success: true, claimed, reserved, remaining, max: PRO_FOUNDER_MAX });
+  } catch (e) {
+    console.error('[LegalUpPro] founder-capacity error:', e?.message || e);
+    res.status(503).json({ error: 'No se pudo confirmar la disponibilidad Founder.', code: 'FOUNDER_CAPACITY_UNAVAILABLE' });
   }
 });
 
@@ -9379,6 +9411,16 @@ app.post('/api/pro/subscribe', async (req, res) => {
       return res.status(403).json({ error: 'La contratación de LegalUp Plus está pausada temporalmente.', code: PLUS_ACQUISITION_DISABLED });
     }
 
+    // Authoritative pricing/coherence helpers (shared by reuse + new checkout).
+    const {
+      resolveProCheckoutPricing,
+      validateReusableCheckout,
+      PRO_FOUNDER_RESERVATION_TTL_SECONDS,
+    } = await import('./server/proFounder.mjs');
+    const allowedCheckoutAmounts = isPlusTarget
+      ? [PLUS_SUBSCRIPTION_PRICE_CLP]
+      : [PRO_INTRO_PRICE_CLP, PRO_STANDARD_PRICE_CLP];
+
     let subscription = await getProLawyerSubscription(userId);
     const hasActivePaid = !!(subscription && subscription.status === 'active' && subscription.provider_subscription_id);
     const currentPaidPlan = subscription ? canonicalPaidPlan(subscription) : null;
@@ -9403,6 +9445,25 @@ app.post('/api/pro/subscribe', async (req, res) => {
         });
         const mpData = await mpCheck.json().catch(() => ({}));
         if (mpCheck.ok) {
+          const providerAmount = Number(mpData?.auto_recurring?.transaction_amount ?? mpData?.transaction_amount);
+          const coherence = validateReusableCheckout({
+            amountClp: PLUS_SUBSCRIPTION_PRICE_CLP,
+            isFounder: false,
+            providerAmount,
+            allowedAmounts: [PLUS_SUBSCRIPTION_PRICE_CLP],
+          });
+          if (!coherence.ok) {
+            console.error('[LegalUpPro] pending Plus upgrade not reusable', {
+              userId,
+              providerAmount,
+              expected: PLUS_SUBSCRIPTION_PRICE_CLP,
+              code: coherence.code,
+            });
+            return res.status(409).json({
+              error: 'Tu checkout pendiente de Plus no coincide con el precio esperado. Inicia un nuevo intento o contacta soporte.',
+              code: coherence.code,
+            });
+          }
           const mpStatus = (mpData.status || '').toLowerCase();
           if (['authorized', 'active'].includes(mpStatus)) {
             const completed = await completePlusUpgrade(subscription, mpData);
@@ -9423,15 +9484,6 @@ app.post('/api/pro/subscribe', async (req, res) => {
       }
     }
 
-    // Founder 15 check — server-side, counts active/pending founder slots.
-    // Plus NEVER participates: no reservation, no slot, no intro price.
-    const { count: founderCount } = await supabase
-      .from('lawyer_subscriptions')
-      .select('id', { count: 'exact', head: true })
-      .eq('is_founder', true)
-      .in('status', ['pending', 'active']);
-
-    const isFounderSlot = (founderCount ?? 0) < PRO_FOUNDER_LIMIT;
     // Pending with provider id: intentar reconciliar o reutilizar checkout
     if (subscription && subscription.status === 'pending' && subscription.provider_subscription_id) {
       try {
@@ -9441,6 +9493,31 @@ app.post('/api/pro/subscribe', async (req, res) => {
         const mpData = await mpCheck.json().catch(() => ({}));
         if (mpCheck.ok) {
           const mpStatus = (mpData.status || '').toLowerCase();
+          // Never activate or reuse a checkout that is incoherent with the
+          // persisted plan/amount/Founder state or the real provider amount.
+          const storedPlan = canonicalPaidPlan(subscription);
+          const providerAmount = Number(mpData?.auto_recurring?.transaction_amount ?? mpData?.transaction_amount);
+          const coherence = validateReusableCheckout({
+            amountClp: subscription.amount_clp,
+            isFounder: subscription.is_founder === true,
+            providerAmount,
+            allowedAmounts: allowedCheckoutAmounts,
+          });
+          if (storedPlan !== targetPlan || !coherence.ok) {
+            console.error('[LegalUpPro] pending checkout not reusable', {
+              userId,
+              storedPlan,
+              targetPlan,
+              amountClp: subscription.amount_clp,
+              providerAmount,
+              isFounder: subscription.is_founder === true,
+              code: storedPlan !== targetPlan ? 'PENDING_PLAN_MISMATCH' : coherence.code,
+            });
+            return res.status(409).json({
+              error: 'Tu checkout pendiente no coincide con el plan o precio esperado. Inicia un nuevo intento o contacta soporte.',
+              code: storedPlan !== targetPlan ? 'PENDING_PLAN_MISMATCH' : coherence.code,
+            });
+          }
           if (['authorized', 'active'].includes(mpStatus)) {
             const { derivePeriodFromProvider } = await import('./server/subscriptions/subscriptionEvents.mjs');
             const derived = derivePeriodFromProvider(mpData);
@@ -9451,7 +9528,17 @@ app.post('/api/pro/subscribe', async (req, res) => {
             return res.json({ success: true, already_active: true, status: 'active', provider_status: mpStatus });
           }
           if (mpStatus === 'pending' && (mpData.init_point || mpData.sandbox_init_point)) {
-            return res.json({ success: true, pending_checkout: true, initPoint: mpData.init_point || mpData.sandbox_init_point, preapproval_id: subscription.provider_subscription_id, provider_status: mpStatus });
+            return res.json({
+              success: true,
+              pending_checkout: true,
+              initPoint: mpData.init_point || mpData.sandbox_init_point,
+              preapproval_id: subscription.provider_subscription_id,
+              provider_status: mpStatus,
+              is_founder: isPlusTarget ? false : subscription.is_founder === true,
+              initial_price_clp: coherence.amountClp,
+              founder_track: !isPlusTarget && subscription.is_founder === true,
+              plan: targetPlan,
+            });
           }
           // cancelled/rejected/expired → permitir nuevo intento (continuar flujo)
           if (['cancelled', 'rejected', 'expired'].includes(mpStatus)) {
@@ -9471,31 +9558,68 @@ app.post('/api/pro/subscribe', async (req, res) => {
 
     const appUrl = process.env.APP_URL || process.env.FRONTEND_URL || 'https://legalup.cl';
 
-    // 4.57D price authority. Pro: certified Founder/standard resolver
-    // (intro-payment count reads PRO-plan payments only — Plus payments
-    // never advance the Founder counter). Plus: fixed 79.990, founder-blind.
-    const { decideCheckoutPrice, PRO_FOUNDER_RESERVATION_TTL_SECONDS } = await import('./server/proFounder.mjs');
+    // 4.57D price authority. Plus: fixed 79.990, founder-blind. Pro: profile
+    // + lifetime-approved count + atomic reservation, all checked explicitly.
+    // A failed/unrecognized reservation is an infrastructure error: no DB row,
+    // no provider charge, controlled retryable response.
     let initialPrice = PRO_STANDARD_PRICE_CLP;
     let founderTrack = false;
+    let isFounderSlot = false;
     if (isPlusTarget) {
       initialPrice = resolvePlanPrice({ planCode: 'plus' }).amountClp;
-    } else try {
-      const [{ data: prof }, lifetimeRes, reservRes] = await Promise.all([
-        supabase.from('profiles').select('is_founder').eq('id', userId).maybeSingle(),
-        supabase.from('pro_subscription_payments').select('id', { count: 'exact', head: true }).eq('lawyer_id', userId).eq('status', 'approved').or('plan.is.null,plan.eq.pro'),
-        supabase.rpc('reserve_pro_founder_slot', { p_lawyer_id: userId, p_ttl_seconds: PRO_FOUNDER_RESERVATION_TTL_SECONDS }),
-      ]);
-      const isFounder = prof?.is_founder === true;
-      const lifetimeApproved = lifetimeRes?.count ?? 0;
-      const reservation = typeof reservRes?.data === 'string' ? reservRes.data : null;
-      // Reservation is authoritative for non-Founders; founders use intro-count.
-      // If the lawyer is already a Founder, a concurrent reservation row (if any)
-      // is harmless: claim path treats them as already_founder.
-      initialPrice = decideCheckoutPrice({ isFounder, lifetimeApproved, reservation });
-      founderTrack = isFounder || reservation === 'reserved' || reservation === 'already_founder';
-    } catch {
-      initialPrice = PRO_STANDARD_PRICE_CLP; // fail-closed: never promise a discount we cannot honor
-      founderTrack = false;
+    } else {
+      try {
+        const [profileRes, lifetimeRes] = await Promise.all([
+          supabase.from('profiles').select('is_founder').eq('id', userId).maybeSingle(),
+          supabase.from('pro_subscription_payments').select('id', { count: 'exact', head: true }).eq('lawyer_id', userId).eq('status', 'approved').or('plan.is.null,plan.eq.pro'),
+        ]);
+        if (profileRes.error || !profileRes.data || lifetimeRes.error || typeof lifetimeRes.count !== 'number') {
+          console.error('[LegalUpPro] founder eligibility unavailable', {
+            userId,
+            profile: profileRes.error?.message || null,
+            payments: lifetimeRes.error?.message || null,
+          });
+          return res.status(503).json({
+            error: 'No se pudo confirmar tu elegibilidad Pro. No se inició ningún cobro; intenta nuevamente.',
+            code: 'FOUNDER_STATUS_UNAVAILABLE',
+          });
+        }
+        const reservRes = await supabase.rpc('reserve_pro_founder_slot', {
+          p_lawyer_id: userId,
+          p_ttl_seconds: PRO_FOUNDER_RESERVATION_TTL_SECONDS,
+        });
+        const pricing = resolveProCheckoutPricing({
+          isFounder: profileRes.data.is_founder === true,
+          lifetimeApproved: lifetimeRes.count,
+          reservationResult: reservRes,
+        });
+        if (!pricing.ok) {
+          console.error('[LegalUpPro] founder reservation rejected', {
+            userId,
+            code: pricing.code,
+            error: pricing.error?.message || pricing.error || null,
+            reservation: pricing.reservation ?? null,
+          });
+          // Best-effort: an invalid result must not squat a slot for its TTL.
+          // Never releases a hold already attached to a provider subscription.
+          try {
+            await supabase.from('pro_founder_reservations').delete().eq('lawyer_id', userId).is('provider_subscription_id', null);
+          } catch {}
+          return res.status(503).json({
+            error: 'No se pudo reservar tu cupo Founder. No se inició ningún cobro; intenta nuevamente.',
+            code: pricing.code,
+          });
+        }
+        initialPrice = pricing.amountClp;
+        founderTrack = pricing.founderTrack;
+        isFounderSlot = pricing.isFounderSlot;
+      } catch (error) {
+        console.error('[LegalUpPro] founder eligibility failed', error);
+        return res.status(503).json({
+          error: 'No se pudo confirmar tu elegibilidad Pro. No se inició ningún cobro; intenta nuevamente.',
+          code: 'FOUNDER_STATUS_UNAVAILABLE',
+        });
+      }
     }
 
     if (!subscription) {
@@ -9609,9 +9733,11 @@ app.post('/api/pro/subscribe', async (req, res) => {
         : { provider_subscription_id: String(mpResult.id), updated_at: new Date().toISOString() }
     ).eq('id', subscription.id);
     // Attach provider subscription to our reservation (abandonment tracking).
-    try {
-      await supabase.from('pro_founder_reservations').update({ provider_subscription_id: String(mpResult.id) }).eq('lawyer_id', userId);
-    } catch {}
+    if (!isPlusTarget) {
+      try {
+        await supabase.from('pro_founder_reservations').update({ provider_subscription_id: String(mpResult.id) }).eq('lawyer_id', userId);
+      } catch {}
+    }
 
     await capturePostHog(isPlusTarget ? 'plus_upgrade_started' : 'pro_subscription_checkout_started', userId, { price_clp: initialPrice, founder_track: founderTrack, preapproval_id: String(mpResult.id), is_founder: isFounderSlot, ...(isUpgrade ? { from_plan: 'pro', target_plan: 'plus' } : {}) });
 

@@ -8,6 +8,9 @@ import {
   shouldAttemptFounderClaim,
   selectFounderCohort,
   decideCheckoutPrice,
+  resolveProCheckoutPricing,
+  validateReusableCheckout,
+  PRO_RESERVATION_RESULTS,
 } from './proFounder.mjs';
 
 const row = (lawyer_id, paid_at, ap_id, status = 'approved') => ({
@@ -99,16 +102,148 @@ describe('4.32B.4 — checkout price matrix (server-authoritative)', () => {
     expect(PRO_STANDARD_PRICE_CLP).toBe(49990);
   });
 
-  it('Non-Founder: any lifetime count → 49990 unless reserved', () => {
+  it('Non-Founder: no slot → 49990; reserved slot follows the 3-payment intro rule', () => {
     for (const n of [0, 1, 2, 3, 10]) {
       expect(decideCheckoutPrice({ isFounder: false, lifetimeApproved: n, reservation: 'standard_no_slot' })).toBe(49990);
       expect(decideCheckoutPrice({ isFounder: false, lifetimeApproved: n, reservation: null })).toBe(49990);
     }
-    expect(decideCheckoutPrice({ isFounder: false, lifetimeApproved: 0, reservation: 'reserved' })).toBe(19990);
+    for (const n of [0, 1, 2]) {
+      expect(decideCheckoutPrice({ isFounder: false, lifetimeApproved: n, reservation: 'reserved' })).toBe(19990);
+    }
+    for (const n of [3, 4, 10]) {
+      expect(decideCheckoutPrice({ isFounder: false, lifetimeApproved: n, reservation: 'reserved' })).toBe(49990);
+    }
   });
 
-  it('Reservation failure fails closed to standard (retry re-reserves)', () => {
+  it('pure helper alone still falls back to standard for an unknown reservation', () => {
+    // The route must never rely on this fallback: resolveProCheckoutPricing
+    // turns a failed/unknown RPC into a controlled error (tested below).
     expect(decideCheckoutPrice({ isFounder: false, lifetimeApproved: 0, reservation: undefined })).toBe(49990);
+  });
+});
+
+describe('checkout pricing resolution — RPC is authoritative', () => {
+  it('exposes only the three known reservation results', () => {
+    expect(PRO_RESERVATION_RESULTS).toEqual(['reserved', 'already_founder', 'standard_no_slot']);
+  });
+
+  it('RPC error → error with FOUNDER_RESERVATION_FAILED (never a price)', () => {
+    const r = resolveProCheckoutPricing({
+      isFounder: false,
+      lifetimeApproved: 0,
+      reservationResult: { data: null, error: { message: 'db down' } },
+    });
+    expect(r.ok).toBe(false);
+    expect(r.code).toBe('FOUNDER_RESERVATION_FAILED');
+    expect(r.amountClp).toBeUndefined();
+  });
+
+  it('missing/unknown RPC result → FOUNDER_RESERVATION_INVALID (never a price)', () => {
+    for (const data of [null, undefined, '', 'boom', 42]) {
+      const r = resolveProCheckoutPricing({
+        isFounder: false,
+        lifetimeApproved: 0,
+        reservationResult: { data, error: null },
+      });
+      expect(r.ok).toBe(false);
+      expect(r.code).toBe('FOUNDER_RESERVATION_INVALID');
+      expect(r.amountClp).toBeUndefined();
+    }
+  });
+
+  it('reserved non-founder → intro price + Founder track', () => {
+    const r = resolveProCheckoutPricing({
+      isFounder: false,
+      lifetimeApproved: 0,
+      reservationResult: { data: 'reserved', error: null },
+    });
+    expect(r).toMatchObject({ ok: true, amountClp: 19990, isFounderSlot: true, founderTrack: true });
+  });
+
+  it('reserved non-founder with 3 approved payments → standard price but keeps Founder track', () => {
+    const r = resolveProCheckoutPricing({
+      isFounder: false,
+      lifetimeApproved: 3,
+      reservationResult: { data: 'reserved', error: null },
+    });
+    expect(r).toMatchObject({ ok: true, amountClp: 49990, isFounderSlot: true, founderTrack: true });
+  });
+
+  it('already_founder respects lifetime approved payments', () => {
+    for (const [n, price] of [[0, 19990], [2, 19990], [3, 49990], [4, 49990]]) {
+      const r = resolveProCheckoutPricing({
+        isFounder: true,
+        lifetimeApproved: n,
+        reservationResult: { data: 'already_founder', error: null },
+      });
+      expect(r).toMatchObject({ ok: true, amountClp: price, isFounderSlot: true, founderTrack: true });
+    }
+  });
+
+  it('standard_no_slot → standard price, no Founder track', () => {
+    const r = resolveProCheckoutPricing({
+      isFounder: false,
+      lifetimeApproved: 0,
+      reservationResult: { data: 'standard_no_slot', error: null },
+    });
+    expect(r).toMatchObject({ ok: true, amountClp: 49990, isFounderSlot: false, founderTrack: false });
+  });
+
+  it('invalid lifetime count is an error, never a default', () => {
+    for (const n of [undefined, null, 'x', -1, NaN]) {
+      const r = resolveProCheckoutPricing({
+        isFounder: false,
+        lifetimeApproved: n,
+        reservationResult: { data: 'reserved', error: null },
+      });
+      expect(r.ok).toBe(false);
+      expect(r.code).toBe('LIFETIME_COUNT_INVALID');
+    }
+  });
+});
+
+describe('pending checkout reuse coherence', () => {
+  const proAmounts = [19990, 49990];
+
+  it('accepts a coherent Pro Founder intro checkout', () => {
+    expect(validateReusableCheckout({ amountClp: 19990, isFounder: true, providerAmount: 19990, allowedAmounts: proAmounts }))
+      .toMatchObject({ ok: true, amountClp: 19990 });
+  });
+
+  it('accepts standard (non-founder) and post-intro founder checkouts', () => {
+    expect(validateReusableCheckout({ amountClp: 49990, isFounder: false, providerAmount: 49990, allowedAmounts: proAmounts }).ok).toBe(true);
+    expect(validateReusableCheckout({ amountClp: 49990, isFounder: true, providerAmount: 49990, allowedAmounts: proAmounts }).ok).toBe(true);
+  });
+
+  it('rejects intro amount without Founder state', () => {
+    const r = validateReusableCheckout({ amountClp: 19990, isFounder: false, providerAmount: 19990, allowedAmounts: proAmounts });
+    expect(r.ok).toBe(false);
+    expect(r.code).toBe('PENDING_FOUNDER_STATE_INVALID');
+  });
+
+  it('rejects provider/stored amount mismatch (never silently reprice)', () => {
+    const r = validateReusableCheckout({ amountClp: 19990, isFounder: true, providerAmount: 49990, allowedAmounts: proAmounts });
+    expect(r.ok).toBe(false);
+    expect(r.code).toBe('PENDING_PRICE_MISMATCH');
+  });
+
+  it('rejects missing provider amount', () => {
+    for (const providerAmount of [undefined, null, '']) {
+      const r = validateReusableCheckout({ amountClp: 19990, isFounder: true, providerAmount, allowedAmounts: proAmounts });
+      expect(r.ok).toBe(false);
+      expect(r.code).toBe('PROVIDER_AMOUNT_MISSING');
+    }
+  });
+
+  it('rejects amounts outside the target plan catalog', () => {
+    const r = validateReusableCheckout({ amountClp: 39990, isFounder: true, providerAmount: 39990, allowedAmounts: proAmounts });
+    expect(r.ok).toBe(false);
+    expect(r.code).toBe('PENDING_AMOUNT_INVALID');
+  });
+
+  it('Plus only accepts 79.990 and is founder-blind', () => {
+    expect(validateReusableCheckout({ amountClp: 79990, isFounder: false, providerAmount: 79990, allowedAmounts: [79990] }).ok).toBe(true);
+    expect(validateReusableCheckout({ amountClp: 19990, isFounder: true, providerAmount: 19990, allowedAmounts: [79990] }).code).toBe('PENDING_AMOUNT_INVALID');
   });
 });
 

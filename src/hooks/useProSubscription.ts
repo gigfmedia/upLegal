@@ -113,9 +113,17 @@ export function useProSubscription() {
 export type ProFounderStatus = {
   isFounder: boolean;
   founderSlotsRemaining: number;
+  maxFounderSlots?: number;
   previewPriceClp: number;
   introPriceClp: number;
   standardPriceClp: number;
+};
+
+export type ProFounderCapacity = {
+  claimed: number;
+  reserved: number;
+  remaining: number;
+  max: number;
 };
 
 /**
@@ -139,6 +147,24 @@ export function useProFounderStatus(enabled = true) {
     },
   });
   return query;
+}
+
+/**
+ * Public commercial capacity for the landing. No session/PII: the endpoint
+ * only returns aggregate claimed/reserved/remaining slots.
+ */
+export function useProFounderCapacity() {
+  return useQuery<ProFounderCapacity>({
+    queryKey: ['pro-founder-capacity'],
+    staleTime: 30 * 1000,
+    retry: 1,
+    queryFn: async () => {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/pro/founder-capacity`);
+      if (!res.ok) throw new Error('Founder capacity unavailable');
+      const data = await res.json();
+      return data as ProFounderCapacity;
+    },
+  });
 }
 
 /**

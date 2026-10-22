@@ -8,7 +8,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
-import { useProSubscription } from "@/hooks/useProSubscription";
+import { useProSubscription, useProFounderCapacity, useProFounderStatus } from "@/hooks/useProSubscription";
+import { resolveFounderAvailability } from "@/lib/proFounderDisplay";
+import { PRO_INTRO_PRICE_CLP_DISPLAY } from "@/lib/planDisplay";
 import { useLawyerCases } from "@/hooks/useLawyerCases";
 import { ProPricingModal } from "@/components/legalup-pro/ProPricingModal";
 import { TestimonialsSection } from "@/components/pro/TestimonialsSection";
@@ -371,6 +373,28 @@ export default function LegalUpPro() {
   const viewedRef = useRef(false);
   // 4.57D: canonical Plus tier for CTA state (current-plan vs upgrade).
   const isPlusUser = pro.canonicalPlan === 'plus' && pro.hasProAccess;
+
+  // Founder availability is server-driven. Signed-in users get their exact
+  // checkout preview (lifetime payments included); anonymous visitors get the
+  // public aggregate capacity. Unknown/error never renders $19.990.
+  const founderCapacity = useProFounderCapacity();
+  const founderPreview = useProFounderStatus(!!user && !isPlusUser);
+  const usesFounderPreview = !!user && !isPlusUser;
+  const founderLoading = usesFounderPreview ? founderPreview.isLoading : founderCapacity.isLoading;
+  const founderError = usesFounderPreview
+    ? founderPreview.isError || (!founderPreview.isLoading && founderPreview.data == null)
+    : founderCapacity.isError;
+  const founderAvailability = resolveFounderAvailability({
+    loading: founderLoading,
+    error: founderError,
+    remaining: usesFounderPreview ? founderPreview.data?.founderSlotsRemaining : founderCapacity.data?.remaining,
+    max: usesFounderPreview ? founderPreview.data?.maxFounderSlots : founderCapacity.data?.max,
+    priceClp: usesFounderPreview ? founderPreview.data?.previewPriceClp : undefined,
+  });
+  // A Founder who exhausted their 3 intro payments is still in the cohort but
+  // pays standard: never render the intro price for them.
+  const founderIntroAvailable = founderAvailability.state === "available"
+    && founderAvailability.priceClp === PRO_INTRO_PRICE_CLP_DISPLAY;
 
   const userRole = (user?.user_metadata?.role as string | undefined) ?? (user as any)?.role ?? (user as any)?.profile?.role ?? null;
 
@@ -1059,14 +1083,40 @@ export default function LegalUpPro() {
                     <h3 className="text-lg font-bold">LegalUp Pro</h3>
                     <div className="flex items-center gap-2">
                       <Badge className="bg-gray-900 text-white">Recomendado</Badge>
-                      <Badge className="border-green-200 bg-green-100 text-green-800">Founder</Badge>
+                      {founderIntroAvailable && (
+                        <Badge className="border-green-200 bg-green-100 text-green-800">Founder</Badge>
+                      )}
+                      {founderAvailability.state === 'sold_out' && (
+                        <Badge variant="outline" className="border-gray-300 text-gray-600">Cupos agotados</Badge>
+                      )}
                     </div>
                   </div>
-                  <div className="mt-3 flex items-end gap-1">
-                    <span className="text-5xl font-bold tracking-tight">$19.990</span>
-                    <span className="pb-1 text-sm font-medium text-gray-500">/mes</span>
-                  </div>
-                  <p className="mt-2 text-sm text-gray-600">Precio Founder durante tus primeros 3 cobros exitosos. Desde el cuarto cobro, $49.990/mes.</p>
+                  {founderIntroAvailable ? (
+                    <div className="mt-3 flex items-end gap-1">
+                      <span className="text-5xl font-bold tracking-tight">$19.990</span>
+                      <span className="pb-1 text-sm font-medium text-gray-500">/mes</span>
+                    </div>
+                  ) : founderAvailability.state === 'available' || founderAvailability.state === 'sold_out' ? (
+                    <div className="mt-3 flex items-end gap-1">
+                      <span className="text-5xl font-bold tracking-tight">$49.990</span>
+                      <span className="pb-1 text-sm font-medium text-gray-500">/mes</span>
+                    </div>
+                  ) : (
+                    <div className="mt-3 text-2xl font-bold tracking-tight text-gray-500">
+                      Precio según disponibilidad
+                    </div>
+                  )}
+                  <p className="mt-2 text-sm text-gray-600">
+                    {founderIntroAvailable
+                      ? `Precio Founder durante tus primeros 3 cobros exitosos. Desde el cuarto cobro, $49.990/mes. Quedan ${founderAvailability.remaining} de ${founderAvailability.max} cupos.`
+                      : founderAvailability.state === 'available'
+                        ? 'Precio estándar $49.990/mes. Ya completaste los 3 cobros Founder.'
+                        : founderAvailability.state === 'sold_out'
+                          ? 'Cupos Founder agotados (15/15). El precio estándar es $49.990/mes.'
+                          : founderAvailability.state === 'loading'
+                            ? 'Consultando disponibilidad de cupos Founder…'
+                            : 'No pudimos confirmar la disponibilidad Founder. El precio final se muestra en el checkout.'}
+                  </p>
                   <Button
                     onClick={() => handleProCTA("pricing_pro")}
                     className="mt-6 h-12 w-full rounded-full bg-gray-900 text-base hover:bg-green-900"
@@ -1184,7 +1234,13 @@ export default function LegalUpPro() {
                 Comenzar con LegalUp Pro <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
-            <p className="mt-5 text-sm font-medium text-green-900">Founder: $19.990/mes × 3 cobros exitosos · Luego $49.990/mes</p>
+            <p className="mt-5 text-sm font-medium text-green-900">
+              {founderIntroAvailable
+                ? `Founder: $19.990/mes × 3 cobros exitosos · Luego $49.990/mes · Quedan ${founderAvailability.remaining} cupos`
+                : founderAvailability.state === 'available' || founderAvailability.state === 'sold_out'
+                  ? 'Pro: $49.990/mes'
+                  : 'Precio Pro según disponibilidad de cupos Founder · Estándar $49.990/mes'}
+            </p>
           </Reveal>
             </div>
           </div>
