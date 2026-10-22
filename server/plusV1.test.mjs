@@ -76,9 +76,12 @@ describe('4.57D Plus v1 — allowances and server wiring', () => {
 
   it('webhook settles plan from trusted provider metadata (PLUS_ prefix)', () => {
     const server = read('server.mjs');
+    // The Plus settlement was extracted to server/subscriptions/proPreapprovalEvent.mjs
+    // (real, behaviourally tested). Its event_type prefix lives there now.
+    const preapproval = read('server/subscriptions/proPreapprovalEvent.mjs');
     expect(server).toContain('handlePlusPreapprovalWebhook');
     expect(server).toContain("startsWith(PLUS_EXTERNAL_REF_PREFIX)");
-    expect(server).toContain('plus_preapproval_');
+    expect(preapproval).toContain('plus_preapproval_');
     expect(server).toContain('plus_upgrade_completed');
     expect(server).toContain('plus_upgrade_failed');
     // Downgrade + stale-cancel reconciliation on Pro-family events.

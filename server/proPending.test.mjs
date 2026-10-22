@@ -6,6 +6,11 @@ import { dirname, resolve } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const serverSrc = readFileSync(resolve(__dirname, '../server.mjs'), 'utf8');
+// 4.57D follow-up: the Pro/Plus preapproval settlement was extracted to a real
+// module (server/subscriptions/proPreapprovalEvent.mjs) so it can be tested
+// behaviourally. The source-contract assertions below read the module that now
+// owns that logic (the guard assertion stays on server.mjs).
+const preapprovalSrc = readFileSync(resolve(__dirname, 'subscriptions/proPreapprovalEvent.mjs'), 'utf8');
 
 function mockGetProAccess(subscription) {
   const now = Date.now();
@@ -65,6 +70,6 @@ describe('FASE 4.57D — Pro webhook residual-state fixes (source contract)', ()
     expect(serverSrc).toMatch(/if \(!matchesActiveProvider\(subscription, preapprovalId\)\)/);
   });
   it('cancelled preapproval releases the unpaid Founder reservation', () => {
-    expect(serverSrc).toMatch(/mpStatus === 'cancelled'\)[\s\S]{0,1500}?from\('pro_founder_reservations'\)\.delete\(\)\.eq\('lawyer_id', lawyerId\)/);
+    expect(preapprovalSrc).toMatch(/mpStatus === 'cancelled'\)[\s\S]{0,1500}?from\('pro_founder_reservations'\)\.delete\(\)\.eq\('lawyer_id', lawyerId\)/);
   });
 });

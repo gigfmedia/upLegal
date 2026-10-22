@@ -6091,84 +6091,31 @@ const handleProPreapprovalWebhook = async (preapproval) => {
   subscription = await maybeApplyScheduledDowngrade(subscription) ?? subscription;
   subscription = await retryOldProCancel(subscription) ?? subscription;
   if (isPlusRef) {
-    await handlePlusPreapprovalWebhook(subscription, preapproval, { mpStatus, preapprovalId });
+    await handlePlusPreapprovalWebhook(subscription, preapproval);
     return;
   }
-  const providerEventAt = preapproval.last_modified || preapproval.date_created || new Date().toISOString();
-  const providerEventId = `${preapprovalId}:${mpStatus}:${providerEventAt}`;
-  const { tryInsertSubscriptionEvent, derivePeriodFromProvider, shouldApplyEvent } = await import('./server/subscriptions/subscriptionEvents.mjs');
-  const ev = await tryInsertSubscriptionEvent(supabase, { productType: 'pro', subscriptionId: subscription.id, providerEventId, providerEventAt, eventType: `preapproval_${mpStatus}`, providerStatus: mpStatus });
-  if (!ev.inserted) return;
-  if (!(await shouldApplyEvent(supabase, { productType: 'pro', subscriptionId: subscription.id, providerEventAt }))) return;
-  if (subscription.status === 'cancelled' && subscription.cancelled_at) {
-    const cancelledAt = new Date(subscription.cancelled_at).getTime();
-    const eventAt = new Date(providerEventAt).getTime();
-    if (!isNaN(cancelledAt) && !isNaN(eventAt) && eventAt <= cancelledAt) return;
-  }
-  const now = new Date();
-  if (mpStatus === 'authorized' || mpStatus === 'active') {
-    const derived = derivePeriodFromProvider(preapproval);
-    if (!derived) return;
-    const periodEnd = derived.end;
-    await supabase.from('lawyer_subscriptions').update({ status: 'active', current_period_start: derived.start.toISOString(), current_period_end: periodEnd.toISOString(), cancel_at_period_end: false, cancelled_at: null, updated_at: now.toISOString() }).eq('id', subscription.id);
-    await capturePostHog('pro_subscription_activated', lawyerId, { price_clp: PRO_SUBSCRIPTION_PRICE_CLP });
-    const userData = await getProLawyerEmail(lawyerId);
-    if (userData?.email) {
-      try { await sendAIEmail(userData.email, '¡Bienvenido a LegalUp Pro!', '<p>Tu suscripción Pro está activa.</p>'); } catch {}
-    }
-  } else if (mpStatus === 'cancelled') {
-    // MP sends `cancelled` for an abandoned (never-authorized) checkout as well
-    // as for a real cancellation. The preapproval status enum is
-    // pending|authorized|paused|cancelled — rejected/expired are payment/order
-    // statuses, never preapprovals (verified against Mercado Pago docs), so no
-    // branch is added for them here. Identity was verified above, so this only
-    // affects the preapproval linked to this row. Release the unpaid Founder
-    // hold so an abandoned checkout cannot squat a slot for its TTL (mirrors
-    // POST /api/pro/subscription/cancel); a claimed badge (profiles.is_founder)
-    // and any live subscription are never touched by this path.
-    await supabase.from('lawyer_subscriptions').update({ status: 'cancelled', cancelled_at: now.toISOString(), cancel_at_period_end: true, updated_at: now.toISOString() }).eq('id', subscription.id);
-    if (subscription.plan !== 'plus') {
-      try { await supabase.from('pro_founder_reservations').delete().eq('lawyer_id', lawyerId); } catch {}
-    }
-  } else if (mpStatus === 'paused') {
-    await supabase.from('lawyer_subscriptions').update({ status: 'past_due', updated_at: now.toISOString() }).eq('id', subscription.id);
-  }
+  // Retry-safe reconciliation lives in the extracted orchestrator (real code,
+  // unit/integration tested). See server/subscriptions/proPreapprovalEvent.mjs.
+  const { processProPreapprovalEvent } = await import('./server/subscriptions/proPreapprovalEvent.mjs');
+  await processProPreapprovalEvent({
+    supabase,
+    subscription,
+    preapproval,
+    deps: { capturePostHog, getProLawyerEmail, sendAIEmail, priceClp: PRO_SUBSCRIPTION_PRICE_CLP },
+  });
 };
 
-// 4.57D: Plus preapproval settlement. Shares the Pro-family event dedup
-// (tryInsertSubscriptionEvent + shouldApplyEvent) so retries never double
-// grant. Plus NEVER touches Founder state (no claim, no reservation, no
-// intro transition) and activates ONLY via completePlusUpgrade.
-const handlePlusPreapprovalWebhook = async (subscription, preapproval, { mpStatus, preapprovalId }) => {
-  const lawyerId = subscription.lawyer_id;
-  const providerEventAt = preapproval.last_modified || preapproval.date_created || new Date().toISOString();
-  const providerEventId = `${preapprovalId}:${mpStatus}:${providerEventAt}`;
-  const { tryInsertSubscriptionEvent, shouldApplyEvent } = await import('./server/subscriptions/subscriptionEvents.mjs');
-  const ev = await tryInsertSubscriptionEvent(supabase, { productType: 'pro', subscriptionId: subscription.id, providerEventId, providerEventAt, eventType: `plus_preapproval_${mpStatus}`, providerStatus: mpStatus });
-  if (!ev.inserted) return;
-  if (!(await shouldApplyEvent(supabase, { productType: 'pro', subscriptionId: subscription.id, providerEventAt }))) return;
-  const now = new Date();
-  if (mpStatus === 'authorized' || mpStatus === 'active') {
-    const pendingId = subscription.pending_provider_subscription_id;
-    const isExpected = pendingId ? String(pendingId) === String(preapprovalId) : subscription.plan === 'plus' && String(subscription.provider_subscription_id) === String(preapprovalId);
-    if (!isExpected && subscription.plan_change_status !== 'upgrade_pending') return;
-    const completed = await completePlusUpgrade(subscription, preapproval);
-    if (!completed.ok) {
-      try { await capturePostHog('plus_upgrade_failed', lawyerId, { reason: completed.reason }); } catch {}
-    }
-  } else if (['cancelled', 'rejected', 'expired'].includes(mpStatus)) {
-    // Failed/abandoned upgrade: clear transition state, Pro stays intact.
-    if (subscription.plan_change_status === 'upgrade_pending' && String(subscription.pending_provider_subscription_id || '') === String(preapprovalId)) {
-      await supabase.from('lawyer_subscriptions').update({ pending_plan: null, plan_change_status: null, plan_change_effective_at: null, pending_provider_subscription_id: null, pending_init_point: null, previous_provider_subscription_id: null, updated_at: now.toISOString() }).eq('id', subscription.id);
-      try { await capturePostHog('plus_upgrade_failed', lawyerId, { reason: `provider_${mpStatus}` }); } catch {}
-    } else if (subscription.plan === 'plus' && String(subscription.provider_subscription_id || '') === String(preapprovalId)) {
-      await supabase.from('lawyer_subscriptions').update({ status: 'cancelled', cancelled_at: now.toISOString(), cancel_at_period_end: true, updated_at: now.toISOString() }).eq('id', subscription.id);
-    }
-  } else if (mpStatus === 'paused') {
-    if (subscription.plan === 'plus') {
-      await supabase.from('lawyer_subscriptions').update({ status: 'past_due', updated_at: now.toISOString() }).eq('id', subscription.id);
-    }
-  }
+// 4.57D: Plus preapproval settlement. Delegates to the extracted orchestrator
+// (shared Pro-family dedup/retry). Plus NEVER touches Founder state (no claim,
+// no reservation, no intro transition) and activates ONLY via completePlusUpgrade.
+const handlePlusPreapprovalWebhook = async (subscription, preapproval) => {
+  const { processPlusPreapprovalEvent } = await import('./server/subscriptions/proPreapprovalEvent.mjs');
+  await processPlusPreapprovalEvent({
+    supabase,
+    subscription,
+    preapproval,
+    deps: { capturePostHog, completePlusUpgrade },
+  });
 };
 
 const handleProAuthorizedPayment = async (payment) => {
@@ -6196,7 +6143,7 @@ const handleProAuthorizedPayment = async (payment) => {
     if (ev.status === 'processed') return;
     if (!ev.retryable) return;
   }
-  if (!(await shouldApplyEvent(supabase, { productType: 'pro', subscriptionId: subscription.id, providerEventAt }))) {
+  if (!(await shouldApplyEvent(supabase, { productType: 'pro', subscriptionId: subscription.id, providerEventAt, eventTypePrefix: 'payment' }))) {
     await markSubscriptionEventProcessed(supabase, { productType: 'pro', providerEventId });
     return;
   }
