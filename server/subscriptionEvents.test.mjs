@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import { derivePeriodFromProvider } from './subscriptions/subscriptionEvents.mjs';
+import { derivePeriodFromProvider, matchesActiveProvider } from './subscriptions/subscriptionEvents.mjs';
 
 describe('FASE 4B-4.1 — period derivation', () => {
   it('uses next_payment_date as period end', () => {
@@ -71,5 +71,30 @@ describe('FASE 4B-4.1 — event idempotency', () => {
     expect(r.duplicate).toBe(true);
     expect(r.retryable).toBe(true);
     expect(r.status).toBe('pending');
+  });
+});
+
+describe('FASE 4.57D — preapproval identity guard (matchesActiveProvider)', () => {
+  it('accepts the canonical provider subscription id', () => {
+    expect(matchesActiveProvider({ provider_subscription_id: 'MP1', pending_provider_subscription_id: null }, 'MP1')).toBe(true);
+  });
+  it('accepts the in-flight pending (upgrade) provider subscription id', () => {
+    expect(matchesActiveProvider({ provider_subscription_id: 'MP_PRO', pending_provider_subscription_id: 'MP_PLUS' }, 'MP_PLUS')).toBe(true);
+  });
+  it('rejects a foreign or stale provider id', () => {
+    expect(matchesActiveProvider({ provider_subscription_id: 'MP1', pending_provider_subscription_id: null }, 'MP_OLD')).toBe(false);
+  });
+  it('rejects an empty or missing provider id', () => {
+    expect(matchesActiveProvider({ provider_subscription_id: 'MP1' }, '')).toBe(false);
+    expect(matchesActiveProvider({ provider_subscription_id: 'MP1' }, null)).toBe(false);
+    expect(matchesActiveProvider({ provider_subscription_id: 'MP1' }, undefined)).toBe(false);
+  });
+  it('accepts when nothing is linked yet (first authorization race)', () => {
+    expect(matchesActiveProvider({ provider_subscription_id: null, pending_provider_subscription_id: null }, 'MP1')).toBe(true);
+    expect(matchesActiveProvider({}, 'MP1')).toBe(true);
+  });
+  it('coerces non-string provider ids', () => {
+    expect(matchesActiveProvider({ provider_subscription_id: 123456 }, 123456)).toBe(true);
+    expect(matchesActiveProvider({ provider_subscription_id: 123456 }, '123456')).toBe(true);
   });
 });
