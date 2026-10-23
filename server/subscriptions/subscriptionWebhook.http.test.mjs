@@ -246,7 +246,7 @@ describe('subscription webhook over real HTTP', () => {
   it('H2: permanent 4xx is ACKed with an explicit reason and no retry', async () => {
     const app = createApp({
       supabase: createMockSupabase().supabase,
-      fetchImpl: async () => response(403),
+      fetchImpl: async () => response(400),
     });
 
     await withServer(app, async (base) => {
@@ -255,9 +255,24 @@ describe('subscription webhook over real HTTP', () => {
       expect(result.json).toMatchObject({
         skipped: 'provider_fetch_failed',
         reason: 'provider_rejected',
-        http_status: 403,
+        http_status: 400,
       });
     });
+  });
+
+  it('H2: 401/403 are operational auth failures and return 503 for redelivery', async () => {
+    for (const status of [401, 403]) {
+      const app = createApp({
+        supabase: createMockSupabase().supabase,
+        fetchImpl: async () => response(status),
+      });
+
+      await withServer(app, async (base) => {
+        const result = await post(base, { type: 'subscription_preapproval', data: { id: 'pre-1' } });
+        expect(result.status).toBe(503);
+        expect(result.json).toMatchObject({ error: 'processing_in_progress', retry: true });
+      });
+    }
   });
 
   it('H3: pending then approved are separate transitions and approved activates', async () => {

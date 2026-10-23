@@ -35,6 +35,10 @@ describe('claimDisposition', () => {
     expect(claimDisposition({ claimed: false, reason: 'busy' })).toEqual({ action: 'retry', reason: 'busy' });
   });
 
+  it('marks a scheduled backoff as retryable without claiming it', () => {
+    expect(claimDisposition({ claimed: false, reason: 'backoff' })).toEqual({ action: 'retry', reason: 'backoff' });
+  });
+
   it('acks terminal duplicates without effects', () => {
     expect(claimDisposition({ claimed: false, reason: 'terminal' })).toEqual({ action: 'ack', reason: 'terminal' });
   });
@@ -52,6 +56,7 @@ describe('claimDisposition', () => {
 describe('nonClaimedResult', () => {
   it('returns a retryable busy result without side effects', () => {
     expect(nonClaimedResult({ claimed: false, reason: 'busy' })).toEqual({ skipped: 'busy', retry: true });
+    expect(nonClaimedResult({ claimed: false, reason: 'backoff' })).toEqual({ skipped: 'backoff', retry: true });
   });
 
   it('acks terminal duplicates and throws on a missing event', () => {

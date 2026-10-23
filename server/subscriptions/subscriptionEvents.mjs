@@ -8,6 +8,10 @@ export const RETRY_LEASE_MS = 10 * 60 * 1000;
 // behaviour of in-flight events is unchanged.
 export const CLAIM_LEASE_SECONDS = Math.ceil(RETRY_LEASE_MS / 1000);
 
+// H4: bounded event attempts. After this many failed claims the event becomes
+// terminal (`dead`) instead of being retried forever.
+export const EVENT_MAX_ATTEMPTS = 8;
+
 function toIso(value) {
   return value ? new Date(value).toISOString() : new Date().toISOString();
 }
@@ -39,6 +43,7 @@ export async function beginSubscriptionEvent(supabase, {
   resourceStatus = null,
   transitionKey = null,
   leaseSeconds = CLAIM_LEASE_SECONDS,
+  maxAttempts = EVENT_MAX_ATTEMPTS,
 }) {
   let claimEventId = String(providerEventId);
   const { error } = await supabase.from('subscription_events').insert({
@@ -77,6 +82,7 @@ export async function beginSubscriptionEvent(supabase, {
     p_event_id: claimEventId,
     p_product_type: productType,
     p_lease_seconds: leaseSeconds,
+    p_max_attempts: maxAttempts,
   });
   if (claimError) throw claimError;
   const row = Array.isArray(data) ? data[0] : data;
@@ -96,7 +102,7 @@ export async function completeSubscriptionEvent(supabase, { productType, provide
   return data ?? 0;
 }
 
-export async function failSubscriptionEvent(supabase, { productType, providerEventId, claimToken, error }) {
+export async function failSubscriptionEvent(supabase, { productType, providerEventId, claimToken, error, maxAttempts = EVENT_MAX_ATTEMPTS }) {
   if (!claimToken) throw new Error('claim_token_required');
   const { data, error: rpcError } = await supabase.rpc('fail_subscription_event', {
     p_provider: 'mercadopago',
@@ -104,6 +110,7 @@ export async function failSubscriptionEvent(supabase, { productType, providerEve
     p_product_type: productType,
     p_claim_token: claimToken,
     p_error: String(error ?? 'unknown'),
+    p_max_attempts: maxAttempts,
   });
   if (rpcError) throw rpcError;
   return data === true;

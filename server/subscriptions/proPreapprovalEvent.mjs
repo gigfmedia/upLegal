@@ -113,7 +113,7 @@ export async function processProPreapprovalEvent({ supabase, subscription, preap
         await completeSubscriptionEvent(supabase, { productType: 'pro', providerEventId, claimToken: claim.claim_token });
         return { skipped: 'no_period' };
       }
-      await supabase.from('lawyer_subscriptions').update({
+      const { error: updateError } = await supabase.from('lawyer_subscriptions').update({
         status: 'active',
         current_period_start: derived.start.toISOString(),
         current_period_end: derived.end.toISOString(),
@@ -121,6 +121,7 @@ export async function processProPreapprovalEvent({ supabase, subscription, preap
         cancelled_at: null,
         updated_at: now.toISOString(),
       }).eq('id', subscription.id);
+      if (updateError) throw updateError;
       effects.push(analyticsEffect({
         transitionKey: tk,
         event: 'pro_subscription_activated',
@@ -134,17 +135,19 @@ export async function processProPreapprovalEvent({ supabase, subscription, preap
         html: '<p>Tu suscripción Pro está activa.</p>',
       }));
     } else if (mpStatus === 'cancelled') {
-      await supabase.from('lawyer_subscriptions').update({
+      const { error: cancelError } = await supabase.from('lawyer_subscriptions').update({
         status: 'cancelled',
         cancelled_at: now.toISOString(),
         cancel_at_period_end: true,
         updated_at: now.toISOString(),
       }).eq('id', subscription.id);
+      if (cancelError) throw cancelError;
       if (subscription.plan !== 'plus') {
         try { await supabase.from('pro_founder_reservations').delete().eq('lawyer_id', lawyerId); } catch {}
       }
     } else if (mpStatus === 'paused') {
-      await supabase.from('lawyer_subscriptions').update({ status: 'past_due', updated_at: now.toISOString() }).eq('id', subscription.id);
+      const { error: pauseError } = await supabase.from('lawyer_subscriptions').update({ status: 'past_due', updated_at: now.toISOString() }).eq('id', subscription.id);
+      if (pauseError) throw pauseError;
     }
     await completeSubscriptionEvent(supabase, { productType: 'pro', providerEventId, claimToken: claim.claim_token, effects });
     await drain({ drainEffects: deps.drainEffects, effectHandlers }, supabase);
@@ -210,7 +213,7 @@ export async function processPlusPreapprovalEvent({ supabase, subscription, prea
       }
     } else if (['cancelled', 'rejected', 'expired'].includes(mpStatus)) {
       if (subscription.plan_change_status === 'upgrade_pending' && String(subscription.pending_provider_subscription_id || '') === String(preapprovalId)) {
-        await supabase.from('lawyer_subscriptions').update({
+        const { error: resetError } = await supabase.from('lawyer_subscriptions').update({
           pending_plan: null,
           plan_change_status: null,
           plan_change_effective_at: null,
@@ -219,6 +222,7 @@ export async function processPlusPreapprovalEvent({ supabase, subscription, prea
           previous_provider_subscription_id: null,
           updated_at: now.toISOString(),
         }).eq('id', subscription.id);
+        if (resetError) throw resetError;
         effects.push(analyticsEffect({
           transitionKey: tk,
           event: 'plus_upgrade_failed',
@@ -226,16 +230,18 @@ export async function processPlusPreapprovalEvent({ supabase, subscription, prea
           props: { reason: `provider_${mpStatus}` },
         }));
       } else if (subscription.plan === 'plus' && String(subscription.provider_subscription_id || '') === String(preapprovalId)) {
-        await supabase.from('lawyer_subscriptions').update({
+        const { error: cancelError } = await supabase.from('lawyer_subscriptions').update({
           status: 'cancelled',
           cancelled_at: now.toISOString(),
           cancel_at_period_end: true,
           updated_at: now.toISOString(),
         }).eq('id', subscription.id);
+        if (cancelError) throw cancelError;
       }
     } else if (mpStatus === 'paused') {
       if (subscription.plan === 'plus') {
-        await supabase.from('lawyer_subscriptions').update({ status: 'past_due', updated_at: now.toISOString() }).eq('id', subscription.id);
+        const { error: pauseError } = await supabase.from('lawyer_subscriptions').update({ status: 'past_due', updated_at: now.toISOString() }).eq('id', subscription.id);
+        if (pauseError) throw pauseError;
       }
     }
     await completeSubscriptionEvent(supabase, { productType: 'pro', providerEventId, claimToken: claim.claim_token, effects });

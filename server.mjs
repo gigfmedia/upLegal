@@ -22,6 +22,7 @@ import { sendWebhookResponse } from './server/subscriptions/webhookResponse.mjs'
 import { dispatchSubscriptionWebhook } from './server/subscriptions/subscriptionWebhook.mjs';
 import { fetchProviderResource, providerFetchFailureResult } from './server/subscriptions/providerFetch.mjs';
 import { processProAuthorizedPaymentEvent } from './server/subscriptions/proPaymentEvent.mjs';
+import { startSubscriptionRecovery } from './server/subscriptions/subscriptionRecoveryScheduler.mjs';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -6077,7 +6078,10 @@ const subscriptionEffectHandlers = {
   },
 };
 
-const handleProPreapprovalWebhook = async (preapproval) => {
+// Shared, read-only resolver for a Pro-family preapproval. It loads the
+// subscription by trusted external_reference and applies the provider identity
+// guard. It never mutates, so both the normal webhook and recovery can use it.
+const resolveProPreapprovalSubscription = async (preapproval) => {
   const mpStatus = preapproval.status;
   const preapprovalId = preapproval.id;
   const externalRef = preapproval.external_reference || '';
@@ -6088,7 +6092,14 @@ const handleProPreapprovalWebhook = async (preapproval) => {
     .replace(PLUS_EXTERNAL_REF_PREFIX, '')
     .replace(PRO_EXTERNAL_REF_PREFIX, '');
   if (!lawyerId) return { skipped: 'invalid_external_reference' };
-  let { data: subscription } = await supabase.from('lawyer_subscriptions').select('*').eq('lawyer_id', lawyerId).maybeSingle();
+  const { data: subscription, error } = await supabase
+    .from('lawyer_subscriptions')
+    .select('*')
+    .eq('lawyer_id', lawyerId)
+    .maybeSingle();
+  // A DB error is not "not found": surface it so recovery defers/retries
+  // instead of terminalizing the event as dead.
+  if (error) throw error;
   if (!subscription) return { skipped: 'subscription_not_found' };
   // Identity guard (4.57D follow-up): the row is resolved by external_reference
   // (lawyer_id), NOT by the preapproval id, so we must confirm this event
@@ -6106,11 +6117,20 @@ const handleProPreapprovalWebhook = async (preapproval) => {
     });
     return { skipped: 'provider_mismatch' };
   }
+  return { subscription, isPlusRef };
+};
+
+const handleProPreapprovalWebhook = async (preapproval) => {
+  const resolved = await resolveProPreapprovalSubscription(preapproval);
+  if (resolved.skipped) return resolved;
+  let { subscription } = resolved;
   // Reconcile scheduled downgrades + stale old-Pro cancellations on every
-  // Pro-family webhook event (no cron dependency).
+  // Pro-family webhook event (no cron dependency). This runs BEFORE the
+  // orchestrator claim; recovery deliberately skips it so the claim remains
+  // the only mutation gate for a replayed event.
   subscription = await maybeApplyScheduledDowngrade(subscription) ?? subscription;
   subscription = await retryOldProCancel(subscription) ?? subscription;
-  if (isPlusRef) {
+  if (resolved.isPlusRef) {
     return await handlePlusPreapprovalWebhook(subscription, preapproval);
   }
   // Retry-safe reconciliation lives in the extracted orchestrator (real code,
@@ -6119,6 +6139,22 @@ const handleProPreapprovalWebhook = async (preapproval) => {
   return await processProPreapprovalEvent({
     supabase,
     subscription,
+    preapproval,
+    deps: { priceClp: PRO_SUBSCRIPTION_PRICE_CLP, effectHandlers: subscriptionEffectHandlers },
+  });
+};
+
+// H4 recovery variant: same resolver/orchestrator, no pre-claim reconciliation.
+const handleProPreapprovalRecovery = async (preapproval) => {
+  const resolved = await resolveProPreapprovalSubscription(preapproval);
+  if (resolved.skipped) return resolved;
+  if (resolved.isPlusRef) {
+    return await handlePlusPreapprovalWebhook(resolved.subscription, preapproval);
+  }
+  const { processProPreapprovalEvent } = await import('./server/subscriptions/proPreapprovalEvent.mjs');
+  return await processProPreapprovalEvent({
+    supabase,
+    subscription: resolved.subscription,
     preapproval,
     deps: { priceClp: PRO_SUBSCRIPTION_PRICE_CLP, effectHandlers: subscriptionEffectHandlers },
   });
@@ -6137,17 +6173,38 @@ const handlePlusPreapprovalWebhook = async (subscription, preapproval) => {
   });
 };
 
-const handleProAuthorizedPayment = async (payment) => {
+const resolveProPaymentSubscription = async (payment) => {
   const preapprovalId = payment.preapproval_id;
   if (!preapprovalId) return { skipped: 'missing_preapproval_id' };
-  let { data: subscription } = await supabase.from('lawyer_subscriptions').select('*').eq('provider_subscription_id', String(preapprovalId)).maybeSingle();
-  if (!subscription) {
-    // 4.57D: in-flight Plus upgrade — the Plus preapproval lives in the
-    // pending column until confirmation flips it to canonical.
-    const pending = await supabase.from('lawyer_subscriptions').select('*').eq('pending_provider_subscription_id', String(preapprovalId)).maybeSingle();
-    subscription = pending.data ?? null;
-  }
-  if (!subscription) return { skipped: 'subscription_not_found' };
+  const { data: subscription, error } = await supabase
+    .from('lawyer_subscriptions')
+    .select('*')
+    .eq('provider_subscription_id', String(preapprovalId))
+    .maybeSingle();
+  if (error) throw error;
+  if (subscription) return { subscription, preapprovalId };
+  // 4.57D: in-flight Plus upgrade — the Plus preapproval lives in the pending
+  // column until confirmation flips it to canonical.
+  const pending = await supabase
+    .from('lawyer_subscriptions')
+    .select('*')
+    .eq('pending_provider_subscription_id', String(preapprovalId))
+    .maybeSingle();
+  if (pending.error) throw pending.error;
+  if (!pending.data) return { skipped: 'subscription_not_found' };
+  return { subscription: pending.data, preapprovalId };
+};
+
+const proPaymentDeps = () => ({
+  completePlusUpgrade,
+  ensureProStandardPrice,
+  effectHandlers: subscriptionEffectHandlers,
+});
+
+const handleProAuthorizedPayment = async (payment) => {
+  const resolved = await resolveProPaymentSubscription(payment);
+  if (resolved.skipped) return resolved;
+  let { subscription } = resolved;
   subscription = await maybeApplyScheduledDowngrade(subscription) ?? subscription;
   subscription = await retryOldProCancel(subscription) ?? subscription;
 
@@ -6155,12 +6212,21 @@ const handleProAuthorizedPayment = async (payment) => {
     supabase,
     payment,
     subscription,
-    preapprovalId,
-    deps: {
-      completePlusUpgrade,
-      ensureProStandardPrice,
-      effectHandlers: subscriptionEffectHandlers,
-    },
+    preapprovalId: resolved.preapprovalId,
+    deps: proPaymentDeps(),
+  });
+};
+
+// H4 recovery variant: no pre-claim reconciliation.
+const handleProAuthorizedPaymentRecovery = async (payment) => {
+  const resolved = await resolveProPaymentSubscription(payment);
+  if (resolved.skipped) return resolved;
+  return await processProAuthorizedPaymentEvent({
+    supabase,
+    payment,
+    subscription: resolved.subscription,
+    preapprovalId: resolved.preapprovalId,
+    deps: proPaymentDeps(),
   });
 };
 
@@ -13005,13 +13071,37 @@ setInterval(async () => {
 const SUBSCRIPTION_EFFECTS_DRAIN_MS = 60 * 1000;
 setInterval(async () => {
   try {
-    const { drainSubscriptionEffects } = await import('./server/subscriptions/subscriptionEffects.mjs');
-    const result = await drainSubscriptionEffects(supabase, subscriptionEffectHandlers, { limit: 20 });
+    const { runSubscriptionEffectsMaintenance } = await import('./server/subscriptions/subscriptionEffects.mjs');
+    const result = await runSubscriptionEffectsMaintenance(supabase, subscriptionEffectHandlers, { limit: 20 });
+    if (result.expired > 0) console.log(`[SubscriptionEffects] expired ${result.expired} exhausted effects`);
     if (result.processed > 0) console.log(`[SubscriptionEffects] drained ${result.processed}`);
   } catch (error) {
     console.error('[SubscriptionEffects] periodic drain error:', error?.message || error);
   }
 }, SUBSCRIPTION_EFFECTS_DRAIN_MS).unref();
+
+// H4: recover Pro subscription events whose provider redeliveries stopped.
+// Disabled by default until the H4 migrations are applied and the operator
+// explicitly enables SUBSCRIPTION_RECOVERY_ENABLED=1. The scheduler adds an
+// in-process overlap guard, a cross-instance DB lease and an auth cooldown.
+startSubscriptionRecovery({
+  supabase,
+  handlers: () => ({
+    fetchPreapproval: (id) => fetchProviderResource(
+      `https://api.mercadopago.com/preapproval/${id}`,
+      { headers: { Authorization: `Bearer ${mercadopagoAccessToken}` } }
+    ),
+    fetchPayment: (id) => fetchProviderResource(
+      `https://api.mercadopago.com/v1/payments/${id}`,
+      { headers: { Authorization: `Bearer ${mercadopagoAccessToken}` } }
+    ),
+    handlers: {
+      // Recovery-only handlers: they never reconcile before the atomic claim.
+      preapproval: handleProPreapprovalRecovery,
+      payment: handleProAuthorizedPaymentRecovery,
+    },
+  }),
+});
 
 // ============================================================================
 // ASISTENTE COMERCIAL Y DE ORIENTACIÓN (front público)

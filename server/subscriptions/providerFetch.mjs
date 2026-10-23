@@ -11,10 +11,21 @@ export const PROVIDER_FETCH_TIMEOUT_MS = 10_000;
 // invisible. A genuinely missing id will exhaust MP's retry budget.
 const RETRYABLE_HTTP_STATUSES = new Set([404, 408, 425, 429]);
 
+// 401/403 are not event failures: the provider credential is missing/expired or
+// lacks the scope. Recovery must pause and alert instead of burning attempts or
+// terminalizing the event, and the webhook must ask for a redelivery (503).
+const AUTH_FAILURE_HTTP_STATUSES = new Set([401, 403]);
+
 export function isRetryableProviderStatus(status) {
   const code = Number(status);
   if (!Number.isFinite(code)) return false;
   return RETRYABLE_HTTP_STATUSES.has(code) || code >= 500;
+}
+
+export function isAuthFailureProviderStatus(status) {
+  const code = Number(status);
+  if (!Number.isFinite(code)) return false;
+  return AUTH_FAILURE_HTTP_STATUSES.has(code);
 }
 
 function errorReason(error) {
@@ -47,10 +58,15 @@ export async function fetchProviderResource(url, {
 
   if (!response?.ok) {
     const status = response?.status ?? null;
+    const authFailure = isAuthFailureProviderStatus(status);
+    const retryable = isRetryableProviderStatus(status);
     return {
       ok: false,
-      retryable: isRetryableProviderStatus(status),
-      reason: isRetryableProviderStatus(status) ? 'provider_unavailable' : 'provider_rejected',
+      retryable,
+      authFailure,
+      reason: authFailure
+        ? 'provider_auth_failed'
+        : (retryable ? 'provider_unavailable' : 'provider_rejected'),
       status,
       response,
     };
@@ -70,9 +86,14 @@ export async function fetchProviderResource(url, {
 }
 
 export function providerFetchFailureResult(failure) {
+  const authFailure = failure?.authFailure === true;
   return {
     skipped: 'provider_fetch_failed',
-    retry: failure?.retryable === true,
+    // An auth failure is operational, not event-specific: ask the provider to
+    // redeliver while the credential is fixed. Recovery handles it separately
+    // and never consumes an event attempt for it.
+    retry: failure?.retryable === true || authFailure,
+    auth_failure: authFailure,
     reason: failure?.reason || 'unknown_error',
     http_status: failure?.status ?? null,
   };
