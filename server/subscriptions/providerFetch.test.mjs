@@ -44,15 +44,41 @@ describe('providerFetch', () => {
       });
     }
 
-    for (const status of [400, 401, 403, 422]) {
+    for (const status of [400, 422]) {
       const result = await fetchProviderResource('https://mp.test/x', {
         fetchImpl: async () => response(status),
       });
       expect(isRetryableProviderStatus(status)).toBe(false);
       expect(result.retryable).toBe(false);
+      expect(result.authFailure).toBe(false);
       expect(providerFetchFailureResult(result)).toMatchObject({
         skipped: 'provider_fetch_failed',
         retry: false,
+        auth_failure: false,
+        http_status: status,
+      });
+    }
+  });
+
+  it('classifies 401/403 as an operational auth failure, not an event rejection', async () => {
+    for (const status of [401, 403]) {
+      const result = await fetchProviderResource('https://mp.test/x', {
+        fetchImpl: async () => response(status),
+      });
+      expect(isRetryableProviderStatus(status)).toBe(false);
+      expect(result).toMatchObject({
+        ok: false,
+        retryable: false,
+        authFailure: true,
+        reason: 'provider_auth_failed',
+        status,
+      });
+      // The webhook still asks the provider to redeliver; recovery handles the
+      // auth failure separately and never consumes an event attempt.
+      expect(providerFetchFailureResult(result)).toMatchObject({
+        skipped: 'provider_fetch_failed',
+        retry: true,
+        auth_failure: true,
         http_status: status,
       });
     }

@@ -16,6 +16,43 @@
 export const EFFECT_LEASE_SECONDS = 120;
 export const EFFECT_MAX_ATTEMPTS = 8;
 
+// H4: terminalize outbox rows that exhausted their attempts while no drainer
+// was running. The claim RPC excludes attempts >= max, so without this sweep a
+// crashed `processing` row at the limit would stay stuck forever.
+export async function expireSubscriptionEffects(supabase, { maxAttempts = EFFECT_MAX_ATTEMPTS } = {}) {
+  const { data, error } = await supabase.rpc('expire_subscription_effects', {
+    p_max_attempts: maxAttempts,
+  });
+  if (error) throw error;
+  return Number(data) || 0;
+}
+
+// H4: the periodic maintenance must not couple expiry to draining. If the H4
+// expiry RPC is missing (migration not applied yet) the drain still runs; if
+// the drain fails, the expiry result is still reported.
+export async function runSubscriptionEffectsMaintenance(supabase, handlers, {
+  limit = 20,
+  maxAttempts = EFFECT_MAX_ATTEMPTS,
+  logger = console,
+} = {}) {
+  let expired = 0;
+  try {
+    expired = await expireSubscriptionEffects(supabase, { maxAttempts });
+  } catch (e) {
+    logger.error('[SubscriptionEffects] expiry failed (drain continues)', {
+      error: String(e?.message || e),
+    });
+  }
+
+  try {
+    const result = await drainSubscriptionEffects(supabase, handlers, { limit, maxAttempts });
+    return { expired, ...result };
+  } catch (e) {
+    logger.error('[SubscriptionEffects] drain failed', { error: String(e?.message || e) });
+    return { expired, processed: 0, error: String(e?.message || e) };
+  }
+}
+
 function backoffSeconds(attempts) {
   return Math.min(3600, 30 * Math.pow(2, Math.max(0, (attempts || 1) - 1)));
 }

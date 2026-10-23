@@ -33,7 +33,7 @@ function sqlLike(pattern, value) {
   }
   return new RegExp(re + '$').test(value);
 }
-function makeSupabase(seed = {}) {
+function makeSupabase(seed = {}, { updateError = null } = {}) {
   const state = {
     subscription_events: seed.subscription_events ? [...seed.subscription_events] : [],
     lawyer_subscriptions: seed.lawyer_subscriptions ? [...seed.lawyer_subscriptions] : [],
@@ -51,7 +51,11 @@ function makeSupabase(seed = {}) {
       rows.push({ created_at: new Date().toISOString(), ...row });
       return { data: null, error: null };
     }
-    if (q._op === 'update') { for (const r of rows.filter(match)) Object.assign(r, q._payload); return { data: null, error: null }; }
+    if (q._op === 'update') {
+      if (updateError) return { data: null, error: updateError };
+      for (const r of rows.filter(match)) Object.assign(r, q._payload);
+      return { data: null, error: null };
+    }
     if (q._op === 'delete') { state[q.table] = rows.filter((r) => !match(r)); return { data: null, error: null }; }
     let out = rows.filter(match);
     if (q._order) out = [...out].sort((a, b) => (q._order.ascending ? 1 : -1) * (new Date(a[q._order.col]) - new Date(b[q._order.col])));
@@ -230,6 +234,25 @@ describe('Pro preapproval orchestrator (real module)', () => {
     expect(calls.emails).toHaveLength(1);
   });
 
+  it('a DB error updating the subscription fails the event instead of completing it', async () => {
+    const s = makeSupabase({ lawyer_subscriptions: [{ ...SUB }] }, { updateError: { message: 'db_down' } });
+    const { calls, deps } = makeDeps();
+
+    await expect(processProPreapprovalEvent({
+      supabase: s,
+      subscription: subRow(s),
+      preapproval: pre('authorized', '2026-10-22T10:00:00Z'),
+      deps,
+    })).rejects.toThrow('db_down');
+
+    const ev = evRow(s, 'PRE-1:authorized:2026-10-22T10:00:00Z');
+    expect(ev.status).toBe('failed');
+    expect(ev.last_error).toMatch(/db_down/);
+    expect(subRow(s).status).toBe('pending');
+    expect(calls.posthog).toHaveLength(0);
+    expect(calls.emails).toHaveLength(0);
+  });
+
   it('duplicate of a processed event is a no-op', async () => {
     const s = makeSupabase({ lawyer_subscriptions: [{ ...SUB }] });
     const { calls, deps } = makeDeps();
@@ -372,5 +395,26 @@ describe('Source invariants of the real module / handler', () => {
   });
   it('server.mjs keeps the identity guard before dispatch', () => {
     expect(serverSrc).toMatch(/if \(!matchesActiveProvider\(subscription, preapprovalId\)\)/);
+  });
+  it('server.mjs surfaces resolver DB errors instead of treating them as missing', () => {
+    expect(serverSrc).toMatch(/if \(error\) throw error;/);
+    expect(serverSrc).toMatch(/if \(pending\.error\) throw pending\.error;/);
+  });
+  it('recovery handlers never reconcile before the atomic claim', () => {
+    const sliceBetween = (start, end) => {
+      const from = serverSrc.indexOf(start);
+      const to = serverSrc.indexOf(end, from + start.length);
+      expect(from).toBeGreaterThan(-1);
+      expect(to).toBeGreaterThan(from);
+      return serverSrc.slice(from, to);
+    };
+    const preapprovalRecovery = sliceBetween('const handleProPreapprovalRecovery', 'const handlePlusPreapprovalWebhook');
+    const paymentRecovery = sliceBetween('const handleProAuthorizedPaymentRecovery', 'const handlePreapprovalWebhook');
+    for (const body of [preapprovalRecovery, paymentRecovery]) {
+      expect(body).not.toMatch(/maybeApplyScheduledDowngrade/);
+      expect(body).not.toMatch(/retryOldProCancel/);
+    }
+    expect(preapprovalRecovery).toMatch(/processProPreapprovalEvent\(\{/);
+    expect(paymentRecovery).toMatch(/processProAuthorizedPaymentEvent\(\{/);
   });
 });
