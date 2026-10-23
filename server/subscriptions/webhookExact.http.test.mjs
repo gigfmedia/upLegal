@@ -335,24 +335,34 @@ suite('FASE 4.65 — exact server.mjs webhook route (sandbox)', () => {
     expect((await proRow()).status).toBe('active');
   });
 
-  it('H2 provider 429/500/404 are retryable 503; 403 is a permanent 200 ACK', async () => {
+  it('H2 provider 429/500/404/401/403 are retryable 503', async () => {
     await proProvider('PRE-HTTP-FETCH');
     const cases = [
-      ['PRE-429', 429, 503],
-      ['PRE-500', 500, 503],
-      ['PRE-404', 404, 503],
-      ['PRE-403', 403, 200],
+      ['PRE-429', 429],
+      ['PRE-500', 500],
+      ['PRE-404', 404],
+      ['PRE-401', 401],
+      ['PRE-403', 403],
     ];
-    for (const [id, providerStatus, expected] of cases) {
+    for (const [id, providerStatus] of cases) {
       mock({ [`/preapproval/${id}`]: { status: providerStatus, body: { message: 'mock' } } });
       const r = await webhook({ topic: 'subscription_preapproval', data: { id } }, id);
-      expect(r.status).toBe(expected);
-      if (expected === 503) {
-        expect(r.json).toMatchObject({ error: 'processing_in_progress', retry: true });
-      } else {
-        expect(r.json).toMatchObject({ ok: false, skipped: 'provider_fetch_failed', http_status: 403 });
-      }
+      expect(r.status).toBe(503);
+      expect(r.json).toMatchObject({ error: 'processing_in_progress', retry: true });
     }
+  });
+
+  it('H2 provider 400 is a permanent 200 ACK with provider_rejected', async () => {
+    await proProvider('PRE-HTTP-FETCH');
+    mock({ '/preapproval/PRE-400': { status: 400, body: { message: 'mock' } } });
+    const r = await webhook({ topic: 'subscription_preapproval', data: { id: 'PRE-400' } }, 'PRE-400');
+    expect(r.status).toBe(200);
+    expect(r.json).toMatchObject({
+      ok: false,
+      skipped: 'provider_fetch_failed',
+      reason: 'provider_rejected',
+      http_status: 400,
+    });
   });
 
   it('H2 provider timeout is a retryable 503', async () => {
