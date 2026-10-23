@@ -68,10 +68,11 @@ describe('4.57D Plus v1 — allowances and server wiring', () => {
 
   it('Plus activation is fail-closed on amount and never touches Founder', () => {
     const server = read('server.mjs');
+    const proPayment = read('server/subscriptions/proPaymentEvent.mjs');
     expect(server).toContain('AMOUNT_MISMATCH');
     expect(server).toContain('PLUS_SUBSCRIPTION_PRICE_CLP');
-    expect(server).toContain('!isPlusEffective && shouldAttemptFounderClaim');
-    expect(server).toContain("plan: isPlusEffective ? 'plus' : 'pro'");
+    expect(proPayment).toContain('!isPlusEffective && shouldAttemptFounderClaim');
+    expect(proPayment).toContain("plan: isPlusEffective ? 'plus' : 'pro'");
   });
 
   it('webhook settles plan from trusted provider metadata (PLUS_ prefix)', () => {

@@ -1,43 +1,50 @@
 // Pro-family preapproval webhook orchestrators, extracted from server.mjs so the
 // retry/recovery path can be unit- and integration-tested against the REAL
 // production code (not a replica). server.mjs imports these and injects its
-// side-effect deps (analytics, email, Plus completer) via `deps`.
+// side-effect handlers (analytics, email, Plus completer) via `deps`.
 //
-// Dedup/ordering model (shared with server/subscriptions/subscriptionEvents.mjs):
-//   - tryInsertSubscriptionEvent inserts one row per (provider, provider_event_id,
-//     product_type). All Pro-family events share product_type='pro'.
-//   - shouldApplyEvent compares against the max provider_event_at of PROCESSED
-//     rows for the same subscription. Because Pro preapproval events now get
-//     marked processed, the comparison is SCOPED to the event family
-//     (eventTypePrefix) so preapproval rows can never move the payment baseline
-//     (or vice-versa).
+// FASE 4.59 delivery model:
+//   - claim: beginSubscriptionEvent() inserts the audit row then calls the
+//     atomic `claim_subscription_event` RPC (one UPDATE). Exactly one delivery
+//     can move the row to `processing`; concurrent duplicates see `busy` or
+//     `terminal`. No read-then-decide window.
+//   - apply: only the claim winner mutates subscription state.
+//   - commit: `complete_subscription_event` marks the event processed AND
+//     enqueues its external effects in the same transaction. A crash after the
+//     mutation but before commit leaves `processing`; the lease expires and the
+//     mutation is re-applied idempotently.
+//   - effects: email/analytics are drained from `subscription_effects`, so a
+//     failing side effect never leaves the event half-processed. The outbox is
+//     at-least-once; its dedupe key is the RESOURCE TRANSITION, not the
+//     notification id.
 //
-// DELIVERY SEMANTICS: at-least-once. If the process dies AFTER an external
-// effect (analytics/email) runs and BEFORE the event is marked processed, the
-// provider retry will run that effect again (a duplicate external effect). We
-// deliberately favour "no silent loss" over "no duplicate": the activation path
-// does NOT short-circuit on `subscription.status === 'active'`, because a
-// partial attempt has already mutated that column, so such a guard would DROP
-// the welcome effect exactly on the retry meant to recover it. (Unit-tested.)
+// Identity separation:
+//   - notification: provider_event_id (compat) and notification_id (when known)
+//     — audit only, never effect dedupe.
+//   - resource: resource_id (preapproval/payment id) + resource_status.
+//   - transition: `<resource_id>:<status>` used only for effect dedupe.
+//     Re-delivery of the same status dedupes; pause -> authorized is a new key.
 //
-// LEASE vs MUTUAL EXCLUSION: a duplicate of a `pending` event is treated as
-// in-flight (skipped) until it is older than RETRY_LEASE_MS, then retryable.
-// This is NOT a hard mutual exclusion — two concurrent deliveries can both read
-// the same lease-expired row and both proceed (see risk notes). The schema
-// (status CHECK has no 'processing' state) cannot express a claim without a
-// migration, so the lease is a heuristic, not a lock.
+// Ordering is still notification-based (`shouldApplyEvent` scoped by event
+// family prefix), so preapproval rows can never move the payment baseline.
 
 import {
-  tryInsertSubscriptionEvent,
+  beginSubscriptionEvent,
+  completeSubscriptionEvent,
+  failSubscriptionEvent,
   derivePeriodFromProvider,
   shouldApplyEvent,
-  markSubscriptionEventProcessed,
-  markSubscriptionEventFailed,
+  transitionKey,
 } from './subscriptionEvents.mjs';
+import {
+  drainSubscriptionEffects,
+  analyticsEffect,
+  emailEffect,
+} from './subscriptionEffects.mjs';
+import { nonClaimedResult } from './webhookClaim.mjs';
 
-// Gate shared by both orchestrators. Returns true when the (possibly duplicate)
-// event should be processed now, false when it must be skipped.
-// `ev` is the shape returned by tryInsertSubscriptionEvent.
+// Legacy pure gate, kept for the retry-contract tests. The live path uses the
+// atomic claim and does not call this.
 function shouldProcessEvent(ev) {
   if (ev.inserted) return true;
   if (ev.status === 'processed') return false; // terminal
@@ -46,22 +53,37 @@ function shouldProcessEvent(ev) {
   return true; // failed, or pending past its lease -> retry
 }
 
+async function drain(deps, supabase) {
+  if (!deps?.effectHandlers) return;
+  try {
+    await (deps.drainEffects ?? drainSubscriptionEffects)(supabase, deps.effectHandlers);
+  } catch (e) {
+    // The event is already committed; a drain failure must not turn it into a
+    // provider retry (the retry would be terminal). Effects stay claimable.
+    console.error('[SubscriptionEffects] drain failed', e?.message || e);
+  }
+}
+
 export async function processProPreapprovalEvent({ supabase, subscription, preapproval, deps }) {
-  const { capturePostHog, getProLawyerEmail, sendAIEmail, priceClp } = deps;
+  const { priceClp, effectHandlers } = deps;
   const mpStatus = preapproval.status;
   const lawyerId = subscription.lawyer_id;
   const providerEventAt = preapproval.last_modified || preapproval.date_created || new Date().toISOString();
   const providerEventId = `${preapproval.id}:${mpStatus}:${providerEventAt}`;
+  const tk = transitionKey(preapproval.id, mpStatus);
 
-  const ev = await tryInsertSubscriptionEvent(supabase, {
+  const claim = await beginSubscriptionEvent(supabase, {
     productType: 'pro',
     subscriptionId: subscription.id,
     providerEventId,
     providerEventAt,
     eventType: `preapproval_${mpStatus}`,
     providerStatus: mpStatus,
+    resourceId: String(preapproval.id),
+    resourceStatus: mpStatus,
+    transitionKey: tk,
   });
-  if (!shouldProcessEvent(ev)) return { skipped: ev.status };
+  if (!claim.claimed) return nonClaimedResult(claim);
 
   if (!(await shouldApplyEvent(supabase, {
     productType: 'pro',
@@ -69,7 +91,7 @@ export async function processProPreapprovalEvent({ supabase, subscription, preap
     providerEventAt,
     eventTypePrefix: 'preapproval',
   }))) {
-    await markSubscriptionEventProcessed(supabase, { productType: 'pro', providerEventId });
+    await completeSubscriptionEvent(supabase, { productType: 'pro', providerEventId, claimToken: claim.claim_token });
     return { skipped: 'out_of_order' };
   }
 
@@ -77,17 +99,18 @@ export async function processProPreapprovalEvent({ supabase, subscription, preap
     const cancelledAt = new Date(subscription.cancelled_at).getTime();
     const eventAt = new Date(providerEventAt).getTime();
     if (!isNaN(cancelledAt) && !isNaN(eventAt) && eventAt <= cancelledAt) {
-      await markSubscriptionEventProcessed(supabase, { productType: 'pro', providerEventId });
+      await completeSubscriptionEvent(supabase, { productType: 'pro', providerEventId, claimToken: claim.claim_token });
       return { skipped: 'stale_cancelled' };
     }
   }
 
   const now = new Date();
   try {
+    const effects = [];
     if (mpStatus === 'authorized' || mpStatus === 'active') {
       const derived = derivePeriodFromProvider(preapproval);
       if (!derived) {
-        await markSubscriptionEventProcessed(supabase, { productType: 'pro', providerEventId });
+        await completeSubscriptionEvent(supabase, { productType: 'pro', providerEventId, claimToken: claim.claim_token });
         return { skipped: 'no_period' };
       }
       await supabase.from('lawyer_subscriptions').update({
@@ -98,11 +121,18 @@ export async function processProPreapprovalEvent({ supabase, subscription, preap
         cancelled_at: null,
         updated_at: now.toISOString(),
       }).eq('id', subscription.id);
-      await capturePostHog('pro_subscription_activated', lawyerId, { price_clp: priceClp });
-      const userData = await getProLawyerEmail(lawyerId);
-      if (userData?.email) {
-        try { await sendAIEmail(userData.email, '¡Bienvenido a LegalUp Pro!', '<p>Tu suscripción Pro está activa.</p>'); } catch {}
-      }
+      effects.push(analyticsEffect({
+        transitionKey: tk,
+        event: 'pro_subscription_activated',
+        lawyerId,
+        props: { price_clp: priceClp },
+      }));
+      effects.push(emailEffect({
+        transitionKey: tk,
+        lawyerId,
+        subject: '¡Bienvenido a LegalUp Pro!',
+        html: '<p>Tu suscripción Pro está activa.</p>',
+      }));
     } else if (mpStatus === 'cancelled') {
       await supabase.from('lawyer_subscriptions').update({
         status: 'cancelled',
@@ -116,31 +146,36 @@ export async function processProPreapprovalEvent({ supabase, subscription, preap
     } else if (mpStatus === 'paused') {
       await supabase.from('lawyer_subscriptions').update({ status: 'past_due', updated_at: now.toISOString() }).eq('id', subscription.id);
     }
-    await markSubscriptionEventProcessed(supabase, { productType: 'pro', providerEventId });
+    await completeSubscriptionEvent(supabase, { productType: 'pro', providerEventId, claimToken: claim.claim_token, effects });
+    await drain({ drainEffects: deps.drainEffects, effectHandlers }, supabase);
     return { ok: true };
   } catch (e) {
-    await markSubscriptionEventFailed(supabase, { productType: 'pro', providerEventId });
+    try { await failSubscriptionEvent(supabase, { productType: 'pro', providerEventId, claimToken: claim.claim_token, error: e?.message || e }); } catch {}
     throw e;
   }
 }
 
 export async function processPlusPreapprovalEvent({ supabase, subscription, preapproval, deps }) {
-  const { capturePostHog, completePlusUpgrade } = deps;
+  const { completePlusUpgrade, effectHandlers } = deps;
   const mpStatus = preapproval.status;
   const preapprovalId = preapproval.id;
   const lawyerId = subscription.lawyer_id;
   const providerEventAt = preapproval.last_modified || preapproval.date_created || new Date().toISOString();
   const providerEventId = `${preapprovalId}:${mpStatus}:${providerEventAt}`;
+  const tk = transitionKey(preapprovalId, mpStatus);
 
-  const ev = await tryInsertSubscriptionEvent(supabase, {
+  const claim = await beginSubscriptionEvent(supabase, {
     productType: 'pro',
     subscriptionId: subscription.id,
     providerEventId,
     providerEventAt,
     eventType: `plus_preapproval_${mpStatus}`,
     providerStatus: mpStatus,
+    resourceId: String(preapprovalId),
+    resourceStatus: mpStatus,
+    transitionKey: tk,
   });
-  if (!shouldProcessEvent(ev)) return { skipped: ev.status };
+  if (!claim.claimed) return nonClaimedResult(claim);
 
   if (!(await shouldApplyEvent(supabase, {
     productType: 'pro',
@@ -148,24 +183,30 @@ export async function processPlusPreapprovalEvent({ supabase, subscription, prea
     providerEventAt,
     eventTypePrefix: 'plus_preapproval',
   }))) {
-    await markSubscriptionEventProcessed(supabase, { productType: 'pro', providerEventId });
+    await completeSubscriptionEvent(supabase, { productType: 'pro', providerEventId, claimToken: claim.claim_token });
     return { skipped: 'out_of_order' };
   }
 
   const now = new Date();
   try {
+    const effects = [];
     if (mpStatus === 'authorized' || mpStatus === 'active') {
       const pendingId = subscription.pending_provider_subscription_id;
       const isExpected = pendingId
         ? String(pendingId) === String(preapprovalId)
         : subscription.plan === 'plus' && String(subscription.provider_subscription_id) === String(preapprovalId);
       if (!isExpected && subscription.plan_change_status !== 'upgrade_pending') {
-        await markSubscriptionEventProcessed(supabase, { productType: 'pro', providerEventId });
+        await completeSubscriptionEvent(supabase, { productType: 'pro', providerEventId, claimToken: claim.claim_token });
         return { skipped: 'unexpected' };
       }
       const completed = await completePlusUpgrade(subscription, preapproval);
       if (!completed.ok) {
-        try { await capturePostHog('plus_upgrade_failed', lawyerId, { reason: completed.reason }); } catch {}
+        effects.push(analyticsEffect({
+          transitionKey: tk,
+          event: 'plus_upgrade_failed',
+          lawyerId,
+          props: { reason: completed.reason },
+        }));
       }
     } else if (['cancelled', 'rejected', 'expired'].includes(mpStatus)) {
       if (subscription.plan_change_status === 'upgrade_pending' && String(subscription.pending_provider_subscription_id || '') === String(preapprovalId)) {
@@ -178,7 +219,12 @@ export async function processPlusPreapprovalEvent({ supabase, subscription, prea
           previous_provider_subscription_id: null,
           updated_at: now.toISOString(),
         }).eq('id', subscription.id);
-        try { await capturePostHog('plus_upgrade_failed', lawyerId, { reason: `provider_${mpStatus}` }); } catch {}
+        effects.push(analyticsEffect({
+          transitionKey: tk,
+          event: 'plus_upgrade_failed',
+          lawyerId,
+          props: { reason: `provider_${mpStatus}` },
+        }));
       } else if (subscription.plan === 'plus' && String(subscription.provider_subscription_id || '') === String(preapprovalId)) {
         await supabase.from('lawyer_subscriptions').update({
           status: 'cancelled',
@@ -192,10 +238,11 @@ export async function processPlusPreapprovalEvent({ supabase, subscription, prea
         await supabase.from('lawyer_subscriptions').update({ status: 'past_due', updated_at: now.toISOString() }).eq('id', subscription.id);
       }
     }
-    await markSubscriptionEventProcessed(supabase, { productType: 'pro', providerEventId });
+    await completeSubscriptionEvent(supabase, { productType: 'pro', providerEventId, claimToken: claim.claim_token, effects });
+    await drain({ drainEffects: deps.drainEffects, effectHandlers }, supabase);
     return { ok: true };
   } catch (e) {
-    await markSubscriptionEventFailed(supabase, { productType: 'pro', providerEventId });
+    try { await failSubscriptionEvent(supabase, { productType: 'pro', providerEventId, claimToken: claim.claim_token, error: e?.message || e }); } catch {}
     throw e;
   }
 }

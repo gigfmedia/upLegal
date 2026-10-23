@@ -283,19 +283,20 @@ describe('4.32B.4 — reservation SQL semantics (source assertions)', () => {
 
 describe('4.32B.3 — webhook integration (source assertions)', () => {
   const server = readFileSync(resolve('server.mjs'), 'utf-8');
+  const proPayment = readFileSync(resolve('server/subscriptions/proPaymentEvent.mjs'), 'utf-8');
 
   it('approved branch attempts atomic founder claim after durable ledger', () => {
     // Anchor on the Pro claim call (the AI handler has its own approved branch).
-    const claimIdx = server.indexOf('claim_pro_founder_slot');
+    const claimIdx = proPayment.indexOf('claim_pro_founder_slot');
     expect(claimIdx).toBeGreaterThan(-1);
-    const before = server.slice(Math.max(0, claimIdx - 3000), claimIdx);
+    const before = proPayment.slice(Math.max(0, claimIdx - 3000), claimIdx);
     expect(before).toContain('pro_subscription_payments');
-    expect(before).toContain("if (payment.status === 'approved')");
+    expect(before).toContain("statusKind === 'approved'");
   });
 
   it('founder claim is non-blocking (payment never fails on founder error)', () => {
-    const idx = server.indexOf('claim_pro_founder_slot');
-    const block = server.slice(Math.max(0, idx - 200), idx + 1200);
+    const idx = proPayment.indexOf('claim_pro_founder_slot');
+    const block = proPayment.slice(Math.max(0, idx - 200), idx + 1200);
     expect(block).toContain('try');
     expect(block).toContain('catch');
   });
@@ -306,8 +307,8 @@ describe('4.32B.3 — webhook integration (source assertions)', () => {
   });
 
   it('claim RPC passes the subscription lawyer (never client input)', () => {
-    expect(server).toContain('p_lawyer_id');
-    expect(server).toContain('subscription.lawyer_id');
+    expect(proPayment).toContain('p_lawyer_id');
+    expect(proPayment).toContain('subscription.lawyer_id');
   });
 
   it('checkout never reads a client-supplied price', () => {
