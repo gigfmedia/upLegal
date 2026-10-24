@@ -19,6 +19,7 @@ import {
   pageTop,
   stackHeight,
   type BlockMetrics,
+  type LineBox,
 } from '@/components/legalup-ai/letterPageGeometry';
 
 const block = (pos: number, height: number, marginTop = 20, marginBottom = 20): BlockMetrics => ({
@@ -135,5 +136,198 @@ describe('UA-4 cortes por bloque', () => {
     const snapshot = JSON.parse(JSON.stringify(blocks));
     computePagination(blocks, layout);
     expect(blocks).toEqual(snapshot);
+  });
+});
+
+// UA-4 FASE 2 — cortes dentro de párrafos y listas.
+const line = (pos: number, index: number, height = 24): LineBox => ({
+  pos,
+  top: index * height,
+  bottom: (index + 1) * height,
+});
+
+const paragraph = (
+  pos: number,
+  count: number,
+  options: { marginTop?: number; marginBottom?: number; start?: number } = {},
+): BlockMetrics => ({
+  pos,
+  height: count * 24,
+  marginTop: options.marginTop ?? 0,
+  marginBottom: options.marginBottom ?? 0,
+  lines: Array.from({ length: count }, (_, i) => line(options.start ?? 1000 + i, i)),
+});
+
+describe('UA-4 Fase 2 — párrafos de varias páginas', () => {
+  const layout = createPageLayout();
+
+  it('un párrafo de 40 líneas se corta tras la línea 36 con el espaciador exacto', () => {
+    const result = computePagination([paragraph(0, 40)], layout);
+    expect(result.pageCount).toBe(2);
+    expect(result.breaks).toHaveLength(1);
+    const br = result.breaks[0];
+    expect(br.anchor).toBe('inline');
+    expect(br.page).toBe(1);
+    // 36 líneas caben (36*24 = 864; 94 + 864 = 958 ≤ 962).
+    expect(br.pos).toBe(1036);
+    expect(br.spacerHeight).toBe(216); // 1174 − 958
+    expect(result.overflowBlocks).toEqual([]);
+  });
+
+  it('un párrafo de 120 líneas ocupa 4 páginas con saltos consecutivos', () => {
+    const result = computePagination([paragraph(0, 120)], layout);
+    expect(result.pageCount).toBe(4);
+    expect(result.breaks.map((b) => b.pos)).toEqual([1036, 1072, 1108]);
+    expect(result.breaks.map((b) => b.page)).toEqual([1, 2, 3]);
+    expect(result.breaks.map((b) => b.anchor)).toEqual(['inline', 'inline', 'inline']);
+    for (const br of result.breaks) expect(br.spacerHeight).toBe(216);
+  });
+
+  it('evita dejar una sola línea al principio de la página siguiente (viuda)', () => {
+    const result = computePagination([paragraph(0, 37)], layout);
+    expect(result.pageCount).toBe(2);
+    const br = result.breaks[0];
+    // Se parte una línea antes: 35 abajo y 2 arriba.
+    expect(br.pos).toBe(1035);
+    expect(br.spacerHeight).toBe(240); // 1174 − (94 + 35*24)
+  });
+
+  it('un párrafo corto que deja menos de 2 líneas abajo se mueve completo', () => {
+    const blocks: BlockMetrics[] = [
+      { pos: 0, height: 800, marginTop: 20, marginBottom: 20 },
+      { ...paragraph(900, 3), marginTop: 20, marginBottom: 20, pos: 900 },
+    ];
+    const result = computePagination(blocks, layout);
+    expect(result.pageCount).toBe(2);
+    expect(result.breaks).toHaveLength(1);
+    const br = result.breaks[0];
+    expect(br.anchor).toBe('block');
+    expect(br.pos).toBe(900);
+    // 1174 − 874 (bottom) − 20 (mb) − 20 (mt) = 260? bottom = 114+800=914.
+    expect(br.spacerHeight).toBe(220);
+    expect(result.overflowBlocks).toEqual([]);
+  });
+
+  it('no muta las métricas de línea ni los ítems al paginar', () => {
+    const blocks = [paragraph(0, 120)];
+    const snapshot = JSON.parse(JSON.stringify(blocks));
+    computePagination(blocks, layout);
+    expect(blocks).toEqual(snapshot);
+  });
+
+  it('es determinista: dos ejecuciones producen el mismo resultado', () => {
+    const blocks = [paragraph(0, 80), paragraph(2000, 40)];
+    expect(computePagination(blocks, layout)).toEqual(computePagination(blocks, layout));
+  });
+});
+
+describe('UA-4 Fase 2 — listas e ítems largos', () => {
+  const layout = createPageLayout();
+
+  const item = (pos: number, top: number, height: number, lines = 0) => ({
+    pos,
+    endPos: pos + 500,
+    top,
+    height,
+    lines: Array.from({ length: lines }, (_, i) => line(pos + 1000 + i, i)),
+  });
+
+  it('una lista corta se mueve completa si el primer ítem no cabe', () => {
+    const blocks: BlockMetrics[] = [
+      { pos: 0, height: 800, marginTop: 20, marginBottom: 20 },
+      {
+        pos: 900,
+        height: 100,
+        marginTop: 20,
+        marginBottom: 20,
+        items: [item(900, 0, 50), item(950, 50, 50)],
+      },
+    ];
+    const result = computePagination(blocks, layout);
+    expect(result.pageCount).toBe(2);
+    expect(result.breaks).toHaveLength(1);
+    expect(result.breaks[0].anchor).toBe('block');
+    expect(result.breaks[0].pos).toBe(900);
+    expect(result.breaks[0].spacerHeight).toBe(220);
+  });
+
+  it('corta entre ítems sin partir un ítem corto', () => {
+    const items = Array.from({ length: 20 }, (_, i) => item(1000 + i * 10, i * 50, 50));
+    const blocks: BlockMetrics[] = [{ pos: 0, height: 1000, marginTop: 0, marginBottom: 0, items }];
+    const result = computePagination(blocks, layout);
+    expect(result.pageCount).toBe(2);
+    expect(result.breaks).toHaveLength(1);
+    const br = result.breaks[0];
+    // 17 ítems caben (94 + 17*50 = 944); el 18.º empieza en 944.
+    expect(br.pos).toBe(items[16].endPos);
+    expect(br.anchor).toBe('inline');
+    expect(br.spacerHeight).toBe(230); // 1174 − 944
+    expect(br.page).toBe(1);
+  });
+
+  it('un ítem más alto que la página se parte por sus líneas', () => {
+    const items = [item(900, 0, 50), item(950, 50, 1200, 50)];
+    const blocks: BlockMetrics[] = [{ pos: 0, height: 1250, marginTop: 0, marginBottom: 0, items }];
+    const result = computePagination(blocks, layout);
+    expect(result.pageCount).toBe(2);
+    expect(result.breaks).toHaveLength(1);
+    const br = result.breaks[0];
+    expect(br.anchor).toBe('inline');
+    expect(br.pos).toBe(items[1].lines[34].pos);
+    // 144 + 34*24 = 960 → 1174 − 960 = 214.
+    expect(br.spacerHeight).toBe(214);
+  });
+
+  it('una lista sin líneas medibles mantiene el fallback de Fase 1', () => {
+    const blocks: BlockMetrics[] = [
+      { pos: 0, height: 800, marginTop: 20, marginBottom: 20 },
+      { pos: 900, height: 300, marginTop: 20, marginBottom: 20, items: [item(900, 0, 300)] },
+    ];
+    const result = computePagination(blocks, layout);
+    expect(result.pageCount).toBe(2);
+    expect(result.breaks[0].anchor).toBe('block');
+    expect(result.overflowBlocks).toEqual([]);
+  });
+});
+
+describe('UA-4 Fase 2 — posiciones diferidas y fallback seguro', () => {
+  const layout = createPageLayout();
+
+  it('solo resuelve la posición de las líneas elegidas como corte', () => {
+    const reads: number[] = [];
+    const lines: LineBox[] = Array.from({ length: 80 }, (_, i) => ({
+      get pos() {
+        reads.push(i);
+        return 1000 + i;
+      },
+      top: i * 24,
+      bottom: (i + 1) * 24,
+    }));
+    const result = computePagination(
+      [{ pos: 0, height: 80 * 24, marginTop: 0, marginBottom: 0, lines }],
+      layout,
+    );
+    expect(result.pageCount).toBeGreaterThan(1);
+    expect(reads).toEqual([36, 72]);
+  });
+
+  it('si una línea no puede resolverse, no inventa un corte negativo', () => {
+    const lines: LineBox[] = Array.from({ length: 80 }, (_, i) => ({
+      pos: i === 36 ? -1 : 1000 + i,
+      top: i * 24,
+      bottom: (i + 1) * 24,
+    }));
+    const result = computePagination(
+      [{ pos: 0, height: 80 * 24, marginTop: 0, marginBottom: 0, lines }],
+      layout,
+    );
+    expect(result.breaks.every((b) => b.pos >= 0)).toBe(true);
+    expect(result.overflowBlocks.length + result.breaks.length).toBeGreaterThan(0);
+  });
+
+  it('unresolvedLines no altera la geometría ni el conteo', () => {
+    const plain = [paragraph(0, 60)];
+    const lazy = [{ ...paragraph(0, 60), unresolvedLines: 30 }];
+    expect(computePagination(lazy, layout)).toEqual(computePagination(plain, layout));
   });
 });
