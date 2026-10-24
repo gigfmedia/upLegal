@@ -2672,6 +2672,7 @@ describe('UA-4 — páginas carta (Fase 1)', () => {
     await waitFor(() => expect(putCalls().length).toBeGreaterThan(0), { timeout: 3000, interval: 50 });
     const sent = String(putBody(putCalls()[0]).content);
     expect(sent).not.toContain('letter-page-break');
+    expect(sent).not.toContain('data-letter-break');
     expect(sent).not.toContain('data-page-number');
     expect(sent).toContain('texto texto');
   });
