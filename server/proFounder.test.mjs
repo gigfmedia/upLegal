@@ -290,7 +290,7 @@ describe('4.32B.3 — webhook integration (source assertions)', () => {
     expect(claimIdx).toBeGreaterThan(-1);
     const before = server.slice(Math.max(0, claimIdx - 3000), claimIdx);
     expect(before).toContain('pro_subscription_payments');
-    expect(before).toContain("if (payment.status === 'approved')");
+    expect(before).toContain("if (paymentStatus === 'approved')");
   });
 
   it('founder claim is non-blocking (payment never fails on founder error)', () => {

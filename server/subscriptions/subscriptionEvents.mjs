@@ -1,43 +1,114 @@
 // A duplicate of a `pending` event is only treated as retryable once it is
-// older than this. Fresh pending rows are assumed in-flight (a redelivery that
-// races the original) and skipped. This is a heuristic, NOT a mutual-exclusion
+// older than this. Fresh pending rows are assumed in-flight and the caller must
+// return a 5xx (not acknowledge) so a crashed original is recovered by the
+// provider retry after the lease. This is a heuristic, NOT a mutual-exclusion
 // lock: two concurrent deliveries can both read the same lease-expired row and
-// both proceed. The schema (status CHECK has no 'processing' state) cannot
-// express a claim without a migration. See risk notes in proPreapprovalEvent.mjs.
+// both proceed. See risk notes in proPreapprovalEvent.mjs.
 export const RETRY_LEASE_MS = 10 * 60 * 1000;
 
+// Financial reversals must always reach manual review, even when their provider
+// timestamp is older than a later payment. They never revoke access or mutate
+// the financial ledger from the webhook path.
+const PAYMENT_REVERSAL_STATUSES = new Set(['cancelled', 'refunded', 'charged_back']);
+
+export function isPaymentReversalStatus(status) {
+  return PAYMENT_REVERSAL_STATUSES.has(String(status || '').toLowerCase());
+}
+
+export function paymentReversalReviewReason(status) {
+  return `payment_${String(status || 'unknown').toLowerCase()}_requires_policy_review`;
+}
+
+export function unlinkedPaymentReversalReview(status) {
+  if (!isPaymentReversalStatus(status)) return null;
+  return {
+    review: true,
+    reason: `payment_${String(status).toLowerCase()}_unlinked_reversal_review`,
+  };
+}
+
+function eventLeaseStart(existing) {
+  return existing?.claimed_at || existing?.created_at || null;
+}
+
+function isLeaseStale(existing, nowMs = Date.now()) {
+  const startedMs = eventLeaseStart(existing) ? Date.parse(eventLeaseStart(existing)) : NaN;
+  return !Number.isNaN(startedMs) && (nowMs - startedMs) >= RETRY_LEASE_MS;
+}
+
+async function claimExistingEvent(supabase, { productType, providerEventId, id, status, nowIso, expectedClaimedAt }) {
+  if (!id) return false;
+  let query = supabase
+    .from('subscription_events')
+    .update({ status: 'processing', claimed_at: nowIso })
+    .eq('id', id)
+    .eq('status', status);
+  // A stale `processing` row keeps the same status after the claim, so the
+  // old lease timestamp is part of the compare-and-swap predicate. Only one
+  // concurrent delivery can replace it.
+  if (status === 'processing' && expectedClaimedAt) {
+    query = query.eq('claimed_at', expectedClaimedAt);
+  }
+  const { data, error } = await query.select('id').maybeSingle();
+  if (error) throw error;
+  return !!data;
+}
+
 export async function tryInsertSubscriptionEvent(supabase, { productType, subscriptionId, providerEventId, providerEventAt, eventType, providerStatus }) {
+  const nowIso = new Date().toISOString();
   try {
     const { error } = await supabase.from('subscription_events').insert({
       product_type: productType,
       subscription_id: subscriptionId,
       provider: 'mercadopago',
       provider_event_id: String(providerEventId),
-      provider_event_at: providerEventAt ? new Date(providerEventAt).toISOString() : new Date().toISOString(),
+      provider_event_at: providerEventAt ? new Date(providerEventAt).toISOString() : nowIso,
       event_type: eventType,
       provider_status: providerStatus,
       status: 'pending',
+      claimed_at: nowIso,
     });
     if (error) {
       if (error.code === '23505') {
         const { data: existing } = await supabase
           .from('subscription_events')
-          .select('status, processed_at, created_at')
+          .select('id, status, processed_at, created_at, claimed_at')
           .eq('provider', 'mercadopago')
           .eq('provider_event_id', String(providerEventId))
           .eq('product_type', productType)
           .maybeSingle();
         if (existing?.status === 'processed') return { inserted: false, duplicate: true, status: 'processed' };
-        if (existing?.status === 'pending' || existing?.status === 'failed') {
-          const createdMs = existing.created_at ? Date.parse(existing.created_at) : NaN;
-          const stale = !Number.isNaN(createdMs) && (Date.now() - createdMs) >= RETRY_LEASE_MS;
-          return { inserted: false, duplicate: true, status: existing.status, retryable: true, stale };
+        if (existing?.status === 'needs_review') {
+          return { inserted: false, duplicate: true, status: 'needs_review' };
+        }
+        if (existing?.status === 'failed') {
+          const claimed = await claimExistingEvent(supabase, {
+            productType, providerEventId, id: existing.id, status: 'failed', nowIso,
+          });
+          return {
+            inserted: false, duplicate: true, status: 'failed', retryable: true,
+            stale: true, claimed,
+          };
+        }
+        if (existing?.status === 'pending' || existing?.status === 'processing') {
+          const stale = isLeaseStale(existing);
+          if (!stale) {
+            return { inserted: false, duplicate: true, status: existing.status, retryable: true, stale: false, claimed: false };
+          }
+          const claimed = await claimExistingEvent(supabase, {
+            productType, providerEventId, id: existing.id, status: existing.status, nowIso,
+            expectedClaimedAt: existing.claimed_at,
+          });
+          return {
+            inserted: false, duplicate: true, status: existing.status, retryable: true,
+            stale: true, claimed,
+          };
         }
         return { inserted: false, duplicate: true, status: existing?.status || 'unknown' };
       }
       throw error;
     }
-    return { inserted: true, status: 'pending' };
+    return { inserted: true, status: 'pending', claimed: true };
   } catch (e) {
     if (e?.code === '23505') return { inserted: false, duplicate: true, status: 'unknown' };
     throw e;
@@ -45,11 +116,22 @@ export async function tryInsertSubscriptionEvent(supabase, { productType, subscr
 }
 
 export async function markSubscriptionEventProcessed(supabase, { productType, providerEventId }) {
-  await supabase.from('subscription_events').update({ status: 'processed', processed_at: new Date().toISOString() }).eq('provider', 'mercadopago').eq('provider_event_id', String(providerEventId)).eq('product_type', productType);
+  const { error } = await supabase.from('subscription_events').update({ status: 'processed', processed_at: new Date().toISOString() }).eq('provider', 'mercadopago').eq('provider_event_id', String(providerEventId)).eq('product_type', productType);
+  if (error) throw error;
 }
 
 export async function markSubscriptionEventFailed(supabase, { productType, providerEventId }) {
-  await supabase.from('subscription_events').update({ status: 'failed' }).eq('provider', 'mercadopago').eq('provider_event_id', String(providerEventId)).eq('product_type', productType);
+  const { error } = await supabase.from('subscription_events').update({ status: 'failed' }).eq('provider', 'mercadopago').eq('provider_event_id', String(providerEventId)).eq('product_type', productType);
+  if (error) throw error;
+}
+
+export async function markSubscriptionEventForReview(supabase, { productType, providerEventId, reason }) {
+  const { error } = await supabase.from('subscription_events').update({
+    status: 'needs_review',
+    review_reason: String(reason || 'manual_review_required').slice(0, 500),
+    processed_at: new Date().toISOString(),
+  }).eq('provider', 'mercadopago').eq('provider_event_id', String(providerEventId)).eq('product_type', productType);
+  if (error) throw error;
 }
 
 export function derivePeriodFromProvider(preapproval) {

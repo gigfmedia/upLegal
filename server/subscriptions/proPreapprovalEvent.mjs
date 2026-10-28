@@ -20,12 +20,12 @@
 // partial attempt has already mutated that column, so such a guard would DROP
 // the welcome effect exactly on the retry meant to recover it. (Unit-tested.)
 //
-// LEASE vs MUTUAL EXCLUSION: a duplicate of a `pending` event is treated as
-// in-flight (skipped) until it is older than RETRY_LEASE_MS, then retryable.
-// This is NOT a hard mutual exclusion — two concurrent deliveries can both read
-// the same lease-expired row and both proceed (see risk notes). The schema
-// (status CHECK has no 'processing' state) cannot express a claim without a
-// migration, so the lease is a heuristic, not a lock.
+// LEASE vs MUTUAL EXCLUSION: a duplicate of a fresh `pending`/`processing`
+// event is treated as in-flight and surfaced as transient so the HTTP caller
+// returns 5xx instead of acknowledging (and losing) a delivery whose original
+// may have died. Once the row's lease expires, a duplicate must win an atomic
+// conditional update to `processing` before it may proceed. This closes the
+// previous race where two concurrent deliveries both read the expired row.
 
 import {
   tryInsertSubscriptionEvent,
@@ -34,16 +34,42 @@ import {
   markSubscriptionEventProcessed,
   markSubscriptionEventFailed,
 } from './subscriptionEvents.mjs';
+import { clearPendingPlusUpgrade, isTimelyEarlyPlusClaim, isTimelyProviderPreapproval } from './proSubscriptionRouting.mjs';
+
+function throwOnPersistenceError(result, operation) {
+  if (!result?.error) return;
+  const detail = result.error.message || result.error.code || 'unknown database error';
+  const error = new Error(`${operation}: ${detail}`);
+  error.cause = result.error;
+  throw error;
+}
 
 // Gate shared by both orchestrators. Returns true when the (possibly duplicate)
 // event should be processed now, false when it must be skipped.
 // `ev` is the shape returned by tryInsertSubscriptionEvent.
 function shouldProcessEvent(ev) {
   if (ev.inserted) return true;
-  if (ev.status === 'processed') return false; // terminal
+  if (ev.status === 'processed' || ev.status === 'needs_review') return false; // terminal
   if (!ev.retryable) return false; // unknown duplicate
-  if (ev.status === 'pending' && !ev.stale) return false; // in-flight, do not compete
-  return true; // failed, or pending past its lease -> retry
+  if (ev.claimed === false) return false; // another delivery owns the lease
+  if ((ev.status === 'pending' || ev.status === 'processing') && !ev.stale) return false; // in-flight, do not compete
+  return true; // failed, or a lease-expired row we atomically claimed
+}
+
+function isFreshPendingDuplicate(ev) {
+  return !ev.inserted
+    && (ev.status === 'pending' || ev.status === 'processing')
+    && ev.retryable === true
+    && ev.stale === false;
+}
+
+function skippedEventResult(ev) {
+  // A fresh pending duplicate means the original delivery may still be in
+  // flight, or may have died after inserting the row. Acknowledging it would
+  // lose that webhook if the original died. Ask the caller to return a 5xx so
+  // the provider retries; after the lease expires the retry can recover it.
+  if (isFreshPendingDuplicate(ev)) return { transient: true, reason: 'event_in_flight' };
+  return { skipped: ev.status };
 }
 
 export async function processProPreapprovalEvent({ supabase, subscription, preapproval, deps }) {
@@ -61,7 +87,7 @@ export async function processProPreapprovalEvent({ supabase, subscription, preap
     eventType: `preapproval_${mpStatus}`,
     providerStatus: mpStatus,
   });
-  if (!shouldProcessEvent(ev)) return { skipped: ev.status };
+  if (!shouldProcessEvent(ev)) return skippedEventResult(ev);
 
   if (!(await shouldApplyEvent(supabase, {
     productType: 'pro',
@@ -85,12 +111,29 @@ export async function processProPreapprovalEvent({ supabase, subscription, preap
   const now = new Date();
   try {
     if (mpStatus === 'authorized' || mpStatus === 'active') {
+      // First link only: ignore a redelivered, old authorized Pro preapproval
+      // when this row has no provider id yet. Otherwise a stale mandate could be
+      // attached to a brand-new checkout and start charging on the wrong one.
+      if (!subscription.provider_subscription_id
+        && !subscription.pending_provider_subscription_id
+        && !isTimelyProviderPreapproval(subscription, preapproval)) {
+        await markSubscriptionEventProcessed(supabase, { productType: 'pro', providerEventId });
+        return { skipped: 'stale_provider' };
+      }
+      // Link the provider id before period validation: a valid authorization
+      // must never leave the row unlinkable just because the period payload is
+      // malformed. Payment webhooks resolve the row by this id.
+      const link = await supabase.from('lawyer_subscriptions').update({
+        provider_subscription_id: String(preapproval.id),
+        updated_at: now.toISOString(),
+      }).eq('id', subscription.id);
+      throwOnPersistenceError(link, 'pro provider link update');
       const derived = derivePeriodFromProvider(preapproval);
       if (!derived) {
         await markSubscriptionEventProcessed(supabase, { productType: 'pro', providerEventId });
         return { skipped: 'no_period' };
       }
-      await supabase.from('lawyer_subscriptions').update({
+      const activation = await supabase.from('lawyer_subscriptions').update({
         status: 'active',
         current_period_start: derived.start.toISOString(),
         current_period_end: derived.end.toISOString(),
@@ -98,23 +141,26 @@ export async function processProPreapprovalEvent({ supabase, subscription, preap
         cancelled_at: null,
         updated_at: now.toISOString(),
       }).eq('id', subscription.id);
+      throwOnPersistenceError(activation, 'pro activation update');
       await capturePostHog('pro_subscription_activated', lawyerId, { price_clp: priceClp });
       const userData = await getProLawyerEmail(lawyerId);
       if (userData?.email) {
         try { await sendAIEmail(userData.email, '¡Bienvenido a LegalUp Pro!', '<p>Tu suscripción Pro está activa.</p>'); } catch {}
       }
     } else if (mpStatus === 'cancelled') {
-      await supabase.from('lawyer_subscriptions').update({
+      const cancellation = await supabase.from('lawyer_subscriptions').update({
         status: 'cancelled',
         cancelled_at: now.toISOString(),
         cancel_at_period_end: true,
         updated_at: now.toISOString(),
       }).eq('id', subscription.id);
+      throwOnPersistenceError(cancellation, 'pro cancellation update');
       if (subscription.plan !== 'plus') {
         try { await supabase.from('pro_founder_reservations').delete().eq('lawyer_id', lawyerId); } catch {}
       }
     } else if (mpStatus === 'paused') {
-      await supabase.from('lawyer_subscriptions').update({ status: 'past_due', updated_at: now.toISOString() }).eq('id', subscription.id);
+      const paused = await supabase.from('lawyer_subscriptions').update({ status: 'past_due', updated_at: now.toISOString() }).eq('id', subscription.id);
+      throwOnPersistenceError(paused, 'pro paused update');
     }
     await markSubscriptionEventProcessed(supabase, { productType: 'pro', providerEventId });
     return { ok: true };
@@ -140,7 +186,7 @@ export async function processPlusPreapprovalEvent({ supabase, subscription, prea
     eventType: `plus_preapproval_${mpStatus}`,
     providerStatus: mpStatus,
   });
-  if (!shouldProcessEvent(ev)) return { skipped: ev.status };
+  if (!shouldProcessEvent(ev)) return skippedEventResult(ev);
 
   if (!(await shouldApplyEvent(supabase, {
     productType: 'pro',
@@ -159,37 +205,53 @@ export async function processPlusPreapprovalEvent({ supabase, subscription, prea
       const isExpected = pendingId
         ? String(pendingId) === String(preapprovalId)
         : subscription.plan === 'plus' && String(subscription.provider_subscription_id) === String(preapprovalId);
-      if (!isExpected && subscription.plan_change_status !== 'upgrade_pending') {
+      // A brand-new Plus checkout can also beat its own id persistence. Accept
+      // only a recent provider preapproval on an unlinked pending Plus row;
+      // stale redeliveries are ignored instead of activating a wrong mandate.
+      const isNewPlusActivation = !isExpected
+        && subscription.plan === 'plus'
+        && !subscription.provider_subscription_id
+        && !subscription.pending_provider_subscription_id
+        && !subscription.plan_change_status
+        && isTimelyEarlyPlusClaim(subscription, preapproval);
+      if (!isExpected && !isNewPlusActivation) {
         await markSubscriptionEventProcessed(supabase, { productType: 'pro', providerEventId });
         return { skipped: 'unexpected' };
       }
       const completed = await completePlusUpgrade(subscription, preapproval);
       if (!completed.ok) {
         try { await capturePostHog('plus_upgrade_failed', lawyerId, { reason: completed.reason }); } catch {}
+        if (completed.reason === 'DB_ERROR' || completed.reason === 'PROVIDER_ERROR') {
+          throw new Error(`plus upgrade failed: ${completed.reason}`);
+        }
+        // Definitive validation failure (amount/period): keep Pro unchanged and
+        // clear only the pending transition. Never leave an early-claimed Plus
+        // id blocking a future checkout.
+        if (subscription.plan_change_status === 'upgrade_pending') {
+          const cleared = await clearPendingPlusUpgrade(supabase, subscription.id, now);
+          if (!cleared.ok) throw cleared.error ?? new Error('failed to clear rejected Plus upgrade');
+        }
+        await markSubscriptionEventProcessed(supabase, { productType: 'pro', providerEventId });
+        return { skipped: 'upgrade_rejected', reason: completed.reason };
       }
     } else if (['cancelled', 'rejected', 'expired'].includes(mpStatus)) {
       if (subscription.plan_change_status === 'upgrade_pending' && String(subscription.pending_provider_subscription_id || '') === String(preapprovalId)) {
-        await supabase.from('lawyer_subscriptions').update({
-          pending_plan: null,
-          plan_change_status: null,
-          plan_change_effective_at: null,
-          pending_provider_subscription_id: null,
-          pending_init_point: null,
-          previous_provider_subscription_id: null,
-          updated_at: now.toISOString(),
-        }).eq('id', subscription.id);
+        const cleared = await clearPendingPlusUpgrade(supabase, subscription.id, now);
+        if (!cleared.ok) throw cleared.error ?? new Error('failed to clear pending Plus upgrade');
         try { await capturePostHog('plus_upgrade_failed', lawyerId, { reason: `provider_${mpStatus}` }); } catch {}
       } else if (subscription.plan === 'plus' && String(subscription.provider_subscription_id || '') === String(preapprovalId)) {
-        await supabase.from('lawyer_subscriptions').update({
+        const cancellation = await supabase.from('lawyer_subscriptions').update({
           status: 'cancelled',
           cancelled_at: now.toISOString(),
           cancel_at_period_end: true,
           updated_at: now.toISOString(),
         }).eq('id', subscription.id);
+        throwOnPersistenceError(cancellation, 'plus cancellation update');
       }
     } else if (mpStatus === 'paused') {
       if (subscription.plan === 'plus') {
-        await supabase.from('lawyer_subscriptions').update({ status: 'past_due', updated_at: now.toISOString() }).eq('id', subscription.id);
+        const paused = await supabase.from('lawyer_subscriptions').update({ status: 'past_due', updated_at: now.toISOString() }).eq('id', subscription.id);
+        throwOnPersistenceError(paused, 'plus paused update');
       }
     }
     await markSubscriptionEventProcessed(supabase, { productType: 'pro', providerEventId });
@@ -200,4 +262,4 @@ export async function processPlusPreapprovalEvent({ supabase, subscription, prea
   }
 }
 
-export { shouldProcessEvent };
+export { shouldProcessEvent, isFreshPendingDuplicate };

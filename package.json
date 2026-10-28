@@ -17,7 +17,8 @@
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "server": "nodemon server.mjs",
-    "start": "concurrently \"npm run server\" \"vite\""
+    "start": "concurrently \"npm run server\" \"vite\"",
+    "test:unit": "vitest run --mode test"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
