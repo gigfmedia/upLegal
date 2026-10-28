@@ -18,6 +18,39 @@ import {
 import { hasCanonicalDocumentReference, resolveAnalysisModel, honestEvidenceLocation } from './server/ai/coreAuthority.mjs';
 import { consultationBase, bookingClientTotal, bookingPricingSnapshot } from './shared/bookingPricing.mjs';
 import { confirmCompanyCancellation } from './server/subscriptions/companyCancellation.mjs';
+import {
+  canClaimEarlyPlusProvider,
+  claimPendingPlusProvider,
+  classifyPreapprovalExternalReference,
+  clearPendingPlusUpgrade,
+  findProSubscriptionByProviderId,
+  hasCurrentPaidPeriod,
+  isPendingPlusUpgrade,
+  isTimelyEarlyPlusClaim,
+  persistCheckoutProviderLink,
+} from './server/subscriptions/proSubscriptionRouting.mjs';
+import {
+  needsProviderRetirement,
+  prepareExpiredSubscriptionForCheckout,
+} from './server/subscriptions/providerPreapprovalRetirement.mjs';
+import {
+  drainAllUnresolvedAuthorizedPayments,
+  drainUnresolvedAuthorizedPayments,
+  processUnresolvedProPayment,
+  stageUnresolvedAuthorizedPayment,
+} from './server/subscriptions/proUnresolvedEvents.mjs';
+import { isPaymentReversalStatus, paymentReversalReviewReason } from './server/subscriptions/subscriptionEvents.mjs';
+import {
+  PAYMENT_REVERSAL_REVIEW_REASONS,
+  stagePaymentReversalReview,
+} from './server/subscriptions/paymentReversalReview.mjs';
+import {
+  drainAllUnresolvedAIAuthorizedPayments,
+  drainUnresolvedAIAuthorizedPayments,
+  stageAIAuthorizedPayment,
+} from './server/subscriptions/aiUnresolvedEvents.mjs';
+import { processUnresolvedAIPayment } from './server/subscriptions/aiPaymentRecovery.mjs';
+import { assertTestServerConfig, isTestMode, resolveServerSupabaseConfig } from './server/subscriptions/sandboxGuard.mjs';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -162,16 +195,21 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables
-dotenv.config({ path: path.resolve(__dirname, '.env.local') });
-dotenv.config();
+// Load environment variables.
+// In test mode there is deliberately no .env.local fallback: tests must pass
+// an explicit local sandbox configuration, and the guard below rejects remote
+// hosts before any Supabase client is created.
+const runningInTestMode = isTestMode();
+if (!runningInTestMode) {
+  dotenv.config({ path: path.resolve(__dirname, '.env.local') });
+  dotenv.config();
+}
 
 // Get environment variables — backend uses clean names only.
 // Frontend VITE_* vars in .env.local are NOT consumed by this server.
 // Keeping a single VITE_SUPABASE_URL fallback for convenience since it is
 // not a secret (identical to the anon key URL the frontend already exposes).
-const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY;
+const { url: supabaseUrl, key: serviceRoleKey } = resolveServerSupabaseConfig(process.env);
 const appUrl = process.env.APP_URL || 'https://legalup.cl';
 const mercadoPagoWebhookUrl =
   process.env.MERCADOPAGO_WEBHOOK_URL ||
@@ -193,6 +231,11 @@ if (!serviceRoleKey) {
       .join(', ') || '(none found with those keywords)'
   );
   process.exit(1);
+}
+
+if (runningInTestMode) {
+  // Fail closed: in test mode only a local Supabase instance is allowed.
+  assertTestServerConfig({ url: supabaseUrl, key: serviceRoleKey, env: process.env });
 }
 
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
@@ -5844,7 +5887,15 @@ const handleAIPreapprovalWebhook = async (preapproval) => {
   const mpStatus = preapproval.status;
   const providerEventAt = preapproval.last_modified || preapproval.date_created || new Date().toISOString();
   const providerEventId = `${preapprovalId}:${mpStatus}:${providerEventAt}`;
-  const { tryInsertSubscriptionEvent, derivePeriodFromProvider, shouldApplyEvent, markSubscriptionEventProcessed, markSubscriptionEventFailed } = await import('./server/subscriptions/subscriptionEvents.mjs');
+  const { tryInsertSubscriptionEvent, derivePeriodFromProvider, shouldApplyEvent, markSubscriptionEventProcessed, markSubscriptionEventFailed, matchesActiveProvider } = await import('./server/subscriptions/subscriptionEvents.mjs');
+  if (!matchesActiveProvider(subscription, preapprovalId)) {
+    console.log('[LegalUpAI] preapproval event ignored (provider id mismatch)', {
+      subscription_id: subscription.id,
+      provider_status: mpStatus,
+      received_preapproval_id: preapprovalId,
+    });
+    return;
+  }
   const eventRes = await tryInsertSubscriptionEvent(supabase, {
     productType: 'ai',
     subscriptionId: subscription.id,
@@ -5853,15 +5904,21 @@ const handleAIPreapprovalWebhook = async (preapproval) => {
     eventType: `preapproval_${mpStatus}`,
     providerStatus: mpStatus,
   });
-  if (!eventRes.inserted && eventRes.status === 'processed') {
-    console.log('[LegalUpAI] duplicate event skipped', providerEventId);
-    return;
+  if (!eventRes.inserted) {
+    if (eventRes.status === 'processed' || eventRes.status === 'needs_review') {
+      console.log('[LegalUpAI] duplicate terminal event skipped', providerEventId);
+      return;
+    }
+    if (!eventRes.retryable) {
+      console.log('[LegalUpAI] duplicate non-retryable event skipped', providerEventId);
+      return;
+    }
+    if (!eventRes.claimed) {
+      console.log('[LegalUpAI] duplicate event in flight skipped', providerEventId);
+      return;
+    }
   }
-  if (!eventRes.inserted && !eventRes.retryable) {
-    console.log('[LegalUpAI] duplicate non-retryable event skipped', providerEventId);
-    return;
-  }
-  if (!(await shouldApplyEvent(supabase, { productType: 'ai', subscriptionId: subscription.id, providerEventAt }))) {
+  if (!(await shouldApplyEvent(supabase, { productType: 'ai', subscriptionId: subscription.id, providerEventAt, eventTypePrefix: 'preapproval' }))) {
     console.log('[LegalUpAI] out-of-order event ignored', providerEventId);
     await markSubscriptionEventProcessed(supabase, { productType: 'ai', providerEventId });
     return;
@@ -5872,6 +5929,7 @@ const handleAIPreapprovalWebhook = async (preapproval) => {
     const eventAt = new Date(providerEventAt).getTime();
     if (!isNaN(cancelledAt) && !isNaN(eventAt) && eventAt <= cancelledAt) {
       console.log('[LegalUpAI] old authorized event after cancellation ignored', providerEventId);
+      await markSubscriptionEventProcessed(supabase, { productType: 'ai', providerEventId });
       return;
     }
   }
@@ -5883,6 +5941,7 @@ const handleAIPreapprovalWebhook = async (preapproval) => {
       const derived = derivePeriodFromProvider(preapproval);
       if (!derived) {
         console.error('[LegalUpAI] cannot derive period, no entitlement', providerEventId);
+        await markSubscriptionEventProcessed(supabase, { productType: 'ai', providerEventId });
         return;
       }
       const periodEnd = derived.end;
@@ -5931,7 +5990,7 @@ const handleAIPreapprovalWebhook = async (preapproval) => {
       break;
     }
     case 'cancelled': {
-      await supabase
+      const { error: cancellationError } = await supabase
         .from('ai_subscriptions')
         .update({
           status: 'cancelled',
@@ -5940,35 +5999,69 @@ const handleAIPreapprovalWebhook = async (preapproval) => {
           updated_at: now.toISOString(),
         })
         .eq('id', subscription.id);
+      if (cancellationError) {
+        await markSubscriptionEventFailed(supabase, { productType: 'ai', providerEventId });
+        throw cancellationError;
+      }
+      await markSubscriptionEventProcessed(supabase, { productType: 'ai', providerEventId });
 
       await capturePostHog('ai_subscription_cancelled', lawyerId, { preapproval_id: preapprovalId });
       break;
     }
     case 'paused': {
-      await supabase
+      const { error: pauseError } = await supabase
         .from('ai_subscriptions')
         .update({ status: 'past_due', updated_at: now.toISOString() })
         .eq('id', subscription.id);
+      if (pauseError) {
+        await markSubscriptionEventFailed(supabase, { productType: 'ai', providerEventId });
+        throw pauseError;
+      }
+      await markSubscriptionEventProcessed(supabase, { productType: 'ai', providerEventId });
 
       await capturePostHog('ai_subscription_past_due', lawyerId, { preapproval_id: preapprovalId });
       break;
     }
     default:
       console.log('[LegalUpAI] Unhandled AI preapproval status:', mpStatus);
+      await markSubscriptionEventProcessed(supabase, { productType: 'ai', providerEventId });
+  }
+  // The preapproval may be the step that persisted provider_subscription_id.
+  // Only an authorizing event may replay payments: a cancelled/paused link must
+  // never reactivate the row by draining an older approved payment.
+  if (mpStatus === 'authorized' || mpStatus === 'active') {
+    await drainStoredAIPaymentsForPreapproval(preapprovalId);
   }
 };
 
 // LegalUp AI: procesa cobros autorizados (primera activación / renovaciones / pagos fallidos).
 const handleAIAuthorizedPayment = async (payment, subscription) => {
-  const providerEventId = String(payment.id);
+  const paymentStatus = String(payment.status || '');
+  const providerEventId = `${payment.id}:${paymentStatus}`;
   const providerEventAt = payment.date_created || payment.date_approved || new Date().toISOString();
-  const { tryInsertSubscriptionEvent, shouldApplyEvent, markSubscriptionEventProcessed, markSubscriptionEventFailed } = await import('./server/subscriptions/subscriptionEvents.mjs');
-  const ev = await tryInsertSubscriptionEvent(supabase, { productType: 'ai', subscriptionId: subscription.id, providerEventId, providerEventAt, eventType: 'payment_approved', providerStatus: payment.status });
+  const { tryInsertSubscriptionEvent, shouldApplyEvent, markSubscriptionEventProcessed, markSubscriptionEventFailed, markSubscriptionEventForReview } = await import('./server/subscriptions/subscriptionEvents.mjs');
+  const ev = await tryInsertSubscriptionEvent(supabase, { productType: 'ai', subscriptionId: subscription.id, providerEventId, providerEventAt, eventType: `payment_${paymentStatus || 'unknown'}`, providerStatus: payment.status });
   if (!ev.inserted) {
-    if (ev.status === 'processed') return;
+    if (ev.status === 'processed' || ev.status === 'needs_review') return;
     if (!ev.retryable) return;
+    if (!ev.claimed) return { transient: true, reason: 'event_in_flight' };
   }
-  if (!(await shouldApplyEvent(supabase, { productType: 'ai', subscriptionId: subscription.id, providerEventAt }))) {
+  // Review reversals before ordering: a refund/chargeback keeps the original
+  // payment timestamp, so it may be older than a later renewal. It must still
+  // surface for manual review instead of being dropped as out-of-order.
+  if (isPaymentReversalStatus(paymentStatus)) {
+    await markSubscriptionEventForReview(supabase, {
+      productType: 'ai',
+      providerEventId,
+      reason: paymentReversalReviewReason(paymentStatus),
+    });
+    await capturePostHog('ai_subscription_payment_review_required', subscription.lawyer_id, {
+      payment_id: String(payment.id),
+      payment_status: paymentStatus,
+    });
+    return;
+  }
+  if (!(await shouldApplyEvent(supabase, { productType: 'ai', subscriptionId: subscription.id, providerEventAt, eventTypePrefix: 'payment' }))) {
     await markSubscriptionEventProcessed(supabase, { productType: 'ai', providerEventId });
     return;
   }
@@ -5984,7 +6077,7 @@ const handleAIAuthorizedPayment = async (payment, subscription) => {
   const paymentDate = new Date(providerEventAt);
   const periodStart = !isNaN(paymentDate.getTime()) ? paymentDate : now;
 
-  if (payment.status === 'approved') {
+  if (paymentStatus === 'approved') {
     const periodEnd = new Date(periodStart.getTime() + AI_MONTH_MS);
 
     const isFirstActivation =
@@ -5992,10 +6085,15 @@ const handleAIAuthorizedPayment = async (payment, subscription) => {
       !subscription.current_period_start;
 
     try {
+      const providerSubscriptionId = payment.preapproval_id
+        ? String(payment.preapproval_id)
+        : (subscription.provider_subscription_id ? String(subscription.provider_subscription_id) : null);
       const { error: updateError } = await supabase
         .from('ai_subscriptions')
         .update({
           status: 'active',
+          provider: 'mercadopago',
+          provider_subscription_id: providerSubscriptionId,
           current_period_start: periodStart.toISOString(),
           current_period_end: periodEnd.toISOString(),
           cancel_at_period_end: false,
@@ -6036,11 +6134,16 @@ const handleAIAuthorizedPayment = async (payment, subscription) => {
           : aiSubscriptionEmailTemplates.renewal(periodEnd.toLocaleDateString('es-CL'))
       );
     }
-  } else if (payment.status === 'rejected' || payment.status === 'refused') {
-    await supabase
+  } else if (paymentStatus === 'rejected' || paymentStatus === 'refused') {
+    const { error: pastDueError } = await supabase
       .from('ai_subscriptions')
       .update({ status: 'past_due', updated_at: now.toISOString() })
       .eq('id', subscription.id);
+    if (pastDueError) {
+      await markSubscriptionEventFailed(supabase, { productType: 'ai', providerEventId });
+      throw pastDueError;
+    }
+    await markSubscriptionEventProcessed(supabase, { productType: 'ai', providerEventId });
 
     await capturePostHog('ai_subscription_payment_failed', subscription.lawyer_id, {
       payment_id: String(payment.id),
@@ -6054,6 +6157,79 @@ const handleAIAuthorizedPayment = async (payment, subscription) => {
         aiSubscriptionEmailTemplates.payment_failed()
       );
     }
+  } else if (paymentStatus === 'pending' || paymentStatus === 'in_process' || paymentStatus === 'authorized') {
+    // Non-final provider status: no entitlement change. Because the event id is
+    // status-scoped, a later approved/rejected webhook for the same payment is a
+    // distinct event and will still be processed.
+    await markSubscriptionEventProcessed(supabase, { productType: 'ai', providerEventId });
+  } else {
+    await markSubscriptionEventForReview(supabase, {
+      productType: 'ai',
+      providerEventId,
+      reason: `payment_status_${paymentStatus || 'unknown'}_requires_review`,
+    });
+  }
+};
+
+const replayUnresolvedAIPayment = (payment, row) => processUnresolvedAIPayment({
+  supabase,
+  payment,
+  row,
+  applyPayment: handleAIAuthorizedPayment,
+  expectedAmountClp: AI_SUBSCRIPTION_PRICE_CLP,
+});
+
+const drainStoredAIPaymentsForPreapproval = async (preapprovalId) => {
+  try {
+    const result = await drainUnresolvedAIAuthorizedPayments(supabase, {
+      preapprovalId: String(preapprovalId),
+      processPayment: replayUnresolvedAIPayment,
+    });
+    if (result.pending || result.invalid) {
+      console.warn('[LegalUpAI] unresolved payment replay incomplete', {
+        preapproval_id: String(preapprovalId),
+        processed: result.processed,
+        pending: result.pending,
+        invalid: result.invalid,
+      });
+    }
+    return result;
+  } catch (error) {
+    console.error('[LegalUpAI] unresolved payment replay failed (kept for retry)', {
+      preapproval_id: String(preapprovalId),
+      error: error?.message || error,
+    });
+    return { ok: false, error };
+  }
+};
+
+const replayUnresolvedProPayment = (payment) => processUnresolvedProPayment({
+  payment,
+  findSubscription: (preapprovalId) => findProSubscriptionByProviderId(supabase, preapprovalId),
+  applyPayment: handleProAuthorizedPayment,
+});
+
+const drainStoredPaymentsForPreapproval = async (preapprovalId) => {
+  try {
+    const result = await drainUnresolvedAuthorizedPayments(supabase, {
+      preapprovalId: String(preapprovalId),
+      processPayment: replayUnresolvedProPayment,
+    });
+    if (result.pending || result.invalid) {
+      console.warn('[LegalUpPro] unresolved payment replay incomplete', {
+        preapproval_id: String(preapprovalId),
+        processed: result.processed,
+        pending: result.pending,
+        invalid: result.invalid,
+      });
+    }
+    return result;
+  } catch (error) {
+    console.error('[LegalUpPro] unresolved payment replay failed (kept for retry)', {
+      preapproval_id: String(preapprovalId),
+      error: error?.message || error,
+    });
+    return { ok: false, error };
   }
 };
 
@@ -6079,30 +6255,63 @@ const handleProPreapprovalWebhook = async (preapproval) => {
   // Ignored events are recorded with ids only (no PII/tokens).
   const { matchesActiveProvider } = await import('./server/subscriptions/subscriptionEvents.mjs');
   if (!matchesActiveProvider(subscription, preapprovalId)) {
-    console.log('[LegalUpPro] preapproval event ignored (provider id mismatch)', {
-      subscription_id: subscription.id,
-      provider_status: mpStatus,
-      received_preapproval_id: String(preapprovalId),
+    // The Plus authorization can beat the checkout response that persists the
+    // pending id. Claim it atomically instead of dropping a valid early event.
+    if (!canClaimEarlyPlusProvider(subscription, isPlusRef)) {
+      console.log('[LegalUpPro] preapproval event ignored (provider id mismatch)', {
+        subscription_id: subscription.id,
+        provider_status: mpStatus,
+        received_preapproval_id: String(preapprovalId),
+      });
+      return;
+    }
+    if (!isTimelyEarlyPlusClaim(subscription, preapproval)) {
+      console.warn('[LegalUpPro] early Plus claim rejected (stale preapproval)', {
+        subscription_id: subscription.id,
+        provider_status: mpStatus,
+        received_preapproval_id: String(preapprovalId),
+        provider_created_at: preapproval?.date_created || null,
+        upgrade_updated_at: subscription.updated_at || null,
+      });
+      return;
+    }
+    const claim = await claimPendingPlusProvider(supabase, {
+      subscriptionId: subscription.id,
+      preapprovalId,
     });
-    return;
+    if (!claim.ok) {
+      if (claim.transient) throw claim.error ?? new Error('failed to claim pending Plus provider');
+      console.log('[LegalUpPro] preapproval event not claimable', {
+        subscription_id: subscription.id,
+        provider_status: mpStatus,
+        received_preapproval_id: String(preapprovalId),
+        code: claim.code || null,
+      });
+      return;
+    }
+    subscription = claim.subscription;
   }
   // Reconcile scheduled downgrades + stale old-Pro cancellations on every
   // Pro-family webhook event (no cron dependency).
   subscription = await maybeApplyScheduledDowngrade(subscription) ?? subscription;
   subscription = await retryOldProCancel(subscription) ?? subscription;
   if (isPlusRef) {
-    await handlePlusPreapprovalWebhook(subscription, preapproval);
+    const outcome = await handlePlusPreapprovalWebhook(subscription, preapproval);
+    if (outcome?.transient) throw new Error(`plus preapproval replay pending: ${outcome.reason || 'event_in_flight'}`);
+    await drainStoredPaymentsForPreapproval(preapprovalId);
     return;
   }
   // Retry-safe reconciliation lives in the extracted orchestrator (real code,
   // unit/integration tested). See server/subscriptions/proPreapprovalEvent.mjs.
   const { processProPreapprovalEvent } = await import('./server/subscriptions/proPreapprovalEvent.mjs');
-  await processProPreapprovalEvent({
+  const outcome = await processProPreapprovalEvent({
     supabase,
     subscription,
     preapproval,
     deps: { capturePostHog, getProLawyerEmail, sendAIEmail, priceClp: PRO_SUBSCRIPTION_PRICE_CLP },
   });
+  if (outcome?.transient) throw new Error(`pro preapproval replay pending: ${outcome.reason || 'event_in_flight'}`);
+  await drainStoredPaymentsForPreapproval(preapprovalId);
 };
 
 // 4.57D: Plus preapproval settlement. Delegates to the extracted orchestrator
@@ -6110,7 +6319,7 @@ const handleProPreapprovalWebhook = async (preapproval) => {
 // no reservation, no intro transition) and activates ONLY via completePlusUpgrade.
 const handlePlusPreapprovalWebhook = async (subscription, preapproval) => {
   const { processPlusPreapprovalEvent } = await import('./server/subscriptions/proPreapprovalEvent.mjs');
-  await processPlusPreapprovalEvent({
+  return processPlusPreapprovalEvent({
     supabase,
     subscription,
     preapproval,
@@ -6128,20 +6337,34 @@ const handleProAuthorizedPayment = async (payment) => {
     const pending = await supabase.from('lawyer_subscriptions').select('*').eq('pending_provider_subscription_id', String(preapprovalId)).maybeSingle();
     subscription = pending.data ?? null;
   }
-  if (!subscription) return;
+  if (!subscription) return { missingSubscription: true };
   subscription = await maybeApplyScheduledDowngrade(subscription) ?? subscription;
   subscription = await retryOldProCancel(subscription) ?? subscription;
   // Effective Plus: steady plus row, or an upgrade whose Plus preapproval
   // just paid. Everything Founder-related is skipped for Plus (§20).
   const isPlusEffective = subscription.plan === 'plus'
     || (subscription.plan_change_status === 'upgrade_pending' && String(subscription.pending_provider_subscription_id || '') === String(preapprovalId));
-  const providerEventId = String(payment.id);
+  const paymentStatus = String(payment.status || '');
+  const providerEventId = `${payment.id}:${paymentStatus}`;
+  const ledgerPaymentId = String(payment.id);
   const providerEventAt = payment.date_created || payment.date_approved || new Date().toISOString();
-  const { tryInsertSubscriptionEvent, shouldApplyEvent, markSubscriptionEventProcessed, markSubscriptionEventFailed } = await import('./server/subscriptions/subscriptionEvents.mjs');
-  const ev = await tryInsertSubscriptionEvent(supabase, { productType: 'pro', subscriptionId: subscription.id, providerEventId, providerEventAt, eventType: 'payment_approved', providerStatus: payment.status });
+  const { tryInsertSubscriptionEvent, shouldApplyEvent, markSubscriptionEventProcessed, markSubscriptionEventFailed, markSubscriptionEventForReview } = await import('./server/subscriptions/subscriptionEvents.mjs');
+  const ev = await tryInsertSubscriptionEvent(supabase, { productType: 'pro', subscriptionId: subscription.id, providerEventId, providerEventAt, eventType: `payment_${paymentStatus || 'unknown'}`, providerStatus: payment.status });
   if (!ev.inserted) {
-    if (ev.status === 'processed') return;
+    if (ev.status === 'processed' || ev.status === 'needs_review') return;
     if (!ev.retryable) return;
+    if (!ev.claimed) return { transient: true, reason: 'event_in_flight' };
+  }
+  // Review reversals before ordering: a refund/chargeback keeps the original
+  // payment timestamp, so it may be older than a later renewal. It must still
+  // surface for manual review instead of being dropped as out-of-order.
+  if (isPaymentReversalStatus(paymentStatus)) {
+    await markSubscriptionEventForReview(supabase, {
+      productType: 'pro',
+      providerEventId,
+      reason: paymentReversalReviewReason(paymentStatus),
+    });
+    return;
   }
   if (!(await shouldApplyEvent(supabase, { productType: 'pro', subscriptionId: subscription.id, providerEventAt, eventTypePrefix: 'payment' }))) {
     await markSubscriptionEventProcessed(supabase, { productType: 'pro', providerEventId });
@@ -6155,32 +6378,65 @@ const handleProAuthorizedPayment = async (payment) => {
       return;
     }
   }
+  if (paymentStatus === 'pending' || paymentStatus === 'in_process' || paymentStatus === 'authorized') {
+    // Non-final provider status: no entitlement or ledger mutation. The event id
+    // is status-scoped, so a later approved/rejected webhook for the same
+    // payment remains processable.
+    await markSubscriptionEventProcessed(supabase, { productType: 'pro', providerEventId });
+    return;
+  }
+  if (paymentStatus !== 'approved' && paymentStatus !== 'rejected' && paymentStatus !== 'refused') {
+    // Unknown provider statuses need a validated business rule before touching
+    // access or financial truth. Preserve the event for manual review.
+    await markSubscriptionEventForReview(supabase, {
+      productType: 'pro',
+      providerEventId,
+      reason: `payment_${paymentStatus || 'unknown'}_requires_policy_review`,
+    });
+    return;
+  }
   // Ledger for intro → standard (4.28B.2) — dedup via provider_authorized_payment_id UNIQUE, lifetime per lawyer
   // 4.57D: plan marker (NULL = historical Pro). Plus payments never feed
   // Founder logic: reconcile + intro-count filter on plan.
-  try {
-    const { error: ledgerErr } = await supabase.from('pro_subscription_payments').insert({
-      lawyer_subscription_id: subscription.id,
-      lawyer_id: subscription.lawyer_id,
-      provider_authorized_payment_id: providerEventId,
-      provider_payment_id: String(payment.payment_id || payment.id || ''),
-      amount_clp: Number(payment.transaction_amount || 0) || 0,
-      currency: 'CLP',
-      status: String(payment.status || ''),
-      paid_at: providerEventAt,
-      plan: isPlusEffective ? 'plus' : 'pro',
-    });
-    if (ledgerErr && String(ledgerErr.code) === '23505') {
-      await supabase.from('pro_subscription_payments').update({
+  // A failed ledger write must fail the event: activating access without the
+  // payment truth would silently corrupt Founder/intro-price decisions.
+  const { error: ledgerErr } = await supabase.from('pro_subscription_payments').insert({
+    lawyer_subscription_id: subscription.id,
+    lawyer_id: subscription.lawyer_id,
+    provider_authorized_payment_id: ledgerPaymentId,
+    provider_payment_id: String(payment.payment_id || payment.id || ''),
+    amount_clp: Number(payment.transaction_amount || 0) || 0,
+    currency: 'CLP',
+    status: String(payment.status || ''),
+    paid_at: providerEventAt,
+    plan: isPlusEffective ? 'plus' : 'pro',
+  });
+  if (ledgerErr) {
+    const approvedPayment = paymentStatus === 'approved';
+    if (String(ledgerErr.code) === '23505') {
+      const { error: ledgerUpdateErr } = await supabase.from('pro_subscription_payments').update({
         provider_payment_id: String(payment.payment_id || payment.id || ''),
         amount_clp: Number(payment.transaction_amount || 0) || 0,
         status: String(payment.status || ''),
         paid_at: providerEventAt,
-      }).eq('provider_authorized_payment_id', providerEventId);
+      }).eq('provider_authorized_payment_id', ledgerPaymentId);
+      if (ledgerUpdateErr) {
+        if (!approvedPayment) {
+          console.error('[LegalUpPro] ledger update failed for non-approved payment', ledgerUpdateErr);
+        } else {
+          await markSubscriptionEventFailed(supabase, { productType: 'pro', providerEventId });
+          throw ledgerUpdateErr;
+        }
+      }
+    } else if (approvedPayment) {
+      await markSubscriptionEventFailed(supabase, { productType: 'pro', providerEventId });
+      throw ledgerErr;
+    } else {
+      console.error('[LegalUpPro] ledger insert failed for non-approved payment', ledgerErr);
     }
-  } catch {}
+  }
 
-  if (payment.status === 'approved') {
+  if (paymentStatus === 'approved') {
     // 4.57D: an approved payment on the pending Plus preapproval confirms
     // the upgrade even before the preapproval webhook arrives (same
     // fail-closed completer; event dedup above keeps it single).
@@ -6193,6 +6449,15 @@ const handleProAuthorizedPayment = async (payment) => {
       });
       if (!completed.ok) {
         try { await capturePostHog('plus_upgrade_failed', subscription.lawyer_id, { reason: completed.reason }); } catch {}
+        if (completed.reason === 'DB_ERROR') {
+          await markSubscriptionEventFailed(supabase, { productType: 'pro', providerEventId });
+          throw new Error(`plus upgrade completion failed: ${completed.reason}`);
+        }
+        const cleared = await clearPendingPlusUpgrade(supabase, subscription.id);
+        if (!cleared.ok) {
+          await markSubscriptionEventFailed(supabase, { productType: 'pro', providerEventId });
+          throw cleared.error ?? new Error('failed to clear rejected Plus upgrade');
+        }
       }
       await markSubscriptionEventProcessed(supabase, { productType: 'pro', providerEventId });
       return;
@@ -6234,11 +6499,82 @@ const handleProAuthorizedPayment = async (payment) => {
       throw e;
     }
     await capturePostHog('pro_subscription_activated', subscription.lawyer_id, { price_clp: subscription.amount_clp ?? PRO_INTRO_PRICE_CLP });
-  } else if (payment.status === 'rejected' || payment.status === 'refused') {
-    await supabase.from('lawyer_subscriptions').update({ status: 'past_due', updated_at: new Date().toISOString() }).eq('id', subscription.id);
-    await capturePostHog('pro_subscription_payment_failed', subscription.lawyer_id, { payment_id: String(payment.id) });
+  } else if (paymentStatus === 'rejected' || paymentStatus === 'refused') {
+    if (isPendingPlusUpgrade(subscription, preapprovalId)) {
+      // A rejected Plus upgrade must never revoke the Pro that is still in
+      // force. Only the transition state is cleared; plan/status stay Pro.
+      const cleared = await clearPendingPlusUpgrade(supabase, subscription.id);
+      if (!cleared.ok) {
+        await markSubscriptionEventFailed(supabase, { productType: 'pro', providerEventId });
+        throw cleared.error ?? new Error('failed to clear pending Plus upgrade');
+      }
+      try { await capturePostHog('plus_upgrade_failed', subscription.lawyer_id, { reason: `payment_${payment.status}` }); } catch {}
+    } else {
+      const { error: updateError } = await supabase
+        .from('lawyer_subscriptions')
+        .update({ status: 'past_due', updated_at: new Date().toISOString() })
+        .eq('id', subscription.id);
+      if (updateError) {
+        await markSubscriptionEventFailed(supabase, { productType: 'pro', providerEventId });
+        throw updateError;
+      }
+      await capturePostHog('pro_subscription_payment_failed', subscription.lawyer_id, { payment_id: String(payment.id) });
+    }
+    await markSubscriptionEventProcessed(supabase, { productType: 'pro', providerEventId });
   }
 };
+
+// Durable inbox recovery: staged early payments are replayed on startup and
+// periodically, not only when another checkout/webhook happens to fire. Without
+// this, a process restart after the provider webhook was acknowledged would
+// leave a paid invoice pending forever.
+const UNRESOLVED_PAYMENT_RECOVERY_MS = 5 * 60 * 1000;
+let unresolvedPaymentRecoveryRunning = false;
+const runUnresolvedPaymentRecovery = async () => {
+  if (unresolvedPaymentRecoveryRunning) return;
+  unresolvedPaymentRecoveryRunning = true;
+  try {
+    const result = await drainAllUnresolvedAuthorizedPayments(supabase, {
+      processPayment: replayUnresolvedProPayment,
+    });
+    if (result.processed || result.pending || result.invalid || result.errors) {
+      console.log('[LegalUpPro] unresolved payment recovery', result);
+    }
+  } catch (error) {
+    console.error('[LegalUpPro] unresolved payment recovery failed (will retry)', {
+      error: error?.message || error,
+    });
+  } finally {
+    unresolvedPaymentRecoveryRunning = false;
+  }
+};
+
+let unresolvedAIRecoveryRunning = false;
+const runUnresolvedAIRecovery = async () => {
+  if (unresolvedAIRecoveryRunning) return;
+  unresolvedAIRecoveryRunning = true;
+  try {
+    const result = await drainAllUnresolvedAIAuthorizedPayments(supabase, {
+      processPayment: replayUnresolvedAIPayment,
+    });
+    if (result.processed || result.pending || result.invalid || result.errors) {
+      console.log('[LegalUpAI] unresolved payment recovery', result);
+    }
+  } catch (error) {
+    console.error('[LegalUpAI] unresolved payment recovery failed (will retry)', {
+      error: error?.message || error,
+    });
+  } finally {
+    unresolvedAIRecoveryRunning = false;
+  }
+};
+
+if (!runningInTestMode) {
+  setTimeout(runUnresolvedPaymentRecovery, 15 * 1000).unref();
+  setInterval(runUnresolvedPaymentRecovery, UNRESOLVED_PAYMENT_RECOVERY_MS).unref();
+  setTimeout(runUnresolvedAIRecovery, 15 * 1000).unref();
+  setInterval(runUnresolvedAIRecovery, UNRESOLVED_PAYMENT_RECOVERY_MS).unref();
+}
 
 const handlePreapprovalWebhook = async (preapprovalId) => {
   console.log('[Empresas] Handling preapproval event:', preapprovalId);
@@ -6256,21 +6592,31 @@ const handlePreapprovalWebhook = async (preapprovalId) => {
   );
 
   if (!mpResponse.ok) {
-    console.error('[Empresas] Failed to fetch preapproval:', preapprovalId);
-    return;
+    if (mpResponse.status === 404) {
+      console.error('[Empresas] Preapproval not found:', preapprovalId);
+      return;
+    }
+    // Transient/provider failure: do not acknowledge a webhook we did not
+    // process or durably store. Let Mercado Pago retry.
+    throw new Error(`preapproval fetch failed: ${mpResponse.status}`);
   }
 
   const preapproval = await mpResponse.json();
   const externalRef = preapproval.external_reference;
+  const route = classifyPreapprovalExternalReference(externalRef, {
+    ai: AI_EXTERNAL_REF_PREFIX,
+    pro: PRO_EXTERNAL_REF_PREFIX,
+    plus: PLUS_EXTERNAL_REF_PREFIX,
+  });
 
   // LegalUp AI: las suscripciones AI usan external_reference `AI_<lawyerId>`.
-  if (externalRef && String(externalRef).startsWith(AI_EXTERNAL_REF_PREFIX)) {
+  if (route === 'ai') {
     await handleAIPreapprovalWebhook(preapproval);
     return;
   }
 
-  // LegalUp Pro: Founder 15
-  if (externalRef && String(externalRef).startsWith(PRO_EXTERNAL_REF_PREFIX)) {
+  // LegalUp Pro family: Pro and Plus both settle through the Pro orchestrator.
+  if (route === 'pro') {
     await handleProPreapprovalWebhook(preapproval);
     return;
   }
@@ -6429,14 +6775,30 @@ const handleAuthorizedPayment = async (paymentId) => {
   );
 
   if (!mpResponse.ok) {
-    console.error('[Empresas] Failed to fetch authorized payment');
-    return;
+    if (mpResponse.status === 404) {
+      console.error('[Empresas] Authorized payment not found:', paymentId);
+      return;
+    }
+    // Transient/provider failure: leave the event unacknowledged so the
+    // provider can redeliver it.
+    throw new Error(`authorized payment fetch failed: ${mpResponse.status}`);
   }
 
   const payment = await mpResponse.json();
   const preapprovalId = payment.preapproval_id;
 
   if (!preapprovalId) {
+    if (isPaymentReversalStatus(payment.status)) {
+      await stagePaymentReversalReview(supabase, {
+        payment,
+        reason: PAYMENT_REVERSAL_REVIEW_REASONS.MISSING_PREAPPROVAL_ID,
+      });
+      console.warn('[Empresas] Reversal stored for neutral review (missing preapproval_id)', {
+        payment_id: String(payment.id || ''),
+        provider_status: String(payment.status || ''),
+      });
+      return;
+    }
     console.error('[Empresas] No preapproval_id in payment');
     return;
   }
@@ -6449,18 +6811,20 @@ const handleAuthorizedPayment = async (paymentId) => {
     .eq('provider_subscription_id', String(preapprovalId))
     .maybeSingle();
   if (aiSubscription) {
-    await handleAIAuthorizedPayment(payment, aiSubscription);
+    const outcome = await handleAIAuthorizedPayment(payment, aiSubscription);
+    if (outcome?.transient) throw new Error(`ai payment replay pending: ${outcome.reason || 'event_in_flight'}`);
     return;
   }
 
-  // LegalUp Pro
-  const { data: proSubscription } = await supabase
-    .from('lawyer_subscriptions')
-    .select('*')
-    .eq('provider_subscription_id', String(preapprovalId))
-    .maybeSingle();
+  // LegalUp Pro family. A Plus upgrade's preapproval id lives in the pending
+  // column until the upgrade confirms, so both columns must be resolved here.
+  const proSubscription = await findProSubscriptionByProviderId(supabase, preapprovalId);
   if (proSubscription) {
-    await handleProAuthorizedPayment(payment);
+    const outcome = await handleProAuthorizedPayment(payment);
+    if (outcome?.transient) {
+      throw new Error(`pro payment replay pending: ${outcome.reason || 'event_in_flight'}`);
+    }
+    await drainStoredPaymentsForPreapproval(preapprovalId);
     return;
   }
 
@@ -6472,6 +6836,122 @@ const handleAuthorizedPayment = async (paymentId) => {
     .maybeSingle();
 
   if (!subscription) {
+    const paymentStatus = String(payment.status || '');
+    const shouldStageUnresolved = ['approved', 'rejected', 'refused'].includes(paymentStatus)
+      || isPaymentReversalStatus(paymentStatus);
+    if (shouldStageUnresolved) {
+      // Only Pro-family preapprovals may enter the Pro replay inbox. Read the
+      // preapproval's trusted external_reference; AI/company early events keep
+      // their existing handling and never leak into this table.
+      const preapprovalResponse = await fetch(
+        `https://api.mercadopago.com/preapproval/${encodeURIComponent(String(preapprovalId))}`,
+        { headers: { Authorization: `Bearer ${mercadopagoAccessToken}` } },
+      );
+      if (!preapprovalResponse.ok) {
+        if (preapprovalResponse.status === 404) {
+          if (isPaymentReversalStatus(paymentStatus)) {
+            await stagePaymentReversalReview(supabase, {
+              payment,
+              preapprovalId,
+              reason: PAYMENT_REVERSAL_REVIEW_REASONS.PREAPPROVAL_NOT_FOUND,
+            });
+            console.warn('[Empresas] Reversal stored for neutral review (preapproval 404)', {
+              payment_id: String(payment.id || ''),
+              preapproval_id: String(preapprovalId),
+              provider_status: paymentStatus,
+            });
+          } else {
+            console.error('[Empresas] Preapproval not found:', preapprovalId);
+          }
+          return;
+        }
+        throw new Error(`preapproval lookup failed: ${preapprovalResponse.status}`);
+      }
+      let preapprovalData;
+      try {
+        preapprovalData = await preapprovalResponse.json();
+      } catch {
+        // A malformed provider response is transient, not proof that this is a
+        // non-Pro event. Surface it so the webhook is retried instead of acked.
+        throw new Error('preapproval lookup returned invalid JSON');
+      }
+      const route = classifyPreapprovalExternalReference(preapprovalData?.external_reference || '', {
+        ai: AI_EXTERNAL_REF_PREFIX,
+        pro: PRO_EXTERNAL_REF_PREFIX,
+        plus: PLUS_EXTERNAL_REF_PREFIX,
+      });
+      if (route === 'ai') {
+        const rawExternalRef = String(preapprovalData?.external_reference || '');
+        const aiLawyerId = rawExternalRef.startsWith(AI_EXTERNAL_REF_PREFIX)
+          ? rawExternalRef.slice(AI_EXTERNAL_REF_PREFIX.length)
+          : '';
+        // AI has its own durable inbox and replay path. It never enters the
+        // Pro/Plus table, so a failed AI payment cannot mutate Pro state.
+        await stageAIAuthorizedPayment(supabase, {
+          preapprovalId,
+          lawyerId: aiLawyerId || null,
+          payment,
+          reason: 'no_subscription_at_delivery',
+        });
+        if (paymentStatus === 'approved') {
+          // Settle the trusted preapproval now so the newly linked AI row can
+          // drain the just-staged payment; failures stay durable for retry.
+          await handleAIPreapprovalWebhook(preapprovalData);
+        }
+        await drainStoredAIPaymentsForPreapproval(preapprovalId);
+        console.warn('[Empresas] AI authorized payment stored for later reconciliation', {
+          preapproval_id: String(preapprovalId),
+          provider_event_id: String(payment.id || ''),
+          provider_status: paymentStatus,
+        });
+        return;
+      }
+      if (route !== 'pro') {
+        if (isPaymentReversalStatus(paymentStatus)) {
+          await stagePaymentReversalReview(supabase, {
+            payment,
+            preapprovalId,
+            externalReference: preapprovalData?.external_reference || null,
+            reason: PAYMENT_REVERSAL_REVIEW_REASONS.UNCLASSIFIED_PRODUCT,
+          });
+          console.warn('[Empresas] Reversal stored for neutral review (unclassified product)', {
+            preapproval_id: String(preapprovalId),
+            payment_id: String(payment.id || ''),
+            provider_status: paymentStatus,
+          });
+          return;
+        }
+        console.warn('[Empresas] Early payment ignored (not Pro-family)', {
+          preapproval_id: String(preapprovalId),
+          provider_event_id: String(payment.id || ''),
+        });
+        return;
+      }
+      // A Pro/Plus payment can beat the checkout response that persists the
+      // pending id. Persist the event durably before acknowledging it; the
+      // replay path revalidates the preapproval→subscription identity.
+      await stageUnresolvedAuthorizedPayment(supabase, {
+        preapprovalId,
+        payment,
+        reason: 'no_subscription_at_delivery',
+      });
+      // The payment can also beat (or outlive) the checkout response that links
+      // the provider id. Settle the trusted preapproval now: it resolves the row
+      // by external_reference, then drains the just-staged payment. If this
+      // fails, the event stays durable and the startup/periodic recovery retries.
+      if (paymentStatus === 'approved') {
+        await handleProPreapprovalWebhook(preapprovalData);
+      }
+      if (paymentStatus === 'approved' || isPaymentReversalStatus(paymentStatus)) {
+        await drainStoredPaymentsForPreapproval(preapprovalId);
+      }
+      console.warn('[Empresas] Authorized payment stored for later reconciliation', {
+        preapproval_id: String(preapprovalId),
+        provider_event_id: String(payment.id || ''),
+        provider_status: paymentStatus,
+      });
+      return;
+    }
     console.error('[Empresas] No subscription found for preapproval:', preapprovalId);
     return;
   }
@@ -6533,7 +7013,7 @@ const handleAuthorizedPayment = async (paymentId) => {
         periodEnd.toLocaleDateString('es-CL')
       )
     );
-  } else if (payment.status === 'rejected' || payment.status === 'refused') {
+  } else if (paymentStatus === 'rejected' || paymentStatus === 'refused') {
     // Mark as past_due
     await supabase
       .from('company_subscriptions')
@@ -9397,7 +9877,10 @@ app.post('/api/pro/subscribe', async (req, res) => {
       : [PRO_INTRO_PRICE_CLP, PRO_STANDARD_PRICE_CLP];
 
     let subscription = await getProLawyerSubscription(userId);
-    const hasActivePaid = !!(subscription && subscription.status === 'active' && subscription.provider_subscription_id);
+    // Only a paid period that has not ended blocks a new checkout. An active
+    // row whose current_period_end has passed is expired access, not a
+    // duplicate subscription.
+    const hasActivePaid = hasCurrentPaidPeriod(subscription);
     const currentPaidPlan = subscription ? canonicalPaidPlan(subscription) : null;
 
     // 4.57D upgrade path (P0): active Pro + target Plus. NEVER naive
@@ -9531,6 +10014,33 @@ app.post('/api/pro/subscribe', async (req, res) => {
       // si MP unreachable, mantener pending y no otorgar acceso, permitir retry si quiere pero no bloquear
     }
 
+    // A previous paid period that already ended must not remain as a second
+    // live recurring mandate. Retire it (and any stale previous id) before any
+    // local reactivation or new provider checkout; fail closed when the
+    // cancellation state is unconfirmed.
+    if (subscription && needsProviderRetirement(subscription)) {
+      const retirement = await prepareExpiredSubscriptionForCheckout({
+        supabase,
+        subscription,
+        accessToken: mercadopagoAccessToken,
+      });
+      if (!retirement.ok) {
+        console.error('[LegalUpPro] previous provider retirement blocked checkout', {
+          userId,
+          subscriptionId: subscription.id,
+          code: retirement.code || null,
+          providerStatus: retirement.providerStatus ?? null,
+          transient: retirement.transient === true,
+        });
+        return res.status(retirement.transient ? 503 : 409).json({
+          error: 'No pudimos cancelar tu suscripción anterior. No se inició un nuevo cobro; intenta nuevamente.',
+          code: 'PREVIOUS_PROVIDER_NOT_RETIRED',
+          reason: retirement.code || 'UNKNOWN',
+        });
+      }
+      subscription = retirement.subscription;
+    }
+
     const appUrl = process.env.APP_URL || process.env.FRONTEND_URL || 'https://legalup.cl';
 
     // 4.57D price authority. Plus: fixed 79.990, founder-blind. Pro: profile
@@ -9632,13 +10142,14 @@ app.post('/api/pro/subscribe', async (req, res) => {
       if (error) throw error;
       subscription = data;
     } else {
-      // Reactivar pending/cancelled/expired — actualizar amount según lifetime intro
-      const { data, error } = await supabase
-        .from('lawyer_subscriptions')
-        .update({
-          plan: isPlusTarget ? 'plus' : PRO_SUBSCRIPTION_PLAN,
-          status: 'pending',
-          amount_clp: initialPrice,
+          // Reactivar pending/cancelled/expired — actualizar amount según lifetime intro
+          const { data, error } = await supabase
+            .from('lawyer_subscriptions')
+            .update({
+              plan: isPlusTarget ? 'plus' : PRO_SUBSCRIPTION_PLAN,
+              status: 'pending',
+              amount_clp: initialPrice,
+              cancel_at_period_end: false,
           // Reactivation must clear the terminal marker: cancelled_at doubles as
           // an out-of-order guard (stale events are dropped while a later
           // cancelled_at exists — see handleProPreapprovalWebhook /
@@ -9708,11 +10219,38 @@ app.post('/api/pro/subscribe', async (req, res) => {
       return res.status(500).json({ error: 'No se pudo iniciar el cobro en Mercado Pago.', details: mpResult });
     }
 
-    await supabase.from('lawyer_subscriptions').update(
-      isUpgrade
-        ? { pending_provider_subscription_id: String(mpResult.id), pending_init_point: mpResult.init_point || mpResult.sandbox_init_point || null, updated_at: new Date().toISOString() }
-        : { provider_subscription_id: String(mpResult.id), updated_at: new Date().toISOString() }
-    ).eq('id', subscription.id);
+    const providerLink = await persistCheckoutProviderLink(supabase, {
+      subscriptionId: subscription.id,
+      preapprovalId: mpResult.id,
+      initPoint: mpResult.init_point || mpResult.sandbox_init_point || null,
+      isUpgrade,
+    });
+    if (!providerLink.ok) {
+      // The provider checkout exists but cannot be reached by a webhook. Cancel
+      // it and release the local checkout so a retry does not create a second
+      // orphan preapproval/upgrade.
+      console.error('[LegalUpPro] failed to persist provider subscription link', {
+        userId,
+        subscriptionId: subscription.id,
+        code: providerLink.error?.code || null,
+      });
+      try {
+        const { cancelMpPreapproval } = await import('./server/subscriptions/cancelSubscription.mjs');
+        await cancelMpPreapproval({ preapprovalId: String(mpResult.id), accessToken: mercadopagoAccessToken });
+      } catch {}
+      if (isUpgrade) {
+        const cleared = await clearPendingPlusUpgrade(supabase, subscription.id);
+        if (!cleared.ok) console.error('[LegalUpPro] failed to clear pending upgrade after link error', cleared.error);
+      } else if (!isPlusTarget) {
+        try {
+          await supabase.from('pro_founder_reservations').delete().eq('lawyer_id', userId).is('provider_subscription_id', null);
+        } catch {}
+      }
+      return res.status(500).json({ error: 'No se pudo registrar la suscripción. Intenta nuevamente.', code: 'DB_ERROR' });
+    }
+    // The id is now durable. Replay any payment that raced the checkout
+    // response; failures leave the inbox row pending for the next trigger.
+    await drainStoredPaymentsForPreapproval(mpResult.id);
     // Attach provider subscription to our reservation (abandonment tracking).
     if (!isPlusTarget) {
       try {
