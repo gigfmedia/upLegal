@@ -21,6 +21,7 @@ import { logPaymentEvent } from '@/utils/paymentLogger';
 import { PaymentMethods } from '@/components/MercadoPagoBadge';
 import { useFeatureFlagVariantKey } from '@posthog/react';
 import posthog from 'posthog-js';
+import { resolveStoredArticleSlug } from '@/lib/bookingAttribution';
 
 interface LawyerProfile {
   user_id: string;
@@ -184,7 +185,9 @@ export default function BookingPage() {
       try { sessionStorage.setItem('legalup_article_slug', urlSlug); } catch {}
     } else {
       try {
-        const stored = sessionStorage.getItem('legalup_article_slug');
+        // Solo reinyecta la atribución si sigue vigente para esta ruta;
+        // un slug viejo de otra navegación no debe reaparecer en la URL.
+        const stored = resolveStoredArticleSlug(window.location.pathname, window.location.search);
         if (stored && !searchParams.has('article_slug')) {
           const newParams = new URLSearchParams(searchParams);
           newParams.set('article_slug', stored);
@@ -344,7 +347,7 @@ export default function BookingPage() {
       bookingPageTracked.current = true;
       import('@/lib/bookingFunnel').then(({ trackBookingPageViewed }) => {
         const params = new URLSearchParams(window.location.search);
-        const articleSlug = params.get('article_slug') || sessionStorage.getItem('legalup_article_slug') || (lawyer as any).article_slug || null;
+        const articleSlug = params.get('article_slug') || resolveStoredArticleSlug(window.location.pathname, window.location.search) || (lawyer as any).article_slug || null;
         const utmCampaign = params.get('utm_campaign') || sessionStorage.getItem('utm_campaign') || null;
         trackBookingPageViewed({ lawyer_id: lawyer.user_id, source: 'booking_page', article_slug: articleSlug, cta_location: utmCampaign ? `utm:${utmCampaign}` : undefined });
       });
@@ -1255,7 +1258,7 @@ export default function BookingPage() {
 
         {/* Pre-checkout Modal */}
         {showPreCheckout && selectedDate && selectedTime && (() => {
-          const articleSlugForCheckout = searchParams.get('article_slug') || (() => { try { return sessionStorage.getItem('legalup_article_slug') || undefined; } catch { return undefined; } })();
+          const articleSlugForCheckout = searchParams.get('article_slug') || resolveStoredArticleSlug(window.location.pathname, window.location.search) || undefined;
           return (
           <PreCheckoutModal
             isOpen={showPreCheckout}

@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import type { BlogTopic } from './blogConversionConfig';
+import { track } from '@/lib/track';
 
 interface CategoryCTAProps {
   category: 'laboral' | 'arriendo' | 'familia' | 'penal' | 'consumidor' | 'civil';
@@ -92,6 +93,21 @@ const CategoryCTA: React.FC<CategoryCTAProps> = ({ category, topic }) => {
   const override = topic ? topicOverrides[topic] : undefined;
   const activeContent = override ? { ...base, ...override } : base;
 
+  const handleClick = () => {
+    try {
+      const pagePath = window.location.pathname;
+      track.commercialCTAClicked({
+        article_slug: pagePath.split('/').pop() || '',
+        page_path: pagePath + window.location.search,
+        legal_category: category,
+        specialty: category,
+        destination: activeContent.link,
+        cta_type: 'category',
+        cta_location: 'category_cta',
+      });
+    } catch { /* tracking best-effort */ }
+  };
+
   return (
     <div className="bg-green-50 border border-green-200 rounded-2xl p-8 mt-12 mb-4 shadow-sm">
       <div className="flex flex-col gap-6">
@@ -100,6 +116,7 @@ const CategoryCTA: React.FC<CategoryCTAProps> = ({ category, topic }) => {
           <p className="text-green-900 mb-6 leading-relaxed">{activeContent.description}</p>
           <Link
             to={activeContent.link}
+            onClick={handleClick}
             className="inline-flex items-center gap-2 bg-gray-900 text-white px-8 py-3 rounded-md font-bold hover:bg-green-900 transition-all group"
           >
             {activeContent.linkText}

@@ -20,6 +20,7 @@ import { AuthModal } from "@/components/AuthModal";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { StickyBottomBar } from "@/components/StickyBottomBar";
+import { resolveStoredArticleSlug } from '@/lib/bookingAttribution';
 import {
   Star,
   MapPin,
@@ -1225,7 +1226,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                               });
                               const fullName = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim();
                               const nameSlug = fullName ? createSlug(fullName) : 'abogado';
-                              const articleSlug = new URLSearchParams(window.location.search).get('article_slug') || (() => { try { return sessionStorage.getItem('legalup_article_slug') || ''; } catch { return ''; } })();
+                              const articleSlug = new URLSearchParams(window.location.search).get('article_slug') || resolveStoredArticleSlug(window.location.pathname, window.location.search) || '';
                               const articleParam = articleSlug ? `?article_slug=${encodeURIComponent(articleSlug)}` : '';
                               navigate(`/booking/${nameSlug}-${lawyer.user_id}${articleParam}`);
                             }
@@ -1404,7 +1405,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
               });
               const fullName = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim();
               const nameSlug = fullName ? createSlug(fullName) : 'abogado';
-              const articleSlug2 = new URLSearchParams(window.location.search).get('article_slug') || (() => { try { return sessionStorage.getItem('legalup_article_slug') || ''; } catch { return ''; } })();
+              const articleSlug2 = new URLSearchParams(window.location.search).get('article_slug') || resolveStoredArticleSlug(window.location.pathname, window.location.search) || '';
               const articleParam2 = articleSlug2 ? `?article_slug=${encodeURIComponent(articleSlug2)}` : '';
               navigate(`/booking/${nameSlug}-${lawyer.user_id}${articleParam2}`);
             }

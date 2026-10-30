@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle, ChevronRight } from 'lucide-react';
 import { useInView } from 'react-intersection-observer';
 import { resolveBlogCtaDestination } from './blogCtaDestinations';
+import { persistArticleSlug } from '@/lib/bookingAttribution';
 
 interface InArticleCTAProps {
   category?: string;
@@ -58,9 +59,10 @@ const InArticleCTA: React.FC<InArticleCTAProps> = ({
 
   const handleCTA = () => {
     sessionStorage.setItem('has_commercial_intent', 'true');
+    const pagePath = window.location.pathname;
+    const articleSlug = pagePath.split('/').pop() || '';
+    persistArticleSlug(articleSlug, resolvedTarget, pagePath);
     if (typeof window !== 'undefined' && window.gtag) {
-      const pagePath = window.location.pathname;
-      const articleSlug = pagePath.split('/').pop() || '';
       window.gtag('event', 'blog_inline_cta_clicked', {
         specialty: category,
         category,
