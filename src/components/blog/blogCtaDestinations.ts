@@ -12,6 +12,15 @@ const CATEGORY_LANDING: Record<string, string> = {
   'Derecho Laboral': '/abogado-laboral',
 };
 
+/**
+ * Artículos cuya categoría declarada (Derecho Civil) no tiene landing propia
+ * pero cuyo tema es de arriendo y sí tiene abogados disponibles en la landing.
+ */
+const SLUG_LANDING: Record<string, string> = {
+  'me-quieren-desalojar-que-hago-chile-2026': '/abogado-arriendo',
+  'cuanto-demora-juicio-desalojo-chile-2026': '/abogado-arriendo',
+};
+
 type ResolveInput = {
   /** Slug del artículo (de la ruta). Manda sobre `category`. */
   slug?: string;
@@ -27,11 +36,12 @@ function searchTarget(category: string): string {
 
 /**
  * Resuelve a dónde debe llevar un CTA de blog cuando no trae destino explícito.
- * Prioridad: targetUrl explícito > categoría del artículo en el registro >
- * categoría del componente > búsqueda genérica.
+ * Prioridad: targetUrl explícito > landing temática del slug > categoría del
+ * artículo en el registro > categoría del componente > búsqueda genérica.
  */
 export function resolveBlogCtaDestination({ slug, category, targetUrl }: ResolveInput): string {
   if (targetUrl) return targetUrl;
+  if (slug && SLUG_LANDING[slug]) return SLUG_LANDING[slug];
   if (slug) {
     const entry = articles.find((a) => a.id === slug);
     if (entry?.category && CATEGORY_LANDING[entry.category]) {

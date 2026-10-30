@@ -32,6 +32,21 @@ export const getOwnerContext = (email?: string | null): { is_owner: boolean } =>
 // sirven como filtro estable).
 let ownerActive = false;
 
+const GA_MEASUREMENT_ID =
+  (import.meta as unknown as { env?: Record<string, string | undefined> }).env
+    ?.VITE_GA_MEASUREMENT_ID || 'G-ZJCG1RNJT6';
+
+export const setOwnerGaOptOut = (active: boolean): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    const w = window as unknown as Record<string, unknown>;
+    if (active) w[`ga-disable-${GA_MEASUREMENT_ID}`] = true;
+    else delete w[`ga-disable-${GA_MEASUREMENT_ID}`];
+  } catch {
+    // noop — nunca debe romper la app
+  }
+};
+
 export const setOwnerActive = (active: boolean): void => {
   ownerActive = active;
   if (active) {
@@ -44,6 +59,7 @@ export const setOwnerActive = (active: boolean): void => {
       // noop — no debe romper el flujo de auth
     }
   }
+  setOwnerGaOptOut(isOwnerActive());
 };
 
 export const isOwnerActive = (): boolean =>

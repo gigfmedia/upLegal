@@ -9,7 +9,7 @@ import './index.css';
 
 import { loadPostHog, posthog } from './lib/posthogLoader';
 import { getStoredConsent, subscribeConsent } from './lib/cookieConsent';
-import { isTestHostname, isOwnerActive, isOwnerDevice } from './lib/owner';
+import { isTestHostname, isOwnerActive, isOwnerDevice, setOwnerGaOptOut } from './lib/owner';
 
 // P1/P2: posthog-js se carga diferido (fuera del critical path de la landing).
 // Con `import('posthog-js')` dinámico, el chunk (~73KB gzip) solo se solicita
@@ -89,6 +89,7 @@ if (typeof window !== 'undefined') {
 // dueño inicia sesión, setOwnerActive se encarga del registro en runtime.
 const isTestHost = isTestHostname();
 if (isTestHost || isOwnerDevice()) {
+  setOwnerGaOptOut(true);
   posthog.register({
     is_owner: true,
     environment: isTestHost ? 'test' : 'prod',

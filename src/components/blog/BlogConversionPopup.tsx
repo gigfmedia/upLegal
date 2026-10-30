@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { resolveBlogCtaDestination } from './blogCtaDestinations';
+import { persistArticleSlug } from '@/lib/bookingAttribution';
 
 interface BlogConversionPopupProps {
   category?: string;
@@ -62,7 +63,8 @@ const BlogConversionPopup: React.FC<BlogConversionPopupProps> = ({
       setPhase('popup');
       
       if (typeof window !== 'undefined' && window.gtag) {
-        window.gtag('event', 'blog_popup_shown', { specialty: category });
+        const slug = window.location.pathname.split('/').pop() || '';
+        window.gtag('event', 'blog_popup_shown', { specialty: category, article_slug: slug });
       }
     };
 
@@ -105,8 +107,11 @@ const BlogConversionPopup: React.FC<BlogConversionPopupProps> = ({
 
   const handleCTA = () => {
     sessionStorage.setItem('has_commercial_intent', 'true');
+    const pagePath = typeof window !== 'undefined' ? window.location.pathname : '';
+    const slug = pagePath.split('/').pop() || '';
+    persistArticleSlug(slug, resolvedTarget, pagePath);
     if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', 'blog_popup_clicked', { specialty: category });
+      window.gtag('event', 'blog_popup_clicked', { specialty: category, article_slug: slug });
     }
   };
 
