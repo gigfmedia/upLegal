@@ -331,3 +331,64 @@ describe('UA-4 Fase 2 — posiciones diferidas y fallback seguro', () => {
     expect(computePagination(lazy, layout)).toEqual(computePagination(plain, layout));
   });
 });
+
+describe('UA-4 Fase 2 — título keep-with-next', () => {
+  const layout = createPageLayout();
+
+  const heading = (pos: number, height = 40, marginTop = 20, marginBottom = 10): BlockMetrics => ({
+    pos,
+    height,
+    marginTop,
+    marginBottom,
+    keepWithNext: true,
+    lines: [line(pos + 1, 0, height)],
+  });
+
+  it('un título al pie viaja con el párrafo siguiente a la página nueva', () => {
+    // Bloque previo termina en 894; el título cabe (914–954) y el párrafo no.
+    const blocks: BlockMetrics[] = [
+      { pos: 0, height: 780, marginTop: 20, marginBottom: 20 },
+      heading(100, 40, 20, 10),
+      { ...paragraph(200, 12), marginTop: 20, marginBottom: 20, pos: 200 },
+    ];
+    const result = computePagination(blocks, layout);
+    expect(result.pageCount).toBe(2);
+    expect(result.breaks).toHaveLength(1);
+    const br = result.breaks[0];
+    expect(br.anchor).toBe('block');
+    expect(br.pos).toBe(100);
+    expect(br.page).toBe(1);
+    expect(br.spacerHeight).toBeGreaterThan(0);
+  });
+
+  it('si el párrafo deja líneas en la misma página, el título no se mueve', () => {
+    const blocks: BlockMetrics[] = [
+      { pos: 0, height: 400, marginTop: 20, marginBottom: 20 },
+      heading(100, 40, 20, 10),
+      { ...paragraph(200, 40), marginTop: 20, marginBottom: 20, pos: 200 },
+    ];
+    const result = computePagination(blocks, layout);
+    expect(result.breaks.some((b) => b.pos === 100 && b.anchor === 'block')).toBe(false);
+    expect(result.breaks.some((b) => b.anchor === 'inline')).toBe(true);
+  });
+
+  it('un título que ya abre la página no se retrae (evita un bucle)', () => {
+    const blocks: BlockMetrics[] = [
+      heading(0, 40, 20, 10),
+      { ...paragraph(50, 50), marginTop: 20, marginBottom: 20, pos: 50 },
+    ];
+    const result = computePagination(blocks, layout);
+    expect(result.breaks.every((b) => b.pos !== 0)).toBe(true);
+    expect(result.pageCount).toBeGreaterThanOrEqual(2);
+  });
+
+  it('sin keepWithNext el título puede quedar al pie (compatibilidad Fase 1)', () => {
+    const blocks: BlockMetrics[] = [
+      { pos: 0, height: 780, marginTop: 20, marginBottom: 20 },
+      { pos: 100, height: 40, marginTop: 20, marginBottom: 10, lines: [line(101, 0, 40)] },
+      { ...paragraph(200, 12), marginTop: 20, marginBottom: 20, pos: 200 },
+    ];
+    const result = computePagination(blocks, layout);
+    expect(result.breaks[0]?.pos).toBe(200);
+  });
+});

@@ -390,6 +390,7 @@ function measureBlocks(
       height,
       marginTop: parsePx(style.marginTop),
       marginBottom: parsePx(style.marginBottom),
+      keepWithNext: node.type.name === 'heading',
     };
 
     if (node.type.name === 'bulletList' || node.type.name === 'orderedList') {
