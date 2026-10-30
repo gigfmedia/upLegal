@@ -19,7 +19,7 @@ import { AuthProvider } from '@/contexts/AuthContext/clean/AuthContext';
 import { CookieConsentProvider } from '@/contexts/CookieConsentContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePageTracking } from '@/hooks/usePageTracking';
-import { persistUTMsFromURL } from '@/lib/bookingAttribution';
+import { persistUTMsFromURL, validateArticleAttribution } from '@/lib/bookingAttribution';
 import { supabase } from '@/lib/supabaseClient';
 import { StickyBottomBarProvider } from '@/contexts/StickyBottomBarContext';
 
@@ -348,7 +348,8 @@ const AppContent = () => {
   // Persist UTMs for attribution across SPA navigation
   useEffect(() => {
     persistUTMsFromURL();
-  }, [location.search]);
+    validateArticleAttribution(location.pathname, location.search);
+  }, [location.search, location.pathname]);
 
   const hashHandledRef = useRef(false);
 

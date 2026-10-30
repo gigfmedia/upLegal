@@ -1,4 +1,5 @@
 import { posthog } from './posthogLoader';
+import { resolveStoredArticleSlug } from './bookingAttribution';
 
 type FunnelProps = {
   lawyer_id?: string;
@@ -30,7 +31,7 @@ function isTestTraffic(props: Record<string, unknown>) {
 function getAttributionContext() {
   try {
     const params = new URLSearchParams(window.location.search);
-    const storedArticle = sessionStorage.getItem('legalup_article_slug');
+    const storedArticle = resolveStoredArticleSlug();
     const storedCta = sessionStorage.getItem('legalup_cta_location');
     const utmSource = params.get('utm_source') || sessionStorage.getItem('utm_source');
     const utmMedium = params.get('utm_medium') || sessionStorage.getItem('utm_medium');

@@ -213,7 +213,7 @@ const BlogArticle = () => {
             category="Derecho Civil"
             targetUrl="/abogado-arriendo"
             title="¿Te subieron el arriendo y no sabes si corresponde?"
-            message="Revisa tu caso con un abogado de arriendos."
+            message="Revisa si el aumento respeta tu contrato y el reajuste por IPC, con un abogado de arriendo."
             buttonText="Ver abogados de arriendos"
             priceNote="Consulta legal de 60 min desde $35.000"
           />
@@ -447,7 +447,7 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
-      <BlogConversionPopup category="Derecho Civil" topic="me-subieron-el-arriendo-que-hago-2026.tsx" />
+      <BlogConversionPopup category="Derecho Civil" topic="arriendo" title="¿Te subieron el arriendo sin acuerdo?" message="Revisa si el aumento respeta tu contrato y el reajuste por IPC, con un abogado de arriendo." buttonText="Revisar mi caso de arriendo" />
     </div>
   );
 };

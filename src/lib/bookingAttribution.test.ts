@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getBookingAttribution } from './bookingAttribution';
+import {
+  getBookingAttribution,
+  persistArticleSlug,
+  validateArticleAttribution,
+  clearArticleAttribution,
+} from './bookingAttribution';
 
 describe('bookingAttribution', () => {
   beforeEach(() => {
@@ -66,5 +71,117 @@ describe('bookingAttribution', () => {
     };
     const attr = await getBookingAttribution();
     expect(attr.ga_client_id).not.toBe(attr.posthog_distinct_id);
+  });
+});
+
+describe('article attribution lifecycle', () => {
+  const setLocation = (pathname: string, search = '') =>
+    Object.defineProperty(window, 'location', { value: { search, hostname: 'legalup.cl', pathname }, writable: true });
+
+  beforeEach(() => {
+    sessionStorage.clear();
+    setLocation('/');
+  });
+
+  it('conserva el slug en el recorrido artículo → CTA → landing → perfil → reserva', async () => {
+    setLocation('/blog/mi-articulo-2026');
+    persistArticleSlug('mi-articulo-2026', '/abogado-arriendo', '/blog/mi-articulo-2026');
+    validateArticleAttribution('/abogado-arriendo', '');
+    setLocation('/abogado/juan-perez-123');
+    validateArticleAttribution('/abogado/juan-perez-123', '');
+    setLocation('/booking/juan-perez-123');
+    validateArticleAttribution('/booking/juan-perez-123', '');
+    const attr = await getBookingAttribution();
+    expect(attr.article_slug).toBe('mi-articulo-2026');
+  });
+
+  it('no hereda el slug si el usuario abandona y visita una landing independiente', async () => {
+    setLocation('/blog/mi-articulo-2026');
+    persistArticleSlug('mi-articulo-2026', '/abogado-arriendo', '/blog/mi-articulo-2026');
+    validateArticleAttribution('/abogado-arriendo', '');
+    validateArticleAttribution('/search', '');
+    setLocation('/abogado-arriendo');
+    validateArticleAttribution('/abogado-arriendo', '');
+    setLocation('/booking/juan-perez-123');
+    validateArticleAttribution('/booking/juan-perez-123', '');
+    const attr = await getBookingAttribution();
+    expect(attr.article_slug).toBeNull();
+  });
+
+  it('no hereda el slug en un perfil visitado sin pasar por el destino del CTA', async () => {
+    setLocation('/blog/mi-articulo-2026');
+    persistArticleSlug('mi-articulo-2026', '/abogado-arriendo', '/blog/mi-articulo-2026');
+    setLocation('/abogado/juan-perez-123');
+    validateArticleAttribution('/abogado/juan-perez-123', '');
+    setLocation('/booking/juan-perez-123');
+    validateArticleAttribution('/booking/juan-perez-123', '');
+    const attr = await getBookingAttribution();
+    expect(attr.article_slug).toBeNull();
+  });
+
+  it('no inyecta el slug en una reserva directa si el CTA nunca llegó a su destino', async () => {
+    setLocation('/blog/mi-articulo-2026');
+    persistArticleSlug('mi-articulo-2026', '/abogado-arriendo', '/blog/mi-articulo-2026');
+    setLocation('/booking/juan-perez-123');
+    validateArticleAttribution('/booking/juan-perez-123', '');
+    const attr = await getBookingAttribution();
+    expect(attr.article_slug).toBeNull();
+  });
+
+  it('mantiene la atribución si la reserva falla', async () => {
+    setLocation('/blog/mi-articulo-2026');
+    persistArticleSlug('mi-articulo-2026', '/abogado-arriendo', '/blog/mi-articulo-2026');
+    validateArticleAttribution('/abogado-arriendo', '');
+    setLocation('/booking/juan-perez-123');
+    validateArticleAttribution('/booking/juan-perez-123', '');
+    // El envío falla: no hay limpieza, la atribución sigue disponible para reintentar.
+    validateArticleAttribution('/booking/juan-perez-123', '');
+    const attr = await getBookingAttribution();
+    expect(attr.article_slug).toBe('mi-articulo-2026');
+  });
+
+  it('limpia la atribución tras una reserva confirmada', async () => {
+    setLocation('/blog/mi-articulo-2026');
+    persistArticleSlug('mi-articulo-2026', '/abogado-arriendo', '/blog/mi-articulo-2026');
+    validateArticleAttribution('/abogado-arriendo', '');
+    setLocation('/booking/juan-perez-123');
+    validateArticleAttribution('/booking/juan-perez-123', '');
+    clearArticleAttribution();
+    const attr = await getBookingAttribution();
+    expect(attr.article_slug).toBeNull();
+  });
+
+  it('navegación directa sin artículo no atribuye nada', async () => {
+    setLocation('/booking/juan-perez-123');
+    validateArticleAttribution('/booking/juan-perez-123', '');
+    const attr = await getBookingAttribution();
+    expect(attr.article_slug).toBeNull();
+  });
+
+  it('mantiene la atribución tras recargar dentro del corredor comercial', async () => {
+    setLocation('/blog/mi-articulo-2026');
+    persistArticleSlug('mi-articulo-2026', '/abogado-arriendo', '/blog/mi-articulo-2026');
+    validateArticleAttribution('/abogado-arriendo', '');
+    setLocation('/abogado/juan-perez-123');
+    validateArticleAttribution('/abogado/juan-perez-123', '');
+    // Recarga: mismo estado de sessionStorage, la ruta sigue siendo el perfil.
+    validateArticleAttribution('/abogado/juan-perez-123', '');
+    const attr = await getBookingAttribution();
+    expect(attr.article_slug).toBe('mi-articulo-2026');
+  });
+
+  it('el parámetro explícito article_slug sigue mandando', async () => {
+    setLocation('/booking/juan-perez-123', '?article_slug=explicito-2026');
+    validateArticleAttribution('/booking/juan-perez-123', '?article_slug=explicito-2026');
+    const attr = await getBookingAttribution();
+    expect(attr.article_slug).toBe('explicito-2026');
+  });
+
+  it('no rompe si sessionStorage falla al persistir', async () => {
+    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('quota'); });
+    expect(() => persistArticleSlug('mi-articulo-2026', '/abogado-arriendo', '/blog/mi-articulo-2026')).not.toThrow();
+    spy.mockRestore();
+    const attr = await getBookingAttribution();
+    expect(attr.article_slug).toBeNull();
   });
 });

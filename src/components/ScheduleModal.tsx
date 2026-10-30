@@ -19,6 +19,7 @@ import { es, enUS } from "date-fns/locale";
 import { createMercadoPagoPayment } from '@/services/mercadopagoService';
 import { fetchPlatformSettings, getDefaultPlatformSettings } from '@/services/platformSettings';
 import { isChileanHoliday } from '@/lib/holidays';
+import { clearArticleAttribution } from '@/lib/bookingAttribution';
 
 interface ScheduleModalProps {
   isOpen: boolean;
@@ -894,6 +895,9 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
       if (!bookingId || !paymentLink) {
         throw new Error('No se pudo obtener el enlace de pago');
       }
+      // La reserva ya fue confirmada por el servidor: se limpia la atribución
+      // para que no se herede a una reserva posterior en la misma sesión.
+      clearArticleAttribution();
       // Store for success page (booking_id)
       const pendingBookingData = {
         bookingId,

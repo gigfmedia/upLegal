@@ -37,7 +37,19 @@ describe('V2 article_slug persistence', () => {
     expect(sessionStorage.getItem('legalup_article_slug')).toBe('cese-de-convivencia-chile-2026');
   });
 
-  it('getBookingAttribution recovers persisted article_slug', async () => {
+  it('getBookingAttribution recovers a still-valid persisted article_slug', async () => {
+    const { persistArticleSlug, validateArticleAttribution, getBookingAttribution } = await import('@/lib/bookingAttribution');
+    persistArticleSlug('me-quieren-desalojar-que-hago-chile-2026', '/abogado-arriendo', '/blog/me-quieren-desalojar-que-hago-chile-2026');
+    validateArticleAttribution('/abogado-arriendo', '');
+    Object.defineProperty(window, 'location', {
+      value: { search: '', hostname: 'legalup.cl', pathname: '/booking/123' },
+      writable: true,
+    });
+    const attr = await getBookingAttribution();
+    expect(attr.article_slug).toBe('me-quieren-desalojar-que-hago-chile-2026');
+  });
+
+  it('drops a stale article_slug when the booking is a later independent visit', async () => {
     sessionStorage.setItem('legalup_article_slug', 'me-quieren-desalojar-que-hago-chile-2026');
     Object.defineProperty(window, 'location', {
       value: { search: '', hostname: 'legalup.cl', pathname: '/booking/123' },
@@ -45,7 +57,7 @@ describe('V2 article_slug persistence', () => {
     });
     const { getBookingAttribution } = await import('@/lib/bookingAttribution');
     const attr = await getBookingAttribution();
-    expect(attr.article_slug).toBe('me-quieren-desalojar-que-hago-chile-2026');
+    expect(attr.article_slug).toBeNull();
   });
 
   it('article → CTA click → booking attribution chain', async () => {
@@ -65,12 +77,13 @@ describe('V2 article_slug persistence', () => {
     expect(sessionStorage.getItem('legalup_article_slug')).toBe('cuanto-demora-juicio-desalojo-chile-2026');
     unmount();
 
-    // Simulate navigation to booking page
+    // Simulate the real navigation: CTA landing → booking page
+    const { validateArticleAttribution, getBookingAttribution } = await import('@/lib/bookingAttribution');
+    validateArticleAttribution('/abogado-arriendo', '');
     Object.defineProperty(window, 'location', {
       value: { search: '', hostname: 'legalup.cl', pathname: '/booking/abc' },
       writable: true,
     });
-    const { getBookingAttribution } = await import('@/lib/bookingAttribution');
     const attr = await getBookingAttribution();
     expect(attr.article_slug).toBe('cuanto-demora-juicio-desalojo-chile-2026');
   });

@@ -6,7 +6,14 @@ vi.mock('./posthogLoader', () => ({
   posthog: { capture: vi.fn() },
 }));
 
+vi.mock('./owner', () => ({
+  isOwnerActive: vi.fn(() => false),
+  setOwnerActive: vi.fn(),
+  setOwnerGaOptOut: vi.fn(),
+}));
+
 import { loadPostHog } from './posthogLoader';
+import { isOwnerActive } from './owner';
 import {
   disableGa4,
   disablePostHog,
@@ -70,6 +77,17 @@ describe('gating GA4', () => {
     seedConsent(false, true);
     ensureGa4Loaded();
     disableGa4();
+    expect((window as unknown as Record<string, unknown>)[`ga-disable-${GA_ID}`]).toBe(true);
+  });
+
+  it('propietario activo: no inyecta gtag.js aunque haya consentimiento', () => {
+    vi.mocked(isOwnerActive).mockReturnValueOnce(true);
+    seedConsent(false, true);
+    ensureGa4Loaded();
+    const scripts = Array.from(document.querySelectorAll('script')).filter((s) =>
+      (s.src || '').includes('gtag/js'),
+    );
+    expect(scripts).toHaveLength(0);
     expect((window as unknown as Record<string, unknown>)[`ga-disable-${GA_ID}`]).toBe(true);
   });
 });

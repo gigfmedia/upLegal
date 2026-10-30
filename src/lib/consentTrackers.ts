@@ -16,6 +16,7 @@ import {
   getStoredConsent,
 } from './cookieConsent';
 import { loadPostHog, getPostHogInstance } from './posthogLoader';
+import { isOwnerActive } from './owner';
 
 const GA_GTAG_SCRIPT = 'gtag/js';
 const GA_MEASUREMENT_ID =
@@ -59,6 +60,10 @@ function gtagScriptPresent(): boolean {
 export function ensureGa4Loaded(): void {
   if (!isBrowser() || ga4Loaded) return;
   if (getStoredConsent()?.analytics !== true) return;
+  if (isOwnerActive()) {
+    disableGa4();
+    return;
+  }
   try {
     const w = window as unknown as Record<string, unknown>;
     // Descarta eventos pre-consentimiento encolados en el stub.

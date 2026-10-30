@@ -647,7 +647,7 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
-      <BlogConversionPopup category="Derecho Civil" topic="garantia-arriendo" targetUrl="/abogado-arriendo" title="¿Todavía no recuperas tu garantía de arriendo?" message="Revisa si la retención de tu mes de garantía es procedente y qué pasos seguir para recuperar tu dinero, con ayuda de un abogado de arriendo." buttonText="Recuperar mi garantía con un abogado" />
+      <BlogConversionPopup category="Derecho Civil" topic="garantia-arriendo" targetUrl="/abogado-arriendo" title="¿Todavía no recuperas tu garantía de arriendo?" message="Revisa si la retención de tu mes de garantía es procedente y qué pasos seguir para recuperar tu dinero, con ayuda de un abogado de arriendo." buttonText="Revisar mi caso de garantía" />
     </div>
   );
 };

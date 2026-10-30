@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useInView } from 'react-intersection-observer';
 import { useFeatureFlagVariantKey } from '@posthog/react';
 import { track, detectLegalCategory } from '@/lib/track';
+import { persistArticleSlug } from '@/lib/bookingAttribution';
 
 type Props = {
   articleSlug?: string;
@@ -96,7 +97,7 @@ export const BlogContextualCTAV2: React.FC<Props> = ({ articleSlug, legalCategor
   }, [inView, slug, category, isContextual]);
 
   const handlePrimary = () => {
-    try { sessionStorage.setItem('legalup_article_slug', slug); } catch {}
+    persistArticleSlug(slug, primaryTarget, typeof window !== 'undefined' ? window.location.pathname : null);
     sessionStorage.setItem('has_commercial_intent', 'true');
     track.blogContextualCTAClicked({
       article_slug: slug,

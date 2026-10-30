@@ -40,6 +40,21 @@ describe('blogCtaDestinations', () => {
     ).toBe('/search?specialty=Derecho%20Civil');
   });
 
+  it('desalojo: usa la landing de arriendo aunque el artículo sea Derecho Civil', () => {
+    expect(
+      resolveBlogCtaDestination({
+        slug: 'me-quieren-desalojar-que-hago-chile-2026',
+        category: 'Derecho Civil',
+      })
+    ).toBe('/abogado-arriendo');
+    expect(
+      resolveBlogCtaDestination({
+        slug: 'cuanto-demora-juicio-desalojo-chile-2026',
+        category: 'Derecho Civil',
+      })
+    ).toBe('/abogado-arriendo');
+  });
+
   it('sin slug usa la categoría del componente', () => {
     expect(resolveBlogCtaDestination({ category: 'Derecho Penal' })).toBe('/abogado-penal');
   });

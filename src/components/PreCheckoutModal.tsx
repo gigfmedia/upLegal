@@ -157,7 +157,7 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData, onSlot
       }
 
       const isAppointment = checkoutData.type === 'appointment';
-      const { getBookingAttribution } = await import('@/lib/bookingAttribution');
+      const { getBookingAttribution, clearArticleAttribution } = await import('@/lib/bookingAttribution');
       const attribution = await getBookingAttribution();
       const articleSlugFromCheckout = (checkoutData as any).article_slug || attribution.article_slug || null;
       const payload = isAppointment
@@ -220,6 +220,10 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData, onSlot
         throw new Error(data.message || data.error || 'Error al crear la reserva');
       }
 
+      // La reserva ya quedó creada con el article_slug en el payload:
+      // se limpia la atribución para que no se herede a otra reserva.
+      clearArticleAttribution();
+
       window.gtag?.('event', 'lead_created', {
         lawyer_id: checkoutData.lawyer_id,
         price: checkoutData.price,
@@ -247,6 +251,8 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData, onSlot
           value: checkoutData.price,
           currency: 'CLP',
           source: isService ? 'ServicePreCheckoutModal' : 'PreCheckoutModal',
+          // Se pasa explícito porque la atribución ya se limpió arriba.
+          article_slug: articleSlugFromCheckout,
         });
 
         const nameSlug = checkoutData.lawyer_name

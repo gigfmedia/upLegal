@@ -30,7 +30,7 @@ describe('blog_contextual_cta_v2', () => {
 
   it('V2 click persists article_slug for booking attribution', async () => {
     const src = readFileSync(resolve('src/components/blog/BlogContextualCTAV2.tsx'), 'utf8');
-    expect(src).toContain("sessionStorage.setItem('legalup_article_slug'");
+    expect(src).toContain('persistArticleSlug(slug, primaryTarget');
     expect(src).toContain("article_slug: slug");
   });
 
