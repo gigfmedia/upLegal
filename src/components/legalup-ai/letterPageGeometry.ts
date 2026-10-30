@@ -125,6 +125,11 @@ export type BlockMetrics = {
   items?: ListItemMetrics[];
   /** Líneas fuera del viewport cuya posición aún no se resolvió (interno). */
   unresolvedLines?: number;
+  /**
+   * UA-4 Fase 2: el bloque no debe quedar solo al pie de página. Títulos
+   * (`heading`) viajan con el bloque siguiente cuando este no cabe.
+   */
+  keepWithNext?: boolean;
 };
 
 /**
@@ -366,12 +371,27 @@ function paginateBlock(
  * del ítem anterior) y el alto se calcula con las posiciones naturales
  * medidas. El contenido posterior se desplaza exactamente H (linealidad
  * verificada en navegador), de modo que el cálculo sigue siendo puro.
+ * Los títulos (`keepWithNext`) no quedan solos al pie: si el bloque siguiente
+ * no cabe en la misma página, el salto se ancla en el título.
  *
  * Bloques más altos que una página sin fragmentos (o sin un corte válido): se
  * colocan al inicio de su página y se permite que desborden; `overflowBlocks`
  * los identifica y el conteo de páginas reserva las que ocupan. Nunca se
  * oculta ni se pierde contenido.
  */
+type PlacedKeep = {
+  pos: number;
+  height: number;
+  marginTop: number;
+  marginBottom: number;
+  page: number;
+  /** Bottom absoluto del bloque keep-with-next ya colocado. */
+  bottom: number;
+  /** Bottom del bloque anterior al keep-with-next (flujo previo). */
+  beforeBottom: number | null;
+  beforeMarginBottom: number;
+};
+
 export function computePagination(blocks: BlockMetrics[], layout: PageLayout): PaginationResult {
   const breaks: PageBreak[] = [];
   const overflowBlocks: number[] = [];
@@ -380,12 +400,51 @@ export function computePagination(blocks: BlockMetrics[], layout: PageLayout): P
   let page = 0;
   let prevBottom: number | null = null;
   let prevMarginBottom = 0;
+  let pendingKeep: PlacedKeep | null = null;
+
+  const placeBlockBreak = (pos: number, fromBottom: number, fromMarginBottom: number, nextMarginTop: number): boolean => {
+    const target = contentTop(layout, page + 1);
+    const spacerHeight = target - fromBottom - fromMarginBottom - nextMarginTop;
+    if (!(spacerHeight > 0)) return false;
+    page += 1;
+    breaks.push({
+      pos,
+      page,
+      spacerHeight: round2(spacerHeight),
+      anchor: 'block',
+    });
+    return true;
+  };
+
+  /** Si el bloque actual empezaría una página nueva, el título previo viaja con él. */
+  const retractKeepWithNext = (): boolean => {
+    if (!pendingKeep) return false;
+    if (pendingKeep.page !== page) return false;
+    if (pendingKeep.beforeBottom === null) return false;
+    const keepTop = pendingKeep.bottom - pendingKeep.height;
+    if (keepTop <= contentTop(layout, page) + PAGE_EPSILON) return false;
+    if (!placeBlockBreak(pendingKeep.pos, pendingKeep.beforeBottom, pendingKeep.beforeMarginBottom, pendingKeep.marginTop)) {
+      return false;
+    }
+    const keepBottom = contentTop(layout, page) + pendingKeep.height;
+    prevBottom = keepBottom;
+    prevMarginBottom = pendingKeep.marginBottom;
+    pendingKeep = {
+      ...pendingKeep,
+      page,
+      bottom: keepBottom,
+      beforeBottom: null,
+    };
+    return true;
+  };
 
   for (let index = 0; index < blocks.length; index += 1) {
     const block = blocks[index];
     const height = Math.max(0, block.height);
     const marginTop = Math.max(0, block.marginTop);
     const marginBottom = Math.max(0, block.marginBottom);
+    const beforeBottom = prevBottom;
+    const beforeMarginBottom = prevMarginBottom;
 
     let top: number;
     if (prevBottom === null) {
@@ -397,24 +456,31 @@ export function computePagination(blocks: BlockMetrics[], layout: PageLayout): P
 
     if (top + height > contentBottom(layout, page) + PAGE_EPSILON) {
       const beforeOverflow = breaks.length;
+      let keptWithHeading = false;
       if (hasFragments(block)) {
         const allowMoveWhole =
           prevBottom !== null && top > contentTop(layout, page) + PAGE_EPSILON;
         let result = paginateBlock(block, top, page, layout, allowMoveWhole);
 
         if (result.kind === 'move' && prevBottom !== null) {
-          const target = contentTop(layout, page + 1);
-          const spacerHeight = target - prevBottom - prevMarginBottom - marginTop;
-          if (spacerHeight > 0) {
-            page += 1;
-            top = target;
-            breaks.push({
-              pos: block.pos,
-              page,
-              spacerHeight: round2(spacerHeight),
-              anchor: 'block',
-            });
+          keptWithHeading = retractKeepWithNext();
+          if (keptWithHeading) {
+            top = prevBottom + Math.max(prevMarginBottom, marginTop);
             result = paginateBlock(block, top, page, layout, false);
+          } else {
+            const target = contentTop(layout, page + 1);
+            const spacerHeight = target - prevBottom - prevMarginBottom - marginTop;
+            if (spacerHeight > 0) {
+              page += 1;
+              top = target;
+              breaks.push({
+                pos: block.pos,
+                page,
+                spacerHeight: round2(spacerHeight),
+                anchor: 'block',
+              });
+              result = paginateBlock(block, top, page, layout, false);
+            }
           }
         }
 
@@ -431,6 +497,18 @@ export function computePagination(blocks: BlockMetrics[], layout: PageLayout): P
           }
           prevBottom = bottom;
           prevMarginBottom = marginBottom;
+          pendingKeep = block.keepWithNext
+            ? {
+                pos: block.pos,
+                height,
+                marginTop,
+                marginBottom,
+                page,
+                bottom,
+                beforeBottom,
+                beforeMarginBottom,
+              }
+            : null;
           continue;
         }
         // Sin corte válido: se descarta lo calculado y se usa el fallback.
@@ -438,19 +516,24 @@ export function computePagination(blocks: BlockMetrics[], layout: PageLayout): P
       }
 
       if (prevBottom !== null) {
-        const target = contentTop(layout, page + 1);
-        const spacerHeight = target - prevBottom - prevMarginBottom - marginTop;
-        // El espaciador solo tiene sentido si la página siguiente está libre.
-        // Si un bloque anterior desbordó y ya la ocupa, se deja fluir.
-        if (spacerHeight > 0) {
-          page += 1;
-          top = target;
-          breaks.push({
-            pos: block.pos,
-            page,
-            spacerHeight: round2(spacerHeight),
-            anchor: 'block',
-          });
+        keptWithHeading = keptWithHeading || retractKeepWithNext();
+        if (keptWithHeading) {
+          top = prevBottom + Math.max(prevMarginBottom, marginTop);
+        } else {
+          const target = contentTop(layout, page + 1);
+          const spacerHeight = target - prevBottom - prevMarginBottom - marginTop;
+          // El espaciador solo tiene sentido si la página siguiente está libre.
+          // Si un bloque anterior desbordó y ya la ocupa, se deja fluir.
+          if (spacerHeight > 0) {
+            page += 1;
+            top = target;
+            breaks.push({
+              pos: block.pos,
+              page,
+              spacerHeight: round2(spacerHeight),
+              anchor: 'block',
+            });
+          }
         }
       }
     }
@@ -467,6 +550,18 @@ export function computePagination(blocks: BlockMetrics[], layout: PageLayout): P
 
     prevBottom = bottom;
     prevMarginBottom = marginBottom;
+    pendingKeep = block.keepWithNext
+      ? {
+          pos: block.pos,
+          height,
+          marginTop,
+          marginBottom,
+          page,
+          bottom,
+          beforeBottom,
+          beforeMarginBottom,
+        }
+      : null;
   }
 
   return { pageCount: Math.max(1, page + 1), breaks, overflowBlocks };
