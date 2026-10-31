@@ -1,15 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { CURRENT_PRIVACY_VERSION, CURRENT_TERMS_VERSION } from '@/lib/legalConsent';
 
 const cbState = vi.hoisted(() => ({
   exchanged: [] as unknown[],
   session: null as null | { user: { id: string; email_confirmed_at: string; user_metadata: Record<string, unknown> } },
   // 5.6: usuario existente CON aceptación → flujo 4.60A intacto.
-  profile: { role: 'lawyer', terms_accepted_at: '2026-10-06T00:00:00.000Z', privacy_acknowledged_at: '2026-10-06T00:00:00.000Z' } as null | {
+  profile: {
+    role: 'lawyer',
+    terms_accepted_at: '2026-10-31T00:00:00.000Z',
+    privacy_acknowledged_at: '2026-10-31T00:00:00.000Z',
+    terms_version: '2026-10-31',
+    privacy_version: '2026-10-31',
+  } as null | {
     role: string | null;
     terms_accepted_at?: string;
     privacy_acknowledged_at?: string;
+    terms_version?: string;
+    privacy_version?: string;
   },
   failReads: false,
 }));
@@ -66,7 +75,13 @@ beforeEach(() => {
   cbState.session = {
     user: { id: 'U1', email_confirmed_at: new Date().toISOString(), user_metadata: { role: 'lawyer' } },
   };
-  cbState.profile = { role: 'lawyer', terms_accepted_at: '2026-10-06T00:00:00.000Z', privacy_acknowledged_at: '2026-10-06T00:00:00.000Z' };
+  cbState.profile = {
+    role: 'lawyer',
+    terms_accepted_at: '2026-10-31T00:00:00.000Z',
+    privacy_acknowledged_at: '2026-10-31T00:00:00.000Z',
+    terms_version: CURRENT_TERMS_VERSION,
+    privacy_version: CURRENT_PRIVACY_VERSION,
+  };
   window.localStorage.clear();
 });
 
@@ -103,6 +118,18 @@ describe('FASE 4.60A — callback OAuth', () => {
     await waitFor(() => expect(navState.path).toContain('/auth/consent'));
     expect(navState.path).toContain(encodeURIComponent('/lawyer/cases'));
   });
+  it('5.6: aceptación de versión anterior obliga a re-aceptar', async () => {
+    cbState.profile = {
+      role: 'lawyer',
+      terms_accepted_at: '2026-10-06T00:00:00.000Z',
+      privacy_acknowledged_at: '2026-10-06T00:00:00.000Z',
+      terms_version: '2026-10-06',
+      privacy_version: '2026-10-06',
+    };
+    renderCallback('/auth/callback?redirectTo=' + encodeURIComponent('/lawyer/cases'));
+    await waitFor(() => expect(navState.path).toContain('/auth/consent'));
+    expect(navState.path).toContain(encodeURIComponent('/lawyer/cases'));
+  });
 });
 
 describe('Onboarding de rol post-registro Google', () => {
@@ -131,8 +158,10 @@ describe('Onboarding de rol post-registro Google', () => {
     googleUser();
     cbState.profile = {
       role: null,
-      terms_accepted_at: '2026-10-06T00:00:00.000Z',
-      privacy_acknowledged_at: '2026-10-06T00:00:00.000Z',
+      terms_accepted_at: '2026-10-31T00:00:00.000Z',
+      privacy_acknowledged_at: '2026-10-31T00:00:00.000Z',
+      terms_version: CURRENT_TERMS_VERSION,
+      privacy_version: CURRENT_PRIVACY_VERSION,
     };
     renderCallback('/auth/callback?code=pkce-legacy');
     await waitFor(() => expect(navState.path).toBe('/auth/role'));
@@ -141,8 +170,10 @@ describe('Onboarding de rol post-registro Google', () => {
     googleUser();
     cbState.profile = {
       role: 'client',
-      terms_accepted_at: '2026-10-06T00:00:00.000Z',
-      privacy_acknowledged_at: '2026-10-06T00:00:00.000Z',
+      terms_accepted_at: '2026-10-31T00:00:00.000Z',
+      privacy_acknowledged_at: '2026-10-31T00:00:00.000Z',
+      terms_version: CURRENT_TERMS_VERSION,
+      privacy_version: CURRENT_PRIVACY_VERSION,
     };
     renderCallback('/auth/callback?code=pkce-existing');
     await waitFor(() => expect(navState.path).toBe('/dashboard'));

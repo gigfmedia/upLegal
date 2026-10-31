@@ -3,6 +3,10 @@ import { Helmet } from 'react-helmet-async';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Header from '@/components/Header';
 import { openCookiePreferences } from '@/lib/cookieConsent';
+import {
+  LEGAL_ENTITY_CONTACT_EMAIL,
+  LEGAL_ENTITY_IDENTIFICATION,
+} from '@/lib/legalEntity';
 
 /**
  * Política de Cookies — lista solo proveedores reales encontrados en
@@ -161,9 +165,10 @@ const CookiesPolicy = () => {
             </p>
 
             <h2 className="text-xl font-semibold mt-8 mb-4">10. Contacto</h2>
+            <p>Responsable: {LEGAL_ENTITY_IDENTIFICATION}.</p>
             <p>Sitio web: <a href="https://legalup.cl" className="text-primary hover:underline">LegalUp.cl</a></p>
-            <p>Correo: <a href="mailto:contacto@legalup.cl" className="text-green-900 hover:text-green-600 underline">contacto@legalup.cl</a></p>
-            {/* TODO(legal): completar RUT, domicilio y correo legal de LegalUp SpA. */}
+            <p>Correo: <a href={`mailto:${LEGAL_ENTITY_CONTACT_EMAIL}`} className="text-green-900 hover:text-green-600 underline">{LEGAL_ENTITY_CONTACT_EMAIL}</a></p>
+            {/* TODO(legal): domicilio legal pendiente de confirmación. */}
           </CardContent>
         </Card>
       </div>

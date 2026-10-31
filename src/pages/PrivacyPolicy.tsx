@@ -2,6 +2,11 @@ import { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Header from '@/components/Header';
+import {
+  LEGAL_ENTITY_CONTACT_EMAIL,
+  LEGAL_ENTITY_IDENTIFICATION,
+  LEGAL_ENTITY_NAME,
+} from '@/lib/legalEntity';
 
 const PrivacyPolicy = () => {
   useEffect(() => {
@@ -32,9 +37,8 @@ const PrivacyPolicy = () => {
           <CardContent className="space-y-6 text-justify">
             <p>
               En LegalUp.cl, “LegalUp” es la marca comercial y el nombre de la plataforma,
-              operada por la sociedad LegalUp SpA (“nosotros”, responsable del tratamiento).
+              operada por la sociedad {LEGAL_ENTITY_NAME} (“nosotros”, responsable del tratamiento).
               Valoramos y respetamos la privacidad de nuestros usuarios.{" "}
-              {/* TODO(legal): completar RUT, domicilio y correo legal de LegalUp SpA como responsable del tratamiento. */}
               Esta Política de Privacidad explica cómo recopilamos, usamos, almacenamos y protegemos la información
               personal de los usuarios que utilizan nuestra plataforma, ya sean personas que buscan asesoría legal
               ("Usuarios") o abogados que ofrecen servicios ("Profesionales"). También explica cómo tratamos el
@@ -74,8 +78,14 @@ const PrivacyPolicy = () => {
             <h2 className="text-xl font-semibold mt-8 mb-4">1.4. Responsable del tratamiento</h2>
             <p>
               El responsable del tratamiento de los datos personales recogidos a través de la plataforma LegalUp es
-              LegalUp SpA.
-              {/* TODO(legal): agregar RUT, domicilio y correo de contacto del responsable cuando se confirmen. */}
+              {LEGAL_ENTITY_IDENTIFICATION}. Correo de contacto:{' '}
+              <a
+                href={`mailto:${LEGAL_ENTITY_CONTACT_EMAIL}`}
+                className="text-green-900 hover:text-green-600 underline"
+              >
+                {LEGAL_ENTITY_CONTACT_EMAIL}
+              </a>.
+              {/* TODO(legal): domicilio legal pendiente de confirmación. */}
             </p>
 
             <h2 className="text-xl font-semibold mt-8 mb-4">2. Cómo utilizamos la información</h2>
@@ -270,12 +280,12 @@ const PrivacyPolicy = () => {
 
             <h2 className="text-xl font-semibold mt-8 mb-4">12. Contacto</h2>
             <p>
-              El responsable de esta plataforma es LegalUp SpA.
-              {/* TODO(legal): completar RUT, domicilio y correo legal de LegalUp SpA. */}
+              El responsable de esta plataforma es {LEGAL_ENTITY_IDENTIFICATION}.
+              {/* TODO(legal): domicilio legal pendiente de confirmación. */}
             </p>
             <p>Para consultas o soporte:</p>
             <p>Sitio web: <a href="https://legalup.cl" className="text-primary hover:underline">LegalUp.cl</a></p>
-            <p>Correo: <a href="mailto:contacto@legalup.cl" className="text-green-900 hover:text-green-600 underline">contacto@legalup.cl</a></p>
+            <p>Correo: <a href={`mailto:${LEGAL_ENTITY_CONTACT_EMAIL}`} className="text-green-900 hover:text-green-600 underline">{LEGAL_ENTITY_CONTACT_EMAIL}</a></p>
           </CardContent>
         </Card>
       </div>

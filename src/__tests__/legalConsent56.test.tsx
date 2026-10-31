@@ -19,19 +19,19 @@ const read = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf-8');
 
 describe('FASE 5.6 — constantes y helpers', () => {
   it('versiones estables y copy exacto', () => {
-    expect(CURRENT_TERMS_VERSION).toBe('2026-10-06');
-    expect(CURRENT_PRIVACY_VERSION).toBe('2026-10-06');
+    expect(CURRENT_TERMS_VERSION).toBe('2026-10-31');
+    expect(CURRENT_PRIVACY_VERSION).toBe('2026-10-31');
     expect(TERMS_PATH).toBe('/terminos');
     expect(PRIVACY_PATH).toBe('/privacidad');
     expect(CONSENT_ERROR).toContain('Debes aceptar');
   });
   it('6/7. patch con timestamps + versiones; detección de aceptación', () => {
-    const patch = buildConsentPatch('2026-10-06T00:00:00.000Z');
+    const patch = buildConsentPatch('2026-10-31T00:00:00.000Z');
     expect(patch).toMatchObject({
-      terms_accepted_at: '2026-10-06T00:00:00.000Z',
-      terms_version: '2026-10-06',
-      privacy_acknowledged_at: '2026-10-06T00:00:00.000Z',
-      privacy_version: '2026-10-06',
+      terms_accepted_at: '2026-10-31T00:00:00.000Z',
+      terms_version: '2026-10-31',
+      privacy_acknowledged_at: '2026-10-31T00:00:00.000Z',
+      privacy_version: '2026-10-31',
     });
     expect(hasLegalConsent(patch)).toBe(true);
     expect(hasLegalConsent(null)).toBe(false);
