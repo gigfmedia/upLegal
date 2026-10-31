@@ -8,11 +8,7 @@ const PrivacyPolicy = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  const currentDate = new Date().toLocaleDateString('es-CL', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  const lastUpdated = '31 de octubre de 2026';
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 pt-32 px-4 sm:px-6 lg:px-8">
@@ -30,7 +26,7 @@ const PrivacyPolicy = () => {
               POLÍTICA DE PRIVACIDAD — LegalUp.cl
             </CardTitle>
             <p className="text-left text-muted-foreground">
-              Última actualización: {currentDate}
+              Última actualización: {lastUpdated}
             </p>
           </CardHeader>
           <CardContent className="space-y-6 text-justify">
@@ -41,7 +37,9 @@ const PrivacyPolicy = () => {
               {/* TODO(legal): completar RUT, domicilio y correo legal de LegalUp SpA como responsable del tratamiento. */}
               Esta Política de Privacidad explica cómo recopilamos, usamos, almacenamos y protegemos la información
               personal de los usuarios que utilizan nuestra plataforma, ya sean personas que buscan asesoría legal
-              ("Usuarios") o abogados que ofrecen servicios ("Profesionales").
+              ("Usuarios") o abogados que ofrecen servicios ("Profesionales"). También explica cómo tratamos el
+              contenido que envías a las funciones de inteligencia artificial y cómo se realizan las transferencias
+              internacionales necesarias para operar el servicio.
             </p>
             <p className="font-medium">
               Al utilizar LegalUp.cl aceptas esta Política de Privacidad.
@@ -55,6 +53,7 @@ const PrivacyPolicy = () => {
               <li>Datos personales de Usuarios: nombre, correo electrónico, teléfono, información del caso u otros documentos que subas.</li>
               <li>Datos de Profesionales: nombre, correo electrónico, teléfono, información profesional, credenciales, experiencia, documentos que acrediten su profesión.</li>
               <li>Contenido generado en la plataforma: mensajes, documentos y archivos compartidos con los abogados o con el sistema.</li>
+              <li>Contenido que envías a las funciones de inteligencia artificial, como consultas, instrucciones, documentos o extractos, y las respuestas que generas a partir de ellas.</li>
             </ul>
 
             <h3 className="font-medium mt-4">1.2. Información recopilada automáticamente</h3>
@@ -86,6 +85,7 @@ const PrivacyPolicy = () => {
               <li>Conectar usuarios con abogados adecuados.</li>
               <li>Facilitar pagos, cobros y facturación.</li>
               <li>Personalizar y mejorar la experiencia dentro de la plataforma.</li>
+              <li>Prestar funciones asistidas por inteligencia artificial sobre el contenido que decides enviar, como análisis de documentos, consultas, investigación jurídica y redacción.</li>
               <li>Enviar notificaciones, actualizaciones y mensajes relevantes.</li>
               <li>Garantizar el cumplimiento de nuestros Términos de Servicio.</li>
               <li>Monitorear seguridad, prevenir fraudes y detectar actividades indebidas.</li>
@@ -93,9 +93,13 @@ const PrivacyPolicy = () => {
             </ul>
 
             <h2 className="text-xl font-semibold mt-8 mb-4">3. Base legal para el tratamiento de datos</h2>
-            <p>Tratamos tus datos conforme a:</p>
+            <p>
+              Tratamos tus datos conforme a la Ley 19.628 sobre Protección de la Vida Privada y, cuando entre en vigencia,
+              la Ley 21.719 que moderniza la regulación de datos personales. Según corresponda, tratamos tus datos con base en:
+            </p>
             <ul className="list-disc pl-6 space-y-2">
               <li>Tu consentimiento cuando usas la plataforma o entregas información.</li>
+              <li>Tu consentimiento, cuando corresponda, para el tratamiento de datos sensibles y para el uso de funciones de inteligencia artificial que impliquen el envío de contenido a proveedores externos.</li>
               <li>La ejecución del contrato, para conectarte con abogados.</li>
               <li>El cumplimiento legal, cuando corresponda.</li>
               <li>Los intereses legítimos de mejorar y proteger nuestros servicios.</li>
@@ -110,12 +114,13 @@ const PrivacyPolicy = () => {
             <h3 className="font-medium mt-4">4.2. Con proveedores externos</h3>
             <p>Por ejemplo:</p>
             <ul className="list-disc pl-6 space-y-2">
-              <li>Servicios de pago</li>
-              <li>Hosting</li>
-              <li>Análisis de datos</li>
-              <li>Herramientas de soporte técnico</li>
+              <li>Servicios de pago.</li>
+              <li>Hosting, base de datos y almacenamiento (Supabase).</li>
+              <li>Enrutamiento y proveedores de modelos de inteligencia artificial (OpenRouter y el proveedor del modelo).</li>
+              <li>Análisis de datos.</li>
+              <li>Herramientas de soporte técnico.</li>
             </ul>
-            <p>Estos proveedores procesan datos bajo estricta confidencialidad.</p>
+            <p>Estos proveedores procesan datos por cuenta de LegalUp y conforme a obligaciones contractuales de confidencialidad y seguridad, cuando corresponda.</p>
             
             <h3 className="font-medium mt-4">4.3. Requerimientos legales</h3>
             <p>Podemos compartir información si una autoridad competente lo exige conforme a la ley chilena.</p>
@@ -129,12 +134,59 @@ const PrivacyPolicy = () => {
             <h3 className="font-medium mt-4">4.6. Inicio de sesión con Google</h3>
             <p>Si eliges crear tu cuenta o iniciar sesión con Google, recibimos de Google únicamente los datos básicos necesarios para autenticarte: tu nombre, dirección de correo electrónico e imagen de perfil. Estos datos se utilizan exclusivamente para crear y administrar tu cuenta de LegalUp y no se comparten con terceros con fines publicitarios. Iniciar sesión con Google NO otorga a LegalUp acceso a tu calendario, correo, Drive ni contactos; el acceso a Google Calendar es una integración separada y opcional descrita en la sección 4.5, que requiere tu autorización explícita adicional. Puedes eliminar tu cuenta y los datos asociados en cualquier momento según lo descrito en la sección 6.</p>
             
+            <h3 className="font-medium mt-4">4.7. Funciones de inteligencia artificial</h3>
+            <p>
+              Algunas funciones de LegalUp usan inteligencia artificial para analizar documentos, responder consultas,
+              apoyar la investigación jurídica y generar borradores. Cuando usas estas funciones, el contenido que decides
+              enviar (por ejemplo, consultas, instrucciones, documentos o extractos) se transmite a OpenRouter, un servicio
+              de enrutamiento de modelos, para que lo procese el proveedor del modelo configurado. Actualmente usamos el
+              modelo openai/gpt-4o-mini a través de OpenRouter. Podemos cambiar de modelo o proveedor para mantener o
+              mejorar el servicio; actualizaremos esta Política cuando el cambio sea relevante.
+            </p>
+            <p>
+              Configuramos las solicitudes de inteligencia artificial para exigir retención cero (Zero Data Retention o ZDR)
+              y denegar la recopilación de datos. Según la documentación de OpenRouter, ZDR implica que el proveedor no
+              conserva el prompt ni la respuesta después de completar la solicitud, salvo las excepciones limitadas que el
+              propio proveedor informe, por ejemplo, obligaciones legales o medidas de seguridad. No habilitamos el registro
+              privado de prompts y respuestas en OpenRouter. No podemos garantizar el comportamiento de terceros más allá de
+              la configuración aplicada y de sus compromisos contractuales.
+            </p>
+            <p>
+              LegalUp no utiliza el contenido de tus casos o documentos para entrenar modelos de inteligencia artificial.
+              La configuración de OpenRouter exige que el proveedor no recopile esos datos y, conforme a las condiciones del
+              proveedor, no los use para entrenamiento. Esta exclusión no impide que LegalUp conserve el contenido en sus
+              propios sistemas para prestar el servicio, cumplir obligaciones legales o atender fines de seguridad, conforme
+              a la sección 8.
+            </p>
+            <p>
+              La retención cero se aplica al procesamiento del proveedor de inferencia; no implica que LegalUp elimine de
+              inmediato el contenido de sus sistemas, copias de seguridad o registros. Te pedimos enviar solo los datos
+              necesarios para la función que estás usando y contar con la autorización correspondiente cuando incluyas datos
+              de terceros o datos sensibles.
+            </p>
+
+            <h3 className="font-medium mt-4">4.8. Transferencias internacionales</h3>
+            <p>
+              Para operar la plataforma, tus datos pueden ser tratados fuera de Chile. La base de datos y el almacenamiento
+              de producción de LegalUp están alojados en Supabase, en la región us-west-1 (Northern California, Estados
+              Unidos). OpenRouter y el proveedor del modelo pueden estar ubicados en Estados Unidos u otros países.
+            </p>
+            <p>
+              Estas transferencias se realizan para ejecutar el contrato, con tu consentimiento cuando corresponda y con
+              medidas contractuales y técnicas razonables, incluida la configuración de retención cero para las solicitudes
+              de inteligencia artificial. Cuando la normativa aplicable exija garantías adicionales, procuraremos
+              implementarlas. Puedes solicitar más información sobre los proveedores y las transferencias a
+              contacto@legalup.cl.
+            </p>
+
             <p className="font-medium">LegalUp SpA no vende información personal a terceros.</p>
 
             <h2 className="text-xl font-semibold mt-8 mb-4">5. Almacenamiento y seguridad</h2>
             <p>
+              El almacenamiento principal de la plataforma se realiza en Supabase, en la región us-west-1 (Estados Unidos).
               LegalUp SpA implementa medidas de seguridad razonables para proteger la información de accesos no autorizados,
-              pérdida o modificación. Sin embargo, ningún sistema es 100% invulnerable. No garantizamos seguridad absoluta.
+              pérdida o modificación, como controles de acceso y cifrado en tránsito. Sin embargo, ningún sistema es 100%
+              invulnerable. No garantizamos seguridad absoluta.
             </p>
 
             <h2 className="text-xl font-semibold mt-8 mb-4">6. Derechos de los usuarios</h2>
@@ -146,7 +198,10 @@ const PrivacyPolicy = () => {
               <li>Solicitar copia de la información entregada.</li>
               <li>Retirar su consentimiento, cuando este sea la base del tratamiento.</li>
             </ul>
-            <p className="mt-2">Solicitudes: <a href="mailto:contacto@legalup.cl" className="text-green-900 hover:green-600 underline">contacto@legalup.cl</a></p>
+            <p className="mt-2">
+              Cuando la Ley 21.719 entre en vigencia, podrás ejercer también los derechos que ella reconozca.
+            </p>
+            <p className="mt-2">Solicitudes: <a href="mailto:contacto@legalup.cl" className="text-green-900 hover:text-green-600 underline">contacto@legalup.cl</a></p>
 
             <h2 className="text-xl font-semibold mt-8 mb-4">7. Cookies y tecnologías similares</h2>
             <p>Utilizamos cookies para:</p>
@@ -180,6 +235,11 @@ const PrivacyPolicy = () => {
               <li>Mientras sea razonablemente necesario para fines operativos o de seguridad.</li>
             </ul>
             <p className="mt-2">Documentos y mensajes pueden ser eliminados al cerrar la cuenta, según la legislación aplicable.</p>
+            <p className="mt-2">
+              El contenido enviado a funciones de inteligencia artificial se conserva en LegalUp conforme a los criterios
+              anteriores. La retención cero descrita en la sección 4.7 se refiere al proveedor de inferencia y no elimina las
+              copias que LegalUp mantenga para prestar el servicio, cumplir obligaciones legales o proteger la plataforma.
+            </p>
 
             <h2 className="text-xl font-semibold mt-8 mb-4">9. Privacidad entre Usuario y Abogado</h2>
             <p>LegalUp SpA, a través de la plataforma LegalUp, no participa en la relación abogado-cliente.</p>
@@ -203,7 +263,9 @@ const PrivacyPolicy = () => {
             <p>
               Podemos actualizar esta Política de Privacidad en cualquier momento.
               La fecha de última actualización se mostrará al inicio del documento.
-              Al continuar usando LegalUp después de los cambios, aceptas la nueva versión.
+              Si los cambios son materiales, podremos solicitar que aceptes nuevamente esta Política.
+              El uso continuado de LegalUp después de la entrada en vigencia de los cambios implica su aceptación,
+              sin perjuicio de la nueva aceptación cuando corresponda.
             </p>
 
             <h2 className="text-xl font-semibold mt-8 mb-4">12. Contacto</h2>
@@ -213,7 +275,7 @@ const PrivacyPolicy = () => {
             </p>
             <p>Para consultas o soporte:</p>
             <p>Sitio web: <a href="https://legalup.cl" className="text-primary hover:underline">LegalUp.cl</a></p>
-            <p>Correo: <a href="mailto:juan.fercommerce@gmail.com" className="text-green-900 hover:text-green-600 underline">contacto@legalup.cl</a></p>
+            <p>Correo: <a href="mailto:contacto@legalup.cl" className="text-green-900 hover:text-green-600 underline">contacto@legalup.cl</a></p>
           </CardContent>
         </Card>
       </div>
