@@ -10,9 +10,9 @@ import { CONSENT_ERROR, buildConsentPatch, hasCurrentLegalConsent, sanitizeRedir
 import { buildRoleOnboardingPath, needsRoleConfirmation } from '@/lib/roleOnboarding';
 
 /**
- * FASE 5.6 — interstitial post-OAuth para cuentas nuevas sin aceptación.
- * Solo se llega aquí si el perfil no tiene timestamps (usuarios existentes
- * con historial pasan de largo). Escribe y continúa al destino original.
+ * FASE 5.6 — interstitial post-OAuth para cuentas sin aceptación vigente.
+ * Se llega aquí si el perfil no tiene timestamps o si sus versiones son
+ * anteriores. Escribe y continúa al destino original.
  */
 export default function ConsentPage() {
   const navigate = useNavigate();

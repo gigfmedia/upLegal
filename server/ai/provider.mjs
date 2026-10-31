@@ -18,6 +18,23 @@ export function isAIProviderConfigured() {
   return Boolean(getApiKey());
 }
 
+/**
+ * Política de privacidad Zero Data Retention (ZDR) para OpenRouter.
+ * Aplicable solo cuando el proveedor es OpenRouter.
+ * @param {string} baseUrl - URL base del proveedor
+ * @returns {{ zdr?: boolean, data_collection?: string } | null}
+ */
+export function getPrivacyPolicy(baseUrl) {
+  const provider = detectAIProvider(baseUrl);
+  if (provider === 'openrouter') {
+    return {
+      zdr: true,
+      data_collection: 'deny',
+    };
+  }
+  return null;
+}
+
 /** Nombre corto del proveedor a partir de la base URL (openai, openrouter, groq…). */
 export function detectAIProvider(baseUrl) {
   try {
@@ -233,12 +250,14 @@ export async function chatCompletion({ model, system, user, messages, maxTokens 
     ? [{ role: 'system', content: system }, ...messages]
     : [{ role: 'system', content: system }, { role: 'user', content: user }];
 
+  const privacyPolicy = getPrivacyPolicy(baseUrl);
   const payload = {
     model,
     messages: chatMessages,
     temperature,
     max_tokens: maxTokens,
     response_format: { type: 'json_object' },
+    ...(privacyPolicy ? { provider: privacyPolicy } : {}),
   };
 
   const attempt = async (withJsonMode) => {
