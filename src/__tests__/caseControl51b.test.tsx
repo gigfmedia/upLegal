@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -73,6 +73,23 @@ describe('FASE 5.1B — calendario', () => {
     fireEvent.click(day15);
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange.mock.calls[0][0]).toBeInstanceOf(Date);
+  });
+  it('se apila sobre el modal y se cierra al elegir una fecha', async () => {
+    const onChange = vi.fn();
+    render(<CaseDatePicker value={undefined} onChange={onChange} ariaLabel="Fecha del pendiente" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Fecha del pendiente' }));
+    const popover = await screen.findByRole('dialog');
+    const zIndex = Number(popover.className.match(/z-\[(\d+)\]/)?.[1]);
+    expect(zIndex).toBeGreaterThan(1200);
+    fireEvent.click(within(popover).getByText('15', { selector: 'button' }));
+    await waitFor(() => expect(screen.queryByText('Hoy')).not.toBeInTheDocument());
+  });
+  it('se cierra al hacer clic fuera', async () => {
+    render(<CaseDatePicker value={undefined} onChange={() => {}} ariaLabel="Fecha del pendiente" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Fecha del pendiente' }));
+    await screen.findByText('Hoy');
+    fireEvent.pointerDown(document.body);
+    await waitFor(() => expect(screen.queryByText('Hoy')).not.toBeInTheDocument());
   });
   it('con fecha existe "Quitar fecha" y al pulsarlo emite undefined', async () => {
     const onChange = vi.fn();
