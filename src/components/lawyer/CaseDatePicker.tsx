@@ -61,7 +61,7 @@ export function CaseDatePicker({
       </PopoverTrigger>
       <PopoverContent
         align={align}
-        className="w-auto max-w-[calc(100vw-2rem)] rounded-xl border p-0 shadow-lg"
+        className="z-[1300] w-auto max-w-[calc(100vw-2rem)] rounded-xl border p-0 shadow-lg"
       >
         <div className="p-1">
           <Calendar
