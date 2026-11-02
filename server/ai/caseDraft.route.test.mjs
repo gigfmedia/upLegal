@@ -16,7 +16,7 @@ import {
 } from './caseSnapshots.mjs';
 import {
   buildDraftSystemPrompt, buildDraftContext, selectDraftEvidence, validateDraftSources,
-  DRAFT_LIMITS, DRAFT_TYPES,
+  normalizeDraftDocumentSettings, DRAFT_LIMITS, DRAFT_TYPES, DRAFT_MARGIN_LIMITS_CM,
 } from './caseDrafting.mjs';
 import { selectDocumentEvidence } from './documentGrounding.mjs';
 
@@ -129,7 +129,8 @@ function harness({ plan = 'pro' } = {}) {
   const ctx = vm.createContext({ console: quiet, z, Buffer, process: { env: { AI_DRAFTING_ENABLED: '1' } }, supabase,
     createAIMetering: (options) => createAIMetering({ ...options, log: () => {} }),
     commercialQuotaForPlan,
-    buildDraftSystemPrompt, buildDraftContext, selectDraftEvidence, validateDraftSources, DRAFT_LIMITS,
+    buildDraftSystemPrompt, buildDraftContext, selectDraftEvidence, validateDraftSources,
+    normalizeDraftDocumentSettings, DRAFT_LIMITS, DRAFT_MARGIN_LIMITS_CM,
     selectDocumentEvidence, getProCaseHeader,
     buildSourceManifest, fingerprintManifest, readLatestSnapshot, persistSnapshotIfNew,
     resolveSnapshotCase, formatSnapshotBlock, computeCaseIntelligence, assembleIntelligencePayload,
@@ -193,6 +194,76 @@ describe('4.59D draft grounded (documentos + snapshot + research)', () => {
     expect((await h.call('post', '/api/ai/cases/:caseId/drafts', { draft_type: 'demanda', instruction: 'instrucción suficientemente larga aquí' })).statusCode).toBe(400);
     expect(h.provider).not.toHaveBeenCalled();
     expect(h.rows.ai_case_drafts).toHaveLength(0);
+  });
+});
+
+describe('UA-4 Fase 3 document_settings en PUT/GET', () => {
+  const margins = { top: 3, right: 2.5, bottom: 4, left: 1.5 };
+
+  it('persiste márgenes normalizados y los devuelve al reabrir', async () => {
+    const h = harness();
+    const gen = await h.call('post', '/api/ai/cases/:caseId/drafts', { draft_type: 'escrito', instruction: 'Preparar contestación centrada en el requerimiento previo de pago' });
+    const put = await h.call('put', '/api/ai/cases/:caseId/drafts/:draftId', {
+      content: gen.body.draft.content,
+      content_format: 'html',
+      origin: 'edit',
+      base_revision: 1,
+      document_settings: { margins_cm: { top: '3,04', right: 2.5, bottom: 4, left: 1.5 } },
+    }, gen.body.draft.id);
+    expect(put.statusCode).toBe(200);
+    expect(put.body.draft.document_settings).toEqual({ margins_cm: margins });
+    const reopened = await h.call('get', '/api/ai/cases/:caseId/drafts/:draftId', {}, gen.body.draft.id);
+    expect(reopened.statusCode).toBe(200);
+    expect(reopened.body.draft.document_settings).toEqual({ margins_cm: margins });
+  });
+
+  it('un borrador legacy sin settings se puede leer y luego inicializar sin perder contenido', async () => {
+    const h = harness();
+    const gen = await h.call('post', '/api/ai/cases/:caseId/drafts', { draft_type: 'escrito', instruction: 'Preparar contestación centrada en el requerimiento previo de pago' });
+    const draftId = gen.body.draft.id;
+    expect(h.rows.ai_case_drafts[0].document_settings).toBeUndefined();
+    const legacy = await h.call('get', '/api/ai/cases/:caseId/drafts/:draftId', {}, draftId);
+    expect(legacy.statusCode).toBe(200);
+    expect(legacy.body.draft.document_settings).toBeUndefined();
+    const saved = await h.call('put', '/api/ai/cases/:caseId/drafts/:draftId', {
+      content: legacy.body.draft.content, origin: 'edit', base_revision: 1,
+      document_settings: { margins_cm: margins },
+    }, draftId);
+    expect(saved.statusCode).toBe(200);
+    expect(saved.body.draft.document_settings).toEqual({ margins_cm: margins });
+    expect(saved.body.draft.content).toBe(legacy.body.draft.content);
+  });
+
+  it('un PUT sin document_settings conserva la configuración existente (compatibilidad)', async () => {
+    const h = harness();
+    const gen = await h.call('post', '/api/ai/cases/:caseId/drafts', { draft_type: 'escrito', instruction: 'Preparar contestación centrada en el requerimiento previo de pago' });
+    await h.call('put', '/api/ai/cases/:caseId/drafts/:draftId', {
+      content: gen.body.draft.content, origin: 'edit', base_revision: 1,
+      document_settings: { margins_cm: margins },
+    }, gen.body.draft.id);
+    const second = await h.call('put', '/api/ai/cases/:caseId/drafts/:draftId', {
+      content: 'Segunda edición sin settings.', origin: 'edit', base_revision: 2,
+    }, gen.body.draft.id);
+    expect(second.statusCode).toBe(200);
+    expect(second.body.draft.document_settings).toEqual({ margins_cm: margins });
+  });
+
+  it.each([
+    ['fuera de rango', { margins_cm: { top: 0.5, right: 2.5, bottom: 2.5, left: 2.5 } }],
+    ['margen faltante', { margins_cm: { top: 2.5, right: 2.5, bottom: 2.5 } }],
+    ['tipo inválido', { margins_cm: { top: 'x', right: 2.5, bottom: 2.5, left: 2.5 } }],
+    ['settings no objeto', []],
+  ])('rechaza %s con 400 sin crear versión', async (_label, document_settings) => {
+    const h = harness();
+    const gen = await h.call('post', '/api/ai/cases/:caseId/drafts', { draft_type: 'escrito', instruction: 'Preparar contestación centrada en el requerimiento previo de pago' });
+    const versionsBefore = h.rows.ai_case_draft_versions.length;
+    const put = await h.call('put', '/api/ai/cases/:caseId/drafts/:draftId', {
+      content: gen.body.draft.content, origin: 'edit', base_revision: 1, document_settings,
+    }, gen.body.draft.id);
+    expect(put.statusCode).toBe(400);
+    expect(put.body.code).toBe('INVALID_REQUEST');
+    expect(h.rows.ai_case_draft_versions).toHaveLength(versionsBefore);
+    expect(h.rows.ai_case_drafts[0].document_settings).toBeUndefined();
   });
 });
 

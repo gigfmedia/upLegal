@@ -62,6 +62,7 @@ import {
   buildDraftContext,
   selectDraftEvidence,
   validateDraftSources,
+  normalizeDraftDocumentSettings,
   DRAFT_LIMITS,
 } from './server/ai/caseDrafting.mjs';
 import {
@@ -12349,6 +12350,14 @@ app.put('/api/ai/cases/:caseId/drafts/:draftId', async (req, res) => {
     if (requestedFormat !== undefined && !DRAFT_CONTENT_FORMATS.has(requestedFormat)) {
       return res.status(400).json({ error: 'Solicitud inválida.', code: 'INVALID_REQUEST' });
     }
+    const rawDocumentSettings = req.body?.document_settings;
+    let documentSettings = null;
+    if (rawDocumentSettings !== undefined) {
+      documentSettings = normalizeDraftDocumentSettings(rawDocumentSettings);
+      if (!documentSettings) {
+        return res.status(400).json({ error: 'Configuración de documento inválida.', code: 'INVALID_REQUEST' });
+      }
+    }
 
     const { data: existing, error: fetchError } = await supabase
       .from('ai_case_drafts')
@@ -12387,9 +12396,16 @@ app.put('/api/ai/cases/:caseId/drafts/:draftId', async (req, res) => {
         current_revision: Number(rebound?.revision) || currentRevision + 1,
       });
     };
+    const updatePayload = {
+      content,
+      content_format: contentFormat,
+      revision: currentRevision + 1,
+      updated_at: new Date().toISOString(),
+      ...(documentSettings ? { document_settings: documentSettings } : {}),
+    };
     const { data, error } = await supabase
       .from('ai_case_drafts')
-      .update({ content, content_format: contentFormat, revision: currentRevision + 1, updated_at: new Date().toISOString() })
+      .update(updatePayload)
       .eq('id', req.params.draftId)
       .eq('lawyer_id', userId)
       .eq('revision', currentRevision)

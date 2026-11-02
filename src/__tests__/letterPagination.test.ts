@@ -8,14 +8,22 @@ import {
   FOOTER_INSET,
   LETTER_PAGE_HEIGHT,
   LETTER_PAGE_WIDTH,
+  MARGIN_STEP_CM,
+  MAX_MARGIN_CM,
+  MIN_MARGIN_CM,
   PAGE_GAP,
   cmToPx,
   computePagination,
   contentBottom,
   contentTop,
   createPageLayout,
+  documentSettingsFromMargins,
   footerLabels,
+  marginsFromDocumentSettings,
+  marginsKey,
   marginsToPx,
+  normalizeMarginCm,
+  normalizeMarginsCm,
   pageTop,
   stackHeight,
   type BlockMetrics,
@@ -62,6 +70,51 @@ describe('UA-4 geometría de página carta', () => {
     expect(footerLabels(0)).toEqual([1]);
     const layout = createPageLayout();
     expect(computePagination([], layout)).toEqual({ pageCount: 1, breaks: [], overflowBlocks: [] });
+  });
+});
+
+describe('UA-4 Fase 3 márgenes configurables', () => {
+  it('acepta 1–5 cm con paso de 0,1 y normaliza strings con coma o punto', () => {
+    expect(MIN_MARGIN_CM).toBe(1);
+    expect(MAX_MARGIN_CM).toBe(5);
+    expect(MARGIN_STEP_CM).toBe(0.1);
+    expect(normalizeMarginCm(2.54)).toBe(2.5);
+    expect(normalizeMarginCm('3,5')).toBe(3.5);
+    expect(normalizeMarginCm('4.06')).toBe(4.1);
+    expect(normalizeMarginCm(1)).toBe(1);
+    expect(normalizeMarginCm(5)).toBe(5);
+  });
+
+  it('rechaza fuera de rango, vacío y valores no numéricos', () => {
+    for (const value of [0.99, 5.01, 0, -1, '', ' ', 'x', null, undefined, Number.NaN, Infinity]) {
+      expect(normalizeMarginCm(value)).toBeNull();
+    }
+    expect(normalizeMarginsCm({ top: 2, right: 2, bottom: 2 })).toBeNull();
+    expect(normalizeMarginsCm({ top: 2, right: 2, bottom: 2, left: 6 })).toBeNull();
+    expect(normalizeMarginsCm(null)).toBeNull();
+  });
+
+  it('compatibilidad: settings vacíos o legacy usan 2,5 cm', () => {
+    expect(marginsFromDocumentSettings({})).toEqual(DEFAULT_MARGINS_CM);
+    expect(marginsFromDocumentSettings(null)).toEqual(DEFAULT_MARGINS_CM);
+    expect(marginsFromDocumentSettings({ margins_cm: null })).toEqual(DEFAULT_MARGINS_CM);
+    expect(marginsFromDocumentSettings({ other: true })).toEqual(DEFAULT_MARGINS_CM);
+  });
+
+  it('deriva layout y settings sin mutar el objeto original', () => {
+    const margins = { top: 1, right: 2, bottom: 3, left: 4 };
+    const layout = createPageLayout(margins);
+    expect(layout.margins).toEqual(marginsToPx(margins));
+    expect(layout.contentWidth).toBe(816 - layout.margins.left - layout.margins.right);
+    expect(layout.contentHeight).toBe(1056 - layout.margins.top - layout.margins.bottom);
+    expect(documentSettingsFromMargins(margins)).toEqual({ margins_cm: margins });
+    expect(marginsKey(margins)).toBe('1|2|3|4');
+    expect(margins).toEqual({ top: 1, right: 2, bottom: 3, left: 4 });
+  });
+
+  it('un layout inválido cae de forma segura a los márgenes por defecto', () => {
+    const layout = createPageLayout({ top: 0, right: 2, bottom: 2, left: 2 });
+    expect(layout.margins).toEqual(marginsToPx(DEFAULT_MARGINS_CM));
   });
 });
 

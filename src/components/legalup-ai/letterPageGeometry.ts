@@ -10,8 +10,13 @@ export const CM_TO_PX = 96 / 2.54;
 export const LETTER_PAGE_WIDTH = 816;
 export const LETTER_PAGE_HEIGHT = 1056;
 
-/** Márgenes iniciales de 2,5 cm (configurables en una fase posterior). */
+/** Márgenes iniciales de 2,5 cm. */
 export const DEFAULT_MARGINS_CM = { top: 2.5, right: 2.5, bottom: 2.5, left: 2.5 };
+
+/** Límites de configuración (UA-4 Fase 3). */
+export const MIN_MARGIN_CM = 1;
+export const MAX_MARGIN_CM = 5;
+export const MARGIN_STEP_CM = 0.1;
 
 /** Separación visual entre páginas: no pertenece a ninguna página. */
 export const PAGE_GAP = 24;
@@ -24,6 +29,48 @@ export const PAGE_EPSILON = 0.5;
 
 export type PageMarginsCm = { top: number; right: number; bottom: number; left: number };
 export type PageMargins = { top: number; right: number; bottom: number; left: number };
+export type DraftDocumentSettings = { margins_cm?: PageMarginsCm };
+
+const MARGIN_KEYS = ['top', 'right', 'bottom', 'left'] as const;
+
+/** Normaliza un margen a 0,1 cm; null si está fuera de rango o no es numérico. */
+export function normalizeMarginCm(value: unknown): number | null {
+  const numeric = typeof value === 'number'
+    ? value
+    : typeof value === 'string' && value.trim() !== ''
+      ? Number(value.replace(',', '.'))
+      : Number.NaN;
+  if (!Number.isFinite(numeric) || numeric < MIN_MARGIN_CM || numeric > MAX_MARGIN_CM) return null;
+  return Math.round(numeric * 10) / 10;
+}
+
+/** Valida los cuatro márgenes; null si falta alguno o alguno es inválido. */
+export function normalizeMarginsCm(value: unknown): PageMarginsCm | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const raw = value as Record<string, unknown>;
+  const normalized = {} as PageMarginsCm;
+  for (const key of MARGIN_KEYS) {
+    const margin = normalizeMarginCm(raw[key]);
+    if (margin === null) return null;
+    normalized[key] = margin;
+  }
+  return normalized;
+}
+
+/** Compatibilidad: `{}` o settings ausentes usan los márgenes por defecto. */
+export function marginsFromDocumentSettings(settings: unknown): PageMarginsCm {
+  if (!settings || typeof settings !== 'object' || Array.isArray(settings)) return { ...DEFAULT_MARGINS_CM };
+  return normalizeMarginsCm((settings as DraftDocumentSettings).margins_cm) ?? { ...DEFAULT_MARGINS_CM };
+}
+
+export function documentSettingsFromMargins(margins: PageMarginsCm): DraftDocumentSettings {
+  return { margins_cm: normalizeMarginsCm(margins) ?? { ...DEFAULT_MARGINS_CM } };
+}
+
+/** Clave estable para comparar settings (el orden de las propiedades importa). */
+export function marginsKey(margins: PageMarginsCm): string {
+  return MARGIN_KEYS.map((key) => margins[key]).join('|');
+}
 
 export type PageLayout = {
   pageWidth: number;
@@ -49,7 +96,8 @@ export function marginsToPx(margins: PageMarginsCm = DEFAULT_MARGINS_CM): PageMa
 }
 
 export function createPageLayout(marginsCm: PageMarginsCm = DEFAULT_MARGINS_CM): PageLayout {
-  const margins = marginsToPx(marginsCm);
+  const safeMargins = normalizeMarginsCm(marginsCm) ?? DEFAULT_MARGINS_CM;
+  const margins = marginsToPx(safeMargins);
   return {
     pageWidth: LETTER_PAGE_WIDTH,
     pageHeight: LETTER_PAGE_HEIGHT,
