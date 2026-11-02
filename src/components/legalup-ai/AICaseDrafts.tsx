@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import StarterTextAlign from '@tiptap/extension-text-align';
+import { TableKit } from '@tiptap/extension-table';
 import {
   AlertTriangle,
   AlignCenter,
@@ -16,6 +17,7 @@ import {
   AlignRight,
   Bold,
   Check,
+  Columns3,
   Copy,
   FilePenLine,
   History as HistoryIcon,
@@ -27,8 +29,11 @@ import {
   Plus,
   Printer,
   Redo2,
+  Rows3,
   Settings2,
   Strikethrough,
+  Table2,
+  Trash2,
   Underline,
   Undo2,
 } from 'lucide-react';
@@ -213,7 +218,8 @@ export function useCaseDrafts(workspaceId: string | undefined) {
 // Config del editor para TODOS los usos: solo encabezados 1-3, sin citas,
 // código, regla horizontal ni enlaces (schema acotado). FASE UA-2 habilita
 // subrayado y tachado (ya incluidos en StarterKit 3.x) y añade alineación de
-// bloque restringida a párrafos y títulos — nunca listas.
+// bloque restringida a párrafos y títulos — nunca listas. UA-5.1 habilita
+// tablas editables con TableKit (sin redimensionado libre ni nodos extra).
 const editorExtensions = () => [
   StarterKit.configure({
     heading: { levels: [1, 2, 3] },
@@ -224,6 +230,7 @@ const editorExtensions = () => [
     link: false,
   }),
   StarterTextAlign.configure({ types: ['paragraph', 'heading'] }),
+  TableKit.configure({ table: { resizable: false } }),
 ];
 
 // FASE UA-2B — zoom de documento: 50 %–150 % en pasos de 10 %, 100 % por
@@ -1683,6 +1690,23 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                         <ToolbarDivider />
                         {toolbarButton('Lista con viñetas', List, () => chainFocus()?.toggleBulletList().run(), !!editor?.isActive('bulletList'))}
                         {toolbarButton('Lista numerada', ListOrdered, () => chainFocus()?.toggleOrderedList().run(), !!editor?.isActive('orderedList'))}
+                        <ToolbarDivider />
+                        {toolbarButton(
+                          'Insertar tabla 2×2',
+                          Table2,
+                          () => chainFocus()?.insertTable({ rows: 2, cols: 2, withHeaderRow: true }).run(),
+                          false,
+                          !editor?.can().insertTable({ rows: 2, cols: 2, withHeaderRow: true })
+                        )}
+                        {editor?.isActive('table') ? (
+                          <>
+                            {toolbarButton('Añadir fila', Rows3, () => chainFocus()?.addRowAfter().run(), false, !editor?.can().addRowAfter())}
+                            {toolbarButton('Eliminar fila', Trash2, () => chainFocus()?.deleteRow().run(), false, !editor?.can().deleteRow())}
+                            {toolbarButton('Añadir columna', Columns3, () => chainFocus()?.addColumnAfter().run(), false, !editor?.can().addColumnAfter())}
+                            {toolbarButton('Eliminar columna', Trash2, () => chainFocus()?.deleteColumn().run(), false, !editor?.can().deleteColumn())}
+                            {toolbarButton('Eliminar tabla', Trash2, () => chainFocus()?.deleteTable().run(), false, !editor?.can().deleteTable())}
+                          </>
+                        ) : null}
                         <ToolbarDivider />
                         {toolbarButton('Negrita', Bold, () => chainFocus()?.toggleBold().run(), !!editor?.isActive('bold'))}
                         {toolbarButton('Cursiva', Italic, () => chainFocus()?.toggleItalic().run(), !!editor?.isActive('italic'))}

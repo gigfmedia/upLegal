@@ -66,6 +66,41 @@ describe('4.62C convertDraftMarkdownToHtml — escape-first', () => {
   it('contenido vacío no genera HTML', () => {
     expect(convertDraftMarkdownToHtml('')).toBe('');
   });
+
+  it('tabla markdown se convierte en tabla real con encabezado', () => {
+    const out = convertDraftMarkdownToHtml(
+      '| Criterio | Cláusula 5 | Cláusula 6 |\n| --- | --- | --- |\n| Plazo | 30 días | 60 días |'
+    );
+    expect(out).toContain('<table>');
+    expect(out).toContain('<thead><tr><th><p>Criterio</p></th><th><p>Cláusula 5</p></th><th><p>Cláusula 6</p></th></tr></thead>');
+    expect(out).toContain('<tbody><tr><td><p>Plazo</p></td><td><p>30 días</p></td><td><p>60 días</p></td></tr></tbody>');
+  });
+
+  it('conserva tablas legacy de hasta 12 columnas sin aplicarles el límite de la acción IA', () => {
+    const columns = Array.from({ length: 7 }, (_, i) => `C${i + 1}`);
+    const row = Array.from({ length: 7 }, (_, i) => `V${i + 1}`);
+    const md = `| ${columns.join(' | ')} |\n| ${columns.map(() => '---').join(' | ')} |\n| ${row.join(' | ')} |`;
+    const out = convertDraftMarkdownToHtml(md);
+    expect(out).toContain('<th><p>C7</p></th>');
+    expect(out).toContain('<td><p>V7</p></td>');
+  });
+
+  it('las celdas de tabla respetan escape-first y la negrita permitida', () => {
+    const out = convertDraftMarkdownToHtml(
+      '| <script> | **clave** |\n| --- | --- |\n| <img x> | *valor* |'
+    );
+    expect(out).toContain('&lt;script&gt;');
+    expect(out).not.toContain('<script>');
+    expect(out).toContain('&lt;img x&gt;');
+    expect(out).toContain('<strong>clave</strong>');
+    expect(out).toContain('<em>valor</em>');
+  });
+
+  it('una tabla sin separador no se interpreta como tabla', () => {
+    const out = convertDraftMarkdownToHtml('| no | es tabla |\n| texto normal |');
+    expect(out).not.toContain('<table>');
+    expect(out).toContain('<p>');
+  });
 });
 
 describe('4.62C htmlToPlainText', () => {
@@ -76,5 +111,11 @@ describe('4.62C htmlToPlainText', () => {
 
   it('convierte <br> en salto de línea', () => {
     expect(htmlToPlainText('a<br>b')).toContain('a\nb');
+  });
+
+  it('las celdas de tabla se separan con tabulador y las filas con salto de línea', () => {
+    const text = htmlToPlainText('<table><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr></table>');
+    expect(text).toContain('A\tB');
+    expect(text).toContain('1\t2');
   });
 });

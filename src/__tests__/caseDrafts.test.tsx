@@ -65,7 +65,16 @@ type FakeEditor = {
   getHTML: () => string;
   isActive: (name: string | Record<string, unknown>, attrs?: Record<string, unknown>) => boolean;
   chain: () => Record<string, (...args: unknown[]) => unknown>;
-  can: () => { undo: () => boolean; redo: () => boolean };
+  can: () => {
+    undo: () => boolean;
+    redo: () => boolean;
+    insertTable: () => boolean;
+    addRowAfter: () => boolean;
+    deleteRow: () => boolean;
+    addColumnAfter: () => boolean;
+    deleteColumn: () => boolean;
+    deleteTable: () => boolean;
+  };
   commands: { setContent: (html: string, opts?: { emitUpdate?: boolean }) => void };
 };
 const fakeEditors: FakeEditor[] = [];
@@ -156,6 +165,12 @@ vi.mock('@tiptap/react', () => ({
           }
           return rec('redo');
         };
+        ret.insertTable = (...args: unknown[]) => rec('insertTable', args);
+        ret.addRowAfter = () => rec('addRowAfter');
+        ret.deleteRow = () => rec('deleteRow');
+        ret.addColumnAfter = () => rec('addColumnAfter');
+        ret.deleteColumn = () => rec('deleteColumn');
+        ret.deleteTable = () => rec('deleteTable');
         ret.unsetAllMarks = () => rec('unsetAllMarks');
         ret.clearNodes = () => rec('clearNodes');
         return ret;
@@ -163,6 +178,12 @@ vi.mock('@tiptap/react', () => ({
       can: () => ({
         undo: () => created.canFlags.undo,
         redo: () => created.canFlags.redo,
+        insertTable: () => true,
+        addRowAfter: () => true,
+        deleteRow: () => true,
+        addColumnAfter: () => true,
+        deleteColumn: () => true,
+        deleteTable: () => true,
       }),
       commands: {
         setContent(html: string, opts?: { emitUpdate?: boolean }) {

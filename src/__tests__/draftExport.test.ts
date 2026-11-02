@@ -17,6 +17,19 @@ describe('UA-4 Fase 3 exportación', () => {
     expect(html).not.toContain('letter-page-break');
   });
 
+  it('incluye estilos de tabla y evita cortar filas entre páginas', () => {
+    const html = buildDraftPrintHtml({
+      title: 'Cuadro',
+      html: '<table><thead><tr><th>A</th></tr></thead><tbody><tr><td>1</td></tr></tbody></table>',
+      marginsCm: { top: 2.5, right: 2.5, bottom: 2.5, left: 2.5 },
+    });
+    expect(html).toContain('table {');
+    expect(html).toContain('border-collapse: collapse');
+    expect(html).toContain('thead { display: table-header-group; }');
+    expect(html).toContain('tr { break-inside: avoid; page-break-inside: avoid; }');
+    expect(html).toContain('<table><thead><tr><th>A</th></tr></thead>');
+  });
+
   it('escapa el título y usa los márgenes por defecto si los settings son inválidos', () => {
     const html = buildDraftPrintHtml({
       title: '<script>alert("x")</script>',

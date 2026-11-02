@@ -52,6 +52,10 @@ import {
   buildChatUserPrompt,
   CHAT_LIMITS,
 } from './server/ai/legalChatPrompt.mjs';
+import {
+  buildComparisonTableSystemPrompt,
+  parseComparisonTableResponse,
+} from './server/ai/draftAgentActions.mjs';
 import { getProCaseHeader, formatProCaseBlock } from './server/ai/proCaseContext.mjs';
 import {
   selectRelevantResearch,
@@ -10439,6 +10443,7 @@ const AIChatRequestSchema = z.object({
   conversation_id: z.string().uuid(),
   message: z.string().trim().min(1).max(CHAT_LIMITS.MAX_CHAT_MESSAGE_LENGTH),
   document_id: z.string().uuid().optional(),
+  action: z.literal('comparison_table').optional(),
 });
 
 // GET /api/ai/cases/:caseId/chat — conversación principal (get-or-create) + mensajes.
@@ -10484,7 +10489,7 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
     if (!parsed.success) {
       return res.status(400).json({ error: 'Solicitud inválida.', code: 'INVALID_REQUEST' });
     }
-    const { conversation_id, message, document_id } = parsed.data;
+    const { conversation_id, message, document_id, action } = parsed.data;
 
     const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
     if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
@@ -10514,7 +10519,7 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       });
     }
 
-    if (!await metering.begin(req, res, { lawyerId: userId, workspaceId: workspace.id, capability: document_id ? 'document_chat' : 'case_chat', resourceId: document_id || conversation.id, input: { conversation_id, message, document_id: document_id || null, model: AI_DEFAULT_MODEL }, commercialLimits: commercialQuotaForPlan(entitlement.plan), freeQuota: freeQuotaForEntitlement(entitlement) })) return;
+    if (!await metering.begin(req, res, { lawyerId: userId, workspaceId: workspace.id, capability: document_id ? 'document_chat' : 'case_chat', resourceId: document_id || conversation.id, input: { conversation_id, message, document_id: document_id || null, action: action || null, model: AI_DEFAULT_MODEL }, commercialLimits: commercialQuotaForPlan(entitlement.plan), freeQuota: freeQuotaForEntitlement(entitlement) })) return;
 
     // Solo documentos listos del caso del abogado.
     const { data: readyDocs, error: docsError } = await supabase
@@ -10756,7 +10761,9 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
     const { data: raw, raw: rawText } = await chatCompletion({
       model: AI_DEFAULT_MODEL,
       metering,
-      system: buildChatSystemPrompt({ mode: prioritizedDocumentId ? 'document' : 'case' }),
+      system: action === 'comparison_table'
+        ? buildComparisonTableSystemPrompt()
+        : buildChatSystemPrompt({ mode: prioritizedDocumentId ? 'document' : 'case' }),
       messages: [
         {
           role: 'user',
@@ -10773,12 +10780,24 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
     let validated;
     if (raw) {
       try {
-        validated = AIChatResponseSchema.parse(raw);
+        validated = action === 'comparison_table'
+          ? parseComparisonTableResponse(raw)
+          : AIChatResponseSchema.parse(raw);
       } catch {
         validated = null;
       }
     } else {
       validated = null;
+    }
+
+    // La tabla es una acción con contrato estricto: si el proveedor no devolvió
+    // datos estructurados válidos, no se degrada a texto libre ni se inserta
+    // nada. El mensaje del usuario ya quedó guardado para poder reintentar.
+    if (action === 'comparison_table' && !validated) {
+      return await metering.respond(res, 422, {
+        error: 'La IA no devolvió una tabla comparativa válida. Reintenta o reformula la solicitud.',
+        code: 'AI_TABLE_INVALID',
+      });
     }
 
     // Fallback robusto: si el proveedor no devolvió JSON válido (p. ej. texto
@@ -10981,6 +11000,10 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       } catch { /* validación RAG best-effort; fuentes filename-level intactas */ }
     }
 
+    const actionResult = action === 'comparison_table' && validated.table
+      ? { kind: 'comparison_table', table: validated.table }
+      : null;
+
     const { data: savedAssistant, error: assistantInsertError } = await supabase
       .from('ai_chat_messages')
       .insert({
@@ -10989,7 +11012,11 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
         lawyer_id: userId,
         role: 'assistant',
         content: validated.answer,
-        metadata: { sources, model: AI_DEFAULT_MODEL },
+        metadata: {
+          sources,
+          model: AI_DEFAULT_MODEL,
+          ...(actionResult ? { action_result: actionResult } : {}),
+        },
       })
       .select()
       .single();
@@ -11007,7 +11034,12 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       console.error('[LegalUpAI] ai_first_chat_message failed', posthogError);
     }
 
-    await metering.respond(res, 200, { user_message: userMessage, message: savedAssistant, sources });
+    await metering.respond(res, 200, {
+      user_message: userMessage,
+      message: savedAssistant,
+      sources,
+      ...(actionResult ? { action_result: actionResult } : {}),
+    });
   } catch (error) {
     console.error('[LegalUpAI] chat error:', error);
     const code =

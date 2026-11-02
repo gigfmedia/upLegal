@@ -62,7 +62,16 @@ type FakeEditor = {
   getHTML: () => string;
   isActive: (name: string | Record<string, unknown>, attrs?: Record<string, unknown>) => boolean;
   chain: () => Record<string, (...args: unknown[]) => unknown>;
-  can: () => { undo: () => boolean; redo: () => boolean };
+  can: () => {
+    undo: () => boolean;
+    redo: () => boolean;
+    insertTable: () => boolean;
+    addRowAfter: () => boolean;
+    deleteRow: () => boolean;
+    addColumnAfter: () => boolean;
+    deleteColumn: () => boolean;
+    deleteTable: () => boolean;
+  };
   commands: { setContent: (html: string, opts?: { emitUpdate?: boolean }) => void };
 };
 const fakeEditors: FakeEditor[] = [];
@@ -105,6 +114,12 @@ vi.mock('@tiptap/react', () => ({
           (options ?? created.opts)?.onUpdate?.({ editor: created });
           return rec('insertContent', [html]);
         };
+        ret.insertTable = (...args: unknown[]) => rec('insertTable', args);
+        ret.addRowAfter = () => rec('addRowAfter');
+        ret.deleteRow = () => rec('deleteRow');
+        ret.addColumnAfter = () => rec('addColumnAfter');
+        ret.deleteColumn = () => rec('deleteColumn');
+        ret.deleteTable = () => rec('deleteTable');
         ret.toggleBold = () => rec('toggleBold');
         ret.toggleItalic = () => rec('toggleItalic');
         ret.toggleBulletList = () => rec('toggleBulletList');
@@ -115,7 +130,16 @@ vi.mock('@tiptap/react', () => ({
         ret.clearNodes = () => rec('clearNodes');
         return ret;
       },
-      can: () => ({ undo: () => false, redo: () => false }),
+      can: () => ({
+        undo: () => false,
+        redo: () => false,
+        insertTable: () => false,
+        addRowAfter: () => false,
+        deleteRow: () => false,
+        addColumnAfter: () => false,
+        deleteColumn: () => false,
+        deleteTable: () => false,
+      }),
       commands: {
         setContent(html: string, opts?: { emitUpdate?: boolean }) {
           created.html = html;
@@ -156,6 +180,7 @@ let chatRequests: { init: RequestInit }[];
 // ('' implies the plain content already; the panel receives composition via
 // composeProposalMessage independent of this reply content).
 let chatReply: { content: string } | null = { content: 'Texto de propuesta.' };
+let chatActionResult: unknown = null;
 // plugin de latencia: si está definido, el POST chat espera a que el test resuelva
 let chatDelay: Promise<void> | null = null;
 let chatRepliesServed = 0;
@@ -167,6 +192,7 @@ const chatPostResponse = (status = 200) => {
           message: { id: `as-${chatRequests.length}`, role: 'assistant', content: chatReply.content, workspace_id: 'ws-a', conversation_id: 'conv', metadata: null },
           user_message: null,
           sources: [],
+          ...(chatActionResult ? { action_result: chatActionResult } : {}),
         }
       : { error: 'Servicio no disponible' }
   ), { status });
@@ -211,6 +237,7 @@ beforeEach(() => {
   resetEditors();
   chatRequests = [];
   chatReply = { content: 'Texto de propuesta.' };
+  chatActionResult = null;
   chatDelay = null;
   chatRepliesServed = 0;
   client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity }, mutations: { retry: false } } });
@@ -315,11 +342,12 @@ describe('UA-3 Agent AI — integración en el editor', () => {
     const ta = proposalInstruction();
     fireEvent.focus(ta);
     expect(await screen.findByTestId('agent-toolkit')).toBeInTheDocument();
-    // Las cuatro acciones del toolkit son reales y están listadas.
+    // Las cinco acciones del toolkit son reales y están listadas.
     expect(screen.getByTestId('agent-toolkit-proofread-selection')).toHaveTextContent('Revisar la selección');
     expect(screen.getByTestId('agent-toolkit-rewrite-selection')).toHaveTextContent('Reescribir la selección');
     expect(screen.getByTestId('agent-toolkit-shorten-selection')).toHaveTextContent('Acortar la selección');
     expect(screen.getByTestId('agent-toolkit-new-paragraph')).toHaveTextContent('Escribir un párrafo nuevo');
+    expect(screen.getByTestId('agent-toolkit-comparison-table')).toHaveTextContent('Crear tabla comparativa');
     // Tipear cierra el menú y conserva todo lo escrito.
     fireEvent.change(ta, { target: { value: 'texto del usuario' } });
     expect(screen.queryByTestId('agent-toolkit')).not.toBeInTheDocument();
@@ -409,7 +437,9 @@ describe('UA-3 Agent AI — integración en el editor', () => {
     fireEvent.click(await screen.findByRole('button', { name: /Borrador de planteamiento/ }));
     await screen.findByTestId('draft-toolbar');
     await screen.findByTestId('draft-agent-panel');
-    expect(screen.getByTestId('agent-attach-draft')).toHaveAttribute('aria-pressed', 'false');
+    await waitFor(() =>
+      expect(screen.getByTestId('agent-attach-draft')).toHaveAttribute('aria-pressed', 'false')
+    );
 
     // Envío sin volver a activar: mensaje sin contexto (nada de d1).
     fireEvent.change(proposalInstruction(), { target: { value: 'instrucción para d2' } });
@@ -597,6 +627,71 @@ describe('UA-3 Agent AI — integración en el editor', () => {
     expect(sendBtn).toBeDisabled();
     fireEvent.click(screen.getByTestId('agent-proposal-retry'));
     await waitFor(() => expect(chatPosts()).toHaveLength(2));
+  });
+
+  it('una petición de tabla viaja con action y se previsualiza como tabla antes de insertar', async () => {
+    chatReply = { content: 'Comparación de las cláusulas relevantes.' };
+    chatActionResult = {
+      kind: 'comparison_table',
+      table: {
+        title: 'Comparación de cláusulas',
+        columns: ['Criterio', 'Cláusula 5', 'Cláusula 6'],
+        rows: [['Plazo', '30 días', '60 días'], ['Multa', '[POR COMPLETAR: monto]', '10 UF']],
+      },
+    };
+
+    await sendProposal('Haz una comparación de las cláusulas 5 y 6', false);
+    await waitFor(() => expect(chatPosts()).toHaveLength(1));
+    const body = JSON.parse(String(chatPosts()[0].init.body)) as { action?: string };
+    expect(body.action).toBe('comparison_table');
+
+    const preview = await screen.findByTestId('agent-proposal-table');
+    expect(preview).toHaveTextContent('Comparación de cláusulas');
+    expect(preview).toHaveTextContent('Criterio');
+    expect(preview).toHaveTextContent('30 días');
+    expect(preview).toHaveTextContent('10 UF');
+
+    await act(async () => fireEvent.click(screen.getByTestId('agent-proposal-accept')));
+    const ed = mainEditor()!;
+    expect(ed.html).toContain('<table>');
+    expect(ed.html).toContain('<th><p>Criterio</p></th>');
+    expect(ed.html).toContain('<td><p>30 días</p></td>');
+    expect(ed.html).toContain('[POR COMPLETAR: monto]');
+    expect(ed.html).toContain('<h1>Borrador</h1>');
+    await screen.findByTestId('agent-notice');
+  });
+
+  it('la acción de tabla del toolkit envía el contrato estructurado y no inserta sin aceptar', async () => {
+    chatReply = { content: 'Tabla lista.' };
+    chatActionResult = {
+      kind: 'comparison_table',
+      table: {
+        title: 'Criterios',
+        columns: ['A', 'B'],
+        rows: [['Uno', 'Dos']],
+      },
+    };
+    await openDraftEditor();
+    await openAgentPanel();
+    fireEvent.focus(proposalInstruction());
+    const row = await screen.findByTestId('agent-toolkit-comparison-table');
+    await waitFor(() => expect(row).toBeEnabled());
+    fireEvent.click(row);
+    await waitFor(() => expect(chatPosts()).toHaveLength(1));
+    const body = JSON.parse(String(chatPosts()[0].init.body)) as { action?: string; message: string };
+    expect(body.action).toBe('comparison_table');
+    expect(body.message).toContain('Genera una tabla comparativa');
+    expect(await screen.findByTestId('agent-proposal-table')).toBeInTheDocument();
+    expect(mainEditor()!.cmdLog.some((c) => c.startsWith('insertContent('))).toBe(false);
+  });
+
+  it('si la acción de tabla no devuelve datos válidos no se muestra propuesta ni se inserta', async () => {
+    chatReply = { content: 'No pude estructurarla.' };
+    chatActionResult = { kind: 'comparison_table', table: { title: 'X', columns: ['A'], rows: [['1']] } };
+    await sendProposal('haz una tabla comparativa', false);
+    await waitFor(() => expect(screen.getByTestId('agent-proposal-error')).toBeInTheDocument());
+    expect(screen.queryByTestId('agent-proposal-table')).not.toBeInTheDocument();
+    expect(mainEditor()!.cmdLog.some((c) => c.startsWith('insertContent('))).toBe(false);
   });
 
   it('Aceptar e insertar ingresa la propuesta por el pipeline normal de guardado sin borrar el contenido existente', async () => {

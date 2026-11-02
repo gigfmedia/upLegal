@@ -215,3 +215,34 @@ All colors MUST be HSL.
   user-select: none;
   pointer-events: none;
 }
+
+/* UA-5.1 — tablas comparativas en el editor y en previews de versión.
+   Solo presentación: el HTML persistido es el que produce TipTap. */
+.draft-preview table,
+[data-testid="draft-page-content"] table {
+  width: 100%;
+  margin: 0 0 0.9em;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+.draft-preview th,
+.draft-preview td,
+[data-testid="draft-page-content"] th,
+[data-testid="draft-page-content"] td {
+  border: 1px solid #9ca3af;
+  padding: 4px 6px;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.draft-preview th,
+[data-testid="draft-page-content"] th {
+  background: #f3f4f6;
+  font-weight: 600;
+}
+.draft-preview table p,
+[data-testid="draft-page-content"] table p {
+  margin: 0;
+}

@@ -60,6 +60,26 @@ export function buildDraftPrintHtml({
     li { margin: 0 0 0.25em; }
     h1, h2, h3 { break-after: avoid; page-break-after: avoid; }
     p, li { orphans: 3; widows: 3; }
+    table {
+      width: 100%;
+      margin: 0 0 0.9em;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 9.5pt;
+      line-height: 1.35;
+    }
+    thead { display: table-header-group; }
+    tr { break-inside: avoid; page-break-inside: avoid; }
+    th, td {
+      border: 1px solid #6b7280;
+      padding: 4px 6px;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    th { background: #f3f4f6; font-weight: 700; }
+    table p { margin: 0; }
   </style>
 </head>
 <body>${html}</body>

@@ -175,6 +175,16 @@ describe('UA-4 cortes por bloque', () => {
     }
   });
 
+  it('una tabla más alta que la página reserva páginas y no inserta un corte dentro de la tabla', () => {
+    // La tabla es un solo bloque top-level: no se parte el documento. La
+    // impresión evita cortar filas y repite el thead; el stack reserva las
+    // páginas que ocupa el bloque.
+    const result = computePagination([block(0, 1500)], layout);
+    expect(result.overflowBlocks).toEqual([0]);
+    expect(result.breaks).toEqual([]);
+    expect(result.pageCount).toBe(2);
+  });
+
   it('un bloque más alto que la página se marca y reserva las páginas que ocupa', () => {
     const result = computePagination([block(0, 1200)], layout);
     expect(result.overflowBlocks).toEqual([0]);
