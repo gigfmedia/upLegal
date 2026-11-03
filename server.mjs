@@ -55,6 +55,11 @@ import {
 import {
   buildComparisonTableSystemPrompt,
   parseComparisonTableResponse,
+  buildDraftCommentsSystemPrompt,
+  parseDraftCommentsResponse,
+  DraftCommentCreateSchema,
+  DraftCommentUpdateSchema,
+  DRAFT_COMMENT_LIMITS,
 } from './server/ai/draftAgentActions.mjs';
 import { getProCaseHeader, formatProCaseBlock } from './server/ai/proCaseContext.mjs';
 import {
@@ -10443,7 +10448,7 @@ const AIChatRequestSchema = z.object({
   conversation_id: z.string().uuid(),
   message: z.string().trim().min(1).max(CHAT_LIMITS.MAX_CHAT_MESSAGE_LENGTH),
   document_id: z.string().uuid().optional(),
-  action: z.literal('comparison_table').optional(),
+  action: z.enum(['comparison_table', 'draft_comments']).optional(),
 });
 
 // GET /api/ai/cases/:caseId/chat — conversación principal (get-or-create) + mensajes.
@@ -10763,7 +10768,9 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       metering,
       system: action === 'comparison_table'
         ? buildComparisonTableSystemPrompt()
-        : buildChatSystemPrompt({ mode: prioritizedDocumentId ? 'document' : 'case' }),
+        : action === 'draft_comments'
+          ? buildDraftCommentsSystemPrompt()
+          : buildChatSystemPrompt({ mode: prioritizedDocumentId ? 'document' : 'case' }),
       messages: [
         {
           role: 'user',
@@ -10782,7 +10789,9 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       try {
         validated = action === 'comparison_table'
           ? parseComparisonTableResponse(raw)
-          : AIChatResponseSchema.parse(raw);
+          : action === 'draft_comments'
+            ? parseDraftCommentsResponse(raw)
+            : AIChatResponseSchema.parse(raw);
       } catch {
         validated = null;
       }
@@ -10797,6 +10806,12 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       return await metering.respond(res, 422, {
         error: 'La IA no devolvió una tabla comparativa válida. Reintenta o reformula la solicitud.',
         code: 'AI_TABLE_INVALID',
+      });
+    }
+    if (action === 'draft_comments' && !validated) {
+      return await metering.respond(res, 422, {
+        error: 'La IA no devolvió comentarios válidos. Reintenta o reformula la solicitud.',
+        code: 'AI_COMMENTS_INVALID',
       });
     }
 
@@ -11002,7 +11017,9 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
 
     const actionResult = action === 'comparison_table' && validated.table
       ? { kind: 'comparison_table', table: validated.table }
-      : null;
+      : action === 'draft_comments' && validated.comments
+        ? { kind: 'draft_comments', comments: validated.comments }
+        : null;
 
     const { data: savedAssistant, error: assistantInsertError } = await supabase
       .from('ai_chat_messages')
@@ -12191,6 +12208,212 @@ app.get('/api/ai/cases/:caseId/drafts/:draftId', async (req, res) => {
   } catch (error) {
     console.error('[LegalUpAI] draft open error:', error);
     res.status(500).json({ error: 'No se pudo abrir el borrador.' });
+  }
+});
+
+// — UA-5.2: comentarios anclados al borrador (sidecar, sin tocar el head) —
+// Leer un comentario/borrador siempre exige que ambos pertenezcan al abogado y
+// workspace de la ruta. Nunca se actualiza ai_case_drafts ni se crea versión.
+// V1 de comentarios es last-write-wins: no hay OCC ni control de revisión para
+// las mutaciones del sidecar; solo el borrador conserva su OCC existente.
+async function getDraftCommentContextOwned(userId, workspaceId, draftId) {
+  const { data, error } = await supabase
+    .from('ai_case_drafts')
+    .select('id, lawyer_id, lawyer_case_id, workspace_id')
+    .eq('id', draftId)
+    .eq('lawyer_id', userId)
+    .eq('workspace_id', workspaceId)
+    .maybeSingle();
+  if (error) throw error;
+  return data || null;
+}
+
+function draftCommentLimitPayload() {
+  return {
+    error: `Un borrador admite hasta ${DRAFT_COMMENT_LIMITS.maxPerDraft} comentarios abiertos. Resuelve, descarta o elimina algunos para continuar.`,
+    code: 'AI_DRAFT_COMMENT_LIMIT_REACHED',
+  };
+}
+
+function isDraftCommentLimitError(error) {
+  return error?.code === 'P0001'
+    && String(error?.message || '').includes('AI_DRAFT_COMMENT_LIMIT_REACHED');
+}
+
+app.get('/api/ai/cases/:caseId/drafts/:draftId/comments', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
+    if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
+    const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
+    if (entitlement.res) return entitlement.res;
+    const draft = await getDraftCommentContextOwned(userId, workspace.id, req.params.draftId);
+    if (!draft) return res.status(404).json({ error: 'Borrador no encontrado.' });
+
+    const { data, error } = await supabase
+      .from('ai_case_draft_comments')
+      .select('*')
+      .eq('draft_id', draft.id)
+      .eq('lawyer_id', userId)
+      .eq('workspace_id', workspace.id)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    res.json({ comments: data || [] });
+  } catch (error) {
+    console.error('[LegalUpAI] draft comments list error:', error);
+    res.status(500).json({ error: 'No se pudieron cargar los comentarios.' });
+  }
+});
+
+app.post('/api/ai/cases/:caseId/drafts/:draftId/comments', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
+    if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
+    const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
+    if (entitlement.res) return entitlement.res;
+    const parsed = DraftCommentCreateSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Comentario inválido.', code: 'INVALID_REQUEST' });
+    }
+    const draft = await getDraftCommentContextOwned(userId, workspace.id, req.params.draftId);
+    if (!draft) return res.status(404).json({ error: 'Borrador no encontrado.' });
+
+    // Fast-path con el mismo mensaje; el trigger de la migración es la
+    // autoridad atómica ante dos POST que lean 99 abiertos a la vez.
+    const { data: existing, error: countError } = await supabase
+      .from('ai_case_draft_comments')
+      .select('id')
+      .eq('draft_id', draft.id)
+      .eq('lawyer_id', userId)
+      .eq('workspace_id', workspace.id)
+      .eq('status', 'open');
+    if (countError) throw countError;
+    if ((existing || []).length >= DRAFT_COMMENT_LIMITS.maxPerDraft) {
+      return res.status(429).json(draftCommentLimitPayload());
+    }
+
+    const now = new Date().toISOString();
+    const { data, error } = await supabase
+      .from('ai_case_draft_comments')
+      .insert({
+        draft_id: draft.id,
+        lawyer_id: userId,
+        lawyer_case_id: draft.lawyer_case_id,
+        workspace_id: workspace.id,
+        body: parsed.data.body,
+        author: parsed.data.author ?? 'lawyer',
+        status: 'open',
+        anchor: parsed.data.anchor,
+        updated_at: now,
+      })
+      .select()
+      .single();
+    if (error) {
+      if (isDraftCommentLimitError(error)) return res.status(429).json(draftCommentLimitPayload());
+      throw error;
+    }
+    res.status(201).json({ comment: data });
+  } catch (error) {
+    console.error('[LegalUpAI] draft comment create error:', error);
+    res.status(500).json({ error: 'No se pudo crear el comentario.' });
+  }
+});
+
+app.patch('/api/ai/cases/:caseId/drafts/:draftId/comments/:commentId', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
+    if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
+    const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
+    if (entitlement.res) return entitlement.res;
+    const parsed = DraftCommentUpdateSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Cambios de comentario inválidos.', code: 'INVALID_REQUEST' });
+    }
+    const draft = await getDraftCommentContextOwned(userId, workspace.id, req.params.draftId);
+    if (!draft) return res.status(404).json({ error: 'Borrador no encontrado.' });
+
+    const { data: existing, error: fetchError } = await supabase
+      .from('ai_case_draft_comments')
+      .select('id, status')
+      .eq('id', req.params.commentId)
+      .eq('draft_id', draft.id)
+      .eq('lawyer_id', userId)
+      .eq('workspace_id', workspace.id)
+      .maybeSingle();
+    if (fetchError) throw fetchError;
+    if (!existing) return res.status(404).json({ error: 'Comentario no encontrado.' });
+
+    const now = new Date().toISOString();
+    const update = { updated_at: now };
+    if (parsed.data.body !== undefined) update.body = parsed.data.body;
+    if (parsed.data.anchor !== undefined) update.anchor = parsed.data.anchor;
+    if (parsed.data.status !== undefined) {
+      update.status = parsed.data.status;
+      update.resolved_at = parsed.data.status === 'resolved' ? now : null;
+    }
+    const { data, error } = await supabase
+      .from('ai_case_draft_comments')
+      .update(update)
+      .eq('id', req.params.commentId)
+      .eq('draft_id', draft.id)
+      .eq('lawyer_id', userId)
+      .eq('workspace_id', workspace.id)
+      .select()
+      .single();
+    if (error) {
+      if (isDraftCommentLimitError(error)) return res.status(429).json(draftCommentLimitPayload());
+      throw error;
+    }
+    res.json({ comment: data });
+  } catch (error) {
+    console.error('[LegalUpAI] draft comment update error:', error);
+    res.status(500).json({ error: 'No se pudo actualizar el comentario.' });
+  }
+});
+
+app.delete('/api/ai/cases/:caseId/drafts/:draftId/comments/:commentId', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
+    if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
+    const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
+    if (entitlement.res) return entitlement.res;
+    const draft = await getDraftCommentContextOwned(userId, workspace.id, req.params.draftId);
+    if (!draft) return res.status(404).json({ error: 'Borrador no encontrado.' });
+
+    const { data: existing, error: fetchError } = await supabase
+      .from('ai_case_draft_comments')
+      .select('id')
+      .eq('id', req.params.commentId)
+      .eq('draft_id', draft.id)
+      .eq('lawyer_id', userId)
+      .eq('workspace_id', workspace.id)
+      .maybeSingle();
+    if (fetchError) throw fetchError;
+    if (!existing) return res.status(404).json({ error: 'Comentario no encontrado.' });
+
+    const { error } = await supabase
+      .from('ai_case_draft_comments')
+      .delete()
+      .eq('id', req.params.commentId)
+      .eq('draft_id', draft.id)
+      .eq('lawyer_id', userId)
+      .eq('workspace_id', workspace.id);
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('[LegalUpAI] draft comment delete error:', error);
+    res.status(500).json({ error: 'No se pudo eliminar el comentario.' });
   }
 });
 

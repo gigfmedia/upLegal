@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup, fireEvent, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AICaseDrafts } from '@/components/legalup-ai/AICaseDrafts';
+import { Schema } from '@tiptap/pm/model';
 
 // UA-3 — Composer Agent AI del editor de borradores (patrón Tiptap Agent
 // Editor): kit contextual con acciones reales (adjuntar copia del borrador,
@@ -183,6 +184,7 @@ let chatReply: { content: string } | null = { content: 'Texto de propuesta.' };
 let chatActionResult: unknown = null;
 // plugin de latencia: si está definido, el POST chat espera a que el test resuelva
 let chatDelay: Promise<void> | null = null;
+let commentPostDelay: Promise<void> | null = null;
 let chatRepliesServed = 0;
 const chatPostResponse = (status = 200) => {
   chatRepliesServed += 1;
@@ -201,6 +203,34 @@ const chatPostResponse = (status = 200) => {
 const chatPosts = (): { init: RequestInit }[] => chatRequests;
 
 const makeD2 = () => makeDraft({ id: 'd2', instruction: 'planeacion', title: 'Borrador de planteamiento del caso' });
+
+// Documento ProseMirror mínimo para probar el anclaje real de UA-5.2 en el
+// editor simulado (el mock solo necesita state.doc/selection).
+const commentSchema = new Schema({
+  nodes: {
+    doc: { content: 'block+' },
+    paragraph: { content: 'inline*', group: 'block' },
+    text: { group: 'inline' },
+    hardBreak: { inline: true, group: 'inline' },
+  },
+  marks: {},
+});
+const makeEditorDoc = (blocks: string[]) => commentSchema.node(
+  'doc',
+  null,
+  blocks.map((text) => commentSchema.node('paragraph', null, text ? [commentSchema.text(text)] : [])),
+);
+const makeEditorDocWithHardBreak = (before: string, after: string) => commentSchema.node(
+  'doc',
+  null,
+  [commentSchema.node('paragraph', null, [
+    commentSchema.text(before),
+    commentSchema.nodes.hardBreak.create(),
+    commentSchema.text(after),
+  ])],
+);
+
+let commentStore: Array<Record<string, unknown>> = [];
 
 let client: QueryClient;
 const mountApp = () =>
@@ -239,7 +269,9 @@ beforeEach(() => {
   chatReply = { content: 'Texto de propuesta.' };
   chatActionResult = null;
   chatDelay = null;
+  commentPostDelay = null;
   chatRepliesServed = 0;
+  commentStore = [];
   client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity }, mutations: { retry: false } } });
   vi.stubGlobal('ResizeObserver', class { observe() { /** noop */ } disconnect() { /** noop */ } });
   fetchMock = vi.fn(async (url: string, opts?: RequestInit) => {
@@ -255,6 +287,44 @@ beforeEach(() => {
       chatRequests.push(req);
       if (chatDelay) await chatDelay;
       return chatPostResponse(chatReply ? 200 : 502);
+    }
+    if (urlStr.includes('/comments')) {
+      const method = opts?.method ?? 'GET';
+      if (method === 'GET') {
+        return { ok: true, json: async () => ({ comments: [...commentStore] }) } as Response;
+      }
+      if (method === 'POST') {
+        if (commentPostDelay) await commentPostDelay;
+        const payload = JSON.parse(String(opts?.body ?? '{}'));
+        const comment = {
+          id: `c-${commentStore.length + 1}`,
+          draft_id: 'd1',
+          lawyer_id: 'u',
+          lawyer_case_id: 'case-1',
+          workspace_id: 'ws-a',
+          body: payload.body,
+          author: payload.author ?? 'lawyer',
+          status: 'open',
+          anchor: payload.anchor,
+          created_at: '2026-11-01T00:00:00Z',
+          updated_at: '2026-11-01T00:00:00Z',
+          resolved_at: null,
+        };
+        commentStore.push(comment);
+        return { ok: true, json: async () => ({ comment }) } as Response;
+      }
+      const id = urlStr.split('/comments/')[1] ?? '';
+      const index = commentStore.findIndex((item) => item.id === id);
+      if (method === 'PATCH') {
+        const payload = JSON.parse(String(opts?.body ?? '{}'));
+        const updated = { ...commentStore[index], ...payload, updated_at: '2026-11-01T00:01:00Z' };
+        commentStore[index] = updated;
+        return { ok: true, json: async () => ({ comment: updated }) } as Response;
+      }
+      if (method === 'DELETE') {
+        commentStore = commentStore.filter((item) => item.id !== id);
+        return { ok: true, json: async () => ({ ok: true }) } as Response;
+      }
     }
     if (urlStr.includes('/drafts/d2/versions')) {
       return { ok: true, json: async () => ({ versions: [], total: 0 }) } as Response;
@@ -922,5 +992,176 @@ describe('UA-3 Agent AI — integración en el editor', () => {
     expect(body.message.length).toBeLessThanOrEqual('algo'.length + 20000 + 400);
     // La propuesta sigue operando con normalidad.
     await waitFor(() => expect(screen.getByTestId('agent-proposal-card')).toBeInTheDocument());
+  });
+});
+
+describe('UA-5.2 — comentarios IA anclados a la selección', () => {
+  it('envía la selección al backend, muestra sugerencias y solo persiste al aceptar', async () => {
+    await openDraftEditor();
+    await openAgentPanel();
+    const ed = mainEditor()!;
+    const doc = makeEditorDoc(['Se notificó al demandado el 3 de enero.']);
+    ed.state = { selection: { from: 1, to: 15, empty: false }, doc };
+    const selectionText = doc.textBetween(1, 15, '\n');
+    const htmlBefore = ed.getHTML();
+    chatActionResult = {
+      kind: 'draft_comments',
+      comments: [{ quote: selectionText.slice(0, 10), comment: 'Verifica la fecha exacta de la notificación.' }],
+    };
+
+    fireEvent.focus(proposalInstruction());
+    fireEvent.click(await screen.findByTestId('agent-toolkit-comment-selection'));
+
+    const card = await screen.findByTestId('agent-proposal-comments');
+    expect(card).toHaveTextContent('Verifica la fecha exacta de la notificación.');
+    // Nada se persiste ni se inserta antes de aceptar cada sugerencia.
+    expect(screen.queryByTestId('agent-proposal-accept')).not.toBeInTheDocument();
+    expect(commentStore).toHaveLength(0);
+    expect(ed.cmdLog.some((entry) => entry.startsWith('insertContent('))).toBe(false);
+    const chatBody = JSON.parse(String(chatPosts()[0].init.body)) as { action: string; message: string };
+    expect(chatBody.action).toBe('draft_comments');
+    expect(chatBody.message).toContain(selectionText);
+
+    fireEvent.click(screen.getByTestId('agent-comment-add-0'));
+
+    await waitFor(() => expect(commentStore).toHaveLength(1));
+    expect(commentStore[0]).toMatchObject({
+      body: 'Verifica la fecha exacta de la notificación.',
+      author: 'ai',
+      status: 'open',
+      anchor: { quote: selectionText },
+    });
+    expect(await screen.findByTestId('draft-comment-c-1')).toBeInTheDocument();
+    // El comentario no modifica el HTML del documento.
+    expect(ed.getHTML()).toBe(htmlBefore);
+    expect(ed.getHTML()).not.toContain('Verifica la fecha exacta');
+  });
+
+  it('cita el texto del ancla con Shift+Enter en lugar del texto sin saltos', async () => {
+    await openDraftEditor();
+    await openAgentPanel();
+    const ed = mainEditor()!;
+    const doc = makeEditorDocWithHardBreak('foo', 'bar');
+    ed.state = { selection: { from: 1, to: 8, empty: false }, doc };
+    // getSelectionText() del editor omite el hardBreak; el ancla sí lo conserva.
+    expect(doc.textBetween(1, 8, '\n')).toBe('foobar');
+    chatActionResult = {
+      kind: 'draft_comments',
+      comments: [{ quote: 'foo', comment: 'Revisa el salto de línea.' }],
+    };
+
+    fireEvent.focus(proposalInstruction());
+    fireEvent.click(await screen.findByTestId('agent-toolkit-comment-selection'));
+
+    await screen.findByTestId('agent-proposal-comments');
+    const chatBody = JSON.parse(String(chatPosts()[0].init.body)) as { message: string };
+    expect(chatBody.message).toContain('«foo\nbar»');
+    expect(chatBody.message).not.toContain('«foobar»');
+  });
+
+  it('no mueve un comentario huérfano sin confirmación explícita de reanclaje', async () => {
+    commentStore.push({
+      id: 'c-1',
+      draft_id: 'd1',
+      lawyer_id: 'u',
+      lawyer_case_id: 'case-1',
+      workspace_id: 'ws-a',
+      body: 'Comentario huérfano.',
+      author: 'ai',
+      status: 'open',
+      anchor: { quote: 'texto que ya no existe', prefix: '', suffix: '', start_hint: 1, end_hint: 2 },
+      created_at: '2026-11-01T00:00:00Z',
+      updated_at: '2026-11-01T00:00:00Z',
+      resolved_at: null,
+    });
+
+    await openDraftEditor();
+
+    expect(await screen.findByTestId('draft-comment-c-1')).toHaveAttribute('data-anchor-status', 'orphaned');
+    expect(screen.getByTestId('draft-comment-navigate-c-1')).toBeDisabled();
+    fireEvent.click(screen.getByTestId('draft-comment-reanchor-c-1'));
+    // Abrir el modo de reanclaje no persiste nada por sí solo.
+    expect(commentStore[0].anchor).toMatchObject({ quote: 'texto que ya no existe' });
+    expect(screen.getByTestId('draft-comment-reanchor-confirm')).toBeInTheDocument();
+
+    const ed = mainEditor()!;
+    const doc = makeEditorDoc(['Se notificó al demandado el 3 de enero.']);
+    const selectionText = doc.textBetween(1, 15, '\n');
+    ed.state = { selection: { from: 1, to: 15, empty: false }, doc };
+
+    fireEvent.click(screen.getByTestId('draft-comment-reanchor-confirm'));
+
+    await waitFor(() => expect(commentStore[0].anchor).toMatchObject({ quote: selectionText }));
+    await waitFor(() => expect(screen.getByTestId('draft-comment-c-1')).toHaveAttribute('data-anchor-status', 'anchored'));
+  });
+
+  it('rechaza selecciones demasiado largas antes de generar el comentario', async () => {
+    await openDraftEditor();
+    await openAgentPanel();
+    const ed = mainEditor()!;
+    const doc = makeEditorDoc(['x'.repeat(2001)]);
+    ed.state = { selection: { from: 1, to: 2002, empty: false }, doc };
+
+    fireEvent.focus(proposalInstruction());
+    fireEvent.click(await screen.findByTestId('agent-toolkit-comment-selection'));
+
+    expect(await screen.findByTestId('agent-selection-hint')).toHaveTextContent('demasiado larga');
+    expect(chatPosts()).toHaveLength(0);
+    expect(commentStore).toHaveLength(0);
+  });
+
+  it('no marca la sugerencia de una propuesta nueva si otra aceptación sigue pendiente', async () => {
+    await openDraftEditor();
+    await openAgentPanel();
+    const ed = mainEditor()!;
+    const doc = makeEditorDoc(['Se notificó al demandado el 3 de enero.']);
+    ed.state = { selection: { from: 1, to: 15, empty: false }, doc };
+    const selectionText = doc.textBetween(1, 15, '\n');
+    chatActionResult = {
+      kind: 'draft_comments',
+      comments: [{ quote: selectionText.slice(0, 10), comment: 'Primera propuesta.' }],
+    };
+
+    fireEvent.focus(proposalInstruction());
+    fireEvent.click(await screen.findByTestId('agent-toolkit-comment-selection'));
+    await screen.findByTestId('agent-proposal-comments');
+
+    let releasePost: () => void = () => {};
+    commentPostDelay = new Promise<void>((resolve) => { releasePost = resolve; });
+    fireEvent.click(screen.getByTestId('agent-comment-add-0'));
+    await waitFor(() => expect(commentStore).toHaveLength(0));
+
+    chatActionResult = {
+      kind: 'draft_comments',
+      comments: [{ quote: selectionText.slice(0, 10), comment: 'Segunda propuesta.' }],
+    };
+    fireEvent.blur(proposalInstruction());
+    fireEvent.focus(proposalInstruction());
+    fireEvent.click(await screen.findByTestId('agent-toolkit-comment-selection'));
+
+    await waitFor(() => expect(chatPosts()).toHaveLength(2));
+    await waitFor(() => expect(screen.getByTestId('agent-proposal-comments')).toHaveTextContent('Segunda propuesta.'));
+
+    commentPostDelay = null;
+    releasePost();
+
+    await waitFor(() => expect(commentStore).toHaveLength(1));
+    await waitFor(() => expect(screen.getByTestId('agent-comment-add-0')).toBeEnabled());
+    expect(screen.getByTestId('agent-comment-add-0')).toHaveTextContent('Añadir comentario');
+  });
+
+  it('rechaza selecciones entre bloques sin enviar nada', async () => {
+    await openDraftEditor();
+    await openAgentPanel();
+    const ed = mainEditor()!;
+    const doc = makeEditorDoc(['Primer párrafo completo.', 'Segundo párrafo completo.']);
+    ed.state = { selection: { from: 1, to: doc.child(0).nodeSize + 3, empty: false }, doc };
+
+    fireEvent.focus(proposalInstruction());
+    fireEvent.click(await screen.findByTestId('agent-toolkit-comment-selection'));
+
+    expect(await screen.findByTestId('agent-selection-hint')).toHaveTextContent('un solo párrafo');
+    expect(chatPosts()).toHaveLength(0);
+    expect(commentStore).toHaveLength(0);
   });
 });

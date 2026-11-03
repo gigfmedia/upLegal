@@ -21,7 +21,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { AIChat } from './AIChat';
-import { useAICaseChat, useSendChatMessage, type AIChatError } from '@/hooks/useAIChat';
+import {
+  useAICaseChat,
+  useSendChatMessage,
+  type AIChatError,
+  type AIDraftCommentSuggestion,
+} from '@/hooks/useAIChat';
 import { useAIDocuments } from '@/hooks/useAIDocuments';
 import { convertDraftMarkdownToHtml, htmlToPlainText } from './draftEditorMarkup';
 import {
@@ -30,6 +35,7 @@ import {
   normalizeComparisonTable,
   type ComparisonTableData,
 } from './draftComparisonTable';
+import type { DraftCommentAnchor } from './draftCommentAnchor';
 
 // UA-3 — Composer Agent AI del editor de borradores (patrón Tiptap Agent
 // Editor, referencias visuales obligatorias). El composer vive DENTRO de la
@@ -65,6 +71,16 @@ export type AIDraftAgentPanelProps = {
    */
   getSelectionText: () => string | null;
   /**
+   * Ancla de la selección actual para comentarios (null + motivo si no es
+   * válida: vacía, fuera del documento o repartida entre bloques).
+   */
+  getSelectionAnchor: () => { anchor: DraftCommentAnchor | null; error: string | null };
+  /**
+   * Persiste un comentario sugerido SOLO tras aceptación explícita. Debe
+   * lanzar un Error legible si el ancla ya no es válida o el guardado falla.
+   */
+  onAddComment: (suggestion: AIDraftCommentSuggestion, anchor: DraftCommentAnchor) => Promise<void>;
+  /**
    * Ratio de zoom de la hoja (1 = 100 %). El composer calcula su
    * contra-escala para mantener un tamaño visual constante.
    */
@@ -81,6 +97,9 @@ type ProposalState = {
   text: string;
   insertError: boolean;
   table?: ComparisonTableData;
+  comments?: AIDraftCommentSuggestion[];
+  commentAnchor?: DraftCommentAnchor;
+  acceptedCommentIndexes?: number[];
 };
 
 type ToolkitAction = {
@@ -91,7 +110,7 @@ type ToolkitAction = {
   requiresSelection: boolean;
   base: string;
   /** Acción estructurada que el backend valida antes de responder. */
-  requestAction?: 'comparison_table';
+  requestAction?: 'comparison_table' | 'draft_comments';
 };
 
 const TOOLKIT_ACTIONS: ToolkitAction[] = [
@@ -124,6 +143,14 @@ const TOOLKIT_ACTIONS: ToolkitAction[] = [
     base: 'Redacta un párrafo nuevo para el borrador a partir de su contexto actual.',
   },
   {
+    key: 'comment-selection',
+    label: 'Comentar selección',
+    icon: MessageSquare,
+    requiresSelection: true,
+    base: 'Propón comentarios breves y accionables sobre esta selección. Cada comentario debe citar un fragmento literal de la selección y explicar qué revisar, sin reescribir el documento completo.',
+    requestAction: 'draft_comments',
+  },
+  {
     key: 'comparison-table',
     label: 'Crear tabla comparativa',
     icon: Table2,
@@ -135,6 +162,26 @@ const TOOLKIT_ACTIONS: ToolkitAction[] = [
 
 /** Detecta una petición explícita de tabla/comparación escrita en el input. */
 const TABLE_INTENT_RE = /\b(tabla|cuadro|matriz)\b|\bcompar(?:a|ar|ación|aciones|ativo|ativa)(?![\p{L}])/iu;
+
+/** Valida/normaliza la lista estructurada del backend. La UI nunca interpreta
+ *  comentarios como HTML ni los inserta en el documento: solo los muestra para
+ *  aceptación explícita. */
+function normalizeDraftComments(value: unknown): AIDraftCommentSuggestion[] | null {
+  if (!Array.isArray(value)) return null;
+  const comments: AIDraftCommentSuggestion[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== 'object') continue;
+    const quote = typeof (item as { quote?: unknown }).quote === 'string'
+      ? (item as { quote: string }).quote.trim()
+      : '';
+    const comment = typeof (item as { comment?: unknown }).comment === 'string'
+      ? (item as { comment: string }).comment.trim()
+      : '';
+    if (!quote || !comment) continue;
+    comments.push({ quote, comment });
+  }
+  return comments.length > 0 ? comments : null;
+}
 
 const CONTEXT_SEPARATOR = '---';
 const CONTEXT_HEADER = 'Copia del borrador abierto';
@@ -181,6 +228,8 @@ export function AIDraftAgentPanel({
   draftTitle,
   getDraftHtml,
   getSelectionText,
+  getSelectionAnchor,
+  onAddComment,
   zoomRatio,
   onInsertProposal,
 }: AIDraftAgentPanelProps) {
@@ -232,7 +281,8 @@ export function AIDraftAgentPanel({
   const activeRequestRef = useRef<AbortController | null>(null);
   // Para el reintento: el mensaje compuesto exacto del último intento fallido.
   const lastProposalMessageRef = useRef<string | null>(null);
-  const lastProposalActionRef = useRef<'comparison_table' | undefined>(undefined);
+  const lastProposalActionRef = useRef<'comparison_table' | 'draft_comments' | undefined>(undefined);
+  const lastProposalAnchorRef = useRef<DraftCommentAnchor | undefined>(undefined);
   // Guard de inserción: un doble clic en «Aceptar e insertar» no puede
   // disparar dos insertContent con la misma propuesta.
   const acceptingRef = useRef(false);
@@ -290,6 +340,7 @@ export function AIDraftAgentPanel({
     activeRequestRef.current = null;
     lastProposalMessageRef.current = null;
     lastProposalActionRef.current = undefined;
+    lastProposalAnchorRef.current = undefined;
     acceptingRef.current = false;
     setProposal(null);
     setError(null);
@@ -310,13 +361,18 @@ export function AIDraftAgentPanel({
   // Evita un set de estado tras desmonte (chat abortado al cerrar el editor).
   useEffect(() => () => { activeRequestRef.current?.abort(); }, []);
 
-  const dispatchProposal = (message: string, action?: 'comparison_table') => {
+  const dispatchProposal = (
+    message: string,
+    action?: 'comparison_table' | 'draft_comments',
+    anchor?: DraftCommentAnchor
+  ) => {
     if (!conversationId || sending || activeRequestRef.current) return;
     const reqDraftId = draftIdRef.current;
     const controller = new AbortController();
     activeRequestRef.current = controller;
     lastProposalMessageRef.current = message;
     lastProposalActionRef.current = action;
+    lastProposalAnchorRef.current = anchor;
     setError(null);
     setNotice(null);
     setCopied(false);
@@ -326,17 +382,35 @@ export function AIDraftAgentPanel({
         onSuccess: (data) => {
           if (controller.signal.aborted || draftIdRef.current !== reqDraftId) return;
           if (action === 'comparison_table') {
-            const table = normalizeComparisonTable(data.action_result?.table);
+            const table = normalizeComparisonTable(
+              data.action_result?.kind === 'comparison_table' ? data.action_result.table : null
+            );
             if (!table) {
               setError(new Error('La IA no devolvió una tabla comparativa válida. Reintenta o reformula la solicitud.'));
               return;
             }
             setProposal({ id: data.message.id, text: data.message.content, insertError: false, table });
+          } else if (action === 'draft_comments') {
+            const result = data.action_result;
+            const comments = result?.kind === 'draft_comments' ? normalizeDraftComments(result.comments) : null;
+            if (!comments || !anchor) {
+              setError(new Error('La IA no devolvió comentarios válidos para la selección. Reintenta o reformula la solicitud.'));
+              return;
+            }
+            setProposal({
+              id: data.message.id,
+              text: data.message.content,
+              insertError: false,
+              comments,
+              commentAnchor: anchor,
+              acceptedCommentIndexes: [],
+            });
           } else {
             setProposal({ id: data.message.id, text: data.message.content, insertError: false });
           }
           lastProposalMessageRef.current = null;
           lastProposalActionRef.current = undefined;
+          lastProposalAnchorRef.current = undefined;
         },
         onSettled: () => { activeRequestRef.current = null; },
         onError: (err) => {
@@ -381,13 +455,24 @@ export function AIDraftAgentPanel({
     if (sending || !conversationId || activeRequestRef.current) return;
     if (action.requiresSelection) {
       const sel = readSelection();
-      if (!sel) {
-        setSelectionHint(`Selecciona el texto en el editor para «${action.label}». No se envió nada.`);
+      const selectionAnchor = action.requestAction === 'draft_comments' ? getSelectionAnchor() : null;
+      if (!sel || (action.requestAction === 'draft_comments' && !selectionAnchor?.anchor)) {
+        setSelectionHint(
+          action.requestAction === 'draft_comments' && selectionAnchor?.error
+            ? selectionAnchor.error
+            : `Selecciona el texto en el editor para «${action.label}». No se envió nada.`
+        );
         return;
       }
+      // El prompt debe citar el mismo texto que el ancla: `getSelectionText`
+      // omite los hardBreak y un Shift+Enter convertía «foo\nbar» en «foobar».
+      const selectionQuote = action.requestAction === 'draft_comments'
+        ? selectionAnchor?.anchor?.quote ?? sel
+        : sel;
       dispatchProposal(
-        composeProposalMessage(`${action.base}\n\n[${SELECTION_QUOTE_HEADER}]\n«${sel}»`, draftTitle, null),
-        action.requestAction
+        composeProposalMessage(`${action.base}\n\n[${SELECTION_QUOTE_HEADER}]\n«${selectionQuote}»`, draftTitle, null),
+        action.requestAction,
+        selectionAnchor?.anchor
       );
     } else {
       const draftHtml = getDraftHtml();
@@ -418,11 +503,15 @@ export function AIDraftAgentPanel({
 
   const handleRetry = () => {
     if (!lastProposalMessageRef.current || sending || activeRequestRef.current) return;
-    dispatchProposal(lastProposalMessageRef.current, lastProposalActionRef.current);
+    dispatchProposal(
+      lastProposalMessageRef.current,
+      lastProposalActionRef.current,
+      lastProposalAnchorRef.current
+    );
   };
 
   const handleAccept = () => {
-    if (!proposal || acceptingRef.current) return;
+    if (!proposal || acceptingRef.current || proposal.comments) return;
     acceptingRef.current = true;
     const html = proposal.table
       ? comparisonTableToHtml(proposal.table)
@@ -441,16 +530,47 @@ export function AIDraftAgentPanel({
 
   const handleCopy = async () => {
     if (!proposal) return;
+    const commentsText = proposal.comments
+      ?.map((comment) => `«${comment.quote}»\n${comment.comment}`)
+      .join('\n\n');
     try {
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(
-          proposal.table ? comparisonTableToPlainText(proposal.table) : proposal.text
+          commentsText
+            ?? (proposal.table ? comparisonTableToPlainText(proposal.table) : proposal.text)
         );
       }
     } catch {
       // noop
     }
     setCopied(true);
+  };
+
+  const [addingCommentIndex, setAddingCommentIndex] = useState<number | null>(null);
+
+  const handleAddComment = async (index: number) => {
+    if (!proposal?.comments || !proposal.commentAnchor || addingCommentIndex !== null) return;
+    if (proposal.acceptedCommentIndexes?.includes(index)) return;
+    // Capturar la propuesta y su ancla antes del await: si llega otra propuesta
+    // mientras persiste el comentario, no se marca como aceptada en la nueva.
+    const proposalId = proposal.id;
+    const suggestion = proposal.comments[index];
+    const anchor = proposal.commentAnchor;
+    setAddingCommentIndex(index);
+    setError(null);
+    try {
+      await onAddComment(suggestion, anchor);
+      setProposal((prev) => (
+        prev && prev.id === proposalId && prev.comments
+          ? { ...prev, acceptedCommentIndexes: [...(prev.acceptedCommentIndexes ?? []), index] }
+          : prev
+      ));
+      setNotice('Comentario añadido al documento. Puedes revisarlo en el panel de comentarios.');
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('No se pudo añadir el comentario.'));
+    } finally {
+      setAddingCommentIndex(null);
+    }
   };
 
   const errorText = error?.message || 'No se pudo generar la propuesta. Intenta nuevamente.';
@@ -675,7 +795,9 @@ export function AIDraftAgentPanel({
           <div className="rounded-xl border bg-card p-3 space-y-2 shadow-lg" data-testid="agent-proposal-card">
             <p className="text-xs font-medium text-green-800 flex items-center gap-1">
               <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-              {proposal.table ? 'Tabla comparativa generada por IA' : 'Propuesta de texto generada por IA'} · revísala antes de insertar
+              {proposal.comments
+                ? 'Comentarios sugeridos por IA · revísalos antes de añadir'
+                : `${proposal.table ? 'Tabla comparativa generada por IA' : 'Propuesta de texto generada por IA'} · revísala antes de insertar`}
             </p>
             {proposal.insertError ? (
               <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2" role="alert" data-testid="agent-insert-error">
@@ -685,7 +807,35 @@ export function AIDraftAgentPanel({
                 </p>
               </div>
             ) : null}
-            {proposal.table ? (
+            {proposal.comments ? (
+              <div className="max-h-72 space-y-2 overflow-y-auto rounded-lg bg-muted/40 px-3 py-2" data-testid="agent-proposal-comments">
+                <p className="text-xs text-muted-foreground">
+                  Elige qué comentarios quieres añadir. No se guarda ninguno sin tu aceptación.
+                </p>
+                {proposal.comments.map((suggestion, index) => {
+                  const added = proposal.acceptedCommentIndexes?.includes(index) ?? false;
+                  return (
+                    <div key={`${index}-${suggestion.quote}`} className="rounded border bg-card p-2" data-testid={`agent-comment-suggestion-${index}`}>
+                      <blockquote className="border-l-2 border-amber-300 pl-2 text-xs italic text-muted-foreground">
+                        «{suggestion.quote}»
+                      </blockquote>
+                      <p className="mt-1.5 whitespace-pre-wrap text-sm text-gray-900">{suggestion.comment}</p>
+                      <Button
+                        size="sm"
+                        variant={added ? 'ghost' : 'outline'}
+                        className="mt-2 h-7 text-xs"
+                        disabled={added || addingCommentIndex !== null}
+                        onClick={() => void handleAddComment(index)}
+                        data-testid={`agent-comment-add-${index}`}
+                      >
+                        {added ? <Check className="mr-1 h-3.5 w-3.5" aria-hidden="true" /> : null}
+                        {added ? 'Añadido' : addingCommentIndex === index ? 'Añadiendo…' : 'Añadir comentario'}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : proposal.table ? (
               <div className="max-h-56 overflow-auto rounded-lg bg-muted/40 px-3 py-2" data-testid="agent-proposal-table">
                 {proposal.text.trim() ? (
                   <p className="mb-2 text-xs text-muted-foreground whitespace-pre-wrap">{proposal.text}</p>
@@ -720,12 +870,16 @@ export function AIDraftAgentPanel({
               </div>
             )}
             <p className="text-xs text-muted-foreground">
-              Aceptar inserta {proposal.table ? 'la tabla' : 'el texto'} en la posición del cursor sin reemplazar el resto del documento.
+              {proposal.comments
+                ? 'Los comentarios se anclan al texto citado y nunca modifican el contenido del borrador.'
+                : `Aceptar inserta ${proposal.table ? 'la tabla' : 'el texto'} en la posición del cursor sin reemplazar el resto del documento.`}
             </p>
             <div className="flex flex-wrap gap-2">
-              <Button size="sm" data-testid="agent-proposal-accept" onClick={handleAccept}>
-                Aceptar e insertar
-              </Button>
+              {proposal.comments ? null : (
+                <Button size="sm" data-testid="agent-proposal-accept" onClick={handleAccept}>
+                  Aceptar e insertar
+                </Button>
+              )}
               <Button size="sm" variant="outline" data-testid="agent-proposal-copy" onClick={handleCopy}>
                 <ClipboardCopy className="h-4 w-4 mr-1" aria-hidden="true" />
                 {copied ? 'Copiado' : 'Copiar texto'}

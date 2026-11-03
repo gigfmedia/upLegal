@@ -6,10 +6,20 @@ import type { ComparisonTableData } from '@/components/legalup-ai/draftCompariso
 
 export type AIChatSource = { document_id: string; file_name: string; fragment_id?: string | null; page_number?: number | null; evidence?: string | null };
 
-export type AIChatActionResult = {
-  kind: 'comparison_table';
-  table: ComparisonTableData;
+export type AIDraftCommentSuggestion = {
+  quote: string;
+  comment: string;
 };
+
+export type AIChatActionResult =
+  | {
+      kind: 'comparison_table';
+      table: ComparisonTableData;
+    }
+  | {
+      kind: 'draft_comments';
+      comments: AIDraftCommentSuggestion[];
+    };
 
 export type AIChatMessage = {
   id: string;
@@ -85,7 +95,7 @@ type SendChatInput = {
   message: string;
   documentId?: string;
   signal?: AbortSignal;
-  action?: 'comparison_table';
+  action?: 'comparison_table' | 'draft_comments';
 };
 type SendChatResult = {
   message: AIChatMessage;
@@ -133,7 +143,11 @@ export function useSendChatMessage(workspaceId: string | undefined) {
         throw err;
       }
       signal?.throwIfAborted();
-      if (body?.action_result && body.action_result.kind !== 'comparison_table') {
+      if (
+        body?.action_result &&
+        body.action_result.kind !== 'comparison_table' &&
+        body.action_result.kind !== 'draft_comments'
+      ) {
         throw new Error('La acción de la IA no es válida. Intenta nuevamente.');
       }
       if (!body?.message || typeof body.message.id !== 'string' ||

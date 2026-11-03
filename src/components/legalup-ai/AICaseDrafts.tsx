@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { EditorContent, useEditor } from '@tiptap/react';
+import type { Node as PMNode } from '@tiptap/pm/model';
 import StarterKit from '@tiptap/starter-kit';
 import { supabase } from '@/lib/supabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,6 +44,17 @@ import { convertDraftMarkdownToHtml, htmlToPlainText } from '@/components/legalu
 import { AIDraftAgentPanel } from '@/components/legalup-ai/AIDraftAgentPanel';
 import { LetterPagination } from '@/components/legalup-ai/letterPagination';
 import { LetterPageOverlay } from '@/components/legalup-ai/LetterPageOverlay';
+import { DraftComments, draftCommentsPluginKey } from '@/components/legalup-ai/draftCommentsExtension';
+import { DraftCommentsPanelContainer } from '@/components/legalup-ai/DraftCommentsPanelContainer';
+import {
+  DRAFT_COMMENT_MAX_QUOTE_CHARS,
+  buildDraftCommentAnchor,
+  isSuggestionInsideAnchor,
+  resolveDraftCommentAnchor,
+  type DraftCommentAnchor,
+} from '@/components/legalup-ai/draftCommentAnchor';
+import { useDraftComments, type DraftComment } from '@/hooks/useDraftComments';
+import type { AIDraftCommentSuggestion } from '@/hooks/useAIChat';
 import {
   DEFAULT_MARGINS_CM,
   LETTER_PAGE_WIDTH,
@@ -378,6 +390,21 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   // cierre/reapertura de borradores y nunca toca el HTML guardado.
   const [draftZoom, setDraftZoom] = useState(100);
 
+  // UA-5.2 — comentarios anclados. Estado de UI separado del documento: el
+  // editor solo recibe decoraciones; nada de esto entra en el HTML ni en OCC.
+  const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
+  const [reanchorTargetId, setReanchorTargetId] = useState<string | null>(null);
+  const [reanchorError, setReanchorError] = useState<string | null>(null);
+  const [commentActionError, setCommentActionError] = useState<string | null>(null);
+  const {
+    comments,
+    isLoading: commentsLoading,
+    error: commentsQueryError,
+    createComment,
+    updateComment,
+    deleteComment,
+  } = useDraftComments(workspaceId, openId ?? undefined);
+
   // UA-4 FASE 1/3 — páginas carta. `pageCount` lo publica la extensión de
   // paginación tras medir el documento; el overlay de React solo dibuja los
   // fondos y los pies (nunca forman parte del HTML persistido).
@@ -558,6 +585,10 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
     setPendingClose(false);
     setPreviewVersion(null);
     setDetailError(null);
+    setActiveCommentId(null);
+    setReanchorTargetId(null);
+    setReanchorError(null);
+    setCommentActionError(null);
     setSaveConflict(null);
     if (debounceRef.current) { clearTimeout(debounceRef.current); debounceRef.current = null; }
     try {
@@ -785,6 +816,9 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
         getLayout: () => pageLayoutRef.current,
         onPageCount: handlePageCount,
       }),
+      // UA-5.2 — decoraciones de comentarios SOLO en el editor principal.
+      // `editorExtensions()` (previews de versiones) nunca las incluye.
+      DraftComments,
     ],
     [pageLayout, handlePageCount],
   );
@@ -1189,6 +1223,10 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
     setOpenId(null);
     setOpenDraft(null);
     setPreviewVersion(null);
+    setActiveCommentId(null);
+    setReanchorTargetId(null);
+    setReanchorError(null);
+    setCommentActionError(null);
     setStatus('idle');
     setSaveConflict(null);
     setPendingSwitch(null);
@@ -1229,6 +1267,140 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
       return null;
     }
   }, []);
+
+  // UA-5.2 — sincroniza decoraciones al cambiar comentarios o documento.
+  // El plugin solo dibuja; el HTML persistido y el undo no cambian.
+  useEffect(() => {
+    if (!editor || editor.isDestroyed) return;
+    try {
+      editor.view.dispatch(
+        editor.state.tr
+          .setMeta(draftCommentsPluginKey, comments)
+          .setMeta('addToHistory', false)
+      );
+    } catch {
+      // Editores simulados en tests o instancia ya destruida: sin efecto.
+    }
+  }, [editor, comments]);
+
+  // Ancla de la selección real para «Comentar selección»: solo un textblock.
+  const getSelectionAnchorForComment = useCallback((): { anchor: DraftCommentAnchor | null; error: string | null } => {
+    const ed = editorRef.current;
+    if (!ed || ed.isDestroyed) return { anchor: null, error: 'El editor no está disponible.' };
+    try {
+      const state = (ed as unknown as {
+        state?: { selection?: { from: number; to: number; empty: boolean }; doc?: PMNode };
+      }).state;
+      const sel = state?.selection;
+      const doc = state?.doc;
+      if (!sel || !doc || sel.empty) {
+        return { anchor: null, error: 'Selecciona el texto que quieres comentar.' };
+      }
+      const built = buildDraftCommentAnchor(doc, sel.from, sel.to);
+      if (built.ok) return { anchor: built.anchor, error: null };
+      const buildError = 'error' in built ? built.error : null;
+      if (buildError === 'cross_block') {
+        return { anchor: null, error: 'Selecciona texto dentro de un solo párrafo o celda. No se admiten selecciones entre bloques.' };
+      }
+      if (buildError === 'too_long') {
+        return { anchor: null, error: `La selección es demasiado larga. El máximo es ${DRAFT_COMMENT_MAX_QUOTE_CHARS} caracteres por comentario.` };
+      }
+      return { anchor: null, error: 'La selección no contiene texto comentable.' };
+    } catch {
+      return { anchor: null, error: 'No se pudo leer la selección del editor.' };
+    }
+  }, []);
+
+  const setCommentError = useCallback((err: unknown) => {
+    setCommentActionError(err instanceof Error ? err.message : 'No se pudo actualizar el comentario.');
+  }, []);
+
+  const navigateToComment = useCallback((comment: DraftComment) => {
+    const ed = editorRef.current;
+    if (!ed || ed.isDestroyed) return;
+    try {
+      const resolution = resolveDraftCommentAnchor(ed.state.doc, comment.anchor);
+      if (resolution.status !== 'anchored') {
+        setCommentActionError('El comentario no está anclado al texto actual. Puedes reanclarlo manualmente.');
+        return;
+      }
+      ed.chain().focus().setTextSelection({ from: resolution.from, to: resolution.to }).scrollIntoView().run();
+      setActiveCommentId(comment.id);
+      setCommentActionError(null);
+    } catch {
+      setCommentActionError('No se pudo navegar al fragmento comentado.');
+    }
+  }, []);
+
+  const resolveComment = useCallback(async (comment: DraftComment) => {
+    setCommentActionError(null);
+    try {
+      await updateComment({ id: comment.id, changes: { status: 'resolved' } });
+    } catch (err) { setCommentError(err); }
+  }, [updateComment, setCommentError]);
+
+  const reopenComment = useCallback(async (comment: DraftComment) => {
+    setCommentActionError(null);
+    try {
+      await updateComment({ id: comment.id, changes: { status: 'open' } });
+    } catch (err) { setCommentError(err); }
+  }, [updateComment, setCommentError]);
+
+  const dismissComment = useCallback(async (comment: DraftComment) => {
+    setCommentActionError(null);
+    try {
+      await updateComment({ id: comment.id, changes: { status: 'dismissed' } });
+    } catch (err) { setCommentError(err); }
+  }, [updateComment, setCommentError]);
+
+  const removeComment = useCallback(async (comment: DraftComment) => {
+    setCommentActionError(null);
+    try {
+      await deleteComment(comment.id);
+      if (activeCommentId === comment.id) setActiveCommentId(null);
+    } catch (err) { setCommentError(err); }
+  }, [deleteComment, activeCommentId, setCommentError]);
+
+  const confirmReanchor = useCallback(async () => {
+    if (!reanchorTargetId) return;
+    const selection = getSelectionAnchorForComment();
+    if (!selection.anchor) {
+      setReanchorError(selection.error);
+      return;
+    }
+    try {
+      await updateComment({ id: reanchorTargetId, changes: { anchor: selection.anchor } });
+      setReanchorTargetId(null);
+      setReanchorError(null);
+      setCommentActionError(null);
+    } catch (err) {
+      setReanchorError(err instanceof Error ? err.message : 'No se pudo reanclar el comentario.');
+    }
+  }, [reanchorTargetId, getSelectionAnchorForComment, updateComment]);
+
+  const addCommentFromSuggestion = useCallback(async (
+    suggestion: AIDraftCommentSuggestion,
+    anchor: DraftCommentAnchor,
+  ) => {
+    const ed = editorRef.current;
+    if (!ed || ed.isDestroyed) throw new Error('El editor no está disponible.');
+    if (anchor.quote.length > DRAFT_COMMENT_MAX_QUOTE_CHARS) {
+      throw new Error(`La selección es demasiado larga. El máximo es ${DRAFT_COMMENT_MAX_QUOTE_CHARS} caracteres por comentario.`);
+    }
+    if (!isSuggestionInsideAnchor(anchor.quote, suggestion.quote)) {
+      throw new Error('La sugerencia no coincide con la selección original. Vuelve a comentar la selección.');
+    }
+    const resolution = resolveDraftCommentAnchor(ed.state.doc, anchor);
+    if (resolution.status !== 'anchored') {
+      throw new Error('El fragmento seleccionado cambió. Selecciona de nuevo el texto antes de aceptar el comentario.');
+    }
+    const rebuilt = buildDraftCommentAnchor(ed.state.doc, resolution.from, resolution.to);
+    if (!rebuilt.ok) {
+      throw new Error('El fragmento seleccionado ya no es válido para comentar.');
+    }
+    await createComment({ body: suggestion.comment, anchor: rebuilt.anchor, author: 'ai' });
+    setCommentActionError(null);
+  }, [createComment]);
 
 
   // FASE UA-2 — toolbar profesional: estilo de párrafo/título por select,
@@ -1795,6 +1967,8 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                                   return ed && !ed.isDestroyed ? ed.getHTML() : null;
                                 }}
                                 getSelectionText={getEditorSelectionText}
+                                getSelectionAnchor={getSelectionAnchorForComment}
+                                onAddComment={addCommentFromSuggestion}
                                 onInsertProposal={insertProposalHtml}
                               />
                             ) : null}
@@ -1803,6 +1977,32 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                       </div>
                     </div>
                   </div>
+
+                  {openDraft ? (
+                    <DraftCommentsPanelContainer
+                      editor={editor}
+                      comments={comments}
+                      isLoading={commentsLoading}
+                      error={commentActionError ?? (commentsQueryError instanceof Error ? commentsQueryError.message : null)}
+                      activeCommentId={activeCommentId}
+                      reanchorTargetId={reanchorTargetId}
+                      reanchorError={reanchorError}
+                      onNavigate={navigateToComment}
+                      onResolve={(comment) => { void resolveComment(comment); }}
+                      onReopen={(comment) => { void reopenComment(comment); }}
+                      onDismiss={(comment) => { void dismissComment(comment); }}
+                      onDelete={(comment) => { void removeComment(comment); }}
+                      onStartReanchor={(comment) => {
+                        setReanchorTargetId(comment.id);
+                        setReanchorError(null);
+                      }}
+                      onConfirmReanchor={() => { void confirmReanchor(); }}
+                      onCancelReanchor={() => {
+                        setReanchorTargetId(null);
+                        setReanchorError(null);
+                      }}
+                    />
+                  ) : null}
 
                   <div className="flex flex-wrap gap-2">
                     <Button size="sm" variant="outline" onClick={copyContent}>
