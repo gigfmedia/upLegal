@@ -48,7 +48,11 @@ function makeSupabase(seed = { subscription_events: [], lawyer_subscriptions: []
       rows.push({ created_at: new Date().toISOString(), ...row });
       return { data: null, error: null };
     }
-    if (q._op === 'update') { for (const r of rows.filter(match)) Object.assign(r, q._payload); return { data: null, error: null }; }
+    if (q._op === 'update') {
+      const found = rows.filter(match);
+      for (const r of found) Object.assign(r, q._payload);
+      return { data: found, error: null };
+    }
     if (q._op === 'delete') { state[q.table] = rows.filter((r) => !match(r)); return { data: null, error: null }; }
     let out = rows.filter(match);
     if (q._order) out = [...out].sort((a, b) => (q._order.ascending ? 1 : -1) * (new Date(a[q._order.col]) - new Date(b[q._order.col])));

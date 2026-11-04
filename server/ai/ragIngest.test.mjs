@@ -195,3 +195,41 @@ describe('4.61B adapter de embeddings', () => {
     await expect(embedBatch(['a'], { fetchFn: short })).rejects.toThrow('COUNT_MISMATCH');
   });
 });
+
+describe('embedBatch · ZDR privacy policy (Zero Data Retention)', () => {
+  it('OpenRouter: provider.zdr=true and provider.data_collection="deny" in payload', async () => {
+    const previous = process.env.AI_PROVIDER_BASE_URL;
+    process.env.AI_PROVIDER_BASE_URL = 'https://openrouter.ai/api/v1';
+    try {
+      const fetchFn = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: [{ embedding: Array(1536).fill(0) }] }),
+      });
+      await embedBatch(['test'], { fetchFn });
+      expect(fetchFn).toHaveBeenCalledTimes(1);
+      const body = JSON.parse(fetchFn.mock.calls[0][1].body);
+      expect(body.provider).toEqual({ zdr: true, data_collection: 'deny' });
+    } finally {
+      if (previous === undefined) delete process.env.AI_PROVIDER_BASE_URL;
+      else process.env.AI_PROVIDER_BASE_URL = previous;
+    }
+  });
+
+  it('OpenAI: no provider privacy policy in payload', async () => {
+    const previous = process.env.AI_PROVIDER_BASE_URL;
+    process.env.AI_PROVIDER_BASE_URL = 'https://api.openai.com/v1';
+    try {
+      const fetchFn = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: [{ embedding: Array(1536).fill(0) }] }),
+      });
+      await embedBatch(['test'], { fetchFn });
+      expect(fetchFn).toHaveBeenCalledTimes(1);
+      const body = JSON.parse(fetchFn.mock.calls[0][1].body);
+      expect(body.provider).toBeUndefined();
+    } finally {
+      if (previous === undefined) delete process.env.AI_PROVIDER_BASE_URL;
+      else process.env.AI_PROVIDER_BASE_URL = previous;
+    }
+  });
+});

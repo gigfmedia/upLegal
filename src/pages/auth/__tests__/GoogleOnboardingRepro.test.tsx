@@ -20,6 +20,8 @@ type ProfileRow = {
   role: string | null;
   terms_accepted_at?: string | null;
   privacy_acknowledged_at?: string | null;
+  terms_version?: string | null;
+  privacy_version?: string | null;
   profile_setup_completed?: boolean | null;
 };
 
@@ -265,8 +267,10 @@ describe('Reproducción del fallo de onboarding Google en producción', () => {
       id: 'U-repro',
       user_id: 'U-repro',
       role: 'client',
-      terms_accepted_at: '2026-10-06T00:00:00.000Z',
-      privacy_acknowledged_at: '2026-10-06T00:00:00.000Z',
+      terms_accepted_at: '2026-10-31T00:00:00.000Z',
+      privacy_acknowledged_at: '2026-10-31T00:00:00.000Z',
+      terms_version: CURRENT_TERMS_VERSION,
+      privacy_version: CURRENT_PRIVACY_VERSION,
     });
     renderFlow('/auth/callback?code=established&redirectTo=%2F');
     await waitFor(() => expect(probe()).toBe('/'), { timeout: 10000 });
@@ -374,8 +378,10 @@ describe('Reproducción del fallo de onboarding Google en producción', () => {
       id: 'U-repro',
       user_id: 'U-repro',
       role: 'lawyer',
-      terms_accepted_at: '2026-10-06T00:00:00.000Z',
-      privacy_acknowledged_at: '2026-10-06T00:00:00.000Z',
+      terms_accepted_at: '2026-10-31T00:00:00.000Z',
+      privacy_acknowledged_at: '2026-10-31T00:00:00.000Z',
+      terms_version: CURRENT_TERMS_VERSION,
+      privacy_version: CURRENT_PRIVACY_VERSION,
     });
     renderFlow('/auth/callback?code=lawyer-login&redirectTo=%2F');
     await screen.findByText('Onboarding abogado final', undefined, { timeout: 10000 });
@@ -388,8 +394,10 @@ describe('Reproducción del fallo de onboarding Google en producción', () => {
       user_id: 'U-repro',
       role: 'lawyer',
       profile_setup_completed: true,
-      terms_accepted_at: '2026-10-06T00:00:00.000Z',
-      privacy_acknowledged_at: '2026-10-06T00:00:00.000Z',
+      terms_accepted_at: '2026-10-31T00:00:00.000Z',
+      privacy_acknowledged_at: '2026-10-31T00:00:00.000Z',
+      terms_version: CURRENT_TERMS_VERSION,
+      privacy_version: CURRENT_PRIVACY_VERSION,
     });
     renderFlow('/auth/callback?code=lawyer-done&redirectTo=%2F');
     await screen.findByText('Dashboard abogado final', undefined, { timeout: 10000 });
@@ -401,8 +409,10 @@ describe('Reproducción del fallo de onboarding Google en producción', () => {
       id: 'U-repro',
       user_id: 'U-repro',
       role: 'lawyer',
-      terms_accepted_at: '2026-10-06T00:00:00.000Z',
-      privacy_acknowledged_at: '2026-10-06T00:00:00.000Z',
+      terms_accepted_at: '2026-10-31T00:00:00.000Z',
+      privacy_acknowledged_at: '2026-10-31T00:00:00.000Z',
+      terms_version: CURRENT_TERMS_VERSION,
+      privacy_version: CURRENT_PRIVACY_VERSION,
     });
     renderFlow('/auth/callback?code=lawyer-deep&redirectTo=%2Flawyer%2Fcases');
     await screen.findByText('Casos abogado', undefined, { timeout: 10000 });
@@ -414,8 +424,10 @@ describe('Reproducción del fallo de onboarding Google en producción', () => {
       id: 'U-repro',
       user_id: 'U-repro',
       role: 'client',
-      terms_accepted_at: '2026-10-06T00:00:00.000Z',
-      privacy_acknowledged_at: '2026-10-06T00:00:00.000Z',
+      terms_accepted_at: '2026-10-31T00:00:00.000Z',
+      privacy_acknowledged_at: '2026-10-31T00:00:00.000Z',
+      terms_version: CURRENT_TERMS_VERSION,
+      privacy_version: CURRENT_PRIVACY_VERSION,
     });
     renderFlow('/auth/callback?code=client-login&redirectTo=%2F');
     await waitFor(() => expect(probe()).toBe('/'), { timeout: 10000 });
@@ -427,8 +439,10 @@ describe('Reproducción del fallo de onboarding Google en producción', () => {
       id: 'U-repro',
       user_id: 'U-repro',
       role: 'lawyer',
-      terms_accepted_at: '2026-10-06T00:00:00.000Z',
-      privacy_acknowledged_at: '2026-10-06T00:00:00.000Z',
+      terms_accepted_at: '2026-10-31T00:00:00.000Z',
+      privacy_acknowledged_at: '2026-10-31T00:00:00.000Z',
+      terms_version: CURRENT_TERMS_VERSION,
+      privacy_version: CURRENT_PRIVACY_VERSION,
     });
     renderFlow('/auth/callback?code=lawyer-evil&redirectTo=' + encodeURIComponent('https://attacker/x'));
     await screen.findByText('Onboarding abogado final', undefined, { timeout: 10000 });

@@ -181,3 +181,88 @@ it('4.35D sends the supported slug to OpenRouter without translation', async () 
   else process.env.AI_PROVIDER_BASE_URL=previous;
  }
 });
+
+describe('chatCompletion · ZDR privacy policy (Zero Data Retention)', () => {
+  it('OpenRouter: provider.zdr=true and provider.data_collection="deny" in payload', async () => {
+    const previous = process.env.AI_PROVIDER_BASE_URL;
+    process.env.AI_PROVIDER_BASE_URL = 'https://openrouter.ai/api/v1';
+    try {
+      mockedFetch.mockResolvedValueOnce(okResponse());
+      await chatCompletion({ model: 'gpt-4o-mini', system: 'sys', user: 'test' });
+      expect(mockedFetch).toHaveBeenCalledTimes(1);
+      const body = JSON.parse(mockedFetch.mock.calls[0][1].body);
+      expect(body.provider).toEqual({ zdr: true, data_collection: 'deny' });
+    } finally {
+      if (previous === undefined) delete process.env.AI_PROVIDER_BASE_URL;
+      else process.env.AI_PROVIDER_BASE_URL = previous;
+    }
+  });
+
+  it('OpenAI: no provider privacy policy in payload', async () => {
+    const previous = process.env.AI_PROVIDER_BASE_URL;
+    process.env.AI_PROVIDER_BASE_URL = 'https://api.openai.com/v1';
+    try {
+      mockedFetch.mockResolvedValueOnce(okResponse());
+      await chatCompletion({ model: 'gpt-4o-mini', system: 'sys', user: 'test' });
+      expect(mockedFetch).toHaveBeenCalledTimes(1);
+      const body = JSON.parse(mockedFetch.mock.calls[0][1].body);
+      expect(body.provider).toBeUndefined();
+    } finally {
+      if (previous === undefined) delete process.env.AI_PROVIDER_BASE_URL;
+      else process.env.AI_PROVIDER_BASE_URL = previous;
+    }
+  });
+
+  it('Groq: no provider privacy policy in payload', async () => {
+    const previous = process.env.AI_PROVIDER_BASE_URL;
+    process.env.AI_PROVIDER_BASE_URL = 'https://api.groq.com/openai/v1';
+    try {
+      mockedFetch.mockResolvedValueOnce(okResponse());
+      await chatCompletion({ model: 'gpt-4o-mini', system: 'sys', user: 'test' });
+      expect(mockedFetch).toHaveBeenCalledTimes(1);
+      const body = JSON.parse(mockedFetch.mock.calls[0][1].body);
+      expect(body.provider).toBeUndefined();
+    } finally {
+      if (previous === undefined) delete process.env.AI_PROVIDER_BASE_URL;
+      else process.env.AI_PROVIDER_BASE_URL = previous;
+    }
+  });
+
+  it('ZDR parameters persist through json_object fallback', async () => {
+    const previous = process.env.AI_PROVIDER_BASE_URL;
+    process.env.AI_PROVIDER_BASE_URL = 'https://openrouter.ai/api/v1';
+    try {
+      mockedFetch
+        .mockResolvedValueOnce(errResponse(400, JSON.stringify({ error: { code: 'json_validate_failed' } })))
+        .mockResolvedValueOnce(okResponse());
+      await chatCompletion({ model: 'gpt-4o-mini', system: 'sys', user: 'test' });
+      expect(mockedFetch).toHaveBeenCalledTimes(2);
+      const firstBody = JSON.parse(mockedFetch.mock.calls[0][1].body);
+      const secondBody = JSON.parse(mockedFetch.mock.calls[1][1].body);
+      expect(firstBody.provider).toEqual({ zdr: true, data_collection: 'deny' });
+      expect(secondBody.provider).toEqual({ zdr: true, data_collection: 'deny' });
+    } finally {
+      if (previous === undefined) delete process.env.AI_PROVIDER_BASE_URL;
+      else process.env.AI_PROVIDER_BASE_URL = previous;
+    }
+  });
+
+  it('ZDR parameters persist through provider retry', async () => {
+    const previous = process.env.AI_PROVIDER_BASE_URL;
+    process.env.AI_PROVIDER_BASE_URL = 'https://openrouter.ai/api/v1';
+    try {
+      mockedFetch
+        .mockResolvedValueOnce(errResponse(429, '{}'))
+        .mockResolvedValueOnce(okResponse());
+      await chatCompletion({ model: 'gpt-4o-mini', system: 'sys', user: 'test' });
+      expect(mockedFetch).toHaveBeenCalledTimes(2);
+      const firstBody = JSON.parse(mockedFetch.mock.calls[0][1].body);
+      const secondBody = JSON.parse(mockedFetch.mock.calls[1][1].body);
+      expect(firstBody.provider).toEqual({ zdr: true, data_collection: 'deny' });
+      expect(secondBody.provider).toEqual({ zdr: true, data_collection: 'deny' });
+    } finally {
+      if (previous === undefined) delete process.env.AI_PROVIDER_BASE_URL;
+      else process.env.AI_PROVIDER_BASE_URL = previous;
+    }
+  });
+});

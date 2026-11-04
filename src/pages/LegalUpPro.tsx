@@ -1241,6 +1241,26 @@ export default function LegalUpPro() {
                   ? 'Pro: $49.990/mes'
                   : 'Precio Pro según disponibilidad de cupos Founder · Estándar $49.990/mes'}
             </p>
+            <p className="mx-auto mt-3 max-w-2xl text-xs leading-relaxed text-green-900/80">
+              Al crear tu cuenta, aceptas los{' '}
+              <button
+                type="button"
+                onClick={() => navigate('/terminos')}
+                className="font-medium underline underline-offset-2 hover:text-green-950"
+              >
+                Términos
+              </button>{' '}
+              y la{' '}
+              <button
+                type="button"
+                onClick={() => navigate('/privacidad')}
+                className="font-medium underline underline-offset-2 hover:text-green-950"
+              >
+                Política de Privacidad
+              </button>
+              . Ahí explicamos el tratamiento de tus datos y documentos, el uso de IA mediante OpenRouter (con retención
+              cero en las solicitudes compatibles) y las transferencias internacionales.
+            </p>
           </Reveal>
             </div>
           </div>

@@ -5,7 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { getLawyerPostAuthDestination, isEmailVerified } from '@/lib/lawyerOnboardingGate';
 import { consumePostAuthRedirect, sanitizePostAuthRedirect, trackGoogleCompleted } from '@/lib/googleAuth';
 import { buildRoleOnboardingPath, needsRoleConfirmation, needsRoleSelection } from '@/lib/roleOnboarding';
-import { BIND_CONSENT_WINDOW_MS, hasCurrentLegalConsent, hasLegalConsent, consumePendingConsent } from '@/lib/legalConsent';
+import { BIND_CONSENT_WINDOW_MS, hasCurrentLegalConsent, consumePendingConsent } from '@/lib/legalConsent';
 import {
   captureEmailVerificationCompleted,
   captureLoginCompleted,
@@ -103,8 +103,8 @@ export default function AuthCallback() {
           // apliquen los destinos por rol (/search, /lawyer/onboarding).
           // Fuera del onboarding (usuario con rol) '/' sí se respeta.
           const onboardingRedirect = safeRedirect && safeRedirect !== '/' ? safeRedirect : null;
-          // FASE 5.6: cuentas sin evidencia de aceptación van al interstitial
-          // de consentimiento (solo primera vez; existentes pasan de largo).
+          // FASE 5.6: cuentas sin aceptación vigente van al interstitial de
+          // consentimiento (versiones anteriores también deben re-aceptar).
           // El checkbox del modal de registro es solo compuerta local: para
           // Google nada persiste consentimiento antes del callback, así que
           // un alta fresca (created_at reciente) sin fila va a consentimiento
@@ -114,7 +114,7 @@ export default function AuthCallback() {
             const readConsent = async () =>
               supabase
                 .from('profiles')
-                .select('terms_accepted_at, privacy_acknowledged_at')
+                .select('terms_accepted_at, privacy_acknowledged_at, terms_version, privacy_version')
                 .eq('id', user.id)
                 .maybeSingle();
             let { data: consentRow } = await readConsent();
@@ -138,7 +138,7 @@ export default function AuthCallback() {
             // confirma timestamps Y versiones vigentes; ante cualquier fallo
             // se cae al interstitial (fail-safe, nunca se omite sin
             // evidencia guardada).
-            if (!hasLegalConsent(consentRow)) {
+            if (!hasCurrentLegalConsent(consentRow)) {
               const transcribed = consumePendingConsent();
               const createdMs = Date.parse(String((user as { created_at?: unknown })?.created_at ?? ''));
               const acceptedMs = transcribed ? Date.parse(String(transcribed.terms_accepted_at)) : NaN;
@@ -172,12 +172,13 @@ export default function AuthCallback() {
               // Ya hay evidencia guardada: el puente (si existe) es redundante.
               consumePendingConsent();
             }
-            // Solo si la fila existe y carece de timestamps, o si es un alta
-            // fresca aún sin fila y sin rol definido en ninguna fuente (nada
-            // pudo persistir su aceptación): en ambos casos corresponde el
-            // interstitial. Con rol en metadata (abogado Google) o admin, y
-            // legacy sin fila, no se bloquea: flujo previo intacto
-            // (fail-open; el consentimiento se evalúa cuando la fila exista).
+            // Solo si la fila existe sin aceptación vigente (sin timestamps o
+            // con versiones anteriores), o si es un alta fresca aún sin fila y
+            // sin rol definido en ninguna fuente (nada pudo persistir su
+            // aceptación): en ambos casos corresponde el interstitial. Con rol
+            // en metadata (abogado Google) o admin, y legacy sin fila, no se
+            // bloquea: flujo previo intacto (fail-open; el consentimiento se
+            // evalúa cuando la fila exista).
             if (
               !consentRow &&
               isRecentSignup(user.created_at) &&
@@ -186,7 +187,7 @@ export default function AuthCallback() {
               navigate(`/auth/consent?redirectTo=${encodeURIComponent(onboardingRedirect || '/')}`, { replace: true });
               return;
             }
-            if (consentRow && !hasLegalConsent(consentRow)) {
+            if (consentRow && !hasCurrentLegalConsent(consentRow)) {
               navigate(`/auth/consent?redirectTo=${encodeURIComponent(onboardingRedirect || '/')}`, { replace: true });
               return;
             }

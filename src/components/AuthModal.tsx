@@ -19,7 +19,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useToast } from "@/hooks/use-toast";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { TermsConsentCheckbox } from "@/components/auth/TermsConsentCheckbox";
-import { CONSENT_ERROR, buildConsentPatch } from "@/lib/legalConsent";
+import { CONSENT_ERROR, buildConsentPatch, hasCurrentLegalConsent } from "@/lib/legalConsent";
 import { buildGoogleTermsSnapshot } from "@/lib/googleAuth";
 import { verifyRutWithPJUD } from "@/services/pjudService";
 import { format } from 'date-fns';
@@ -709,6 +709,21 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess,
       }
       
       throw loginError;
+    }
+
+    if (currentUser) {
+      const { data: loginProfile } = await supabase
+        .from('profiles')
+        .select('terms_accepted_at, privacy_acknowledged_at, terms_version, privacy_version')
+        .eq('id', currentUser.id)
+        .maybeSingle();
+
+      if (loginProfile && !hasCurrentLegalConsent(loginProfile)) {
+        onClose();
+        const redirectTo = `${window.location.pathname}${window.location.search}`;
+        navigate(`/auth/consent?redirectTo=${encodeURIComponent(redirectTo || '/')}`, { replace: true });
+        return;
+      }
     }
 
     // Show success message

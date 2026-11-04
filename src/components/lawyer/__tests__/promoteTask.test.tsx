@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { CaseTasksSection } from '@/components/lawyer/CaseTasksSection';
 
 const updateCaseMock = vi.fn();
@@ -92,6 +92,18 @@ describe('CTA por tarea', () => {
     expect(screen.queryByText(/reemplazará la próxima gestión actual/i)).toBeNull();
   });
 
+  it('el calendario se monta fuera del modal y por encima de él', async () => {
+    renderSection();
+    openPromoteFor('Llamar al cliente');
+    const modal = screen.getByRole('dialog', { name: /usar como próxima gestión/i });
+    fireEvent.click(screen.getByRole('button', { name: /fecha de la próxima gestión/i }));
+    const dialogs = await screen.findAllByRole('dialog');
+    const popover = dialogs.find((el) => within(el).queryByText('Hoy'));
+    expect(popover).toBeDefined();
+    expect(modal.contains(popover!)).toBe(false);
+    const zIndex = Number(popover!.className.match(/z-\[(\d+)\]/)?.[1]);
+    expect(zIndex).toBeGreaterThan(1200);
+  });
   it('cancelar no llama updateCase', () => {
     renderSection();
     openPromoteFor('Presentar escrito');

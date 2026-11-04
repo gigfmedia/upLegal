@@ -2,8 +2,8 @@
  * FASE 5.6 — constantes únicas de consentimiento legal.
  * Versiones estables; cambiarlas solo ante actualización material de textos.
  */
-export const CURRENT_TERMS_VERSION = '2026-10-06';
-export const CURRENT_PRIVACY_VERSION = '2026-10-06';
+export const CURRENT_TERMS_VERSION = '2026-10-31';
+export const CURRENT_PRIVACY_VERSION = '2026-10-31';
 
 export const TERMS_PATH = '/terminos';
 export const PRIVACY_PATH = '/privacidad';

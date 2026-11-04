@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { toast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import { logPaymentEvent } from "@/utils/paymentLogger";
-import { LEGAL_ENTITY_NAME } from "@/lib/legalEntity";
+import { LEGAL_ENTITY_CONTACT_EMAIL, LEGAL_ENTITY_NAME, LEGAL_ENTITY_RUT } from "@/lib/legalEntity";
 
 interface PaymentDetails {
   status: string;
@@ -161,8 +161,9 @@ export default function PaymentSuccess() {
                 <p><strong>Estado:</strong> {paymentDetails.status === 'approved' ? 'Aprobado' : paymentDetails.status}</p>
                 <p><strong>ID de pago:</strong> {paymentId}</p>
                 <p className="mt-2 text-xs text-gray-500">
-                  Cobro procesado por {LEGAL_ENTITY_NAME} a través de Mercado Pago.
-                  {/* TODO(legal): agregar RUT y datos de facturación cuando se confirmen. */}
+                  Cobro procesado por {LEGAL_ENTITY_NAME} (RUT {LEGAL_ENTITY_RUT}) a través de Mercado Pago.
+                  Contacto: {LEGAL_ENTITY_CONTACT_EMAIL}.
+                  {/* TODO(legal): datos de facturación pendientes. */}
                 </p>
                </div>
             )}

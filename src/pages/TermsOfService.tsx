@@ -5,17 +5,18 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import Header from '@/components/Header';
+import {
+  LEGAL_ENTITY_CONTACT_EMAIL,
+  LEGAL_ENTITY_IDENTIFICATION,
+  LEGAL_ENTITY_NAME,
+} from '@/lib/legalEntity';
 
 const TermsOfService = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  const currentDate = new Date().toLocaleDateString('es-CL', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  const lastUpdated = '31 de octubre de 2026';
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 pt-32 px-4 sm:px-6 lg:px-8">
@@ -33,17 +34,16 @@ const TermsOfService = () => {
               TÉRMINOS DE SERVICIO — LegalUp.cl
             </CardTitle>
             <p className="text-left text-muted-foreground">
-              Última actualización: {currentDate}
+              Última actualización: {lastUpdated}
             </p>
           </CardHeader>
           <CardContent className="space-y-6 text-justify">
             <p>
               Bienvenido a LegalUp.cl. En estos Términos, “LegalUp” es la marca
               comercial y el nombre de la plataforma (“la Plataforma”), y
-              “LegalUp SpA” es la sociedad que la opera (“nosotros”).
+              “{LEGAL_ENTITY_NAME}” es la sociedad que la opera (“nosotros”).
               Estos Términos de Servicio regulan el acceso y uso de la Plataforma
               por parte de usuarios clientes, abogados, y cualquier persona que interactúe con nuestros servicios.
-              {/* TODO(legal): agregar RUT, domicilio y correo legal de LegalUp SpA cuando se confirmen. No mostrar RUT públicamente salvo obligación legal. */}
             </p>
             <p className="font-medium">
               Al usar LegalUp.cl, aceptas estos Términos. Si no estás de acuerdo, no utilices la Plataforma.
@@ -125,7 +125,9 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-xl font-semibold mb-3">7. Privacidad y manejo de datos</h2>
               <ul className="list-disc pl-6 space-y-2">
-                <li>El uso de la plataforma LegalUp implica la recopilación y tratamiento de datos personales conforme a nuestra Política de Privacidad.</li>
+                <li>El uso de la plataforma LegalUp implica la recopilación y tratamiento de datos personales conforme a nuestra <Link to="/privacidad" className="text-green-900 underline hover:text-green-600">Política de Privacidad</Link>.</li>
+                <li>El uso de funciones de inteligencia artificial implica el envío del contenido que decidas procesar a OpenRouter y al proveedor del modelo, en los términos descritos en la Política de Privacidad. LegalUp no utiliza ese contenido para entrenar modelos.</li>
+                <li>Para prestar el servicio, los datos pueden ser tratados fuera de Chile, incluidos Estados Unidos, conforme a la Política de Privacidad.</li>
                 <li>Recomendamos leerla atentamente.</li>
                 <li>LegalUp SpA implementa medidas razonables de seguridad, pero no garantiza protección absoluta contra amenazas externas.</li>
               </ul>
@@ -176,12 +178,12 @@ const TermsOfService = () => {
 
             <h2 className="text-xl font-semibold mb-3">12. Contacto</h2>
             <p>
-              La plataforma LegalUp es operada por LegalUp SpA.
-              {/* TODO(legal): completar RUT, domicilio y correo legal de LegalUp SpA. */}
+              La plataforma LegalUp es operada por {LEGAL_ENTITY_IDENTIFICATION}.
+              {/* TODO(legal): domicilio legal pendiente de confirmación. */}
             </p>
             <p>Para consultas o soporte:</p>
             <p>Sitio web: <a href="https://legalup.cl" className="text-primary hover:underline">LegalUp.cl</a></p>
-            <p>Correo: <a href="mailto:juan.fercommerce@gmail.com" className="text-green-900 hover:text-green-600 underline">contacto@legalup.cl</a></p>
+            <p>Correo: <a href={`mailto:${LEGAL_ENTITY_CONTACT_EMAIL}`} className="text-green-900 hover:text-green-600 underline">{LEGAL_ENTITY_CONTACT_EMAIL}</a></p>
           </CardContent>
         </Card>
       </div>

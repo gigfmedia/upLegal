@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { logPaymentEvent } from '@/utils/paymentLogger';
 import { supabase } from '@/lib/supabaseClient';
 import { posthog } from '@/lib/posthogLoader';
-import { LEGAL_ENTITY_NAME } from '@/lib/legalEntity';
+import { LEGAL_ENTITY_CONTACT_EMAIL, LEGAL_ENTITY_NAME, LEGAL_ENTITY_RUT } from '@/lib/legalEntity';
 
 export interface AppointmentCheckoutData {
   type: 'appointment';
@@ -406,8 +406,9 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData, onSlot
 
           {!requiresQuote && (
             <p className="text-[11px] text-gray-500 text-center">
-              El pago será procesado por {LEGAL_ENTITY_NAME} a través de Mercado Pago.
-              {/* TODO(legal): agregar RUT y datos de facturación cuando se confirmen. */}
+              El pago será procesado por {LEGAL_ENTITY_NAME} (RUT {LEGAL_ENTITY_RUT}) a través de Mercado Pago.
+              Contacto: {LEGAL_ENTITY_CONTACT_EMAIL}.
+              {/* TODO(legal): datos de facturación pendientes. */}
             </p>
           )}
 

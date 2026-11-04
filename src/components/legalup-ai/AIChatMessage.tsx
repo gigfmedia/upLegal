@@ -195,7 +195,7 @@ export function AIChatMessage({ message, animate = true }: AIChatMessageProps) {
           <Sparkles className="h-4 w-4" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="break-words rounded-2xl rounded-tl-sm border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 shadow-sm">
+          <div className="break-words rounded-2xl rounded-tl-sm border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800">
             <MarkdownText
               content={typed.text}
               sources={sources as Array<{ document_id: string; file_name: string; fragment_id?: string | null; evidence?: string | null; page_number?: number | null }>}
@@ -301,13 +301,10 @@ export function AIChatMessage({ message, animate = true }: AIChatMessageProps) {
       transition={{ duration: USER_ENTRY_MS / 1000, ease: 'easeOut' }}
     >
       <div className="min-w-0 max-w-[85%]">
-        <div className="whitespace-pre-wrap break-words rounded-2xl rounded-tr-sm bg-green-900 px-4 py-3 text-sm text-white shadow-sm">
+        <div className="whitespace-pre-wrap break-words rounded-2xl rounded-tr-sm bg-gray-100 px-4 py-3 text-sm text-gray-800">
           {message.content}
         </div>
       </div>
-      <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
-        <User className="h-4 w-4" aria-hidden="true" />
-      </span>
     </motion.div>
   );
 }

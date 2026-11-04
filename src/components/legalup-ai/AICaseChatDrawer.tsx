@@ -60,7 +60,7 @@ export function AICaseChatDrawer({
                 </SheetPrimitive.Title>
               </div>
               <p className="mt-1 text-sm font-medium text-gray-800">Asistente del caso</p>
-              <p className="text-xs text-muted-foreground">Responde usando la información disponible en los documentos de este caso.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Responde usando la información disponible en los documentos de este caso.</p>
               {documentId ? (
                 <div className="mt-2 rounded border border-green-200 bg-green-50 px-2 py-1">
                   <p className="text-xs font-medium text-green-800">Sobre este documento</p>

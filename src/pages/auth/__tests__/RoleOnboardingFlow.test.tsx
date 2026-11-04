@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { CURRENT_PRIVACY_VERSION, CURRENT_TERMS_VERSION } from '@/lib/legalConsent';
 
 /**
  * Regresión del flujo completo post-registro Google con navegación REAL
@@ -20,6 +21,8 @@ const flowState = vi.hoisted(() => ({
     role: string | null;
     terms_accepted_at?: string | null;
     privacy_acknowledged_at?: string | null;
+    terms_version?: string | null;
+    privacy_version?: string | null;
   },
 }));
 
@@ -126,8 +129,10 @@ describe('Flujo completo de onboarding Google', () => {
     flowState.profile = {
       id: 'U-flow',
       role: null,
-      terms_accepted_at: '2026-10-06T00:00:00.000Z',
-      privacy_acknowledged_at: '2026-10-06T00:00:00.000Z',
+      terms_accepted_at: '2026-10-31T00:00:00.000Z',
+      privacy_acknowledged_at: '2026-10-31T00:00:00.000Z',
+      terms_version: CURRENT_TERMS_VERSION,
+      privacy_version: CURRENT_PRIVACY_VERSION,
     };
     renderFlow('/auth/callback?code=flow-noconsent');
     await screen.findByText('Bienvenido a LegalUp', undefined, { timeout: 8000 });
