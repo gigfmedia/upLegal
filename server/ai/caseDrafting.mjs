@@ -41,6 +41,43 @@ export const DRAFT_LIMITS = {
   MISSING_MARKER: '[POR COMPLETAR: ',
 };
 
+/** UA-4 Fase 3 — límites de márgenes configurables (cm). */
+export const DRAFT_MARGIN_LIMITS_CM = {
+  MIN: 1,
+  MAX: 5,
+  STEP: 0.1,
+};
+
+const DRAFT_MARGIN_KEYS = ['top', 'right', 'bottom', 'left'];
+
+function normalizeDraftMarginCm(value) {
+  const numeric = typeof value === 'number'
+    ? value
+    : typeof value === 'string' && value.trim() !== ''
+      ? Number(value.replace(',', '.'))
+      : Number.NaN;
+  if (!Number.isFinite(numeric) || numeric < DRAFT_MARGIN_LIMITS_CM.MIN || numeric > DRAFT_MARGIN_LIMITS_CM.MAX) return null;
+  return Math.round(numeric * 10) / 10;
+}
+
+/**
+ * Normaliza `{ margins_cm: { top, right, bottom, left } }`.
+ * Devuelve null si falta cualquier margen, no es numérico o está fuera de
+ * 1–5 cm. El servidor nunca persiste settings parciales.
+ */
+export function normalizeDraftDocumentSettings(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const rawMargins = value.margins_cm;
+  if (!rawMargins || typeof rawMargins !== 'object' || Array.isArray(rawMargins)) return null;
+  const margins = {};
+  for (const key of DRAFT_MARGIN_KEYS) {
+    const normalized = normalizeDraftMarginCm(rawMargins[key]);
+    if (normalized === null) return null;
+    margins[key] = normalized;
+  }
+  return { margins_cm: margins };
+}
+
 const TYPE_GUIDANCE = {
   escrito:
     'Prepara un escrito jurídico en tono formal procesal chileno, con encabezado, hechos numerados, fundamentos y petitorio. No inventes número de rol, tribunal ni fechas de actuaciones.',

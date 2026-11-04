@@ -3,6 +3,11 @@ import { render, screen, cleanup, fireEvent, waitFor, act, within } from '@testi
 import { QueryClient, QueryClientProvider, focusManager } from '@tanstack/react-query';
 import { AICaseDrafts } from '@/components/legalup-ai/AICaseDrafts';
 
+const printDraftDocumentMock = vi.hoisted(() => vi.fn(() => true));
+vi.mock('@/components/legalup-ai/draftExport', () => ({
+  printDraftDocument: printDraftDocumentMock,
+}));
+
 // FASE 4.59D + 4.62C — Draft/document workspace UI: lista, creación validada,
 // editor rich (TipTap) con autosave, OCC (409) y versiones.
 
@@ -60,7 +65,16 @@ type FakeEditor = {
   getHTML: () => string;
   isActive: (name: string | Record<string, unknown>, attrs?: Record<string, unknown>) => boolean;
   chain: () => Record<string, (...args: unknown[]) => unknown>;
-  can: () => { undo: () => boolean; redo: () => boolean };
+  can: () => {
+    undo: () => boolean;
+    redo: () => boolean;
+    insertTable: () => boolean;
+    addRowAfter: () => boolean;
+    deleteRow: () => boolean;
+    addColumnAfter: () => boolean;
+    deleteColumn: () => boolean;
+    deleteTable: () => boolean;
+  };
   commands: { setContent: (html: string, opts?: { emitUpdate?: boolean }) => void };
 };
 const fakeEditors: FakeEditor[] = [];
@@ -151,6 +165,12 @@ vi.mock('@tiptap/react', () => ({
           }
           return rec('redo');
         };
+        ret.insertTable = (...args: unknown[]) => rec('insertTable', args);
+        ret.addRowAfter = () => rec('addRowAfter');
+        ret.deleteRow = () => rec('deleteRow');
+        ret.addColumnAfter = () => rec('addColumnAfter');
+        ret.deleteColumn = () => rec('deleteColumn');
+        ret.deleteTable = () => rec('deleteTable');
         ret.unsetAllMarks = () => rec('unsetAllMarks');
         ret.clearNodes = () => rec('clearNodes');
         return ret;
@@ -158,6 +178,12 @@ vi.mock('@tiptap/react', () => ({
       can: () => ({
         undo: () => created.canFlags.undo,
         redo: () => created.canFlags.redo,
+        insertTable: () => true,
+        addRowAfter: () => true,
+        deleteRow: () => true,
+        addColumnAfter: () => true,
+        deleteColumn: () => true,
+        deleteTable: () => true,
       }),
       commands: {
         setContent(html: string, opts?: { emitUpdate?: boolean }) {
@@ -243,6 +269,8 @@ beforeEach(() => {
   putStaleRevisions = [];
   authState.reset();
   resetEditors();
+  printDraftDocumentMock.mockReset();
+  printDraftDocumentMock.mockReturnValue(true);
   fetchMock = vi.fn(async (url: string, opts?: RequestInit) => {
     const urlStr = String(url);
     if (urlStr.includes('/api/ai/usage')) {
@@ -2439,11 +2467,14 @@ describe('FASE UA-2 — toolbar profesional y zoom de presentación', () => {
     expect(content).toBeTruthy();
     const zoomWrapper = content.closest('[data-testid="draft-zoom-content"]') as HTMLElement | null;
     const sheet = document.querySelector('[data-testid="draft-sheet"]') as HTMLElement;
-    const workBox = toolbar.parentElement as HTMLElement;
+    const workBox = toolbar.closest('[data-testid="draft-canvas"]') as HTMLElement;
+    const stickyGroup = toolbar.parentElement as HTMLElement;
     expect(workBox.getAttribute('data-testid')).toBe('draft-canvas');
-    // La toolbar está pegada al borde superior del box y ocupa su ancho:
-    // primera hija, determinada por el contenedor, sin margen propio.
-    expect(workBox.firstElementChild).toBe(toolbar);
+    // Toolbar y panel de márgenes comparten el bloque sticky, pegado al borde
+    // superior del box y a su ancho completo.
+    expect(stickyGroup.getAttribute('data-testid')).toBe('draft-toolbar-sticky');
+    expect(workBox.firstElementChild).toBe(stickyGroup);
+    expect(stickyGroup.contains(toolbar)).toBe(true);
     expect(toolbar.className).toContain('border-b');
     expect(zoomWrapper?.style.transform).toBe('scale(1)');
     expect(zoomWrapper?.style.transformOrigin).toBe('top center');
@@ -2624,6 +2655,174 @@ describe('FASE UA-2 — toolbar profesional y zoom de presentación', () => {
     expect(sent.content).toContain('<u>subrayado</u>');
     expect(sent.content).toContain('<s>tachado</s>');
     expect(sent.content).toContain('<strong>añadido</strong>');
+  });
+});
+
+describe('UA-4 Fase 3 — márgenes configurables', () => {
+  it('abre un borrador con sus márgenes persistidos y ajusta el área de contenido', async () => {
+    draftPayloadOverride = makeDraft({
+      title: 'Borrador con márgenes',
+      document_settings: { margins_cm: { top: 3, right: 2.5, bottom: 4, left: 1.5 } },
+    });
+    renderDrafts();
+    fireEvent.click(await screen.findByText('Borrador con márgenes'));
+    await screen.findByText(/Contenido\./);
+    const surface = screen.getByTestId('draft-page-content');
+    expect(surface.style.paddingTop).toBe('113px');
+    expect(surface.style.paddingRight).toBe('94px');
+    expect(surface.style.paddingBottom).toBe('151px');
+    expect(surface.style.paddingLeft).toBe('57px');
+    expect(surface.style.getPropertyValue('--letter-content-height')).toBe('792px');
+  });
+
+  it('cambiar un margen programa autosave de document_settings sin tocar el HTML ni recrear TipTap', async () => {
+    renderDrafts();
+    await openFirstDraft();
+    const editorBefore = mainEditor()!;
+    const before = editorBefore.getHTML();
+    const instancesBefore = fakeEditors.length;
+    fireEvent.click(screen.getByRole('button', { name: 'Márgenes' }));
+    const top = screen.getByTestId('draft-margin-top') as HTMLInputElement;
+    fireEvent.change(top, { target: { value: '3,5' } });
+    fireEvent.blur(top);
+    expect(screen.getByTestId('save-status').textContent).toContain('Cambios sin guardar');
+    await waitFor(() => expect(putCalls().length).toBeGreaterThan(0), { timeout: 3000, interval: 50 });
+    const body = putBody(putCalls()[0]);
+    expect(body.content).toBe(before);
+    expect(body.document_settings).toEqual({ margins_cm: { top: 3.5, right: 2.5, bottom: 2.5, left: 2.5 } });
+    await waitFor(() => expect(screen.getByTestId('save-status').textContent).toContain('Guardado'));
+    expect(top.value).toBe('3.5');
+    expect(mainEditor()).toBe(editorBefore);
+    expect(fakeEditors).toHaveLength(instancesBefore);
+    expect(screen.getByTestId('draft-page-content').style.paddingTop).toBe('132px');
+  });
+
+  it('un margen pendiente exige resolución explícita al cerrar el editor', async () => {
+    renderDrafts();
+    await openFirstDraft();
+    fireEvent.click(screen.getByRole('button', { name: 'Márgenes' }));
+    const top = screen.getByTestId('draft-margin-top') as HTMLInputElement;
+    fireEvent.change(top, { target: { value: '3,2' } });
+    fireEvent.blur(top);
+    expect(screen.getByTestId('save-status').textContent).toContain('Cambios sin guardar');
+    fireEvent.click(screen.getByText('Cerrar'));
+    expect(await screen.findByText(/Tienes cambios sin guardar/)).toBeTruthy();
+    expect(screen.getByText('Guardar y cerrar')).toBeTruthy();
+    expect(screen.getByText('Descartar y cerrar')).toBeTruthy();
+    expect(screen.getByTestId('draft-page-content').style.paddingTop).toBe('121px');
+  });
+
+  it('conflicto OCC con solo márgenes: no sobrescribe ni pierde el valor local', async () => {
+    renderDrafts();
+    await openFirstDraft();
+    const editorBefore = mainEditor()!;
+    putFailure = {
+      status: 409,
+      body: {
+        error: 'El documento cambió en otro dispositivo o pestaña.',
+        code: 'AI_DRAFT_REVISION_CONFLICT',
+        current_revision: 7,
+      },
+    };
+    fireEvent.click(screen.getByRole('button', { name: 'Márgenes' }));
+    const top = screen.getByTestId('draft-margin-top') as HTMLInputElement;
+    fireEvent.change(top, { target: { value: '3,4' } });
+    fireEvent.blur(top);
+    expect(await screen.findByText('El documento cambió en otro dispositivo o pestaña.')).toBeTruthy();
+    expect(screen.getByTestId('save-status').textContent).toContain('Cambios en conflicto');
+    expect(top.value).toBe('3.4');
+    expect(screen.getByTestId('draft-page-content').style.paddingTop).toBe('129px');
+    const sent = putBody(putCalls().at(-1)!);
+    expect(sent.base_revision).toBe(1);
+    expect(sent.document_settings).toEqual({ margins_cm: { top: 3.4, right: 2.5, bottom: 2.5, left: 2.5 } });
+    expect(mainEditor()).toBe(editorBefore);
+    putFailure = null;
+  });
+
+  it('un margen inválido se revierte sin guardar y Restablecer vuelve a 2,5 cm', async () => {
+    draftPayloadOverride = makeDraft({
+      title: 'Borrador para restablecer',
+      document_settings: { margins_cm: { top: 3, right: 3, bottom: 3, left: 3 } },
+    });
+    renderDrafts();
+    fireEvent.click(await screen.findByText('Borrador para restablecer'));
+    await screen.findByText(/Contenido\./);
+    fireEvent.click(screen.getByRole('button', { name: 'Márgenes' }));
+    const top = screen.getByTestId('draft-margin-top') as HTMLInputElement;
+    fireEvent.change(top, { target: { value: '0,5' } });
+    fireEvent.blur(top);
+    expect(top.value).toBe('3');
+    await new Promise((r) => setTimeout(r, 900));
+    expect(putCalls()).toHaveLength(0);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Restablecer' }));
+    await waitFor(() => expect(putCalls().length).toBeGreaterThan(0), { timeout: 3000, interval: 50 });
+    const body = putBody(putCalls().at(-1)!);
+    expect(body.document_settings).toEqual({ margins_cm: { top: 2.5, right: 2.5, bottom: 2.5, left: 2.5 } });
+    expect((screen.getByTestId('draft-margin-top') as HTMLInputElement).value).toBe('2.5');
+  });
+
+  it('compatibilidad: borrador legacy sin document_settings usa 2,5 cm', async () => {
+    renderDrafts();
+    await openFirstDraft();
+    const surface = screen.getByTestId('draft-page-content');
+    expect(surface.style.paddingTop).toBe('94px');
+    expect(surface.style.paddingLeft).toBe('94px');
+  });
+
+  it('los dos botones de exportación usan la misma función y bloquean aperturas simultáneas', async () => {
+    renderDrafts();
+    await openFirstDraft();
+
+    const buttons = screen.getAllByRole('button', { name: 'Exportar PDF' });
+    expect(buttons).toHaveLength(2);
+    // Misma acción, mismo icono y mismo estilo en ambos puntos de entrada.
+    expect(buttons[0].querySelector('svg.lucide-printer')).toBeTruthy();
+    expect(buttons[1].querySelector('svg.lucide-printer')).toBeTruthy();
+    expect(buttons[0].className).toBe(buttons[1].className);
+
+    fireEvent.click(buttons[0]);
+    expect(printDraftDocumentMock).toHaveBeenCalledTimes(1);
+    expect(printDraftDocumentMock).toHaveBeenCalledWith({
+      title: 'Borrador de contestación',
+      html: expect.stringContaining('Contenido.'),
+      marginsCm: { top: 2.5, right: 2.5, bottom: 2.5, left: 2.5 },
+    });
+    // El guard síncrono cubre el doble clic incluso antes del re-render.
+    expect(buttons[0]).toBeDisabled();
+    expect(buttons[1]).toBeDisabled();
+    fireEvent.click(buttons[1]);
+    expect(printDraftDocumentMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => { await new Promise((r) => setTimeout(r, 1100)); });
+    expect(buttons[0]).toBeEnabled();
+    expect(buttons[1]).toBeEnabled();
+    fireEvent.click(buttons[1]);
+    expect(printDraftDocumentMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('toolbar y panel de márgenes comparten el bloque sticky sin overflow que lo oculte', async () => {
+    renderDrafts();
+    await openFirstDraft();
+
+    const toolbar = screen.getByTestId('draft-toolbar');
+    const canvas = screen.getByTestId('draft-canvas');
+    const stickyGroup = screen.getByTestId('draft-toolbar-sticky');
+    expect(stickyGroup.className).toContain('sticky');
+    expect(stickyGroup.className).toContain('top-[6.75rem]');
+    expect(stickyGroup.className).toContain('z-30');
+    expect(stickyGroup.className).toContain('bg-card');
+    expect(stickyGroup.contains(toolbar)).toBe(true);
+    expect(toolbar.className).toContain('overflow-x-auto');
+    expect(toolbar.className).toContain('sm:flex-wrap');
+    expect(toolbar.className).toContain('sm:justify-center');
+    expect(canvas.className).not.toContain('overflow-hidden');
+    expect(canvas.firstElementChild).toBe(stickyGroup);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Márgenes' }));
+    const controls = screen.getByTestId('draft-margin-controls');
+    expect(stickyGroup.contains(controls)).toBe(true);
+    expect(toolbar.nextElementSibling).toBe(controls);
   });
 });
 

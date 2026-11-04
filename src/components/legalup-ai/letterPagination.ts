@@ -28,6 +28,8 @@ type PaginationState = {
 
 export type LetterPaginationOptions = {
   layout: PageLayout;
+  /** Layout vigente (UA-4 Fase 3): permite cambiar márgenes sin recrear el editor. */
+  getLayout?: () => PageLayout;
   /** Notifica el número de páginas calculado (para el overlay de React). */
   onPageCount?: (pageCount: number) => void;
 };
@@ -443,7 +445,7 @@ export const LetterPagination = Extension.create<LetterPaginationOptions>({
   name: 'letterPagination',
 
   addProseMirrorPlugins() {
-    const { layout, onPageCount } = this.options;
+    const { layout, getLayout, onPageCount } = this.options;
 
     return [
       new Plugin<PaginationState>({
@@ -487,9 +489,9 @@ export const LetterPagination = Extension.create<LetterPaginationOptions>({
           };
 
           const measure = () => {
-            if (!canMeasure()) return;
+            if (destroyed || editorView.isDestroyed || !canMeasure()) return;
             const blocks = measureBlocks(editorView, cache);
-            const result = computePagination(blocks, layout);
+            const result = computePagination(blocks, getLayout ? getLayout() : layout);
             const nextSignature = `${result.pageCount}|${result.breaks
               .map((b) => `${b.pos}:${b.spacerHeight}`)
               .join(',')}`;

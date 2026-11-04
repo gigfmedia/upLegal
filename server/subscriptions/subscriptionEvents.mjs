@@ -1,10 +1,19 @@
+// Legacy retry lease, kept for the AI path and the old helper contract. The
+// Pro-family path no longer uses this heuristic: it claims atomically through
+// `claim_subscription_event` (status goes pending -> processing) and this value
+// is now only the default claim lease duration.
+export const RETRY_LEASE_MS = 10 * 60 * 1000;
+
+// Lease for the real, atomic claim. Kept equal to RETRY_LEASE_MS so recovery
+// behaviour of in-flight events is unchanged.
+export const CLAIM_LEASE_SECONDS = Math.ceil(RETRY_LEASE_MS / 1000);
+
 // A duplicate of a `pending` event is only treated as retryable once it is
 // older than this. Fresh pending rows are assumed in-flight and the caller must
 // return a 5xx (not acknowledge) so a crashed original is recovered by the
 // provider retry after the lease. This is a heuristic, NOT a mutual-exclusion
 // lock: two concurrent deliveries can both read the same lease-expired row and
 // both proceed. See risk notes in proPreapprovalEvent.mjs.
-export const RETRY_LEASE_MS = 10 * 60 * 1000;
 
 // Financial reversals must always reach manual review, even when their provider
 // timestamp is older than a later payment. They never revoke access or mutate
@@ -52,6 +61,120 @@ async function claimExistingEvent(supabase, { productType, providerEventId, id, 
   const { data, error } = await query.select('id').maybeSingle();
   if (error) throw error;
   return !!data;
+}
+
+function toIso(value) {
+  return value ? new Date(value).toISOString() : new Date().toISOString();
+}
+
+/**
+ * Insert the audit row (idempotent) and atomically claim it.
+ *
+ * The claim is one UPDATE ... WHERE in Postgres (claim_subscription_event):
+ * exactly one concurrent caller can flip the row to `processing`; the others
+ * get `busy` or `terminal`. No read-then-decide window.
+ *
+ * The claim returns a fencing token. complete/fail MUST present it, so a worker
+ * whose lease expired can never overwrite the outcome of the worker that
+ * reclaimed the event.
+ *
+ * `providerEventId` remains the notification identity (backward compatible).
+ * `notificationId`, `resourceId`, `resourceStatus` and `transitionKey` are
+ * additive audit/effect identity and never change event dedup.
+ */
+export async function beginSubscriptionEvent(supabase, {
+  productType,
+  subscriptionId,
+  providerEventId,
+  providerEventAt,
+  eventType,
+  providerStatus,
+  notificationId = null,
+  resourceId = null,
+  resourceStatus = null,
+  transitionKey = null,
+  leaseSeconds = CLAIM_LEASE_SECONDS,
+}) {
+  let claimEventId = String(providerEventId);
+  let inserted = true;
+  const { error } = await supabase.from('subscription_events').insert({
+    product_type: productType,
+    subscription_id: subscriptionId,
+    provider: 'mercadopago',
+    provider_event_id: claimEventId,
+    provider_event_at: toIso(providerEventAt),
+    event_type: eventType,
+    provider_status: providerStatus,
+    status: 'pending',
+    notification_id: notificationId,
+    resource_id: resourceId,
+    resource_status: resourceStatus,
+    transition_key: transitionKey,
+  });
+
+  if (error) {
+    if (error.code !== '23505') throw error;
+    inserted = false;
+    // A known delivery id may arrive with a different synthesized event id.
+    // Reuse the audited row instead of claiming a non-existent one.
+    if (notificationId) {
+      const { data: existing } = await supabase
+        .from('subscription_events')
+        .select('provider_event_id')
+        .eq('provider', 'mercadopago')
+        .eq('product_type', productType)
+        .eq('notification_id', notificationId)
+        .maybeSingle();
+      if (existing?.provider_event_id) claimEventId = String(existing.provider_event_id);
+    }
+  }
+
+  const { data, error: claimError } = await supabase.rpc('claim_subscription_event', {
+    p_provider: 'mercadopago',
+    p_event_id: claimEventId,
+    p_product_type: productType,
+    p_lease_seconds: leaseSeconds,
+  });
+  if (claimError) throw claimError;
+  const row = Array.isArray(data) ? data[0] : data;
+  const result = row ?? { claimed: false, reason: 'not_found', event_id: null, claim_token: null, attempts: 0 };
+  return { ...result, inserted };
+}
+
+export async function completeSubscriptionEvent(supabase, { productType, providerEventId, claimToken, effects = [] }) {
+  if (!claimToken) throw new Error('claim_token_required');
+  const { data, error } = await supabase.rpc('complete_subscription_event', {
+    p_provider: 'mercadopago',
+    p_event_id: String(providerEventId),
+    p_product_type: productType,
+    p_claim_token: claimToken,
+    p_effects: effects,
+  });
+  if (error) throw error;
+  return data ?? 0;
+}
+
+export async function failSubscriptionEvent(supabase, { productType, providerEventId, claimToken, error }) {
+  if (!claimToken) throw new Error('claim_token_required');
+  const { data, error: rpcError } = await supabase.rpc('fail_subscription_event', {
+    p_provider: 'mercadopago',
+    p_event_id: String(providerEventId),
+    p_product_type: productType,
+    p_claim_token: claimToken,
+    p_error: String(error ?? 'unknown'),
+  });
+  if (rpcError) throw rpcError;
+  return data === true;
+}
+
+/**
+ * Deterministic effect identity. Notification redeliveries of the SAME
+ * transition share a key (enqueue once); a different status gets a new key.
+ * Transitions are resource-scoped on purpose: a pause -> authorized cycle is a
+ * new transition, while re-delivering `authorized` is not.
+ */
+export function transitionKey(resourceId, resourceStatus) {
+  return `${resourceId}:${resourceStatus}`;
 }
 
 export async function tryInsertSubscriptionEvent(supabase, { productType, subscriptionId, providerEventId, providerEventAt, eventType, providerStatus }) {

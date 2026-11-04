@@ -2,8 +2,24 @@ import { aiOperationIdentity } from '@/lib/aiOperationIdentity';
 import { pollTerminalResult } from '@/lib/aiInProgressPoll';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
+import type { ComparisonTableData } from '@/components/legalup-ai/draftComparisonTable';
 
 export type AIChatSource = { document_id: string; file_name: string; fragment_id?: string | null; page_number?: number | null; evidence?: string | null };
+
+export type AIDraftCommentSuggestion = {
+  quote: string;
+  comment: string;
+};
+
+export type AIChatActionResult =
+  | {
+      kind: 'comparison_table';
+      table: ComparisonTableData;
+    }
+  | {
+      kind: 'draft_comments';
+      comments: AIDraftCommentSuggestion[];
+    };
 
 export type AIChatMessage = {
   id: string;
@@ -12,7 +28,7 @@ export type AIChatMessage = {
   lawyer_id: string;
   role: 'user' | 'assistant';
   content: string;
-  metadata: { sources?: AIChatSource[]; model?: string } | null;
+  metadata: { sources?: AIChatSource[]; model?: string; action_result?: AIChatActionResult | null } | null;
   created_at: string;
 };
 
@@ -74,11 +90,18 @@ export function useAICaseChat(workspaceId: string | undefined, enabled: boolean)
   return query;
 }
 
-type SendChatInput = { conversationId: string; message: string; documentId?: string; signal?: AbortSignal };
+type SendChatInput = {
+  conversationId: string;
+  message: string;
+  documentId?: string;
+  signal?: AbortSignal;
+  action?: 'comparison_table' | 'draft_comments';
+};
 type SendChatResult = {
   message: AIChatMessage;
   user_message: AIChatMessage | null;
   sources: AIChatSource[];
+  action_result?: AIChatActionResult | null;
 };
 
 /** Envía una pregunta y guarda user + assistant en backend (sin contexto del cliente). */
@@ -86,13 +109,14 @@ export function useSendChatMessage(workspaceId: string | undefined) {
   const queryClient = useQueryClient();
 
   return useMutation<SendChatResult, AIChatError, SendChatInput>({
-    mutationFn: async ({ conversationId, message, documentId, signal }) => {
+    mutationFn: async ({ conversationId, message, documentId, signal, action }) => {
       const token = await getAccessToken();
       if (!token) throw new Error('Sesión no válida. Vuelve a iniciar sesión.');
 
       signal?.throwIfAborted();
       const payload: Record<string, unknown> = { conversation_id: conversationId, message };
       if (documentId) payload.document_id = documentId;
+      if (action) payload.action = action;
 
       const { data: { session } } = await supabase.auth.getSession();
       const identity = await aiOperationIdentity(`${session?.user?.id}:chat:${workspaceId}`, payload);
@@ -119,6 +143,13 @@ export function useSendChatMessage(workspaceId: string | undefined) {
         throw err;
       }
       signal?.throwIfAborted();
+      if (
+        body?.action_result &&
+        body.action_result.kind !== 'comparison_table' &&
+        body.action_result.kind !== 'draft_comments'
+      ) {
+        throw new Error('La acción de la IA no es válida. Intenta nuevamente.');
+      }
       if (!body?.message || typeof body.message.id !== 'string' ||
           body.message.role !== 'assistant' || typeof body.message.content !== 'string' ||
           !body.message.content.trim() || body.message.workspace_id !== workspaceId ||

@@ -18,6 +18,10 @@ import {
 import { hasCanonicalDocumentReference, resolveAnalysisModel, honestEvidenceLocation } from './server/ai/coreAuthority.mjs';
 import { consultationBase, bookingClientTotal, bookingPricingSnapshot } from './shared/bookingPricing.mjs';
 import { confirmCompanyCancellation } from './server/subscriptions/companyCancellation.mjs';
+import { sendWebhookResponse } from './server/subscriptions/webhookResponse.mjs';
+import { dispatchSubscriptionWebhook } from './server/subscriptions/subscriptionWebhook.mjs';
+import { fetchProviderResource, providerFetchFailureResult } from './server/subscriptions/providerFetch.mjs';
+import { processProAuthorizedPaymentEvent } from './server/subscriptions/proPaymentEvent.mjs';
 import {
   canClaimEarlyPlusProvider,
   claimPendingPlusProvider,
@@ -81,6 +85,15 @@ import {
   buildChatUserPrompt,
   CHAT_LIMITS,
 } from './server/ai/legalChatPrompt.mjs';
+import {
+  buildComparisonTableSystemPrompt,
+  parseComparisonTableResponse,
+  buildDraftCommentsSystemPrompt,
+  parseDraftCommentsResponse,
+  DraftCommentCreateSchema,
+  DraftCommentUpdateSchema,
+  DRAFT_COMMENT_LIMITS,
+} from './server/ai/draftAgentActions.mjs';
 import { getProCaseHeader, formatProCaseBlock } from './server/ai/proCaseContext.mjs';
 import {
   selectRelevantResearch,
@@ -91,6 +104,7 @@ import {
   buildDraftContext,
   selectDraftEvidence,
   validateDraftSources,
+  normalizeDraftDocumentSettings,
   DRAFT_LIMITS,
 } from './server/ai/caseDrafting.mjs';
 import {
@@ -2777,46 +2791,58 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
       return res.status(401).json({ error: 'Invalid webhook signature' });
     }
 
+    let providerResourceId = null;
     let paymentId = null;
     let source = '';
 
-    // helper: limpia IDs
+    // Preapproval ids are alphanumeric. Keep the raw provider resource id for
+    // subscription topics; only the booking payment branch needs a numeric id.
+    const normalizeResourceId = (value) => {
+      if (value == null) return null;
+      let raw = String(value).trim().split('?')[0].split('#')[0];
+      if (!raw) return null;
+      if (/^https?:\/\//i.test(raw)) {
+        try {
+          const parts = new URL(raw).pathname.split('/').filter(Boolean);
+          raw = parts.pop() || '';
+        } catch {
+          return null;
+        }
+      }
+      return raw || null;
+    };
     const normalizeId = (value) => {
-      if (!value) return null;
-
-      const str = String(value)
-        .trim()
-        .split('?')[0]     // elimina query params
-        .split('#')[0];    // seguridad extra
-
-      // extrae solo números
-      const match = str.match(/\d+/);
+      const raw = normalizeResourceId(value);
+      const match = raw?.match(/\d+/);
       return match ? match[0] : null;
     };
 
     // PRIORIDAD 1: data.id (recomendado MP v2)
     if (req.body?.data?.id) {
-      paymentId = normalizeId(req.body.data.id);
+      providerResourceId = normalizeResourceId(req.body.data.id);
       source = 'body.data.id';
     }
 
     // PRIORIDAD 2: resource
-    if (!paymentId && req.body?.resource) {
-      paymentId = normalizeId(req.body.resource);
+    if (!providerResourceId && req.body?.resource) {
+      providerResourceId = normalizeResourceId(req.body.resource);
       source = 'body.resource';
     }
 
     // PRIORIDAD 3: query params
-    if (!paymentId && req.query?.['data.id']) {
-      paymentId = normalizeId(req.query['data.id']);
+    if (!providerResourceId && req.query?.['data.id']) {
+      providerResourceId = normalizeResourceId(req.query['data.id']);
       source = "query['data.id']";
     }
 
-    if (!paymentId && req.query?.id) {
-      paymentId = normalizeId(req.query.id);
+    if (!providerResourceId && req.query?.id) {
+      providerResourceId = normalizeResourceId(req.query.id);
       source = 'query.id';
     }
 
+    paymentId = normalizeId(providerResourceId);
+
+    console.log('Extracted provider resource ID:', providerResourceId);
     console.log('Extracted Payment ID:', paymentId);
     console.log('Payment ID source:', source);
     console.log('Final topic:', topic);
@@ -3887,30 +3913,21 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
       console.log('[webhook] step=complete booking_id=' + bookingId + ' appointment_id=' + (appointmentId || 'no') + ' meet_status=' + meetStatus);
     };
 
-    // Handle subscription/preapproval events
-    if (topic === 'preapproval' && paymentId) {
-      console.log('[Empresas] Handling preapproval event:', paymentId);
-      await handlePreapprovalWebhook(paymentId);
-      return res.status(200).send('OK');
-    }
-
-    // Handle authorized payment events (subscription payment notifications)
-    if (topic === 'authorized_payment' && paymentId) {
-      console.log('[Empresas] Handling authorized payment:', paymentId);
-      await handleAuthorizedPayment(paymentId);
-      return res.status(200).send('OK');
-    }
-
-    // Handle subscription/plan events from newer MP API
-    if (topic === 'subscription' || topic === 'subscription.authorized_payment' || topic === 'subscription.preapproval' || topic === 'subscription.cancelled') {
-      console.log('[Empresas] Handling subscription topic:', topic, 'paymentId:', paymentId);
-
-      if (topic === 'subscription.authorized_payment' || topic === 'authorized_payment') {
-        await handleAuthorizedPayment(paymentId);
-      } else if (topic === 'subscription.preapproval' || topic === 'preapproval') {
-        await handlePreapprovalWebhook(paymentId);
-      }
-      return res.status(200).send('OK');
+    // Handle subscription/preapproval/authorized-payment/cancellation topics.
+    // The dispatcher accepts both MP dot and underscore names and ACKs
+    // unsupported/ambiguous topics explicitly instead of falling through.
+    // Keep booking `payment` on the legacy branch below; everything else is
+    // routed here so an unknown topic is never silently ACKed.
+    const normalizedTopic = String(topic || '').trim().toLowerCase();
+    const isBookingPaymentTopic = normalizedTopic === 'payment' || normalizedTopic === 'payment.created';
+    if (!isBookingPaymentTopic) {
+      const subscriptionDispatch = await dispatchSubscriptionWebhook({
+        topic,
+        resourceId: providerResourceId,
+        handlers: { handlePreapprovalWebhook, handleAuthorizedPayment },
+      });
+      console.log('[Empresas] Handling subscription topic:', topic, 'resourceId:', providerResourceId);
+      return sendWebhookResponse(res, subscriptionDispatch.result);
     }
 
     if ((topic === 'payment' || topic === 'payment.created') && paymentId) {
@@ -6233,6 +6250,19 @@ const drainStoredPaymentsForPreapproval = async (preapprovalId) => {
   }
 };
 
+// FASE 4.59: external effects are executed by the outbox drainer, not inline in
+// the orchestrator. These handlers are the only place email/analytics run for
+// Pro-family webhooks.
+const subscriptionEffectHandlers = {
+  analytics: async (payload) => {
+    await capturePostHog(payload.event, payload.lawyer_id, payload.props || {});
+  },
+  email_welcome: async (payload) => {
+    const userData = await getProLawyerEmail(payload.lawyer_id);
+    if (userData?.email) await sendAIEmail(userData.email, payload.subject, payload.html);
+  },
+};
+
 const handleProPreapprovalWebhook = async (preapproval) => {
   const mpStatus = preapproval.status;
   const preapprovalId = preapproval.id;
@@ -6243,9 +6273,9 @@ const handleProPreapprovalWebhook = async (preapproval) => {
   const lawyerId = String(externalRef)
     .replace(PLUS_EXTERNAL_REF_PREFIX, '')
     .replace(PRO_EXTERNAL_REF_PREFIX, '');
-  if (!lawyerId) return;
+  if (!lawyerId) return { skipped: 'invalid_external_reference' };
   let { data: subscription } = await supabase.from('lawyer_subscriptions').select('*').eq('lawyer_id', lawyerId).maybeSingle();
-  if (!subscription) return;
+  if (!subscription) return { skipped: 'subscription_not_found' };
   // Identity guard (4.57D follow-up): the row is resolved by external_reference
   // (lawyer_id), NOT by the preapproval id, so we must confirm this event
   // belongs to the preapproval currently linked to the row (canonical or the
@@ -6287,7 +6317,7 @@ const handleProPreapprovalWebhook = async (preapproval) => {
         received_preapproval_id: String(preapprovalId),
         code: claim.code || null,
       });
-      return;
+      return { skipped: 'provider_mismatch' };
     }
     subscription = claim.subscription;
   }
@@ -6308,7 +6338,7 @@ const handleProPreapprovalWebhook = async (preapproval) => {
     supabase,
     subscription,
     preapproval,
-    deps: { capturePostHog, getProLawyerEmail, sendAIEmail, priceClp: PRO_SUBSCRIPTION_PRICE_CLP },
+    deps: { priceClp: PRO_SUBSCRIPTION_PRICE_CLP, effectHandlers: subscriptionEffectHandlers },
   });
   if (outcome?.transient) throw new Error(`pro preapproval replay pending: ${outcome.reason || 'event_in_flight'}`);
   await drainStoredPaymentsForPreapproval(preapprovalId);
@@ -6323,13 +6353,13 @@ const handlePlusPreapprovalWebhook = async (subscription, preapproval) => {
     supabase,
     subscription,
     preapproval,
-    deps: { capturePostHog, completePlusUpgrade },
+    deps: { completePlusUpgrade, effectHandlers: subscriptionEffectHandlers },
   });
 };
 
 const handleProAuthorizedPayment = async (payment) => {
   const preapprovalId = payment.preapproval_id;
-  if (!preapprovalId) return;
+  if (!preapprovalId) return { skipped: 'missing_preapproval_id' };
   let { data: subscription } = await supabase.from('lawyer_subscriptions').select('*').eq('provider_subscription_id', String(preapprovalId)).maybeSingle();
   if (!subscription) {
     // 4.57D: in-flight Plus upgrade — the Plus preapproval lives in the
@@ -6579,29 +6609,24 @@ if (!runningInTestMode) {
 const handlePreapprovalWebhook = async (preapprovalId) => {
   console.log('[Empresas] Handling preapproval event:', preapprovalId);
 
-  if (!preapprovalId) return;
+  if (!preapprovalId) return { skipped: 'missing_preapproval_id' };
 
-  // Fetch preapproval details from MP
-  const mpResponse = await fetch(
+  // Fetch preapproval details from MP. Transient failures must return 503 so
+  // MP redelivers; permanent failures are ACKed with an explicit reason.
+  const fetched = await fetchProviderResource(
     `https://api.mercadopago.com/preapproval/${preapprovalId}`,
-    {
-      headers: {
-        Authorization: `Bearer ${mercadopagoAccessToken}`,
-      },
-    }
+    { headers: { Authorization: `Bearer ${mercadopagoAccessToken}` } }
   );
-
-  if (!mpResponse.ok) {
-    if (mpResponse.status === 404) {
-      console.error('[Empresas] Preapproval not found:', preapprovalId);
-      return;
-    }
-    // Transient/provider failure: do not acknowledge a webhook we did not
-    // process or durably store. Let Mercado Pago retry.
-    throw new Error(`preapproval fetch failed: ${mpResponse.status}`);
+  if (!fetched.ok) {
+    console.error('[Empresas] Failed to fetch preapproval:', preapprovalId, {
+      reason: fetched.reason,
+      status: fetched.status,
+      retryable: fetched.retryable,
+    });
+    return providerFetchFailureResult(fetched);
   }
 
-  const preapproval = await mpResponse.json();
+  const preapproval = fetched.data;
   const externalRef = preapproval.external_reference;
   const route = classifyPreapprovalExternalReference(externalRef, {
     ai: AI_EXTERNAL_REF_PREFIX,
@@ -6610,9 +6635,8 @@ const handlePreapprovalWebhook = async (preapprovalId) => {
   });
 
   // LegalUp AI: las suscripciones AI usan external_reference `AI_<lawyerId>`.
-  if (route === 'ai') {
-    await handleAIPreapprovalWebhook(preapproval);
-    return;
+  if (externalRef && String(externalRef).startsWith(AI_EXTERNAL_REF_PREFIX)) {
+    return await handleAIPreapprovalWebhook(preapproval);
   }
 
   // LegalUp Pro family: Pro and Plus both settle through the Pro orchestrator.
@@ -6626,7 +6650,7 @@ const handlePreapprovalWebhook = async (preapprovalId) => {
 
   if (!companyId) {
     console.error('[Empresas] No external_reference in preapproval');
-    return;
+    return { skipped: 'missing_company_reference' };
   }
 
   // Find subscription
@@ -6638,7 +6662,7 @@ const handlePreapprovalWebhook = async (preapprovalId) => {
 
   if (!subscription) {
     console.error('[Empresas] No subscription found for preapproval:', preapprovalId);
-    return;
+    return { skipped: 'subscription_not_found' };
   }
 
   const { data: plan } = await supabase
@@ -6655,7 +6679,7 @@ const handlePreapprovalWebhook = async (preapprovalId) => {
 
   if (!company || !plan) {
     console.error('[Empresas] Company or plan not found');
-    return;
+    return { skipped: 'company_or_plan_not_found' };
   }
 
   // Track event
@@ -6756,35 +6780,31 @@ const handlePreapprovalWebhook = async (preapprovalId) => {
     default:
       console.log('[Empresas] Unhandled preapproval status:', mpStatus);
   }
+  return { ok: true };
 };
 
 // ---- HANDLE AUTHORIZED PAYMENT (subscription payment notification) ----
 const handleAuthorizedPayment = async (paymentId) => {
   console.log('[Empresas] Handling authorized payment:', paymentId);
 
-  if (!paymentId) return;
+  if (!paymentId) return { skipped: 'missing_payment_id' };
 
-  // Fetch payment details
-  const mpResponse = await fetch(
+  // Fetch payment details. Same retry classification as preapproval: 429/5xx/
+  // timeout are retryable (503), 4xx are permanent (explicit ACK).
+  const fetched = await fetchProviderResource(
     `https://api.mercadopago.com/v1/payments/${paymentId}`,
-    {
-      headers: {
-        Authorization: `Bearer ${mercadopagoAccessToken}`,
-      },
-    }
+    { headers: { Authorization: `Bearer ${mercadopagoAccessToken}` } }
   );
-
-  if (!mpResponse.ok) {
-    if (mpResponse.status === 404) {
-      console.error('[Empresas] Authorized payment not found:', paymentId);
-      return;
-    }
-    // Transient/provider failure: leave the event unacknowledged so the
-    // provider can redeliver it.
-    throw new Error(`authorized payment fetch failed: ${mpResponse.status}`);
+  if (!fetched.ok) {
+    console.error('[Empresas] Failed to fetch authorized payment', {
+      reason: fetched.reason,
+      status: fetched.status,
+      retryable: fetched.retryable,
+    });
+    return providerFetchFailureResult(fetched);
   }
 
-  const payment = await mpResponse.json();
+  const payment = fetched.data;
   const preapprovalId = payment.preapproval_id;
 
   if (!preapprovalId) {
@@ -6800,7 +6820,7 @@ const handleAuthorizedPayment = async (paymentId) => {
       return;
     }
     console.error('[Empresas] No preapproval_id in payment');
-    return;
+    return { skipped: 'missing_preapproval_id' };
   }
 
   // LegalUp AI: el pago pertenece a una suscripción AI si el preapproval
@@ -6953,7 +6973,7 @@ const handleAuthorizedPayment = async (paymentId) => {
       return;
     }
     console.error('[Empresas] No subscription found for preapproval:', preapprovalId);
-    return;
+    return { skipped: 'subscription_not_found' };
   }
 
   const { data: company } = await supabase
@@ -6962,7 +6982,7 @@ const handleAuthorizedPayment = async (paymentId) => {
     .eq('id', subscription.company_id)
     .maybeSingle();
 
-  if (!company) return;
+  if (!company) return { skipped: 'company_not_found' };
 
   // Track event
   await supabase.from('subscription_payment_events').insert({
@@ -7031,6 +7051,7 @@ const handleAuthorizedPayment = async (paymentId) => {
       subscriptionEmailTemplates.payment_failed(company.name)
     );
   }
+  return { ok: true };
 };
 
 // ---- EXTENDED WEBHOOK ----
@@ -11054,6 +11075,7 @@ const AIChatRequestSchema = z.object({
   conversation_id: z.string().uuid(),
   message: z.string().trim().min(1).max(CHAT_LIMITS.MAX_CHAT_MESSAGE_LENGTH),
   document_id: z.string().uuid().optional(),
+  action: z.enum(['comparison_table', 'draft_comments']).optional(),
 });
 
 // GET /api/ai/cases/:caseId/chat — conversación principal (get-or-create) + mensajes.
@@ -11099,7 +11121,7 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
     if (!parsed.success) {
       return res.status(400).json({ error: 'Solicitud inválida.', code: 'INVALID_REQUEST' });
     }
-    const { conversation_id, message, document_id } = parsed.data;
+    const { conversation_id, message, document_id, action } = parsed.data;
 
     const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
     if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
@@ -11129,7 +11151,7 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       });
     }
 
-    if (!await metering.begin(req, res, { lawyerId: userId, workspaceId: workspace.id, capability: document_id ? 'document_chat' : 'case_chat', resourceId: document_id || conversation.id, input: { conversation_id, message, document_id: document_id || null, model: AI_DEFAULT_MODEL }, commercialLimits: commercialQuotaForPlan(entitlement.plan), freeQuota: freeQuotaForEntitlement(entitlement) })) return;
+    if (!await metering.begin(req, res, { lawyerId: userId, workspaceId: workspace.id, capability: document_id ? 'document_chat' : 'case_chat', resourceId: document_id || conversation.id, input: { conversation_id, message, document_id: document_id || null, action: action || null, model: AI_DEFAULT_MODEL }, commercialLimits: commercialQuotaForPlan(entitlement.plan), freeQuota: freeQuotaForEntitlement(entitlement) })) return;
 
     // Solo documentos listos del caso del abogado.
     const { data: readyDocs, error: docsError } = await supabase
@@ -11371,7 +11393,11 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
     const { data: raw, raw: rawText } = await chatCompletion({
       model: AI_DEFAULT_MODEL,
       metering,
-      system: buildChatSystemPrompt({ mode: prioritizedDocumentId ? 'document' : 'case' }),
+      system: action === 'comparison_table'
+        ? buildComparisonTableSystemPrompt()
+        : action === 'draft_comments'
+          ? buildDraftCommentsSystemPrompt()
+          : buildChatSystemPrompt({ mode: prioritizedDocumentId ? 'document' : 'case' }),
       messages: [
         {
           role: 'user',
@@ -11388,12 +11414,32 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
     let validated;
     if (raw) {
       try {
-        validated = AIChatResponseSchema.parse(raw);
+        validated = action === 'comparison_table'
+          ? parseComparisonTableResponse(raw)
+          : action === 'draft_comments'
+            ? parseDraftCommentsResponse(raw)
+            : AIChatResponseSchema.parse(raw);
       } catch {
         validated = null;
       }
     } else {
       validated = null;
+    }
+
+    // La tabla es una acción con contrato estricto: si el proveedor no devolvió
+    // datos estructurados válidos, no se degrada a texto libre ni se inserta
+    // nada. El mensaje del usuario ya quedó guardado para poder reintentar.
+    if (action === 'comparison_table' && !validated) {
+      return await metering.respond(res, 422, {
+        error: 'La IA no devolvió una tabla comparativa válida. Reintenta o reformula la solicitud.',
+        code: 'AI_TABLE_INVALID',
+      });
+    }
+    if (action === 'draft_comments' && !validated) {
+      return await metering.respond(res, 422, {
+        error: 'La IA no devolvió comentarios válidos. Reintenta o reformula la solicitud.',
+        code: 'AI_COMMENTS_INVALID',
+      });
     }
 
     // Fallback robusto: si el proveedor no devolvió JSON válido (p. ej. texto
@@ -11596,6 +11642,12 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       } catch { /* validación RAG best-effort; fuentes filename-level intactas */ }
     }
 
+    const actionResult = action === 'comparison_table' && validated.table
+      ? { kind: 'comparison_table', table: validated.table }
+      : action === 'draft_comments' && validated.comments
+        ? { kind: 'draft_comments', comments: validated.comments }
+        : null;
+
     const { data: savedAssistant, error: assistantInsertError } = await supabase
       .from('ai_chat_messages')
       .insert({
@@ -11604,7 +11656,11 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
         lawyer_id: userId,
         role: 'assistant',
         content: validated.answer,
-        metadata: { sources, model: AI_DEFAULT_MODEL },
+        metadata: {
+          sources,
+          model: AI_DEFAULT_MODEL,
+          ...(actionResult ? { action_result: actionResult } : {}),
+        },
       })
       .select()
       .single();
@@ -11622,7 +11678,12 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       console.error('[LegalUpAI] ai_first_chat_message failed', posthogError);
     }
 
-    await metering.respond(res, 200, { user_message: userMessage, message: savedAssistant, sources });
+    await metering.respond(res, 200, {
+      user_message: userMessage,
+      message: savedAssistant,
+      sources,
+      ...(actionResult ? { action_result: actionResult } : {}),
+    });
   } catch (error) {
     console.error('[LegalUpAI] chat error:', error);
     const code =
@@ -12777,6 +12838,212 @@ app.get('/api/ai/cases/:caseId/drafts/:draftId', async (req, res) => {
   }
 });
 
+// — UA-5.2: comentarios anclados al borrador (sidecar, sin tocar el head) —
+// Leer un comentario/borrador siempre exige que ambos pertenezcan al abogado y
+// workspace de la ruta. Nunca se actualiza ai_case_drafts ni se crea versión.
+// V1 de comentarios es last-write-wins: no hay OCC ni control de revisión para
+// las mutaciones del sidecar; solo el borrador conserva su OCC existente.
+async function getDraftCommentContextOwned(userId, workspaceId, draftId) {
+  const { data, error } = await supabase
+    .from('ai_case_drafts')
+    .select('id, lawyer_id, lawyer_case_id, workspace_id')
+    .eq('id', draftId)
+    .eq('lawyer_id', userId)
+    .eq('workspace_id', workspaceId)
+    .maybeSingle();
+  if (error) throw error;
+  return data || null;
+}
+
+function draftCommentLimitPayload() {
+  return {
+    error: `Un borrador admite hasta ${DRAFT_COMMENT_LIMITS.maxPerDraft} comentarios abiertos. Resuelve, descarta o elimina algunos para continuar.`,
+    code: 'AI_DRAFT_COMMENT_LIMIT_REACHED',
+  };
+}
+
+function isDraftCommentLimitError(error) {
+  return error?.code === 'P0001'
+    && String(error?.message || '').includes('AI_DRAFT_COMMENT_LIMIT_REACHED');
+}
+
+app.get('/api/ai/cases/:caseId/drafts/:draftId/comments', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
+    if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
+    const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
+    if (entitlement.res) return entitlement.res;
+    const draft = await getDraftCommentContextOwned(userId, workspace.id, req.params.draftId);
+    if (!draft) return res.status(404).json({ error: 'Borrador no encontrado.' });
+
+    const { data, error } = await supabase
+      .from('ai_case_draft_comments')
+      .select('*')
+      .eq('draft_id', draft.id)
+      .eq('lawyer_id', userId)
+      .eq('workspace_id', workspace.id)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    res.json({ comments: data || [] });
+  } catch (error) {
+    console.error('[LegalUpAI] draft comments list error:', error);
+    res.status(500).json({ error: 'No se pudieron cargar los comentarios.' });
+  }
+});
+
+app.post('/api/ai/cases/:caseId/drafts/:draftId/comments', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
+    if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
+    const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
+    if (entitlement.res) return entitlement.res;
+    const parsed = DraftCommentCreateSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Comentario inválido.', code: 'INVALID_REQUEST' });
+    }
+    const draft = await getDraftCommentContextOwned(userId, workspace.id, req.params.draftId);
+    if (!draft) return res.status(404).json({ error: 'Borrador no encontrado.' });
+
+    // Fast-path con el mismo mensaje; el trigger de la migración es la
+    // autoridad atómica ante dos POST que lean 99 abiertos a la vez.
+    const { data: existing, error: countError } = await supabase
+      .from('ai_case_draft_comments')
+      .select('id')
+      .eq('draft_id', draft.id)
+      .eq('lawyer_id', userId)
+      .eq('workspace_id', workspace.id)
+      .eq('status', 'open');
+    if (countError) throw countError;
+    if ((existing || []).length >= DRAFT_COMMENT_LIMITS.maxPerDraft) {
+      return res.status(429).json(draftCommentLimitPayload());
+    }
+
+    const now = new Date().toISOString();
+    const { data, error } = await supabase
+      .from('ai_case_draft_comments')
+      .insert({
+        draft_id: draft.id,
+        lawyer_id: userId,
+        lawyer_case_id: draft.lawyer_case_id,
+        workspace_id: workspace.id,
+        body: parsed.data.body,
+        author: parsed.data.author ?? 'lawyer',
+        status: 'open',
+        anchor: parsed.data.anchor,
+        updated_at: now,
+      })
+      .select()
+      .single();
+    if (error) {
+      if (isDraftCommentLimitError(error)) return res.status(429).json(draftCommentLimitPayload());
+      throw error;
+    }
+    res.status(201).json({ comment: data });
+  } catch (error) {
+    console.error('[LegalUpAI] draft comment create error:', error);
+    res.status(500).json({ error: 'No se pudo crear el comentario.' });
+  }
+});
+
+app.patch('/api/ai/cases/:caseId/drafts/:draftId/comments/:commentId', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
+    if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
+    const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
+    if (entitlement.res) return entitlement.res;
+    const parsed = DraftCommentUpdateSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Cambios de comentario inválidos.', code: 'INVALID_REQUEST' });
+    }
+    const draft = await getDraftCommentContextOwned(userId, workspace.id, req.params.draftId);
+    if (!draft) return res.status(404).json({ error: 'Borrador no encontrado.' });
+
+    const { data: existing, error: fetchError } = await supabase
+      .from('ai_case_draft_comments')
+      .select('id, status')
+      .eq('id', req.params.commentId)
+      .eq('draft_id', draft.id)
+      .eq('lawyer_id', userId)
+      .eq('workspace_id', workspace.id)
+      .maybeSingle();
+    if (fetchError) throw fetchError;
+    if (!existing) return res.status(404).json({ error: 'Comentario no encontrado.' });
+
+    const now = new Date().toISOString();
+    const update = { updated_at: now };
+    if (parsed.data.body !== undefined) update.body = parsed.data.body;
+    if (parsed.data.anchor !== undefined) update.anchor = parsed.data.anchor;
+    if (parsed.data.status !== undefined) {
+      update.status = parsed.data.status;
+      update.resolved_at = parsed.data.status === 'resolved' ? now : null;
+    }
+    const { data, error } = await supabase
+      .from('ai_case_draft_comments')
+      .update(update)
+      .eq('id', req.params.commentId)
+      .eq('draft_id', draft.id)
+      .eq('lawyer_id', userId)
+      .eq('workspace_id', workspace.id)
+      .select()
+      .single();
+    if (error) {
+      if (isDraftCommentLimitError(error)) return res.status(429).json(draftCommentLimitPayload());
+      throw error;
+    }
+    res.json({ comment: data });
+  } catch (error) {
+    console.error('[LegalUpAI] draft comment update error:', error);
+    res.status(500).json({ error: 'No se pudo actualizar el comentario.' });
+  }
+});
+
+app.delete('/api/ai/cases/:caseId/drafts/:draftId/comments/:commentId', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
+    if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
+    const entitlement = await requireAIEntitlement(req, res, userId, { metered: false });
+    if (entitlement.res) return entitlement.res;
+    const draft = await getDraftCommentContextOwned(userId, workspace.id, req.params.draftId);
+    if (!draft) return res.status(404).json({ error: 'Borrador no encontrado.' });
+
+    const { data: existing, error: fetchError } = await supabase
+      .from('ai_case_draft_comments')
+      .select('id')
+      .eq('id', req.params.commentId)
+      .eq('draft_id', draft.id)
+      .eq('lawyer_id', userId)
+      .eq('workspace_id', workspace.id)
+      .maybeSingle();
+    if (fetchError) throw fetchError;
+    if (!existing) return res.status(404).json({ error: 'Comentario no encontrado.' });
+
+    const { error } = await supabase
+      .from('ai_case_draft_comments')
+      .delete()
+      .eq('id', req.params.commentId)
+      .eq('draft_id', draft.id)
+      .eq('lawyer_id', userId)
+      .eq('workspace_id', workspace.id);
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('[LegalUpAI] draft comment delete error:', error);
+    res.status(500).json({ error: 'No se pudo eliminar el comentario.' });
+  }
+});
+
 // — FASE 4.62C: guardado documental con OCC y versiones append-only —
 // El revision number vive en el servidor (ai_case_drafts.revision); updated_at
 // del navegador nunca es autoritativo. Orígenes client: solo 'edit'|'autosave'
@@ -12965,6 +13232,14 @@ app.put('/api/ai/cases/:caseId/drafts/:draftId', async (req, res) => {
     if (requestedFormat !== undefined && !DRAFT_CONTENT_FORMATS.has(requestedFormat)) {
       return res.status(400).json({ error: 'Solicitud inválida.', code: 'INVALID_REQUEST' });
     }
+    const rawDocumentSettings = req.body?.document_settings;
+    let documentSettings = null;
+    if (rawDocumentSettings !== undefined) {
+      documentSettings = normalizeDraftDocumentSettings(rawDocumentSettings);
+      if (!documentSettings) {
+        return res.status(400).json({ error: 'Configuración de documento inválida.', code: 'INVALID_REQUEST' });
+      }
+    }
 
     const { data: existing, error: fetchError } = await supabase
       .from('ai_case_drafts')
@@ -13003,9 +13278,16 @@ app.put('/api/ai/cases/:caseId/drafts/:draftId', async (req, res) => {
         current_revision: Number(rebound?.revision) || currentRevision + 1,
       });
     };
+    const updatePayload = {
+      content,
+      content_format: contentFormat,
+      revision: currentRevision + 1,
+      updated_at: new Date().toISOString(),
+      ...(documentSettings ? { document_settings: documentSettings } : {}),
+    };
     const { data, error } = await supabase
       .from('ai_case_drafts')
-      .update({ content, content_format: contentFormat, revision: currentRevision + 1, updated_at: new Date().toISOString() })
+      .update(updatePayload)
       .eq('id', req.params.draftId)
       .eq('lawyer_id', userId)
       .eq('revision', currentRevision)
@@ -13614,6 +13896,20 @@ setInterval(async () => {
     console.error('[LegalUpAI] trial reminder scan error:', error);
   }
 }, TRIAL_REMINDER_SCAN_MS).unref();
+
+// FASE 4.59: drain the subscription effect outbox independently of webhook
+// traffic. Claims use FOR UPDATE SKIP LOCKED, so multiple instances are safe.
+// The opportunistic drain inside the webhook handlers stays as a fast path.
+const SUBSCRIPTION_EFFECTS_DRAIN_MS = 60 * 1000;
+setInterval(async () => {
+  try {
+    const { drainSubscriptionEffects } = await import('./server/subscriptions/subscriptionEffects.mjs');
+    const result = await drainSubscriptionEffects(supabase, subscriptionEffectHandlers, { limit: 20 });
+    if (result.processed > 0) console.log(`[SubscriptionEffects] drained ${result.processed}`);
+  } catch (error) {
+    console.error('[SubscriptionEffects] periodic drain error:', error?.message || error);
+  }
+}, SUBSCRIPTION_EFFECTS_DRAIN_MS).unref();
 
 // ============================================================================
 // ASISTENTE COMERCIAL Y DE ORIENTACIÓN (front público)

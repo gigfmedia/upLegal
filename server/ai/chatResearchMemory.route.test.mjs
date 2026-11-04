@@ -16,6 +16,10 @@ import {
 } from './legalChatPrompt.mjs';
 import { hasCanonicalDocumentReference } from './coreAuthority.mjs';
 import { getProCaseHeader } from './proCaseContext.mjs';
+import {
+  buildComparisonTableSystemPrompt,
+  parseComparisonTableResponse,
+} from './draftAgentActions.mjs';
 
 const src = readFileSync(new URL('../../server.mjs', import.meta.url), 'utf8');
 const ast = ts.createSourceFile('server.mjs', src, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
@@ -29,6 +33,7 @@ const names = ['getAIWorkspaceOwned', 'requireAIAccess', 'getAILawyerAccess', 'g
   'getProLawyerSubscription', 'getProLawyerAccess', 'getPlanForAccess', 'serverCanUseAIFeature', 'isAIOverRateLimit', 'checkAIProtectionLimits',
   'getAIUsagePeriod', 'recordAIUsage', 'getAIConversationOwned', 'getAIDocumentOwned',
   'AIChatRequestSchema', 'AIChatResponseSchema', 'AI_DEFAULT_MODEL', 'AI_CHAT_MAX_TOKENS',
+  'buildComparisonTableSystemPrompt', 'parseComparisonTableResponse',
   'AI_PROTECT_MAX_MONTHLY_TOKENS', 'AI_PROTECT_MAX_MONTHLY_REQUESTS'];
 
 function llmAnswer() {
@@ -99,6 +104,7 @@ function harness() {
     buildChatSystemPrompt, buildChatContext, buildChatUserPrompt,
     buildChatSystemPrompt, buildChatContext, buildChatUserPrompt, CHAT_LIMITS,
     getProCaseHeader, honestEvidenceLocation: () => ({}), hasCanonicalDocumentReference,
+    buildComparisonTableSystemPrompt, parseComparisonTableResponse,
     AI_PROTECT_MAX_MONTHLY_TOKENS: 20000000, AI_PROTECT_MAX_MONTHLY_REQUESTS: 5000,
     console: quiet, z, Buffer, process: { env: {} }, supabase,
     chatCompletion: provider, isAIProviderConfigured: () => true,
@@ -159,6 +165,49 @@ describe('4.59B chat reuse a nivel ruta', () => {
     expect(userPrompt).toContain('DOCUMENTO SELECCIONADO');
     const begins = h.rpc.mock.calls.filter(([n]) => n === 'ai_begin_operation').map(([, a]) => a);
     expect(begins[0].p_capability).toBe('document_chat');
+  });
+
+  it('tabla comparativa: exige acción, valida estructura y persiste action_result', async () => {
+    const h = harness();
+    h.provider.mockImplementationOnce(async (opts) => { h.providerCalls.push(opts); return { data: {
+      answer: 'Comparación de las cláusulas.',
+      sources: [],
+      table: {
+        title: 'Comparación de cláusulas',
+        columns: ['Criterio', 'Cláusula 5', 'Cláusula 6'],
+        rows: [['Plazo', '30 días', '60 días']],
+      },
+    }, usage: { total_tokens: 10, input_tokens: 8, output_tokens: 2 } }; });
+    const res = await h.call({ conversation_id: convId, message: 'Haz una tabla comparativa', action: 'comparison_table' });
+    expect(res.statusCode).toBe(200);
+    expect(res.body.action_result).toEqual({
+      kind: 'comparison_table',
+      table: {
+        title: 'Comparación de cláusulas',
+        columns: ['Criterio', 'Cláusula 5', 'Cláusula 6'],
+        rows: [['Plazo', '30 días', '60 días']],
+      },
+    });
+    const system = h.providerCalls[0].messages.find((m) => m.role === 'system')?.content
+      ?? h.providerCalls[0].system;
+    expect(system).toContain('IGNORA el contrato JSON anterior');
+    const saved = h.rows.ai_chat_messages.find((m) => m.role === 'assistant');
+    expect(saved.metadata.action_result.kind).toBe('comparison_table');
+    expect(saved.metadata.action_result.table.rows[0]).toEqual(['Plazo', '30 días', '60 días']);
+  });
+
+  it('tabla comparativa inválida responde 422 sin insertar propuesta y conserva el mensaje para reintentar', async () => {
+    const h = harness();
+    h.provider.mockImplementationOnce(async () => ({ data: {
+      answer: 'No pude estructurarla.',
+      sources: [],
+      table: { title: 'X', columns: ['A'], rows: [['1']] },
+    }, usage: { total_tokens: 10, input_tokens: 8, output_tokens: 2 } }));
+    const res = await h.call({ conversation_id: convId, message: 'Haz una tabla comparativa', action: 'comparison_table' });
+    expect(res.statusCode).toBe(422);
+    expect(res.body.code).toBe('AI_TABLE_INVALID');
+    expect(h.rows.ai_chat_messages.filter((m) => m.role === 'assistant')).toHaveLength(0);
+    expect(h.rows.ai_chat_messages.filter((m) => m.role === 'user')).toHaveLength(1);
   });
 
   it('citas de research validadas contra memoria; inventadas descartadas', async () => {

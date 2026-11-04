@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { EditorContent, useEditor } from '@tiptap/react';
+import type { Node as PMNode } from '@tiptap/pm/model';
 import StarterKit from '@tiptap/starter-kit';
 import { supabase } from '@/lib/supabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import StarterTextAlign from '@tiptap/extension-text-align';
+import { TableKit } from '@tiptap/extension-table';
 import {
   AlertTriangle,
   AlignCenter,
@@ -16,6 +18,7 @@ import {
   AlignRight,
   Bold,
   Check,
+  Columns3,
   Copy,
   FilePenLine,
   History as HistoryIcon,
@@ -25,8 +28,13 @@ import {
   Eraser,
   Minus,
   Plus,
+  Printer,
   Redo2,
+  Rows3,
+  Settings2,
   Strikethrough,
+  Table2,
+  Trash2,
   Underline,
   Undo2,
 } from 'lucide-react';
@@ -36,11 +44,30 @@ import { convertDraftMarkdownToHtml, htmlToPlainText } from '@/components/legalu
 import { AIDraftAgentPanel } from '@/components/legalup-ai/AIDraftAgentPanel';
 import { LetterPagination } from '@/components/legalup-ai/letterPagination';
 import { LetterPageOverlay } from '@/components/legalup-ai/LetterPageOverlay';
+import { DraftComments, draftCommentsPluginKey } from '@/components/legalup-ai/draftCommentsExtension';
+import { DraftCommentsPanelContainer } from '@/components/legalup-ai/DraftCommentsPanelContainer';
 import {
+  DRAFT_COMMENT_MAX_QUOTE_CHARS,
+  buildDraftCommentAnchor,
+  isSuggestionInsideAnchor,
+  resolveDraftCommentAnchor,
+  type DraftCommentAnchor,
+} from '@/components/legalup-ai/draftCommentAnchor';
+import { useDraftComments, type DraftComment } from '@/hooks/useDraftComments';
+import type { AIDraftCommentSuggestion } from '@/hooks/useAIChat';
+import {
+  DEFAULT_MARGINS_CM,
   LETTER_PAGE_WIDTH,
   createPageLayout,
+  documentSettingsFromMargins,
+  marginsFromDocumentSettings,
+  marginsKey,
+  normalizeMarginCm,
+  normalizeMarginsCm,
   stackHeight,
+  type PageMarginsCm,
 } from '@/components/legalup-ai/letterPageGeometry';
+import { printDraftDocument } from '@/components/legalup-ai/draftExport';
 
 // FASE 4.62C — workspace documental de redacción asistida.
 // Izquierda: generación (IA) + borradores anteriores + historial de versiones.
@@ -74,6 +101,7 @@ export type CaseDraft = CaseDraftListItem & {
   model: string | null;
   revision?: number;
   content_format?: string;
+  document_settings?: { margins_cm?: PageMarginsCm } | null;
 };
 
 export type CaseDraftVersionMeta = {
@@ -111,6 +139,12 @@ type DraftingAllowance = {
 };
 
 type SaveStatus = 'idle' | 'dirty' | 'saving' | 'saved' | 'error' | 'conflict';
+
+// UA-4 Fase 3: evita que dos clics rápidos (toolbar superior y pie del
+// editor) abran dos diálogos de impresión. El diálogo es modal en la mayoría
+// de navegadores; la ventana cubre el caso en que print() retorna antes de
+// que el usuario cierre el diálogo.
+const EXPORT_REENTRY_LOCK_MS = 1000;
 
 class DraftApiError extends Error {
   status: number;
@@ -196,7 +230,8 @@ export function useCaseDrafts(workspaceId: string | undefined) {
 // Config del editor para TODOS los usos: solo encabezados 1-3, sin citas,
 // código, regla horizontal ni enlaces (schema acotado). FASE UA-2 habilita
 // subrayado y tachado (ya incluidos en StarterKit 3.x) y añade alineación de
-// bloque restringida a párrafos y títulos — nunca listas.
+// bloque restringida a párrafos y títulos — nunca listas. UA-5.1 habilita
+// tablas editables con TableKit (sin redimensionado libre ni nodos extra).
 const editorExtensions = () => [
   StarterKit.configure({
     heading: { levels: [1, 2, 3] },
@@ -207,6 +242,7 @@ const editorExtensions = () => [
     link: false,
   }),
   StarterTextAlign.configure({ types: ['paragraph', 'heading'] }),
+  TableKit.configure({ table: { resizable: false } }),
 ];
 
 // FASE UA-2B — zoom de documento: 50 %–150 % en pasos de 10 %, 100 % por
@@ -265,6 +301,55 @@ function ToolbarDivider() {
   return <span className="mx-0.5 h-4 w-px shrink-0 bg-gray-300" aria-hidden="true" />;
 }
 
+/** UA-4 Fase 3 — margen individual en cm. El valor se confirma al salir del
+ *  campo (o con Enter) para no guardar números incompletos mientras se escribe. */
+function MarginInput({
+  id,
+  label,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  const [text, setText] = useState(String(value));
+  useEffect(() => setText(String(value)), [value]);
+
+  const commit = () => {
+    const normalized = normalizeMarginCm(text);
+    if (normalized === null) {
+      setText(String(value));
+      return;
+    }
+    setText(String(normalized));
+    if (normalized !== value) onChange(normalized);
+  };
+
+  return (
+    <label htmlFor={id} className="flex flex-col gap-1 text-[11px] font-medium text-gray-700">
+      <span>{label}</span>
+      <input
+        id={id}
+        data-testid={id}
+        type="number"
+        inputMode="decimal"
+        min={1}
+        max={5}
+        step={0.1}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') e.currentTarget.blur();
+        }}
+        className="h-7 w-20 rounded border border-gray-300 bg-white px-2 text-xs text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-700"
+      />
+    </label>
+  );
+}
+
 const SAVE_STATUS_LABEL: Record<SaveStatus, string> = {
   idle: '',
   dirty: 'Cambios sin guardar',
@@ -290,6 +375,7 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   const [openDraft, setOpenDraft] = useState<CaseDraft | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [saveConflict, setSaveConflict] = useState<{ current_revision: number; message: string } | null>(null);
   const [pendingSwitch, setPendingSwitch] = useState<{ targetId: string; targetTitle: string } | null>(null);
@@ -304,11 +390,28 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   // cierre/reapertura de borradores y nunca toca el HTML guardado.
   const [draftZoom, setDraftZoom] = useState(100);
 
-  // UA-4 FASE 1 — páginas carta. `pageCount` lo publica la extensión de
+  // UA-5.2 — comentarios anclados. Estado de UI separado del documento: el
+  // editor solo recibe decoraciones; nada de esto entra en el HTML ni en OCC.
+  const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
+  const [reanchorTargetId, setReanchorTargetId] = useState<string | null>(null);
+  const [reanchorError, setReanchorError] = useState<string | null>(null);
+  const [commentActionError, setCommentActionError] = useState<string | null>(null);
+  const {
+    comments,
+    isLoading: commentsLoading,
+    error: commentsQueryError,
+    createComment,
+    updateComment,
+    deleteComment,
+  } = useDraftComments(workspaceId, openId ?? undefined);
+
+  // UA-4 FASE 1/3 — páginas carta. `pageCount` lo publica la extensión de
   // paginación tras medir el documento; el overlay de React solo dibuja los
   // fondos y los pies (nunca forman parte del HTML persistido).
   const [pageCount, setPageCount] = useState(1);
-  const pageLayout = useMemo(() => createPageLayout(), []);
+  const [marginsCm, setMarginsCm] = useState<PageMarginsCm>({ ...DEFAULT_MARGINS_CM });
+  const [showMarginControls, setShowMarginControls] = useState(false);
+  const pageLayout = useMemo(() => createPageLayout(marginsCm), [marginsCm]);
   const handlePageCount = useCallback((count: number) => {
     setPageCount((prev) => (prev === count ? prev : count));
   }, []);
@@ -338,6 +441,9 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
     [],
   );
   useEffect(() => () => { zoomMeasureDetach.current?.(); zoomMeasureDetach.current = null; }, []);
+  useEffect(() => () => {
+    if (exportLockTimerRef.current) window.clearTimeout(exportLockTimerRef.current);
+  }, []);
   const zoomRatio = draftZoom / 100;
   const zoomOverflow = zoomMeasure
     ? Math.min(LETTER_PAGE_WIDTH, zoomMeasure.w) * zoomRatio > zoomMeasure.w
@@ -348,8 +454,17 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   const tokenRef = useRef<string | null>(null);
   const openRevisionRef = useRef(1);
   const lastSavedHtmlRef = useRef('');
+  // UA-4 Fase 3: los settings también participan del autosave. La ref permite
+  // que callbacks estables (runSave/flush) lean el valor más reciente.
+  const marginsRef = useRef<PageMarginsCm>(marginsCm);
+  const lastSavedSettingsKeyRef = useRef(marginsKey(DEFAULT_MARGINS_CM));
+  const pageLayoutRef = useRef(pageLayout);
+  marginsRef.current = marginsCm;
+  pageLayoutRef.current = pageLayout;
   const openIdRef = useRef<string | null>(null);
   const statusRef = useRef<SaveStatus>('idle');
+  const exportingRef = useRef(false);
+  const exportLockTimerRef = useRef<number | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restoringRef = useRef(false);
   // Serialización de escrituras: un PUT activo por borrador, promesa compartida
@@ -362,7 +477,7 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   // emergencia si TipTap ya destruyó el editor al desmontar) y llave de
   // deduplicación del flush de emergencia (borrador + contenido + revisión).
   const liveHtmlRef = useRef<string | null>(null);
-  const emergencyFlushSentRef = useRef<{ draftId: string; html: string; revision: number } | null>(null);
+  const emergencyFlushSentRef = useRef<{ draftId: string; html: string; settingsKey: string; revision: number } | null>(null);
 
   const setStatus = useCallback((next: SaveStatus) => {
     statusRef.current = next;
@@ -391,12 +506,14 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
     const current = editorRef.current;
     const liveHtml = current && !current.isDestroyed ? current.getHTML() : liveHtmlRef.current;
     if (!liveHtml) return;
-    const pendingNew = liveHtml !== lastSavedHtmlRef.current;
+    const settings = documentSettingsFromMargins(marginsRef.current);
+    const settingsKey = marginsKey(marginsRef.current);
+    const pendingNew = liveHtml !== lastSavedHtmlRef.current || settingsKey !== lastSavedSettingsKeyRef.current;
     if (st !== 'dirty' && st !== 'error' && !(st === 'saved' && pendingNew)) return;
     const revision = openRevisionRef.current;
     const sent = emergencyFlushSentRef.current;
-    if (sent && sent.draftId === draftId && sent.html === liveHtml && sent.revision === revision) return;
-    emergencyFlushSentRef.current = { draftId, html: liveHtml, revision };
+    if (sent && sent.draftId === draftId && sent.html === liveHtml && sent.settingsKey === settingsKey && sent.revision === revision) return;
+    emergencyFlushSentRef.current = { draftId, html: liveHtml, settingsKey, revision };
     void fetch(`${getApiBaseUrl()}/api/ai/cases/${workspaceId}/drafts/${draftId}`, {
       method: 'PUT',
       keepalive: true,
@@ -409,6 +526,7 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
         content_format: 'html',
         origin: 'autosave',
         base_revision: revision,
+        document_settings: settings,
       }),
     }).catch(() => { /* best-effort */ });
   }, [workspaceId]);
@@ -416,6 +534,10 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
   const setEditorFromDraft = useCallback((draft: CaseDraft) => {
     const html = draftContentToEditorHtml(draft);
     lastSavedHtmlRef.current = html;
+    const nextMargins = marginsFromDocumentSettings(draft.document_settings);
+    marginsRef.current = nextMargins;
+    lastSavedSettingsKeyRef.current = marginsKey(nextMargins);
+    setMarginsCm(nextMargins);
     // FASE 4.62D.35: el fallback de emergencia arranca con el contenido del
     // borrador recién abierto (válido aunque el editor muera antes).
     liveHtmlRef.current = html;
@@ -463,6 +585,10 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
     setPendingClose(false);
     setPreviewVersion(null);
     setDetailError(null);
+    setActiveCommentId(null);
+    setReanchorTargetId(null);
+    setReanchorError(null);
+    setCommentActionError(null);
     setSaveConflict(null);
     if (debounceRef.current) { clearTimeout(debounceRef.current); debounceRef.current = null; }
     try {
@@ -503,7 +629,12 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
       // la revisión ya actualizada (trailing save). Nunca dos PUT con la misma
       // base_revision por una carrera intra-pestaña.
       if (saveInFlightRef.current) {
-        if (editor.getHTML() !== lastSavedHtmlRef.current) savePendingRef.current = true;
+        if (
+          editor.getHTML() !== lastSavedHtmlRef.current
+          || marginsKey(marginsRef.current) !== lastSavedSettingsKeyRef.current
+        ) {
+          savePendingRef.current = true;
+        }
         const inFlight = saveInFlightPromiseRef.current;
         if (inFlight) {
           try { await inFlight; } catch { /* el estado ya lo estableció el catch interno */ }
@@ -511,7 +642,14 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
         }
         const fresh = editorRef.current;
         const freshHtml = fresh && !fresh.isDestroyed ? fresh.getHTML() : null;
-        if (freshHtml === null || (!config.force && freshHtml === lastSavedHtmlRef.current)) {
+        if (
+          freshHtml === null
+          || (
+            !config.force
+            && freshHtml === lastSavedHtmlRef.current
+            && marginsKey(marginsRef.current) === lastSavedSettingsKeyRef.current
+          )
+        ) {
           // Contenido ya confirmado por el servidor: el estado 'saved' es
           // real aunque un PUT redundante (edición revertida) siga en vuelo.
           if (statusRef.current !== 'conflict') setStatus('saved');
@@ -531,7 +669,13 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
       // FASE 4.62D.35: el PUT normal también es la vía más fiable: registra el
       // HTML vivo si el editor muere a continuación.
       liveHtmlRef.current = html;
-      if (!config.force && html === lastSavedHtmlRef.current) {
+      const settings = documentSettingsFromMargins(marginsRef.current);
+      const settingsKey = marginsKey(marginsRef.current);
+      if (
+        !config.force
+        && html === lastSavedHtmlRef.current
+        && settingsKey === lastSavedSettingsKeyRef.current
+      ) {
         setSaveConflict(null);
         savePendingRef.current = false;
         if (statusRef.current === 'saving' || statusRef.current === 'dirty') setStatus('saved');
@@ -551,6 +695,7 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                 origin: config.origin,
                 base_revision: openRevisionRef.current,
                 force: config.force === true,
+                document_settings: settings,
               }),
             }
           );
@@ -558,13 +703,20 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
           // Revisión monotónica: una respuesta tardía nunca degrada la base OCC.
           openRevisionRef.current = Math.max(openRevisionRef.current, Number(body?.draft?.revision) || openRevisionRef.current + 1);
           lastSavedHtmlRef.current = html;
+          lastSavedSettingsKeyRef.current = settingsKey;
           // FASE 4.62D.35: el servidor confirmó este contenido; libera la
           // deduplicación del flush de emergencia (una nueva salida re-evalúa
           // desde cero, y 'saved' con HTML confirmado no la necesita).
           emergencyFlushSentRef.current = null;
           setSaveConflict(null);
           setStatus('saved');
-          setOpenDraft((prev) => (prev && prev.id === id ? { ...prev, content: html, content_format: 'html', revision: body?.draft?.revision } : prev));
+          setOpenDraft((prev) => (prev && prev.id === id ? {
+            ...prev,
+            content: html,
+            content_format: 'html',
+            revision: body?.draft?.revision,
+            document_settings: body?.draft?.document_settings ?? settings,
+          } : prev));
           void queryClient.invalidateQueries({ queryKey: [...AI_CASE_DRAFTS_QUERY_KEY, workspaceId, id, 'versions'] });
           void queryClient.invalidateQueries({ queryKey: [...AI_CASE_DRAFTS_QUERY_KEY, workspaceId] });
         } catch (e) {
@@ -572,7 +724,10 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
           if (e instanceof DraftApiError && e.code === AI_DRAFT_REVISION_CONFLICT) {
             // Conflicto trivial: el contenido local YA es la cabeza (carrera de
             // guardados idénticos). Recarga silenciosa, sin panel de conflicto.
-            if (editorRef.current?.getHTML() === lastSavedHtmlRef.current) {
+            if (
+              editorRef.current?.getHTML() === lastSavedHtmlRef.current
+              && marginsKey(marginsRef.current) === lastSavedSettingsKeyRef.current
+            ) {
               void openDraftById(id, { force: true });
               return;
             }
@@ -595,7 +750,14 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
           if (openIdRef.current === id && savePendingRef.current && statusRef.current === 'saved') {
             savePendingRef.current = false;
             const trailing = editorRef.current;
-            if (trailing && !trailing.isDestroyed && trailing.getHTML() !== lastSavedHtmlRef.current) {
+            if (
+              trailing
+              && !trailing.isDestroyed
+              && (
+                trailing.getHTML() !== lastSavedHtmlRef.current
+                || marginsKey(marginsRef.current) !== lastSavedSettingsKeyRef.current
+              )
+            ) {
               void runSave({ origin: 'autosave' });
             }
           }
@@ -613,7 +775,12 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
     if (liveEd && !liveEd.isDestroyed) liveHtmlRef.current = liveEd.getHTML();
     if (statusRef.current === 'conflict') {
       // En conflicto no se escribe más: el usuario resuelve que prevalece.
-      if (editorRef.current?.getHTML() !== lastSavedHtmlRef.current) setStatus('dirty');
+      if (
+        editorRef.current?.getHTML() !== lastSavedHtmlRef.current
+        || marginsKey(marginsRef.current) !== lastSavedSettingsKeyRef.current
+      ) {
+        setStatus('dirty');
+      }
       return;
     }
     setStatus('dirty');
@@ -624,11 +791,34 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
     }, 800);
   }, [runSave, setStatus]);
 
+  /** UA-4 Fase 3 — aplica y persiste márgenes sin recrear el editor. */
+  const applyMargins = useCallback((next: PageMarginsCm) => {
+    const normalized = normalizeMarginsCm(next);
+    if (!normalized) return;
+    if (marginsKey(normalized) === marginsKey(marginsRef.current)) return;
+    marginsRef.current = normalized;
+    setMarginsCm(normalized);
+    scheduleSave();
+  }, [scheduleSave]);
+
+  const updateMargin = useCallback((key: keyof PageMarginsCm, value: number) => {
+    applyMargins({ ...marginsRef.current, [key]: value });
+  }, [applyMargins]);
+
   const extensions = useMemo(
     () => [
       ...editorExtensions(),
       // UA-4 — paginación de presentación sobre el MISMO documento.
-      LetterPagination.configure({ layout: pageLayout, onPageCount: handlePageCount }),
+      // getLayout permite que un cambio de márgenes se refleje sin recrear
+      // la instancia de TipTap (y sin perder selección/undo).
+      LetterPagination.configure({
+        layout: pageLayout,
+        getLayout: () => pageLayoutRef.current,
+        onPageCount: handlePageCount,
+      }),
+      // UA-5.2 — decoraciones de comentarios SOLO en el editor principal.
+      // `editorExtensions()` (previews de versiones) nunca las incluye.
+      DraftComments,
     ],
     [pageLayout, handlePageCount],
   );
@@ -967,6 +1157,34 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
     }
   };
 
+  const exportDraft = () => {
+    if (exportingRef.current || !openDraft) return;
+    const current = editorRef.current;
+    const html = current && !current.isDestroyed ? current.getHTML() : draftContentToEditorHtml(openDraft);
+    if (!htmlToPlainText(html).trim()) {
+      setError('El borrador está vacío: no hay contenido para exportar.');
+      return;
+    }
+    exportingRef.current = true;
+    setExporting(true);
+    const opened = printDraftDocument({
+      title: openDraft.title,
+      html,
+      marginsCm: marginsRef.current,
+    });
+    if (!opened) {
+      exportingRef.current = false;
+      setExporting(false);
+      setError('No se pudo abrir la vista de exportación en este navegador.');
+      return;
+    }
+    exportLockTimerRef.current = window.setTimeout(() => {
+      exportingRef.current = false;
+      exportLockTimerRef.current = null;
+      setExporting(false);
+    }, EXPORT_REENTRY_LOCK_MS);
+  };
+
   const closeDraft = (opts?: { force?: boolean }) => {
     // FASE 4.62D.34: el cierre también contiene la única copia local cuando
     // hay texto sin confirmar (dirty), un PUT en vuelo (saving), un guardado
@@ -993,6 +1211,7 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
         || statusRef.current === 'error'
         || statusRef.current === 'conflict'
         || (liveHtml !== null && liveHtml !== lastSavedHtmlRef.current)
+        || marginsKey(marginsRef.current) !== lastSavedSettingsKeyRef.current
       )
     ) {
       setPendingClose(true);
@@ -1004,6 +1223,10 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
     setOpenId(null);
     setOpenDraft(null);
     setPreviewVersion(null);
+    setActiveCommentId(null);
+    setReanchorTargetId(null);
+    setReanchorError(null);
+    setCommentActionError(null);
     setStatus('idle');
     setSaveConflict(null);
     setPendingSwitch(null);
@@ -1044,6 +1267,140 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
       return null;
     }
   }, []);
+
+  // UA-5.2 — sincroniza decoraciones al cambiar comentarios o documento.
+  // El plugin solo dibuja; el HTML persistido y el undo no cambian.
+  useEffect(() => {
+    if (!editor || editor.isDestroyed) return;
+    try {
+      editor.view.dispatch(
+        editor.state.tr
+          .setMeta(draftCommentsPluginKey, comments)
+          .setMeta('addToHistory', false)
+      );
+    } catch {
+      // Editores simulados en tests o instancia ya destruida: sin efecto.
+    }
+  }, [editor, comments]);
+
+  // Ancla de la selección real para «Comentar selección»: solo un textblock.
+  const getSelectionAnchorForComment = useCallback((): { anchor: DraftCommentAnchor | null; error: string | null } => {
+    const ed = editorRef.current;
+    if (!ed || ed.isDestroyed) return { anchor: null, error: 'El editor no está disponible.' };
+    try {
+      const state = (ed as unknown as {
+        state?: { selection?: { from: number; to: number; empty: boolean }; doc?: PMNode };
+      }).state;
+      const sel = state?.selection;
+      const doc = state?.doc;
+      if (!sel || !doc || sel.empty) {
+        return { anchor: null, error: 'Selecciona el texto que quieres comentar.' };
+      }
+      const built = buildDraftCommentAnchor(doc, sel.from, sel.to);
+      if (built.ok) return { anchor: built.anchor, error: null };
+      const buildError = 'error' in built ? built.error : null;
+      if (buildError === 'cross_block') {
+        return { anchor: null, error: 'Selecciona texto dentro de un solo párrafo o celda. No se admiten selecciones entre bloques.' };
+      }
+      if (buildError === 'too_long') {
+        return { anchor: null, error: `La selección es demasiado larga. El máximo es ${DRAFT_COMMENT_MAX_QUOTE_CHARS} caracteres por comentario.` };
+      }
+      return { anchor: null, error: 'La selección no contiene texto comentable.' };
+    } catch {
+      return { anchor: null, error: 'No se pudo leer la selección del editor.' };
+    }
+  }, []);
+
+  const setCommentError = useCallback((err: unknown) => {
+    setCommentActionError(err instanceof Error ? err.message : 'No se pudo actualizar el comentario.');
+  }, []);
+
+  const navigateToComment = useCallback((comment: DraftComment) => {
+    const ed = editorRef.current;
+    if (!ed || ed.isDestroyed) return;
+    try {
+      const resolution = resolveDraftCommentAnchor(ed.state.doc, comment.anchor);
+      if (resolution.status !== 'anchored') {
+        setCommentActionError('El comentario no está anclado al texto actual. Puedes reanclarlo manualmente.');
+        return;
+      }
+      ed.chain().focus().setTextSelection({ from: resolution.from, to: resolution.to }).scrollIntoView().run();
+      setActiveCommentId(comment.id);
+      setCommentActionError(null);
+    } catch {
+      setCommentActionError('No se pudo navegar al fragmento comentado.');
+    }
+  }, []);
+
+  const resolveComment = useCallback(async (comment: DraftComment) => {
+    setCommentActionError(null);
+    try {
+      await updateComment({ id: comment.id, changes: { status: 'resolved' } });
+    } catch (err) { setCommentError(err); }
+  }, [updateComment, setCommentError]);
+
+  const reopenComment = useCallback(async (comment: DraftComment) => {
+    setCommentActionError(null);
+    try {
+      await updateComment({ id: comment.id, changes: { status: 'open' } });
+    } catch (err) { setCommentError(err); }
+  }, [updateComment, setCommentError]);
+
+  const dismissComment = useCallback(async (comment: DraftComment) => {
+    setCommentActionError(null);
+    try {
+      await updateComment({ id: comment.id, changes: { status: 'dismissed' } });
+    } catch (err) { setCommentError(err); }
+  }, [updateComment, setCommentError]);
+
+  const removeComment = useCallback(async (comment: DraftComment) => {
+    setCommentActionError(null);
+    try {
+      await deleteComment(comment.id);
+      if (activeCommentId === comment.id) setActiveCommentId(null);
+    } catch (err) { setCommentError(err); }
+  }, [deleteComment, activeCommentId, setCommentError]);
+
+  const confirmReanchor = useCallback(async () => {
+    if (!reanchorTargetId) return;
+    const selection = getSelectionAnchorForComment();
+    if (!selection.anchor) {
+      setReanchorError(selection.error);
+      return;
+    }
+    try {
+      await updateComment({ id: reanchorTargetId, changes: { anchor: selection.anchor } });
+      setReanchorTargetId(null);
+      setReanchorError(null);
+      setCommentActionError(null);
+    } catch (err) {
+      setReanchorError(err instanceof Error ? err.message : 'No se pudo reanclar el comentario.');
+    }
+  }, [reanchorTargetId, getSelectionAnchorForComment, updateComment]);
+
+  const addCommentFromSuggestion = useCallback(async (
+    suggestion: AIDraftCommentSuggestion,
+    anchor: DraftCommentAnchor,
+  ) => {
+    const ed = editorRef.current;
+    if (!ed || ed.isDestroyed) throw new Error('El editor no está disponible.');
+    if (anchor.quote.length > DRAFT_COMMENT_MAX_QUOTE_CHARS) {
+      throw new Error(`La selección es demasiado larga. El máximo es ${DRAFT_COMMENT_MAX_QUOTE_CHARS} caracteres por comentario.`);
+    }
+    if (!isSuggestionInsideAnchor(anchor.quote, suggestion.quote)) {
+      throw new Error('La sugerencia no coincide con la selección original. Vuelve a comentar la selección.');
+    }
+    const resolution = resolveDraftCommentAnchor(ed.state.doc, anchor);
+    if (resolution.status !== 'anchored') {
+      throw new Error('El fragmento seleccionado cambió. Selecciona de nuevo el texto antes de aceptar el comentario.');
+    }
+    const rebuilt = buildDraftCommentAnchor(ed.state.doc, resolution.from, resolution.to);
+    if (!rebuilt.ok) {
+      throw new Error('El fragmento seleccionado ya no es válido para comentar.');
+    }
+    await createComment({ body: suggestion.comment, anchor: rebuilt.anchor, author: 'ai' });
+    setCommentActionError(null);
+  }, [createComment]);
 
 
   // FASE UA-2 — toolbar profesional: estilo de párrafo/título por select,
@@ -1274,7 +1631,7 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                 <>
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="font-medium text-sm">{openDraft.title}</p>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center justify-end gap-2">
                       <span
                         data-testid="save-status"
                         aria-live="polite"
@@ -1282,7 +1639,11 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                       >
                         {SAVE_STATUS_LABEL[saveStatus]}
                       </span>
-                      <Button size="sm" variant="outline" onClick={closeDraft}>Cerrar</Button>
+                      <Button size="sm" variant="outline" onClick={exportDraft} disabled={exporting}>
+                        <Printer className="h-4 w-4 mr-1" />
+                        Exportar PDF
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => closeDraft()}>Cerrar</Button>
                     </div>
                   </div>
 
@@ -1431,68 +1792,129 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                       stack de páginas carta (816 × 1056 px, márgenes de
                       2,5 cm) con pies numerados; el contenido sigue siendo un
                       único documento y los cortes son solo presentación. */}
-                  <div data-testid="draft-canvas" className="rounded-lg border bg-muted/50 overflow-hidden">
-                    <div role="toolbar" aria-label="Formato del borrador" data-testid="draft-toolbar" className="flex flex-wrap items-center justify-center gap-0.5 border-b bg-card px-3 py-1.5">
-                      {toolbarButton('Deshacer', Undo2, () => chainFocus()?.undo().run(), false, !editor?.can().undo())}
-                      {toolbarButton('Rehacer', Redo2, () => chainFocus()?.redo().run(), false, !editor?.can().redo())}
-                      <ToolbarDivider />
-                      <div role="group" aria-label="Zoom del documento" className="flex items-center gap-0.5">
+                  <div data-testid="draft-canvas" className="rounded-lg border bg-muted/50">
+                    {/* Toolbar + panel de márgenes comparten un único bloque
+                        sticky respecto del scroll del documento: al abrir los
+                        márgenes, el box completo permanece visible. top =
+                        header fijo (4rem) + tabs sticky del caso (~2.75rem);
+                        z-30 lo deja sobre las tabs (z-10) y bajo el header
+                        (z-50), sin interferir con diálogos/popovers. En móvil
+                        la toolbar no envuelve en varias filas: una sola fila
+                        con scroll horizontal para no consumir altura. */}
+                    <div data-testid="draft-toolbar-sticky" className="sticky top-[6.75rem] z-30 bg-card rounded-t-lg">
+                      <div role="toolbar" aria-label="Formato del borrador" data-testid="draft-toolbar" className="flex flex-nowrap items-center justify-start gap-0.5 overflow-x-auto rounded-t-lg border-b bg-card px-3 py-1.5 scrollbar-hide sm:flex-wrap sm:justify-center sm:overflow-visible">
+                        {toolbarButton('Deshacer', Undo2, () => chainFocus()?.undo().run(), false, !editor?.can().undo())}
+                        {toolbarButton('Rehacer', Redo2, () => chainFocus()?.redo().run(), false, !editor?.can().redo())}
+                        <ToolbarDivider />
+                        <div role="group" aria-label="Zoom del documento" className="flex items-center gap-0.5">
+                          <button
+                            type="button"
+                            title="Reducir zoom"
+                            aria-label="Reducir zoom"
+                            disabled={draftZoom <= ZOOM_MIN}
+                            onClick={() => applyZoom(draftZoom - 10)}
+                            className="rounded p-1.5 text-gray-800 hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-700 disabled:opacity-50"
+                          >
+                            <Minus className="h-4 w-4" aria-hidden="true" />
+                            <span className="sr-only">Reducir zoom</span>
+                          </button>
+                          <span aria-live="polite" className="min-w-[44px] px-0.5 text-center text-xs leading-4 text-gray-800">{draftZoom} %</span>
+                          <button
+                            type="button"
+                            title="Aumentar zoom"
+                            aria-label="Aumentar zoom"
+                            disabled={draftZoom >= ZOOM_MAX}
+                            onClick={() => applyZoom(draftZoom + 10)}
+                            className="rounded p-1.5 text-gray-800 hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-700 disabled:opacity-50"
+                          >
+                            <Plus className="h-4 w-4" aria-hidden="true" />
+                            <span className="sr-only">Aumentar zoom</span>
+                          </button>
+                        </div>
+                        <ToolbarDivider />
                         <button
                           type="button"
-                          title="Reducir zoom"
-                          aria-label="Reducir zoom"
-                          disabled={draftZoom <= ZOOM_MIN}
-                          onClick={() => applyZoom(draftZoom - 10)}
-                          className="rounded p-1.5 text-gray-800 hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-700 disabled:opacity-50"
+                          title="Márgenes"
+                          aria-label="Márgenes"
+                          aria-expanded={showMarginControls}
+                          aria-controls="draft-margin-controls"
+                          onClick={() => setShowMarginControls((prev) => !prev)}
+                          className={`flex items-center gap-1 rounded px-1.5 py-1.5 text-gray-800 hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-700 ${showMarginControls ? 'text-green-700' : ''}`}
                         >
-                          <Minus className="h-4 w-4" aria-hidden="true" />
-                          <span className="sr-only">Reducir zoom</span>
+                          <Settings2 className="h-4 w-4" aria-hidden="true" />
+                          <span className="text-xs leading-4">Márgenes</span>
                         </button>
-                        <span aria-live="polite" className="min-w-[44px] px-0.5 text-center text-xs leading-4 text-gray-800">{draftZoom} %</span>
-                        <button
-                          type="button"
-                          title="Aumentar zoom"
-                          aria-label="Aumentar zoom"
-                          disabled={draftZoom >= ZOOM_MAX}
-                          onClick={() => applyZoom(draftZoom + 10)}
-                          className="rounded p-1.5 text-gray-800 hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-700 disabled:opacity-50"
+                        <ToolbarDivider />
+                        <label htmlFor="draft-block-style" className="sr-only">Estilo de párrafo o título</label>
+                        <select
+                          id="draft-block-style"
+                          aria-label="Estilo de párrafo o título"
+                          disabled={!editor || editor.isDestroyed}
+                          value={blockStyleValue}
+                          onChange={(e) => applyBlockStyle(e.target.value as 'p' | 'h1' | 'h2' | 'h3')}
+                          className="rounded bg-transparent px-1.5 py-1 text-xs text-gray-800 leading-4 hover:bg-gray-100 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-700"
                         >
-                          <Plus className="h-4 w-4" aria-hidden="true" />
-                          <span className="sr-only">Aumentar zoom</span>
-                        </button>
+                          <option value="p">Párrafo</option>
+                          <option value="h1">Título 1</option>
+                          <option value="h2">Título 2</option>
+                          <option value="h3">Título 3</option>
+                        </select>
+                        <ToolbarDivider />
+                        {toolbarButton('Lista con viñetas', List, () => chainFocus()?.toggleBulletList().run(), !!editor?.isActive('bulletList'))}
+                        {toolbarButton('Lista numerada', ListOrdered, () => chainFocus()?.toggleOrderedList().run(), !!editor?.isActive('orderedList'))}
+                        <ToolbarDivider />
+                        {toolbarButton(
+                          'Insertar tabla 2×2',
+                          Table2,
+                          () => chainFocus()?.insertTable({ rows: 2, cols: 2, withHeaderRow: true }).run(),
+                          false,
+                          !editor?.can().insertTable({ rows: 2, cols: 2, withHeaderRow: true })
+                        )}
+                        {editor?.isActive('table') ? (
+                          <>
+                            {toolbarButton('Añadir fila', Rows3, () => chainFocus()?.addRowAfter().run(), false, !editor?.can().addRowAfter())}
+                            {toolbarButton('Eliminar fila', Trash2, () => chainFocus()?.deleteRow().run(), false, !editor?.can().deleteRow())}
+                            {toolbarButton('Añadir columna', Columns3, () => chainFocus()?.addColumnAfter().run(), false, !editor?.can().addColumnAfter())}
+                            {toolbarButton('Eliminar columna', Trash2, () => chainFocus()?.deleteColumn().run(), false, !editor?.can().deleteColumn())}
+                            {toolbarButton('Eliminar tabla', Trash2, () => chainFocus()?.deleteTable().run(), false, !editor?.can().deleteTable())}
+                          </>
+                        ) : null}
+                        <ToolbarDivider />
+                        {toolbarButton('Negrita', Bold, () => chainFocus()?.toggleBold().run(), !!editor?.isActive('bold'))}
+                        {toolbarButton('Cursiva', Italic, () => chainFocus()?.toggleItalic().run(), !!editor?.isActive('italic'))}
+                        {toolbarButton('Tachado', Strikethrough, () => chainFocus()?.toggleStrike().run(), !!editor?.isActive('strike'))}
+                        {toolbarButton('Subrayado', Underline, () => chainFocus()?.toggleUnderline().run(), !!editor?.isActive('underline'))}
+                        <ToolbarDivider />
+                        {toolbarButton('Alinear a la izquierda', AlignLeft, () => applyTextAlign('left'), activeAlign === 'left')}
+                        {toolbarButton('Centrar', AlignCenter, () => applyTextAlign('center'), activeAlign === 'center')}
+                        {toolbarButton('Alinear a la derecha', AlignRight, () => applyTextAlign('right'), activeAlign === 'right')}
+                        {toolbarButton('Justificar', AlignJustify, () => applyTextAlign('justify'), activeAlign === 'justify')}
+                        <ToolbarDivider />
+                        {toolbarButton('Limpiar formato', Eraser, () => chainFocus()?.unsetAllMarks().clearNodes().run(), false)}
                       </div>
-                      <ToolbarDivider />
-                      <label htmlFor="draft-block-style" className="sr-only">Estilo de párrafo o título</label>
-                      <select
-                        id="draft-block-style"
-                        aria-label="Estilo de párrafo o título"
-                        disabled={!editor || editor.isDestroyed}
-                        value={blockStyleValue}
-                        onChange={(e) => applyBlockStyle(e.target.value as 'p' | 'h1' | 'h2' | 'h3')}
-                        className="rounded bg-transparent px-1.5 py-1 text-xs text-gray-800 leading-4 hover:bg-gray-100 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-700"
-                      >
-                        <option value="p">Párrafo</option>
-                        <option value="h1">Título 1</option>
-                        <option value="h2">Título 2</option>
-                        <option value="h3">Título 3</option>
-                      </select>
-                      <ToolbarDivider />
-                      {toolbarButton('Lista con viñetas', List, () => chainFocus()?.toggleBulletList().run(), !!editor?.isActive('bulletList'))}
-                      {toolbarButton('Lista numerada', ListOrdered, () => chainFocus()?.toggleOrderedList().run(), !!editor?.isActive('orderedList'))}
-                      <ToolbarDivider />
-                      {toolbarButton('Negrita', Bold, () => chainFocus()?.toggleBold().run(), !!editor?.isActive('bold'))}
-                      {toolbarButton('Cursiva', Italic, () => chainFocus()?.toggleItalic().run(), !!editor?.isActive('italic'))}
-                      {toolbarButton('Tachado', Strikethrough, () => chainFocus()?.toggleStrike().run(), !!editor?.isActive('strike'))}
-                      {toolbarButton('Subrayado', Underline, () => chainFocus()?.toggleUnderline().run(), !!editor?.isActive('underline'))}
-                      <ToolbarDivider />
-                      {toolbarButton('Alinear a la izquierda', AlignLeft, () => applyTextAlign('left'), activeAlign === 'left')}
-                      {toolbarButton('Centrar', AlignCenter, () => applyTextAlign('center'), activeAlign === 'center')}
-                      {toolbarButton('Alinear a la derecha', AlignRight, () => applyTextAlign('right'), activeAlign === 'right')}
-                      {toolbarButton('Justificar', AlignJustify, () => applyTextAlign('justify'), activeAlign === 'justify')}
-                      <ToolbarDivider />
-                      {toolbarButton('Limpiar formato', Eraser, () => chainFocus()?.unsetAllMarks().clearNodes().run(), false)}
+                      {showMarginControls ? (
+                        <div id="draft-margin-controls" data-testid="draft-margin-controls" className="border-b bg-card px-3 py-2">
+                          <div className="flex flex-wrap items-end justify-center gap-3">
+                            <MarginInput id="draft-margin-top" label="Superior" value={marginsCm.top} onChange={(value) => updateMargin('top', value)} />
+                            <MarginInput id="draft-margin-right" label="Derecho" value={marginsCm.right} onChange={(value) => updateMargin('right', value)} />
+                            <MarginInput id="draft-margin-bottom" label="Inferior" value={marginsCm.bottom} onChange={(value) => updateMargin('bottom', value)} />
+                            <MarginInput id="draft-margin-left" label="Izquierdo" value={marginsCm.left} onChange={(value) => updateMargin('left', value)} />
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => applyMargins({ ...DEFAULT_MARGINS_CM })}
+                              className="h-7 text-xs"
+                            >
+                              Restablecer
+                            </Button>
+                          </div>
+                          <p className="mt-1 text-center text-[11px] text-muted-foreground">
+                            Entre 1 y 5 cm, en pasos de 0,1 cm. Se guardan con el borrador.
+                          </p>
+                        </div>
+                      ) : null}
                     </div>
-                    <div className="p-2 sm:p-4 md:p-6 overflow-x-auto">
+                    <div className="rounded-b-lg p-2 sm:p-4 md:p-6 overflow-x-auto">
                       {/* Reserva vertical = altura natural medida x zoom;
                           el contenido transformado llena esa caja a la vista. */}
                       <div style={zoomReserveHeight ? { height: zoomReserveHeight } : undefined}>
@@ -1545,6 +1967,8 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                                   return ed && !ed.isDestroyed ? ed.getHTML() : null;
                                 }}
                                 getSelectionText={getEditorSelectionText}
+                                getSelectionAnchor={getSelectionAnchorForComment}
+                                onAddComment={addCommentFromSuggestion}
                                 onInsertProposal={insertProposalHtml}
                               />
                             ) : null}
@@ -1554,10 +1978,40 @@ export function AICaseDrafts({ workspaceId }: { workspaceId: string }) {
                     </div>
                   </div>
 
+                  {openDraft ? (
+                    <DraftCommentsPanelContainer
+                      editor={editor}
+                      comments={comments}
+                      isLoading={commentsLoading}
+                      error={commentActionError ?? (commentsQueryError instanceof Error ? commentsQueryError.message : null)}
+                      activeCommentId={activeCommentId}
+                      reanchorTargetId={reanchorTargetId}
+                      reanchorError={reanchorError}
+                      onNavigate={navigateToComment}
+                      onResolve={(comment) => { void resolveComment(comment); }}
+                      onReopen={(comment) => { void reopenComment(comment); }}
+                      onDismiss={(comment) => { void dismissComment(comment); }}
+                      onDelete={(comment) => { void removeComment(comment); }}
+                      onStartReanchor={(comment) => {
+                        setReanchorTargetId(comment.id);
+                        setReanchorError(null);
+                      }}
+                      onConfirmReanchor={() => { void confirmReanchor(); }}
+                      onCancelReanchor={() => {
+                        setReanchorTargetId(null);
+                        setReanchorError(null);
+                      }}
+                    />
+                  ) : null}
+
                   <div className="flex flex-wrap gap-2">
                     <Button size="sm" variant="outline" onClick={copyContent}>
                       {copied ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
                       {copied ? 'Copiado' : 'Copiar'}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={exportDraft} disabled={exporting}>
+                      <Printer className="h-4 w-4 mr-1" />
+                      Exportar PDF
                     </Button>
                     <Button
                       size="sm"
