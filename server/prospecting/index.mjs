@@ -55,8 +55,17 @@ export function createProspectingModule({
     try {
       const overview = await engine.getOverview();
       const data = sanitizeOverview(overview);
+      
+      // Diagnostic: log which search provider keys are present (without values)
+      const searchKeys = {
+        serper: Boolean(env.SERPER_API_KEY && env.SERPER_API_KEY.trim().length > 0),
+        brave: Boolean(env.BRAVE_SEARCH_API_KEY && env.BRAVE_SEARCH_API_KEY.trim().length > 0),
+        google_cse: Boolean(env.GOOGLE_CSE_API_KEY && env.GOOGLE_CSE_API_KEY.trim().length > 0 && env.GOOGLE_CSE_CX && env.GOOGLE_CSE_CX.trim().length > 0),
+      };
+      logger.debug('[Prospecting] Search provider detection:', searchKeys);
+      
       data.readiness = {
-        search_provider: env.SERPER_API_KEY ? 'serper' : env.BRAVE_SEARCH_API_KEY ? 'brave' : (env.GOOGLE_CSE_API_KEY && env.GOOGLE_CSE_CX) ? 'google_cse' : null,
+        search_provider: env.SERPER_API_KEY && env.SERPER_API_KEY.trim().length > 0 ? 'serper' : env.BRAVE_SEARCH_API_KEY && env.BRAVE_SEARCH_API_KEY.trim().length > 0 ? 'brave' : (env.GOOGLE_CSE_API_KEY && env.GOOGLE_CSE_API_KEY.trim().length > 0 && env.GOOGLE_CSE_CX && env.GOOGLE_CSE_CX.trim().length > 0) ? 'google_cse' : null,
         unsubscribe_secret: Boolean(env.PROSPECTING_UNSUBSCRIBE_SECRET),
         webhook_secret: Boolean(env.RESEND_WEBHOOK_SECRET),
         cron_secret: Boolean(env.PROSPECTING_CRON_SECRET),

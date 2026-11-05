@@ -296,6 +296,13 @@ if (!process.env.SERPER_API_KEY && !process.env.BRAVE_SEARCH_API_KEY && !(proces
   console.warn('⚠️ No search provider configured (SERPER_API_KEY / BRAVE_SEARCH_API_KEY / GOOGLE_CSE_*). Prospecting discovery will stay empty.');
 }
 
+// Prospecting search provider diagnostic (safe: no values exposed)
+const serperConfigured = Boolean(process.env.SERPER_API_KEY && process.env.SERPER_API_KEY.trim().length > 0);
+const braveConfigured = Boolean(process.env.BRAVE_SEARCH_API_KEY && process.env.BRAVE_SEARCH_API_KEY.trim().length > 0);
+const googleCseConfigured = Boolean(process.env.GOOGLE_CSE_API_KEY && process.env.GOOGLE_CSE_API_KEY.trim().length > 0 && process.env.GOOGLE_CSE_CX && process.env.GOOGLE_CSE_CX.trim().length > 0);
+const selectedSearchProvider = serperConfigured ? 'serper' : braveConfigured ? 'brave' : googleCseConfigured ? 'google_cse' : null;
+console.log('[Prospecting] serper_configured:', serperConfigured, '| selected_search_provider:', selectedSearchProvider);
+
 if (!isAIProviderConfigured()) {
   console.warn('⚠️ AI_PROVIDER_API_KEY is not configured. LegalUp AI document analysis will FAIL.');
 }
