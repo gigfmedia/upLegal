@@ -603,7 +603,7 @@ export default function LegalUpPro() {
           <button onClick={() => navigate("/")} className="flex items-center gap-2">
             <Scale className="h-7 w-7 text-green-900" />
             <span className="text-lg font-bold text-green-900">LegalUp</span>
-            <span className="rounded-[5px] border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-px text-[0.6rem] font-semibold tracking-[0.14em] text-emerald-700">PRO</span>
+            <span className="text-[10px] bg-[#85efab] text-[#101820] px-[6px] py-[4px] rounded ml-1 font-bold align-middle">PRO</span>
           </button>
           <nav className="hidden items-center gap-7 md:flex">
             <button onClick={() => scrollToId("producto")} className="text-sm font-medium text-gray-600 hover:text-gray-900">Producto</button>
@@ -617,19 +617,19 @@ export default function LegalUpPro() {
                 <Button variant="ghost" onClick={() => { setAuthMode("login"); setAuthOpen(true); }} className="rounded-full text-gray-600">
                   Iniciar sesión
                 </Button>
-                <Button onClick={() => handleCTAClick("header")} className="rounded-full bg-gray-900 shadow-sm hover:bg-green-900">
+                <Button onClick={() => handleCTAClick("header")} className="rounded-full bg-gray-900 shadow-sm hover:bg-[#85efab] hover:text-[#101820">
                   Comenzar con LegalUp Pro
                 </Button>
               </>
             ) : userRole === "client" ? (
-              <Button onClick={() => handleCTAClick("header")} className="rounded-full bg-gray-900 shadow-sm hover:bg-green-900">
+              <Button onClick={() => handleCTAClick("header")} className="rounded-full bg-gray-900 shadow-sm hover:bg-[#85efab] hover:text-[#101820]">
                 Buscar abogado
               </Button>
             ) : pro.hasProAccess ? (
-              <Button onClick={() => navigate("/lawyer/dashboard")} className="rounded-full bg-gray-900 shadow-sm hover:bg-green-900">Ir al dashboard</Button>
+              <Button onClick={() => navigate("/lawyer/dashboard")} className="rounded-full bg-gray-900 shadow-sm hover:bg-[#85efab] hover:text-[#101820">Ir al dashboard</Button>
             ) : userRole === "lawyer" ? (
               hasCases ? (
-                <Button onClick={() => setPricingOpen(true)} className="rounded-full bg-gray-900 shadow-sm hover:bg-green-900">Activar Pro</Button>
+                <Button onClick={() => setPricingOpen(true)} className="rounded-full bg-gray-900 shadow-sm hover:bg-[#85efab] hover:text-[#101820]">Activar Pro</Button>
               ) : (
                 <Button
                   onClick={() => navigate("/lawyer/cases")}
@@ -669,7 +669,7 @@ export default function LegalUpPro() {
                   ) : (
                     <Button
                       onClick={() => { setMobileMenuOpen(false); navigate("/lawyer/cases"); }}
-                      className="rounded-full bg-gray-900 hover:bg-green-900"
+                      className="rounded-full bg-gray-900 hover:bg-[#85efab] hover:text-[#101820"
                     >
                       Ir a mis casos
                     </Button>
@@ -1119,7 +1119,7 @@ export default function LegalUpPro() {
                   </p>
                   <Button
                     onClick={() => handleProCTA("pricing_pro")}
-                    className="mt-6 h-12 w-full rounded-full bg-gray-900 text-base hover:bg-green-900"
+                    className="mt-6 h-12 w-full rounded-full bg-gray-900 text-base hover:bg-[#85efab] hover:text-[#101820]"
                   >
                     {!user ? "Comenzar con Pro" : pro.hasProAccess ? "Ir a LegalUp Pro" : pro.status === "pending" ? "Continuar suscripción" : "Pasar a Pro"} <ArrowRight className="h-4 w-4" />
                   </Button>
@@ -1273,7 +1273,7 @@ export default function LegalUpPro() {
           <div className="flex items-center gap-2">
             <Scale className="h-7 w-7 text-green-900" />
             <span className="text-lg font-bold text-green-900">LegalUp</span>
-            <span className="rounded-[5px] border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-px text-[0.6rem] font-semibold tracking-[0.14em] text-emerald-700">PRO</span>
+            <span className="text-[10px] bg-[#85efab] text-[#101820] px-[6px] py-[4px] rounded ml-1 font-bold align-middle">PRO</span>
           </div>
           <div className="flex items-center gap-4 text-sm text-gray-500">
             <button onClick={() => scrollToId("producto")} className="hover:text-gray-900">Producto</button>

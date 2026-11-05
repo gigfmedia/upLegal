@@ -102,7 +102,7 @@ export function renderProspectEmail({ prospect, settings, unsubscribeUrl, legalU
         <a href="${escapeHtml(link)}" style="display:inline-block;background:#85efab;color:#1a202c;text-decoration:none;padding:14px 22px;border-radius:8px;font-weight:600;">Ver LegalUp Pro</a>
       </p>
       <p style="margin:0 0 4px;">Quedo atento a tu opinión.</p>
-      <p style="margin:16px 0 0;">Juan Guajardo<br><span style="color:#1a202c;font-weight:600;">LegalUp Pro</span><br><a href="mailto:juan@legalup.cl" style="color:#374151;">juan@legalup.cl</a></p>
+      <p style="margin:16px 0 0;">Juan<br><span style="color:#1a202c;font-weight:600;">LegalUp Pro</span><br><a href="mailto:juan@legalup.cl" style="color:#374151;">juan@legalup.cl</a></p>
     </div>
     <div style="padding:20px 4px 0;font-size:12px;color:#6b7280;line-height:1.5;">
       <p style="margin:0 0 6px;text-align:center;">${escapeHtml(reason)}</p>
@@ -130,8 +130,8 @@ export function renderProspectEmail({ prospect, settings, unsubscribeUrl, legalU
     '',
     'Quedo atento a tu opinión.',
     '',
-    'Juan Guajardo',
-    'LegalUp',
+    'Juan',
+    'LegalUp Pro',
     'juan@legalup.cl',
     '',
     reason,

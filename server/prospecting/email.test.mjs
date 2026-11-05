@@ -12,7 +12,7 @@ import {
 
 const settings = {
   app_url: 'https://legalup.cl/pro',
-  sender_name: 'Juan Guajardo | LegalUp',
+  sender_name: 'Juan de Legalup',
   sender_email: 'juan@legalup.cl',
 };
 

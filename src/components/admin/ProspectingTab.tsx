@@ -129,7 +129,7 @@ const emptySettings: ProspectingSettings = {
   max_sends_per_day: 100,
   schedule_time: '10:00',
   timezone: 'America/Santiago',
-  sender_name: 'Juan Guajardo | LegalUp',
+  sender_name: 'Juan de Legalup',
   sender_email: 'juan@legalup.cl',
   reply_to: 'juan@legalup.cl',
   app_url: 'https://legalup.cl/pro',

@@ -26,7 +26,7 @@ create table if not exists public.prospecting_settings (
   max_sends_per_day integer not null default 100 check (max_sends_per_day between 0 and 1000),
   schedule_time time not null default '10:00',
   timezone text not null default 'America/Santiago',
-  sender_name text not null default 'Juan Guajardo | LegalUp',
+  sender_name text not null default 'Juan de Legalup',
   sender_email text not null default 'juan@legalup.cl',
   reply_to text not null default 'juan@legalup.cl',
   app_url text not null default 'https://legalup.cl/pro',

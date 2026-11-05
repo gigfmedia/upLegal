@@ -17,7 +17,7 @@ import { normalizeEmail } from './validation.mjs';
 import { MAX_SEND_ATTEMPTS } from './constants.mjs';
 
 const SEND_DELAY_MS = 1200;
-const DEFAULT_SENDER_NAME = 'Juan Guajardo | LegalUp';
+const DEFAULT_SENDER_NAME = 'Juan de Legalup';
 const DEFAULT_SENDER_EMAIL = 'juan@legalup.cl';
 
 export function createProspectingEngine({
