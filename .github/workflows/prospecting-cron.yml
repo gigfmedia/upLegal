@@ -1,0 +1,34 @@
+name: Prospecting daily cron
+
+on:
+  schedule:
+    # 13:00 UTC = 10:00 America/Santiago during DST (approx. Sep-Apr)
+    # 14:00 UTC = 10:00 America/Santiago outside DST (approx. May-Aug)
+    # The API ignores the run when local time is before settings.schedule_time,
+    # so the duplicate schedule is safe and DST-proof.
+    - cron: '0 13 * * *'
+    - cron: '0 14 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: prospecting-daily
+  cancel-in-progress: false
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Trigger prospecting run
+        env:
+          PROSPECTING_CRON_SECRET: ${{ secrets.PROSPECTING_CRON_SECRET }}
+        run: |
+          if [ -z "$PROSPECTING_CRON_SECRET" ]; then
+            echo "Missing repository secret PROSPECTING_CRON_SECRET" >&2
+            exit 1
+          fi
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            "https://legalup.cl/api/cron/prospecting" \
+            --header "x-cron-secret: ${PROSPECTING_CRON_SECRET}" \
+            --header "Content-Type: application/json"

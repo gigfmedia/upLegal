@@ -159,6 +159,7 @@ import {
 } from './server/ai/assistant.mjs';
 import { createNotificationService } from './server/notifications/service.mjs';
 import { createAuthorization, isPlatformAdmin } from './server/auth/authorization.mjs';
+import { createProspectingModule } from './server/prospecting/index.mjs';
 
 async function sendEmailIdempotent({ supabase, businessEventId, type, recipient, sendFn }) {
   const normalizedRecipient = String(recipient || '').trim().toLowerCase();
@@ -283,6 +284,16 @@ const isOwnerEmail = (email) => OWNER_EMAILS.has(String(email || '').trim().toLo
 
 if (!resend) {
   console.warn('⚠️ RESEND_API_KEY is not configured. Emails will NOT be sent.');
+}
+
+if (!process.env.PROSPECTING_UNSUBSCRIBE_SECRET) {
+  console.warn('⚠️ PROSPECTING_UNSUBSCRIBE_SECRET is not configured. Real prospecting sends will fail closed.');
+}
+if (!process.env.RESEND_WEBHOOK_SECRET) {
+  console.warn('⚠️ RESEND_WEBHOOK_SECRET is not configured. Resend webhooks will be rejected.');
+}
+if (!process.env.SERPER_API_KEY && !process.env.BRAVE_SEARCH_API_KEY && !(process.env.GOOGLE_CSE_API_KEY && process.env.GOOGLE_CSE_CX)) {
+  console.warn('⚠️ No search provider configured (SERPER_API_KEY / BRAVE_SEARCH_API_KEY / GOOGLE_CSE_*). Prospecting discovery will stay empty.');
 }
 
 if (!isAIProviderConfigured()) {
@@ -466,6 +477,13 @@ const mpClient = new MercadoPagoConfig({
 // Create API client instance
 const mp = new Payment({ client: mpClient });
 
+// Prospecting: módulo aislado, deshabilitado por defecto en settings.
+const prospecting = createProspectingModule({
+  supabase,
+  resend,
+  env: process.env,
+});
+
 // Initialize Express app
 const app = express();
 app.set('trust proxy', 1); // Trust first proxy (Render/Heroku load balancer) for secure cookies
@@ -486,6 +504,9 @@ const corsOptions = {
 
 // Apply middleware
 app.use(cors(corsOptions));
+// Resend webhook must receive the raw body to verify the Svix signature.
+// Registered before express.json() or the signature check would break.
+app.post('/api/webhooks/resend', express.raw({ type: 'application/json', limit: '1mb' }), prospecting.handleWebhook);
 // 2mb: mínimo que soporta el contrato del editor (200.000 chars UTF-8 ⩽ 800KB)
 // sin ampliar de más la superficie de los demás endpoints.
 app.use(express.json({ limit: '2mb' }));
@@ -494,6 +515,12 @@ app.use(cookieParser());
 // Authorization uses Auth server-managed claims, never editable profile/user metadata.
 const { authenticate, requireAdmin, requireAuthentication } = createAuthorization({ supabase });
 const companyAuthorization = createCompanyAuthorization({ supabase, authenticate });
+
+// Prospecting routes (admin protected; public unsubscribe + signed webhook above).
+const PROSPECTING_ADMIN_MOUNT = '/api/admin/prospecting';
+app.use('/api/prospecting', prospecting.publicRouter);
+app.use(PROSPECTING_ADMIN_MOUNT, requireAdmin, prospecting.adminRouter);
+app.post('/api/cron/prospecting', prospecting.cronHandler);
 
 // Health check para mantener Render despierto
 app.get('/health', (req, res) => {
@@ -6600,6 +6627,7 @@ const runUnresolvedAIRecovery = async () => {
 };
 
 if (!runningInTestMode) {
+  prospecting.startScheduler();
   setTimeout(runUnresolvedPaymentRecovery, 15 * 1000).unref();
   setInterval(runUnresolvedPaymentRecovery, UNRESOLVED_PAYMENT_RECOVERY_MS).unref();
   setTimeout(runUnresolvedAIRecovery, 15 * 1000).unref();
@@ -14340,6 +14368,15 @@ app.post('/api/legal-category/classify', async (req, res) => {
 // 413 controlado del parser de body (cuerpo demasiado grande): JSON de la API,
 // sin filtrar detalles internos. Todo lo demás sigue al handler existente.
 app.use(serverPayloadTooLargeMiddleware);
+
+// Errores de prospección con status controlado (400/404/409/503), sin filtrar
+// detalles internos en 500. El resto sigue al handler global existente.
+app.use((error, req, res, next) => {
+  if (!/^\/api\/(admin\/prospecting|prospecting|cron\/prospecting|webhooks\/resend)/.test(req.path || '')) {
+    return next(error);
+  }
+  return prospecting.errorHandler(error, req, res, next);
+});
 app.use((error, req, res, next) => {
   if (error.message === 'Not allowed by CORS') {
     return res.status(403).json({
