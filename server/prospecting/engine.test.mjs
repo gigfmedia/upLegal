@@ -59,6 +59,7 @@ function createHarness({ settings = BASE_SETTINGS, todayCount = 0, mailerResult 
     failedProspects: [],
     released: [],
     mailerCalls: [],
+    eligibleCalls: [],
     run: {
       id: 'run-1',
       run_key: 'manual:test',
@@ -96,7 +97,10 @@ function createHarness({ settings = BASE_SETTINGS, todayCount = 0, mailerResult 
         rejected: [],
       };
     },
-    async listEligibleForRun() { return prospects; },
+    async listEligibleForRun(runId, options) {
+      state.eligibleCalls.push({ runId, options });
+      return prospects;
+    },
     async createSend({ runId, prospect, subject, html, idempotencyKey }) {
       const send = {
         id: `send-${state.sends.length + 1}`,
@@ -192,6 +196,19 @@ describe('prospecting engine', () => {
     expect(state.run.inserted).toBe(2);
     expect(state.run.eligible).toBe(2);
     expect(state.released).toEqual(['lock-1']);
+  });
+
+  it('daily_target es tope estricto de elegibles y envíos', async () => {
+    const { engine, state } = createHarness({
+      settings: { ...BASE_SETTINGS, dry_run: false, daily_target: 1, max_sends_per_run: 5, max_sends_per_day: 10 },
+    });
+    const started = await engine.startRun({ trigger: 'manual', mode: 'send', confirm: true, actorId: 'admin-1' });
+    const final = await started.execution;
+    expect(final.status).toBe('succeeded');
+    expect(state.eligibleCalls[0].options).toMatchObject({ limit: 1 });
+    expect(state.run.summary.limits).toMatchObject({ daily_target: 1, target_remaining: 1, planned: 1 });
+    expect(state.mailerCalls).toHaveLength(1);
+    expect(state.contacted).toEqual(['prospect-1']);
   });
 
   it('envío real usa idempotency key, CTA exacto, baja y marca contactado', async () => {

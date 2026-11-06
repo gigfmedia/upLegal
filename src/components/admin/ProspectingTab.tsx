@@ -25,6 +25,7 @@ interface ProspectingSettings {
   sender_email: string;
   reply_to: string;
   app_url: string;
+  allow_multiple_contacts_per_firm: boolean;
 }
 
 interface ProspectingRun {
@@ -83,6 +84,9 @@ interface Prospect {
   source: string;
   source_url?: string | null;
   discovered_at: string;
+  email_kind?: string | null;
+  org_type?: string | null;
+  rejection_reason?: string | null;
 }
 
 interface ProspectSend {
@@ -133,6 +137,7 @@ const emptySettings: ProspectingSettings = {
   sender_email: 'juan@legalup.cl',
   reply_to: 'juan@legalup.cl',
   app_url: 'https://legalup.cl/pro',
+  allow_multiple_contacts_per_firm: false,
 };
 
 export function ProspectingTab() {
@@ -323,10 +328,18 @@ export function ProspectingTab() {
                 />
                 Dry-run por defecto
               </label>
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  checked={settingsForm.allow_multiple_contacts_per_firm}
+                  onChange={(event) => setSettingsForm((current) => ({ ...current, allow_multiple_contacts_per_firm: event.target.checked }))}
+                />
+                Permitir múltiples contactos por estudio
+              </label>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">
-              <Field label="Prospectos/día">
+              <Field label="Prospectos/día (tope estricto)">
                 <Input type="number" min={1} max={500} value={settingsForm.daily_target}
                   onChange={(event) => setSettingsForm((current) => ({ ...current, daily_target: Number(event.target.value) }))} />
               </Field>
@@ -454,7 +467,7 @@ export function ProspectingTab() {
         </CardHeader>
         <CardContent>
           <SimpleTable
-            headers={['Estudio', 'Contacto', 'Email', 'Ciudad', 'Validación', 'Estado', 'Origen']}
+            headers={['Estudio', 'Contacto', 'Email', 'Ciudad', 'Calidad', 'Tipo email', 'Tipo org.', 'Motivo', 'Estado', 'Origen']}
             empty="Sin prospectos"
             rows={prospects.map((prospect) => [
               prospect.firm_name,
@@ -462,6 +475,9 @@ export function ProspectingTab() {
               prospect.email || '—',
               prospect.city || '—',
               prospect.validation_status,
+              prospect.email_kind || '—',
+              prospect.org_type || '—',
+              prospect.rejection_reason || '—',
               <StatusBadge key={prospect.id} status={prospect.status} />,
               <a key={`${prospect.id}-source`} href={prospect.source_url || '#'} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
                 {prospect.source}

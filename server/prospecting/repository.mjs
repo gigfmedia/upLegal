@@ -1,4 +1,5 @@
 import { normalizeDomain, normalizeEmail } from './validation.mjs';
+import { buildDomainKey, buildPersonKey, selectEligibleContacts } from './quality.mjs';
 
 const SEND_STATUS_RANK = { queued: 0, sending: 1, sent: 2, delivered: 3, unknown: 3, failed: 4, bounced: 5, complained: 6 };
 
@@ -14,6 +15,7 @@ const SETTINGS_FIELDS = [
   'sender_email',
   'reply_to',
   'app_url',
+  'allow_multiple_contacts_per_firm',
 ];
 
 export function createProspectingRepository({ supabase, logger = console } = {}) {
@@ -115,7 +117,7 @@ export function createProspectingRepository({ supabase, logger = console } = {})
     return data || null;
   }
 
-  async function filterNewCandidates(candidates, { runId } = {}) {
+  async function filterNewCandidates(candidates, { runId, allowMultipleContactsPerFirm = false } = {}) {
     const unique = [];
     const seen = new Set();
     for (const candidate of candidates) {
@@ -175,6 +177,27 @@ export function createProspectingRepository({ supabase, logger = console } = {})
       }
     }
 
+    const seenPeople = new Set();
+    const seenDomains = new Set();
+    for (const [key, candidate] of [...byKey.entries()]) {
+      const excluded = candidate.status === 'excluded' || candidate.validation_status === 'invalid';
+      if (excluded) continue;
+      const personKey = candidate.person_key || buildPersonKey(candidate.contact_name);
+      const domainKey = candidate.domain_key || buildDomainKey({ email: candidate.email, website: candidate.website });
+      if (personKey && seenPeople.has(personKey)) {
+        rejected.push({ dedupe_key: key, email: candidate.email || null, reason: 'duplicate_person_same_run' });
+        byKey.delete(key);
+        continue;
+      }
+      if (!allowMultipleContactsPerFirm && domainKey && seenDomains.has(domainKey)) {
+        rejected.push({ dedupe_key: key, email: candidate.email || null, reason: 'duplicate_firm_same_run' });
+        byKey.delete(key);
+        continue;
+      }
+      if (personKey) seenPeople.add(personKey);
+      if (!allowMultipleContactsPerFirm && domainKey) seenDomains.add(domainKey);
+    }
+
     const rows = [...byKey.values()].map((candidate) => ({
       dedupe_key: candidate.dedupe_key,
       email: candidate.email || null,
@@ -192,6 +215,14 @@ export function createProspectingRepository({ supabase, logger = console } = {})
       status: candidate.status || 'new',
       validated_at: candidate.validated_at || null,
       notes: candidate.notes || null,
+      email_kind: candidate.email_kind || null,
+      org_type: candidate.org_type || null,
+      rejection_reason: candidate.rejection_reason || null,
+      discovery_query: candidate.discovery_query || null,
+      search_rank: Number.isFinite(Number(candidate.search_rank)) ? Number(candidate.search_rank) : null,
+      person_key: candidate.person_key || buildPersonKey(candidate.contact_name),
+      domain_key: candidate.domain_key || buildDomainKey({ email: candidate.email, website: candidate.website }),
+      mailbox_verified: false,
       discovered_run_id: runId || null,
     }));
 
@@ -232,17 +263,20 @@ export function createProspectingRepository({ supabase, logger = console } = {})
     return { emails, websites };
   }
 
-  async function listEligibleForRun(runId, limit) {
+  async function listEligibleForRun(runId, options = {}) {
     // No se limita al run actual: un dry-run inserta prospectos válidos y no
     // debe consumirlos. La cola real toma el backlog pendiente más antiguo,
     // manteniendo una sola campaña por prospecto vía unique(prospect_id).
+    const { limit = 500, allowMultipleContactsPerFirm = false } = typeof options === 'number'
+      ? { limit: options }
+      : options;
     const target = clamp(limit, 1, 500);
     const windowSize = 500;
     const maxScan = 2000;
-    const eligible = [];
+    const scanned = [];
     let offset = 0;
 
-    while (eligible.length < target && offset < maxScan) {
+    while (offset < maxScan) {
       const { data, error } = await db('prospects')
         .select('*')
         .eq('validation_status', 'valid')
@@ -266,14 +300,14 @@ export function createProspectingRepository({ supabase, logger = console } = {})
       for (const row of rows) {
         if (withSends.has(row.id)) continue;
         if (suppressedSet.has(normalizeEmail(row.email))) continue;
-        eligible.push(row);
-        if (eligible.length >= target) break;
+        scanned.push(row);
       }
+      if (selectEligibleContacts(scanned, { allowMultipleContactsPerFirm, limit: target }).length >= target) break;
       if (rows.length < windowSize) break;
       offset += windowSize;
     }
 
-    return eligible;
+    return selectEligibleContacts(scanned, { allowMultipleContactsPerFirm, limit: target });
   }
 
   async function listPendingContact(limit = 100) {
@@ -663,6 +697,14 @@ export function createProspectingRepository({ supabase, logger = console } = {})
         validation_status: candidate.validation_status || (candidate.email ? 'valid' : 'no_email'),
         status: candidate.status || (candidate.email ? 'validated' : 'pending_contact'),
         notes: candidate.notes || null,
+        email_kind: candidate.email_kind || null,
+        org_type: candidate.org_type || null,
+        rejection_reason: candidate.rejection_reason || null,
+        discovery_query: candidate.discovery_query || null,
+        search_rank: Number.isFinite(Number(candidate.search_rank)) ? Number(candidate.search_rank) : null,
+        person_key: candidate.person_key || buildPersonKey(candidate.contact_name),
+        domain_key: candidate.domain_key || buildDomainKey({ email: candidate.email, website: candidate.website }),
+        mailbox_verified: false,
       })
       .select('*')
       .single();

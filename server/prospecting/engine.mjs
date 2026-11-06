@@ -135,13 +135,19 @@ export function createProspectingEngine({
 
       await repository.updateRun(run.id, { discovered: candidates.length, summary });
 
-      const filtered = await repository.filterNewCandidates(candidates, { runId: run.id });
+      const filtered = await repository.filterNewCandidates(candidates, {
+        runId: run.id,
+        allowMultipleContactsPerFirm: settings.allow_multiple_contacts_per_firm === true,
+      });
       summary.rejected.total = filtered.rejected.length;
       for (const rejection of filtered.rejected) {
         summary.rejected.by_reason[rejection.reason] = (summary.rejected.by_reason[rejection.reason] || 0) + 1;
       }
 
-      const eligible = await repository.listEligibleForRun(run.id, settings.max_sends_per_run);
+      const eligible = await repository.listEligibleForRun(run.id, {
+        limit: settings.daily_target,
+        allowMultipleContactsPerFirm: settings.allow_multiple_contacts_per_firm === true,
+      });
       await repository.updateRun(run.id, {
         inserted: filtered.inserted.length,
         eligible: eligible.length,
@@ -176,8 +182,15 @@ export function createProspectingEngine({
       const dayStart = startOfDayUtc(clock(), settings.timezone).toISOString();
       const sentToday = await repository.getTodaySendCount(dayStart);
       const dailyRemaining = Math.max(0, Number(settings.max_sends_per_day) - sentToday);
-      const planned = Math.min(Number(settings.max_sends_per_run), dailyRemaining);
-      summary.limits = { max_per_run: settings.max_sends_per_run, daily_remaining: dailyRemaining, planned };
+      const targetRemaining = Math.max(0, Number(settings.daily_target) - sentToday);
+      const planned = Math.min(Number(settings.max_sends_per_run), dailyRemaining, targetRemaining);
+      summary.limits = {
+        daily_target: settings.daily_target,
+        target_remaining: targetRemaining,
+        max_per_run: settings.max_sends_per_run,
+        daily_remaining: dailyRemaining,
+        planned,
+      };
 
       if (planned <= 0) {
         await finishRun(run.id, 'skipped', {

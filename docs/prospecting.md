@@ -9,6 +9,7 @@ No se envía ningún correo real hasta que un administrador active la automatiza
 - `server.mjs`: monta las rutas y arranca el scheduler solo fuera de tests.
 - `src/components/admin/ProspectingTab.tsx`: panel dentro de LegalUp Admin.
 - `supabase/migrations/20261105004400_prospecting_automation.sql`: tablas, RLS deny, claim atómico, recuperación de runs y supresiones.
+- `supabase/migrations/20261105190000_prospecting_quality_limits.sql`: columnas aditivas de calidad, dedupe por persona/dominio y setting de múltiples contactos.
 - `.github/workflows/prospecting-cron.yml`: cron externo de respaldo.
 
 ## Rutas
@@ -89,7 +90,7 @@ Ambos usan `run_key = scheduled:YYYY-MM-DD` en la zona horaria configurada, por 
 
 ```sql
 select id, enabled, dry_run, daily_target, max_sends_per_run, max_sends_per_day,
-       schedule_time, timezone, sender_email
+       allow_multiple_contacts_per_firm, schedule_time, timezone, sender_email
 from public.prospecting_settings;
 
 select run_key, trigger, mode, status, discovered, inserted, eligible, sent, failed, error
@@ -97,11 +98,36 @@ from public.prospecting_runs
 order by started_at desc
 limit 20;
 
-select status, validation_status, count(*)
+select status, validation_status, email_kind, org_type, count(*)
 from public.prospects
-group by status, validation_status
-order by 3 desc;
+group by status, validation_status, email_kind, org_type
+order by 5 desc;
+
+select firm_name, email, contact_name, email_kind, org_type, rejection_reason
+from public.prospects
+where status = 'excluded'
+order by discovered_at desc
+limit 50;
 ```
+
+## Calidad y límites
+
+- `email_kind` clasifica el correo como `personal`, `firm`, `role`, `third_party` o `invalid`. Solo `personal` puede ser elegible.
+- `org_type` clasifica la organización como `law_firm`, `public_entity`, `school`, `portal`, `directory` u `other`. Solo `law_firm` es elegible.
+- `rejection_reason` y `notes` conservan el motivo del rechazo para auditoría; no se contacta un registro excluido.
+- `mailbox_verified = false` siempre: MX prueba que el dominio recibe correo, no que la casilla exista.
+- `daily_target` es el tope estricto de prospectos elegibles y de envíos planificados por día. `max_sends_per_run` y `max_sends_per_day` siguen actuando como topes adicionales.
+- El discovery puede explorar más páginas que el objetivo diario, pero la elegibilidad y el envío nunca superan `daily_target`.
+- Por defecto, la elegibilidad permite una persona y un dominio/estudio por campaña. `allow_multiple_contacts_per_firm = true` permite más de un contacto del mismo estudio, sin duplicar personas.
+
+## Reevaluación de prospectos existentes
+
+La migración es aditiva y no borra ni reescribe registros. Para reevaluar los prospectos existentes sin contacto real:
+
+1. Ejecutar `buildReauditPlan(rows)` de `server/prospecting/reaudit.mjs` en un entorno de solo lectura.
+2. Revisar el resumen `would_keep`, `would_exclude` y `by_reason`.
+3. Aplicar únicamente las columnas nuevas (`email_kind`, `org_type`, `rejection_reason`, `person_key`, `domain_key`, `mailbox_verified`, `quality_evaluated_at`) y, si el registro no tiene historial terminal, el estado propuesto.
+4. No modificar prospectos con estado `contacted`, `bounced`, `complained`, `unsubscribed` o `failed`; su historial se conserva.
 
 ## Seguridad y límites
 

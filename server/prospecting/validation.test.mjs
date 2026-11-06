@@ -1,9 +1,13 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
 import {
+  classifyProspectEmail,
+  containsHumanName,
   emailBelongsToPage,
   isDisposableEmail,
+  isFirmStyleEmail,
   isGenericEmail,
+  isProspectEmailSyntax,
   isValidEmailSyntax,
   normalizeContactName,
   normalizeDomain,
@@ -73,5 +77,88 @@ describe('prospecting validation', () => {
   it('normaliza nombres sin cargos ni sufijos de firma', () => {
     expect(normalizeContactName('Abogada Juan Pérez | Estudio Jurídico')).toBe('Juan Pérez');
     expect(normalizeFirmName('Pérez & Asociados | Inicio')).toBe('Pérez & Asociados');
+  });
+
+  it('rechaza sintaxis mal extraída y locales que empiezan con dígito', () => {
+    expect(isProspectEmailSyntax("'contacto@estudio-beta.example")).toBe(false);
+    expect(isProspectEmailSyntax('46abc@estudio-delta.example')).toBe(false);
+    expect(isProspectEmailSyntax('juan.perez@estudio.cl')).toBe(true);
+    expect(classifyProspectEmail("'contacto@estudio-beta.example")).toMatchObject({
+      kind: 'invalid',
+      reason: 'invalid_syntax',
+    });
+  });
+
+  it('clasifica roles, firmas y terceros sin contactarlos', () => {
+    expect(classifyProspectEmail('comunicaciones@estudio.cl')).toMatchObject({ kind: 'role', reason: 'role_address' });
+    expect(classifyProspectEmail('copropiedad@estudio.cl')).toMatchObject({ kind: 'role', reason: 'role_address' });
+    expect(isFirmStyleEmail('ejemplo@ejemplo.example')).toBe(true);
+    expect(isFirmStyleEmail('ejemplo@ejemploycia.example')).toBe(true);
+    expect(classifyProspectEmail('ejemplo@ejemplo.example', { pageUrl: 'https://ejemplo.example/equipo' })).toMatchObject({
+      kind: 'firm',
+      reason: 'firm_address',
+    });
+    expect(classifyProspectEmail('juan@gmail.com', { pageUrl: 'https://estudio.cl' })).toMatchObject({
+      kind: 'third_party',
+      reason: 'third_party_domain',
+    });
+    expect(classifyProspectEmail('juan.perez@estudio.cl', { pageUrl: 'https://estudio.cl' })).toMatchObject({
+      kind: 'personal',
+      reason: null,
+    });
+  });
+
+  it('clasifica roles compuestos y firmas cuyo local incluye el dominio', () => {
+    expect(classifyProspectEmail('correocontacto@estudio-beta.example', { pageUrl: 'https://estudio-beta.example/' })).toMatchObject({
+      kind: 'role',
+      reason: 'role_address',
+    });
+    expect(classifyProspectEmail('ejemplo.asociados@ejemplo.example', { pageUrl: 'https://ejemplo.example/' })).toMatchObject({
+      kind: 'firm',
+      reason: 'firm_address',
+    });
+  });
+
+  it('marca locales concatenados por HTML como corruptos, no personales', () => {
+    for (const email of [
+      'larrondesocioejemplo@estudio-zeta.example',
+      'nsocioejemplo@estudio-zeta.example',
+      'larenassocioejemplo@estudio-zeta.example',
+    ]) {
+      expect(classifyProspectEmail(email, { pageUrl: 'https://estudio-zeta.example/' })).toMatchObject({
+        kind: 'invalid',
+        reason: 'corrupted_local_part',
+      });
+    }
+  });
+
+  it('no confunde encabezados de menú con nombres de personas', () => {
+    expect(containsHumanName('Áreas de práctica')).toBe(false);
+    expect(containsHumanName('Nuestra Firma')).toBe(false);
+    expect(containsHumanName('PROFESIONALES DEL DERECHO')).toBe(false);
+    expect(containsHumanName('OPERACIONES RECIENTES')).toBe(false);
+    expect(containsHumanName('Cómo funciona')).toBe(false);
+    expect(containsHumanName('Navegación principal')).toBe(false);
+    expect(containsHumanName('Accidente Laboral')).toBe(false);
+    expect(containsHumanName('Penalista en Viña del Mar')).toBe(false);
+    expect(containsHumanName('En el centro de Chile')).toBe(false);
+    expect(containsHumanName('expertos en causas penales')).toBe(false);
+    expect(containsHumanName('Alfonso Del Fierro')).toBe(true);
+    expect(containsHumanName('Juan Pérez')).toBe(true);
+  });
+
+  it('validateEmail rechaza un genérico sin consultar MX', async () => {
+    let called = false;
+    const result = await validateEmail('comunicaciones@estudio.cl', {
+      resolveMx: async () => { called = true; return [{ exchange: 'mx', priority: 10 }]; },
+    });
+    expect(result).toMatchObject({
+      valid: false,
+      status: 'invalid',
+      reason: 'role_address',
+      email_kind: 'role',
+      mailbox_verified: false,
+    });
+    expect(called).toBe(false);
   });
 });

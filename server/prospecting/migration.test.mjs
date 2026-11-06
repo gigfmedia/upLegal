@@ -3,10 +3,11 @@ import { beforeAll, afterAll, describe, it, expect } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import { readFileSync } from 'node:fs';
 
-const migration = readFileSync(
+const migrations = [
   new URL('../../supabase/migrations/20261105004400_prospecting_automation.sql', import.meta.url),
-  'utf8',
-).replace(/create extension if not exists pgcrypto;/i, '-- pgcrypto omitido en PGlite; gen_random_uuid es nativo.');
+  new URL('../../supabase/migrations/20261105190000_prospecting_quality_limits.sql', import.meta.url),
+].map((url) => readFileSync(url, 'utf8'))
+  .map((sql) => sql.replace(/create extension if not exists pgcrypto;/i, '-- pgcrypto omitido en PGlite; gen_random_uuid es nativo.'));
 
 const uuid = (n) => `00000000-0000-4000-a000-${String(n).padStart(12, '0')}`;
 
@@ -20,7 +21,7 @@ beforeAll(async () => {
     CREATE ROLE service_role BYPASSRLS;
     CREATE TABLE public.profiles (id uuid PRIMARY KEY);
   `);
-  await db.exec(migration);
+  for (const sql of migrations) await db.exec(sql);
 }, 30000);
 
 afterAll(async () => {
@@ -37,14 +38,30 @@ async function claim(runKey, trigger = 'manual', mode = 'dry_run', actor = null)
 
 describe('prospecting migration', () => {
   it('crea settings deshabilitado y en dry-run por defecto', async () => {
-    const result = await db.query('select enabled, dry_run, daily_target, schedule_time, timezone from public.prospecting_settings where id = 1');
+    const result = await db.query('select enabled, dry_run, daily_target, schedule_time, timezone, allow_multiple_contacts_per_firm from public.prospecting_settings where id = 1');
     expect(result.rows[0]).toMatchObject({
       enabled: false,
       dry_run: true,
       daily_target: 100,
       schedule_time: '10:00:00',
       timezone: 'America/Santiago',
+      allow_multiple_contacts_per_firm: false,
     });
+  });
+
+  it('agrega columnas de calidad sin tocar prospectos existentes', async () => {
+    const result = await db.query(`
+      select column_name, is_nullable, column_default
+      from information_schema.columns
+      where table_schema = 'public' and table_name = 'prospects'
+        and column_name in ('email_kind', 'org_type', 'rejection_reason', 'discovery_query', 'search_rank', 'person_key', 'domain_key', 'mailbox_verified', 'quality_evaluated_at')
+      order by column_name
+    `);
+    const columns = Object.fromEntries(result.rows.map((row) => [row.column_name, row]));
+    expect(Object.keys(columns)).toHaveLength(9);
+    expect(columns.mailbox_verified.column_default).toContain('false');
+    expect(columns.email_kind.is_nullable).toBe('YES');
+    expect(columns.org_type.is_nullable).toBe('YES');
   });
 
   it('deduplica prospectos por dedupe_key y email normalizado', async () => {

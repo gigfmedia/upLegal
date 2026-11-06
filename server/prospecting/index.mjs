@@ -450,7 +450,7 @@ async function handleUnsubscribe(req, res, { repository, env, logger, viaPost })
 
 function validateSettingsPatch(body) {
   const patch = {};
-  const booleanFields = ['enabled', 'dry_run'];
+  const booleanFields = ['enabled', 'dry_run', 'allow_multiple_contacts_per_firm'];
   for (const field of booleanFields) {
     if (body[field] !== undefined) {
       if (typeof body[field] !== 'boolean') throw httpError(400, `${field}_must_be_boolean`);

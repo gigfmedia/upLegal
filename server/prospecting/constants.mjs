@@ -10,15 +10,26 @@ export const PROSPECTING_DEFAULTS = Object.freeze({
   sender_email: 'juan@legalup.cl',
   reply_to: 'juan@legalup.cl',
   app_url: 'https://legalup.cl/pro',
+  allow_multiple_contacts_per_firm: false,
 });
 
 export const GENERIC_EMAIL_LOCAL_PARTS = Object.freeze(new Set([
   'admin', 'administracion', 'administración', 'atencion', 'atención', 'ayuda',
   'abogado', 'abogados', 'contacto', 'contact', 'consultas', 'comercial',
+  'comunicaciones', 'comunicacion', 'comunicación', 'copropiedad', 'copropiedades',
   'correo', 'clientes', 'equipo', 'estudio', 'firma', 'hello', 'hola', 'info',
   'informaciones', 'legal', 'mail', 'marketing', 'no-reply', 'noreply',
   'oficina', 'postmaster', 'prensa', 'recepcion', 'recepción', 'rrhh',
   'secretaria', 'soporte', 'support', 'ventas', 'web', 'webmaster',
+]));
+
+export const ROLE_EMAIL_LOCAL_PARTS = Object.freeze(new Set([
+  ...GENERIC_EMAIL_LOCAL_PARTS,
+  'abogada', 'abogadas', 'arquitectura', 'cartera', 'cobranza', 'contabilidad',
+  'contratacion', 'contratación', 'direccion', 'dirección', 'documentos',
+  'facturacion', 'facturación', 'gerencia', 'juridico', 'jurídico', 'laboral',
+  'notificaciones', 'operaciones', 'practica', 'práctica', 'proveedores',
+  'reclamos', 'socios', 'talento', 'tesoreria', 'tesorería',
 ]));
 
 export const DISPOSABLE_EMAIL_DOMAINS = Object.freeze(new Set([

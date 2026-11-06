@@ -116,17 +116,102 @@ describe('prospecting discovery', () => {
     expect(isAllowedByRobots(robots, 'https://estudio.cl/privado/publico')).toBe(true);
   });
 
-  it('extrae solo email individual del dominio del sitio', () => {
+  it('extrae el candidato individual y conserva el motivo de los rechazos', () => {
     const candidates = extractCandidatesFromPage(PAGE_HTML, 'https://www.estudio.cl/equipo', { query: 'abogados' });
-    expect(candidates).toHaveLength(1);
-    expect(candidates[0]).toMatchObject({
+    expect(candidates).toHaveLength(3);
+    const personal = candidates.find((candidate) => candidate.email === 'juan.perez@estudio.cl');
+    expect(personal).toMatchObject({
       email: 'juan.perez@estudio.cl',
+      email_kind: 'personal',
+      org_type: 'law_firm',
       firm_name: 'Pérez & Asociados',
       city: 'Santiago',
+      source_url: 'https://www.estudio.cl/equipo',
+      discovery_query: 'abogados',
     });
-    expect(candidates[0].specialties).toContain('Derecho laboral');
-    expect(candidates[0].linkedin_url).toContain('linkedin.com/company/perez');
-    expect(candidates[0].website).toBe('https://www.estudio.cl');
+    expect(personal.specialties).toContain('Derecho laboral');
+    expect(personal.linkedin_url).toContain('linkedin.com/company/perez');
+    expect(personal.website).toBe('https://www.estudio.cl');
+    expect(candidates.find((candidate) => candidate.email === 'contacto@estudio.cl')).toMatchObject({
+      validation_status: 'invalid',
+      status: 'excluded',
+      email_kind: 'role',
+      rejection_reason: 'role_address',
+    });
+    expect(candidates.find((candidate) => candidate.email === 'juan@gmail.com')).toMatchObject({
+      validation_status: 'invalid',
+      status: 'excluded',
+      email_kind: 'third_party',
+      rejection_reason: 'third_party_domain',
+    });
+  });
+
+  it('separa nodos de texto y no concatena etiquetas con correos', () => {
+    const html = `<!doctype html><html><head>
+<title>Estudio Zeta & Asociados - Abogados</title>
+</head><body>
+<h1>Estudio Zeta & Asociados</h1>
+<div><h4>Álvaro Ejemplo</h4><p>Socio</p><p>alvaro.ejemplo@estudio-zeta.example</p></div>
+<div><h4>Gonzalo Ejemplo</h4><p>Socio</p><p>gonzalo.ejemplo@estudio-zeta.example</p></div>
+<a href="mailto:' + DEST + '?subject=hola">Escribir</a>
+</body></html>`;
+    const candidates = extractCandidatesFromPage(html, 'https://www.estudio-zeta.example/');
+    expect(candidates.map((candidate) => candidate.email)).toEqual([
+      'alvaro.ejemplo@estudio-zeta.example',
+      'gonzalo.ejemplo@estudio-zeta.example',
+    ]);
+    expect(candidates.some((candidate) => candidate.email.includes('socio'))).toBe(false);
+    expect(candidates[0].firm_name).toBe('Estudio Zeta & Asociados');
+  });
+
+  it('extrae mailto real y evita roles compuestos y plantillas JS', () => {
+    const html = `<!doctype html><html><head>
+<title>Estudio Beta | Abogados</title>
+</head><body>
+<p>Puede contactarnos al correo Contacto@estudio-beta.example</p>
+<a href="mailto:' + DEST + '?subject=hola">Escribir</a>
+</body></html>`;
+    const candidates = extractCandidatesFromPage(html, 'https://estudio-beta.example/');
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0]).toMatchObject({
+      email: 'contacto@estudio-beta.example',
+      email_kind: 'role',
+      org_type: 'law_firm',
+      firm_name: 'Estudio Beta',
+      status: 'excluded',
+    });
+    expect(candidates[0].email).not.toContain('correo');
+    expect(candidates[0].email).not.toContain("'");
+  });
+
+  it('extrae el nombre de la firma desde el título y no desde la etiqueta Abogados', () => {
+    const html = `<!doctype html><html><head>
+<title>Abogados - Estudio Alfa</title>
+</head><body><h1>Estudio Alfa</h1><p>Abogados</p>
+<a href="mailto:persona@estudio-alfa.example">Persona</a></body></html>`;
+    const [candidate] = extractCandidatesFromPage(html, 'https://www.estudio-alfa.example/abogados/');
+    expect(candidate).toMatchObject({
+      firm_name: 'Estudio Alfa',
+      email: 'persona@estudio-alfa.example',
+      org_type: 'law_firm',
+      review_required: false,
+    });
+  });
+
+  it('clasifica SS.CC. como colegio cuando el sitio muestra matrícula y apoderados', () => {
+    const html = `<!doctype html><html><head>
+<title>Estudio Jurídico - Colegio Ejemplo</title>
+</head><body>
+<nav><a>Matrícula</a><a>Apoderados</a><a>Alumnos</a></nav>
+<h1>Colegio Ejemplo</h1><p>Derecho Público</p>
+<a href="mailto:comunicaciones@colegio-ejemplo.example">Contacto</a>
+</body></html>`;
+    const [candidate] = extractCandidatesFromPage(html, 'https://www.colegio-ejemplo.example/estudio-juridico/');
+    expect(candidate).toMatchObject({
+      org_type: 'school',
+      status: 'excluded',
+      email_kind: 'role',
+    });
   });
 
   it('descubre y valida emails con búsqueda y MX simulados', async () => {
@@ -148,12 +233,14 @@ describe('prospecting discovery', () => {
       maxPages: 2,
       logger: { warn() {}, error() {} },
     });
-    expect(result.candidates).toHaveLength(1);
-    expect(result.candidates[0]).toMatchObject({
+    expect(result.candidates).toHaveLength(3);
+    expect(result.candidates.find((candidate) => candidate.email === 'juan.perez@estudio.cl')).toMatchObject({
       email: 'juan.perez@estudio.cl',
       validation_status: 'valid',
       status: 'validated',
+      mailbox_verified: false,
     });
+    expect(result.stats.excluded).toBe(2);
   });
 
   it('sitio sin email queda pendiente de contacto, no se inventa dirección', async () => {
