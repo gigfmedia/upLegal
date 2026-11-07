@@ -9,8 +9,9 @@ const PROSPECT_LOCAL_RE = /^[a-z][a-z0-9._'-]*$/i;
 const CL_SECOND_LEVEL = new Set(['com', 'gob', 'net', 'org', 'mil', 'edu', 'int', 'nom']);
 
 const HEADING_WORDS = new Set([
-  'abogado', 'abogada', 'abogados', 'abogadas', 'actualidad', 'areas', 'áreas',
-  'contacto', 'derecho', 'equipo', 'especialidades', 'estudio', 'firma', 'inicio',
+  'abogado', 'abogada', 'abogados', 'abogadas', 'actualidad', 'area', 'área',
+  'areas', 'áreas', 'calculadora', 'calculadoras', 'contacto', 'copropiedad',
+  'derecho', 'equipo', 'especialidades', 'estudio', 'firma', 'inicio',
   'juridico', 'jurídico', 'legal', 'nuestra', 'nuestro', 'operaciones', 'practica',
   'práctica', 'profesionales', 'quienes', 'quiénes', 'servicios', 'somos',
 ]);
@@ -317,7 +318,7 @@ export function containsHumanName(value) {
 
 export function firstNameFrom(contactName) {
   const name = normalizeContactName(contactName);
-  if (!name) return null;
+  if (!name || !containsHumanName(name)) return null;
   const first = name.split(/\s+/)[0];
   if (!first || first.length < 2 || NAME_PARTICLES.has(first.toLowerCase())) return null;
   return first;

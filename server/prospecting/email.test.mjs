@@ -50,6 +50,49 @@ describe('prospecting email', () => {
       .toBe('Una idea para Pérez & Asociados');
   });
 
+  it('no usa secciones de sitio ni firmas descriptivas como persona', () => {
+    expect(buildSubject({ contact_name: 'Áreas de práctica', firm_name: 'Abogados' }))
+      .toBe('Una idea para tu práctica legal');
+    expect(buildSubject({ contact_name: 'PROFESIONALES DEL DERECHO', firm_name: 'Abogados Kegevic & Cía.' }))
+      .toBe('Una idea para Abogados Kegevic & Cía.');
+    expect(buildSubject({
+      contact_name: 'Áreas de práctica',
+      firm_name: 'Fundada en 2011, Cruz&Muñoz Abogados se especializa en Leyes empresariales.',
+    })).toBe('Una idea para tu práctica legal');
+
+    const rendered = renderProspectEmail({
+      prospect: {
+        id: '123e4567-e89b-42d3-a456-426614174000',
+        contact_name: 'Áreas de práctica',
+        firm_name: 'Fundada en 2011, Cruz&Muñoz Abogados se especializa en Leyes empresariales.',
+      },
+      settings,
+      unsubscribeUrl: 'https://legalup.cl/u',
+      legalUpProUrl: 'https://legalup.cl/pro',
+    });
+    expect(rendered.subject).toBe('Una idea para tu práctica legal');
+    expect(rendered.html).toContain('Hola,');
+    expect(rendered.html).not.toContain('Hola Áreas');
+    expect(rendered.html).not.toContain('Fundada en 2011');
+    expect(rendered.text).toContain('Hola,');
+    expect(rendered.text).not.toContain('Hola Áreas');
+
+    const firmOnly = renderProspectEmail({
+      prospect: {
+        id: '123e4567-e89b-42d3-a456-426614174000',
+        contact_name: 'PROFESIONALES DEL DERECHO',
+        firm_name: 'Abogados Kegevic & Cía.',
+      },
+      settings,
+      unsubscribeUrl: 'https://legalup.cl/u',
+      legalUpProUrl: 'https://legalup.cl/pro',
+    });
+    expect(firmOnly.subject).toBe('Una idea para Abogados Kegevic & Cía.');
+    expect(firmOnly.text).toContain('Hola,');
+    expect(firmOnly.text).toContain('Vi el sitio de Abogados Kegevic & Cía.');
+    expect(firmOnly.text).not.toContain('Hola PROFESIONALES');
+  });
+
   it('renderiza HTML y texto con CTA exacto, firma y baja', () => {
     const rendered = renderProspectEmail({
       prospect: {

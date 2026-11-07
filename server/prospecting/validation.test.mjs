@@ -134,6 +134,8 @@ describe('prospecting validation', () => {
 
   it('no confunde encabezados de menú con nombres de personas', () => {
     expect(containsHumanName('Áreas de práctica')).toBe(false);
+    expect(containsHumanName('Área de Copropiedad')).toBe(false);
+    expect(containsHumanName('Calculadoras laborales')).toBe(false);
     expect(containsHumanName('Nuestra Firma')).toBe(false);
     expect(containsHumanName('PROFESIONALES DEL DERECHO')).toBe(false);
     expect(containsHumanName('OPERACIONES RECIENTES')).toBe(false);

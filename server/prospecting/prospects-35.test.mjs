@@ -109,7 +109,8 @@ describe('reauditoría de los 35 prospectos', () => {
       organization_lead_gen_risk: 1,
       organization_weak_identity: 1,
     });
-    expect(summary.would_exclude).toBe(15);
+    expect(summary.would_exclude).toBe(10);
+    expect(summary.excluded_or_review).toBe(15);
     expect(summary.would_keep).toBe(20);
   });
 

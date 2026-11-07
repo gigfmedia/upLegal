@@ -9,7 +9,8 @@ No se envía ningún correo real hasta que un administrador active la automatiza
 - `server.mjs`: monta las rutas y arranca el scheduler solo fuera de tests.
 - `src/components/admin/ProspectingTab.tsx`: panel dentro de LegalUp Admin.
 - `supabase/migrations/20261105004400_prospecting_automation.sql`: tablas, RLS deny, claim atómico, recuperación de runs y supresiones.
-- `supabase/migrations/20261105190000_prospecting_quality_limits.sql`: columnas aditivas de calidad, dedupe por persona/dominio y setting de múltiples contactos.
+- `supabase/migrations/20261105225853_prospecting_quality_limits.sql`: columnas aditivas de calidad, dedupe por persona/dominio y setting de múltiples contactos.
+- `supabase/migrations/20261106120000_prospecting_quality_version.sql`: versión explícita de reglas de calidad; `null` significa pendiente de reevaluación.
 - `.github/workflows/prospecting-cron.yml`: cron externo de respaldo.
 
 ## Rutas
@@ -116,6 +117,13 @@ limit 50;
 - `org_type` clasifica la organización como `law_firm`, `public_entity`, `school`, `portal`, `directory` u `other`. Solo `law_firm` es elegible.
 - `rejection_reason` y `notes` conservan el motivo del rechazo para auditoría; no se contacta un registro excluido.
 - `mailbox_verified = false` siempre: MX prueba que el dominio recibe correo, no que la casilla exista.
+- La selección exige `quality_evaluated_at` no nulo y `quality_rules_version` igual a la versión actual. Un histórico sin evaluar nunca consume cupo diario.
+- `filterNewCandidates` reevalúa cada candidato con `assessCandidateQuality` antes de insertarlo; ignora `quality_evaluated_at` y `quality_rules_version` provistos por el llamador y estampa la versión actual solo después de la evaluación.
+- `assessCandidateQuality` conserva `contact_name` solo si es un nombre humano. Para la firma visible, usa el `firm_name` actual si es plausible; si no, deriva un nombre desde `sourceH1`/`sourceTitle`. El email vuelve a validar ambos campos y usa un saludo/asunto genérico cuando no son seguros.
+- La revisión manual usa el prefijo `manual_review:` en `rejection_reason`, mantiene `validation_status = pending` y no se marca como `invalid` ni como estado terminal. Un registro en revisión no es seleccionable, pero puede resolverse en una reevaluación posterior.
+- `insertManualProspect` ejecuta `assessCandidateQuality` antes de insertar. Si la evidencia no alcanza, guarda el registro en revisión manual con `quality_rules_version = null` y `quality_evaluated_at = null`; no puede quedar elegible sin una evaluación suficiente.
+- La selección vuelve a comprobar usuarios y firmas registradas al construir la cola, además de la comprobación de inserción. El orden usa `discovered_at` y `id` para que la selección sea reproducible.
+- La migración exige que `quality_rules_version` no nulo tenga `quality_evaluated_at` no nulo; una inserción que solo declare la versión falla.
 - `daily_target` es el tope estricto de prospectos elegibles y de envíos planificados por día. `max_sends_per_run` y `max_sends_per_day` siguen actuando como topes adicionales.
 - El discovery puede explorar más páginas que el objetivo diario, pero la elegibilidad y el envío nunca superan `daily_target`.
 - Por defecto, la elegibilidad permite una persona y un dominio/estudio por campaña. `allow_multiple_contacts_per_firm = true` permite más de un contacto del mismo estudio, sin duplicar personas.
@@ -125,9 +133,11 @@ limit 50;
 La migración es aditiva y no borra ni reescribe registros. Para reevaluar los prospectos existentes sin contacto real:
 
 1. Ejecutar `buildReauditPlan(rows)` de `server/prospecting/reaudit.mjs` en un entorno de solo lectura.
-2. Revisar el resumen `would_keep`, `would_exclude` y `by_reason`.
-3. Aplicar únicamente las columnas nuevas (`email_kind`, `org_type`, `rejection_reason`, `person_key`, `domain_key`, `mailbox_verified`, `quality_evaluated_at`) y, si el registro no tiene historial terminal, el estado propuesto.
-4. No modificar prospectos con estado `contacted`, `bounced`, `complained`, `unsubscribed` o `failed`; su historial se conserva.
+2. Revisar el resumen `would_keep`, `would_exclude`, `manual_review`, `excluded_or_review`, `by_reason`, `changed` y `skipped_current`.
+3. Aplicar únicamente las columnas de calidad (`email_kind`, `org_type`, `rejection_reason`, `person_key`, `domain_key`, `mailbox_verified`, `quality_evaluated_at`, `quality_rules_version`) y, si el registro no tiene historial terminal, el estado propuesto. No persistir `contact_name` ni `firm_name`; la evaluación puede usar valores normalizados o derivados solo en memoria.
+4. No modificar prospectos con estado `contacted`, `bounced`, `complained`, `unsubscribed`, `failed`, `excluded` o validación `invalid`; su historial se conserva.
+5. La revisión manual no es terminal: se conserva con `validation_status = pending`, no se aplica como exclusión definitiva y puede resolverse en una reevaluación futura.
+6. La reevaluación es idempotente: los registros ya evaluados con la versión actual se omiten. Usar `{ force: true }` solo para auditar de nuevo la misma versión.
 
 ## Seguridad y límites
 

@@ -8,6 +8,23 @@ import {
   registrableDomain,
 } from './validation.mjs';
 
+export const QUALITY_RULES_VERSION = '2026-11-06.3';
+export const MANUAL_REVIEW_PREFIX = 'manual_review:';
+
+export function isManualReviewReason(value) {
+  return typeof value === 'string' && value.startsWith(MANUAL_REVIEW_PREFIX);
+}
+
+export function manualReviewReason(value) {
+  const reason = String(value || '').trim();
+  if (!reason) return `${MANUAL_REVIEW_PREFIX}manual_review`;
+  return isManualReviewReason(reason) ? reason : `${MANUAL_REVIEW_PREFIX}${reason}`;
+}
+
+export function manualReviewCode(value) {
+  return isManualReviewReason(value) ? value.slice(MANUAL_REVIEW_PREFIX.length) : null;
+}
+
 const PUBLIC_ENTITY_DOMAINS = new Set([
   'providencia.cl', 'lascondes.cl', 'vitacura.cl', 'nunoa.cl', 'maipu.cl',
   'puentealto.cl', 'lareina.cl', 'colina.cl', 'lo-barnechea.cl', 'sanmiguel.cl',
@@ -37,7 +54,7 @@ function splitIdentityCandidates(value) {
     .filter(Boolean);
 }
 
-function isPlausibleFirmName(value) {
+export function isPlausibleFirmName(value) {
   const name = normalizeFirmName(value);
   if (!name || name.length < 3 || name.length > 120) return false;
   if (GENERIC_FIRM_NAMES.test(name)) return false;
@@ -47,6 +64,15 @@ function isPlausibleFirmName(value) {
   if (/^abogad[oa]s?\b/i.test(name) && !/[&]|asociados?|compa[nñ][ií]a|c[ií]a\.?/i.test(name)) return false;
   if (/^(chile|santiago|providencia|las condes|vitacura|vi[nñ]a del mar|valpara[ií]so|concepci[oó]n)$/i.test(name)) return false;
   return name.split(/\s+/).length <= 8;
+}
+
+export function resolveDisplayFirmName({ firmName = null, sourceTitle = null, sourceH1 = null } = {}) {
+  const candidates = [
+    normalizeFirmName(firmName),
+    normalizeFirmName(sourceH1),
+    ...splitIdentityCandidates(sourceTitle),
+  ].filter(Boolean);
+  return candidates.find(isPlausibleFirmName) || normalizeFirmName(firmName) || null;
 }
 
 function hasStructuredLegalType(jsonLdTypes) {
@@ -163,20 +189,27 @@ export function buildDomainKey({ email = null, website = null } = {}) {
 
 export function assessCandidateQuality(candidate, { pageUrl = null } = {}) {
   const sourceUrl = candidate.source_url || pageUrl || candidate.website || null;
+  const sourceTitle = candidate.sourceTitle ?? candidate.source_title ?? null;
+  const sourceH1 = candidate.sourceH1 ?? candidate.source_h1 ?? null;
   const classification = candidate.email
     ? classifyProspectEmail(candidate.email, { pageUrl: sourceUrl })
     : { kind: null, reason: null, normalized: null };
   const contactName = isLikelyPersonName(candidate.contact_name)
     ? normalizeContactName(candidate.contact_name)
     : null;
+  const firmName = resolveDisplayFirmName({
+    firmName: candidate.firm_name,
+    sourceTitle,
+    sourceH1,
+  });
   const organization = evaluateOrganization({
     website: candidate.website,
     firmName: candidate.firm_name,
     text: candidate.description,
     sourceUrl,
     email: candidate.email,
-    sourceTitle: candidate.sourceTitle ?? candidate.source_title ?? null,
-    sourceH1: candidate.sourceH1 ?? candidate.source_h1 ?? null,
+    sourceTitle,
+    sourceH1,
     metaDescription: candidate.metaDescription ?? candidate.meta_description ?? null,
     jsonLdTypes: candidate.jsonLdTypes ?? candidate.json_ld_types ?? [],
     siteSignals: candidate.siteSignals ?? candidate.site_signals ?? null,
@@ -187,31 +220,42 @@ export function assessCandidateQuality(candidate, { pageUrl = null } = {}) {
   if (classification.reason === 'corrupted_local_part') {
     reviewReason = reviewReason || 'email_corrupted_local_part';
   }
-  let rejectionReason = candidate.rejection_reason || null;
-  let status = candidate.status || 'new';
-  let validationStatus = candidate.validation_status || 'pending';
+  const manualReview = isManualReviewReason(candidate.rejection_reason);
+  const manualNoEmail = manualReview && !classification.kind;
+  const resolvedManualReview = manualReview
+    && !reviewReason
+    && orgType === 'law_firm'
+    && classification.kind === 'personal';
+  let rejectionReason = manualReview ? null : candidate.rejection_reason || null;
+  let status = resolvedManualReview ? 'validated' : candidate.status || 'new';
+  let validationStatus = resolvedManualReview ? 'valid' : candidate.validation_status || 'pending';
 
   if (orgType !== 'law_firm') {
     rejectionReason = reviewReason || rejectionReason || `organization_${orgType}`;
     status = 'excluded';
     validationStatus = 'invalid';
   } else if (reviewReason) {
-    rejectionReason = reviewReason;
-    status = 'excluded';
-    validationStatus = 'invalid';
+    rejectionReason = manualReviewReason(reviewReason);
+    status = ['new', 'validated', 'pending_contact'].includes(status) ? status : 'new';
+    validationStatus = 'pending';
   } else if (classification.kind && classification.kind !== 'personal') {
     rejectionReason = rejectionReason || classification.reason;
     status = 'excluded';
     validationStatus = 'invalid';
+  } else if (manualNoEmail) {
+    rejectionReason = manualReviewReason(candidate.rejection_reason);
+    status = ['new', 'validated', 'pending_contact'].includes(status) ? status : 'pending_contact';
+    validationStatus = 'pending';
   }
 
   return {
     ...candidate,
     contact_name: contactName,
+    firm_name: firmName,
     email_kind: classification.kind,
     org_type: orgType,
-    review_required: Boolean(reviewReason),
-    review_reason: reviewReason,
+    review_required: Boolean(reviewReason) || manualNoEmail,
+    review_reason: reviewReason || (manualNoEmail ? 'no_email' : null),
     rejection_reason: rejectionReason,
     person_key: buildPersonKey(contactName),
     domain_key: buildDomainKey({ email: candidate.email, website: candidate.website }),
@@ -219,6 +263,23 @@ export function assessCandidateQuality(candidate, { pageUrl = null } = {}) {
     status,
     validation_status: validationStatus,
   };
+}
+
+export function isQualityEligible(row) {
+  if (!row) return false;
+  if (!row.quality_evaluated_at) return false;
+  if (row.quality_rules_version !== QUALITY_RULES_VERSION) return false;
+  if (row.org_type !== 'law_firm') return false;
+  if (row.email_kind !== 'personal') return false;
+  if (row.validation_status !== 'valid') return false;
+  if (row.status !== 'new' && row.status !== 'validated') return false;
+  if (row.send_status !== 'not_sent') return false;
+  if (row.rejection_reason) return false;
+  return Boolean(normalizeEmail(row.email));
+}
+
+export function selectQualityEligibleContacts(rows, options = {}) {
+  return selectEligibleContacts((rows || []).filter(isQualityEligible), options);
 }
 
 export function selectEligibleContacts(rows, { allowMultipleContactsPerFirm = false, limit = rows.length } = {}) {

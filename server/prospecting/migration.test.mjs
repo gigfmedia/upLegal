@@ -5,7 +5,8 @@ import { readFileSync } from 'node:fs';
 
 const migrations = [
   new URL('../../supabase/migrations/20261105004400_prospecting_automation.sql', import.meta.url),
-  new URL('../../supabase/migrations/20261105190000_prospecting_quality_limits.sql', import.meta.url),
+  new URL('../../supabase/migrations/20261105225853_prospecting_quality_limits.sql', import.meta.url),
+  new URL('../../supabase/migrations/20261106120000_prospecting_quality_version.sql', import.meta.url),
 ].map((url) => readFileSync(url, 'utf8'))
   .map((sql) => sql.replace(/create extension if not exists pgcrypto;/i, '-- pgcrypto omitido en PGlite; gen_random_uuid es nativo.'));
 
@@ -54,14 +55,22 @@ describe('prospecting migration', () => {
       select column_name, is_nullable, column_default
       from information_schema.columns
       where table_schema = 'public' and table_name = 'prospects'
-        and column_name in ('email_kind', 'org_type', 'rejection_reason', 'discovery_query', 'search_rank', 'person_key', 'domain_key', 'mailbox_verified', 'quality_evaluated_at')
+        and column_name in ('email_kind', 'org_type', 'rejection_reason', 'discovery_query', 'search_rank', 'person_key', 'domain_key', 'mailbox_verified', 'quality_evaluated_at', 'quality_rules_version')
       order by column_name
     `);
     const columns = Object.fromEntries(result.rows.map((row) => [row.column_name, row]));
-    expect(Object.keys(columns)).toHaveLength(9);
+    expect(Object.keys(columns)).toHaveLength(10);
     expect(columns.mailbox_verified.column_default).toContain('false');
     expect(columns.email_kind.is_nullable).toBe('YES');
     expect(columns.org_type.is_nullable).toBe('YES');
+    expect(columns.quality_rules_version.is_nullable).toBe('YES');
+  });
+
+  it('exige evaluación cuando se registra una versión de calidad', async () => {
+    await expect(db.exec(`
+      INSERT INTO public.prospects (dedupe_key, firm_name, source, quality_rules_version)
+      VALUES ('quality:sin-evaluacion', 'Estudio', 'test', '2026-11-06.1');
+    `)).rejects.toMatchObject({ code: '23514' });
   });
 
   it('deduplica prospectos por dedupe_key y email normalizado', async () => {

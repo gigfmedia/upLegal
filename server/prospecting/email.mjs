@@ -1,5 +1,6 @@
 import crypto from 'crypto';
-import { firstNameFrom, normalizeContactName } from './validation.mjs';
+import { firstNameFrom, normalizeFirmName } from './validation.mjs';
+import { isPlausibleFirmName } from './quality.mjs';
 
 const CTA = 'Me gustaría que lo probaras y me dieras tu opinión directa sobre qué aporta y qué habría que mejorar.';
 const DEFAULT_APP_URL = 'https://legalup.cl/pro';
@@ -60,15 +61,14 @@ export function buildLegalUpProUrl(settings, prospectId) {
 
 export function buildSubject(prospect) {
   const first = firstNameFrom(prospect?.contact_name);
-  const firm = truncate(String(prospect?.firm_name || '').trim(), 70);
+  const firm = truncate(displayFirmName(prospect) || '', 70);
   if (first) return truncate(`${first}, una idea para ${firm || 'tu práctica legal'}`, 120);
   return truncate(`Una idea para ${firm || 'tu práctica legal'}`, 120);
 }
 
 export function renderProspectEmail({ prospect, settings, unsubscribeUrl, legalUpProUrl }) {
-  const firm = truncate(clean(prospect?.firm_name) || 'tu estudio', 160);
-  const contact = normalizeContactName(prospect?.contact_name);
-  const first = firstNameFrom(contact);
+  const firm = truncate(displayFirmName(prospect) || 'tu estudio', 160);
+  const first = firstNameFrom(prospect?.contact_name);
   const city = truncate(clean(prospect?.city), 80);
   const specialties = Array.isArray(prospect?.specialties)
     ? prospect.specialties.map((item) => clean(item)).filter(Boolean).slice(0, 2)
@@ -162,6 +162,11 @@ function sourceDomainOf(prospect) {
   } catch {
     return null;
   }
+}
+
+function displayFirmName(prospect) {
+  const name = normalizeFirmName(prospect?.firm_name);
+  return isPlausibleFirmName(name) ? name : null;
 }
 
 function clean(value) {

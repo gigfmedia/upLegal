@@ -1,11 +1,15 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
 import {
+  QUALITY_RULES_VERSION,
   assessCandidateQuality,
   buildDomainKey,
   buildPersonKey,
   classifyOrganization,
+  isQualityEligible,
+  resolveDisplayFirmName,
   selectEligibleContacts,
+  selectQualityEligibleContacts,
 } from './quality.mjs';
 
 describe('prospecting quality', () => {
@@ -47,6 +51,21 @@ describe('prospecting quality', () => {
     })).toBe('school');
   });
 
+  it('deriva un nombre de firma visible desde la evidencia de fuente', () => {
+    expect(resolveDisplayFirmName({
+      firmName: 'Abogados',
+      sourceTitle: 'Abogados – Claro y Cia.',
+    })).toBe('Claro y Cia.');
+    expect(resolveDisplayFirmName({
+      firmName: 'Fundada en 2011, Cruz&Muñoz Abogados se especializa en Leyes empresariales.',
+      sourceTitle: 'Cruz & Muñoz Abogados – Bufete de abogados en Concepción.',
+    })).toBe('Cruz & Muñoz Abogados');
+    expect(resolveDisplayFirmName({
+      firmName: 'Fundada en 2011, Estudio Epsilon Abogados se especializa en Leyes empresariales.',
+      sourceTitle: 'Abogados en Chile',
+    })).toBe('Fundada en 2011, Estudio Epsilon Abogados se especializa en Leyes empresariales.');
+  });
+
   it('marca revisión manual para lead-gen, identidad débil y correos corruptos', () => {
     const leadGen = assessCandidateQuality({
       email: null,
@@ -63,8 +82,9 @@ describe('prospecting quality', () => {
       org_type: 'law_firm',
       review_required: true,
       review_reason: 'organization_lead_gen_risk',
-      status: 'excluded',
-      validation_status: 'invalid',
+      rejection_reason: 'manual_review:organization_lead_gen_risk',
+      status: 'new',
+      validation_status: 'pending',
     });
 
     const weakIdentity = assessCandidateQuality({
@@ -96,6 +116,7 @@ describe('prospecting quality', () => {
       validation_status: 'valid',
     });
     expect(realFirmWithLongHeading).toMatchObject({
+      firm_name: 'Estudio Epsilon Abogados',
       org_type: 'law_firm',
       email_kind: 'personal',
       review_required: false,
@@ -122,6 +143,8 @@ describe('prospecting quality', () => {
   it('normaliza persona y dominio para deduplicar', () => {
     expect(buildPersonKey('Alfonso Del Fierro')).toBe('alfonso-del-fierro');
     expect(buildPersonKey('Áreas de práctica')).toBe(null);
+    expect(buildPersonKey('Área de Copropiedad')).toBe(null);
+    expect(buildPersonKey('Calculadoras laborales')).toBe(null);
     expect(buildPersonKey('Navegación principal')).toBe(null);
     expect(buildPersonKey('Penalista en Viña del Mar')).toBe(null);
     expect(buildPersonKey('En el centro de Chile')).toBe(null);
@@ -160,5 +183,51 @@ describe('prospecting quality', () => {
     ];
     expect(selectEligibleContacts(rows, { limit: 10 }).map((row) => row.id)).toEqual([1, 4]);
     expect(selectEligibleContacts(rows, { allowMultipleContactsPerFirm: true, limit: 10 }).map((row) => row.id)).toEqual([1, 2, 4]);
+  });
+
+  it('solo selecciona prospectos evaluados que superan calidad actual', () => {
+    const base = {
+      quality_evaluated_at: '2026-11-06T12:00:00.000Z',
+      quality_rules_version: QUALITY_RULES_VERSION,
+      org_type: 'law_firm',
+      email_kind: 'personal',
+      validation_status: 'valid',
+      status: 'validated',
+      send_status: 'not_sent',
+      rejection_reason: null,
+      email: 'persona@estudio-alfa.example',
+      website: 'https://estudio-alfa.example',
+      person_key: 'persona-alfa',
+      domain_key: 'estudio-alfa.example',
+    };
+    const rows = [
+      { ...base, id: 'historico-sin-evaluar', quality_evaluated_at: null },
+      { ...base, id: 'organizacion-no-juridica', org_type: 'portal' },
+      { ...base, id: 'email-no-personal', email_kind: 'role' },
+      { ...base, id: 'validacion-invalida', validation_status: 'invalid' },
+      { ...base, id: 'calidad-rechazada', rejection_reason: 'organization_lead_gen_risk' },
+      { ...base, id: 'reglas-antiguas', quality_rules_version: '2026-01-01.1' },
+      { ...base, id: 'ya-enviado', send_status: 'sent' },
+      { ...base, id: 'elegible-1' },
+      { ...base, id: 'elegible-2', email: 'persona@estudio-beta.example', website: 'https://estudio-beta.example', person_key: 'persona-beta', domain_key: 'estudio-beta.example', status: 'new' },
+      { ...base, id: 'elegible-3', email: 'persona@estudio-gamma.example', website: 'https://estudio-gamma.example', person_key: 'persona-gamma', domain_key: 'estudio-gamma.example' },
+      { ...base, id: 'duplicado-firma', email: 'otra@estudio-alfa.example', website: 'https://estudio-alfa.example', person_key: 'otra-persona-alfa', domain_key: 'estudio-alfa.example' },
+    ];
+
+    expect(isQualityEligible(rows[0])).toBe(false);
+    expect(isQualityEligible(rows[1])).toBe(false);
+    expect(isQualityEligible(rows[2])).toBe(false);
+    expect(isQualityEligible(rows[3])).toBe(false);
+    expect(isQualityEligible(rows[4])).toBe(false);
+    expect(isQualityEligible(rows[5])).toBe(false);
+    expect(isQualityEligible(rows[6])).toBe(false);
+    expect(isQualityEligible(rows[7])).toBe(true);
+
+    expect(selectQualityEligibleContacts(rows, { limit: 10 }).map((row) => row.id))
+      .toEqual(['elegible-1', 'elegible-2', 'elegible-3']);
+    expect(selectQualityEligibleContacts(rows, { limit: 2 }).map((row) => row.id))
+      .toEqual(['elegible-1', 'elegible-2']);
+    expect(selectQualityEligibleContacts(rows, { allowMultipleContactsPerFirm: true, limit: 10 }).map((row) => row.id))
+      .toEqual(['elegible-1', 'elegible-2', 'elegible-3', 'duplicado-firma']);
   });
 });

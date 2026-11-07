@@ -1,5 +1,14 @@
 import { normalizeDomain, normalizeEmail } from './validation.mjs';
-import { buildDomainKey, buildPersonKey, selectEligibleContacts } from './quality.mjs';
+import {
+  QUALITY_RULES_VERSION,
+  assessCandidateQuality,
+  buildDomainKey,
+  buildPersonKey,
+  isManualReviewReason,
+  manualReviewCode,
+  manualReviewReason,
+  selectQualityEligibleContacts,
+} from './quality.mjs';
 
 const SEND_STATUS_RANK = { queued: 0, sending: 1, sent: 2, delivered: 3, unknown: 3, failed: 4, bounced: 5, complained: 6 };
 
@@ -118,9 +127,14 @@ export function createProspectingRepository({ supabase, logger = console } = {})
   }
 
   async function filterNewCandidates(candidates, { runId, allowMultipleContactsPerFirm = false } = {}) {
+    const assessed = candidates.map((candidate) => (
+      candidate
+        ? assessCandidateQuality(candidate, { pageUrl: candidate.source_url || candidate.website || null })
+        : candidate
+    ));
     const unique = [];
     const seen = new Set();
-    for (const candidate of candidates) {
+    for (const candidate of assessed) {
       if (!candidate?.dedupe_key || seen.has(candidate.dedupe_key)) continue;
       seen.add(candidate.dedupe_key);
       unique.push(candidate);
@@ -182,6 +196,8 @@ export function createProspectingRepository({ supabase, logger = console } = {})
     for (const [key, candidate] of [...byKey.entries()]) {
       const excluded = candidate.status === 'excluded' || candidate.validation_status === 'invalid';
       if (excluded) continue;
+      const manualReview = candidate.review_required || isManualReviewReason(candidate.rejection_reason);
+      if (manualReview) continue;
       const personKey = candidate.person_key || buildPersonKey(candidate.contact_name);
       const domainKey = candidate.domain_key || buildDomainKey({ email: candidate.email, website: candidate.website });
       if (personKey && seenPeople.has(personKey)) {
@@ -198,12 +214,13 @@ export function createProspectingRepository({ supabase, logger = console } = {})
       if (!allowMultipleContactsPerFirm && domainKey) seenDomains.add(domainKey);
     }
 
+    const evaluatedAt = new Date().toISOString();
     const rows = [...byKey.values()].map((candidate) => ({
       dedupe_key: candidate.dedupe_key,
       email: candidate.email || null,
       contact_name: candidate.contact_name || null,
       role: candidate.role || null,
-      firm_name: candidate.firm_name,
+      firm_name: candidate.firm_name || 'Sin nombre',
       website: candidate.website || null,
       linkedin_url: candidate.linkedin_url || null,
       city: candidate.city || null,
@@ -223,6 +240,8 @@ export function createProspectingRepository({ supabase, logger = console } = {})
       person_key: candidate.person_key || buildPersonKey(candidate.contact_name),
       domain_key: candidate.domain_key || buildDomainKey({ email: candidate.email, website: candidate.website }),
       mailbox_verified: false,
+      quality_evaluated_at: evaluatedAt,
+      quality_rules_version: QUALITY_RULES_VERSION,
       discovered_run_id: runId || null,
     }));
 
@@ -274,6 +293,7 @@ export function createProspectingRepository({ supabase, logger = console } = {})
     const windowSize = 500;
     const maxScan = 2000;
     const scanned = [];
+    const registered = await getRegisteredContacts();
     let offset = 0;
 
     while (offset < maxScan) {
@@ -281,9 +301,15 @@ export function createProspectingRepository({ supabase, logger = console } = {})
         .select('*')
         .eq('validation_status', 'valid')
         .eq('send_status', 'not_sent')
+        .eq('org_type', 'law_firm')
+        .eq('email_kind', 'personal')
+        .eq('quality_rules_version', QUALITY_RULES_VERSION)
+        .not('quality_evaluated_at', 'is', null)
+        .is('rejection_reason', null)
         .in('status', ['new', 'validated'])
         .not('email', 'is', null)
         .order('discovered_at', { ascending: true })
+        .order('id', { ascending: true })
         .range(offset, offset + windowSize - 1);
       if (error) fail('listEligibleForRun', error);
       const rows = data || [];
@@ -300,14 +326,17 @@ export function createProspectingRepository({ supabase, logger = console } = {})
       for (const row of rows) {
         if (withSends.has(row.id)) continue;
         if (suppressedSet.has(normalizeEmail(row.email))) continue;
+        const email = normalizeEmail(row.email);
+        const website = normalizeDomain(row.website);
+        if (registered.emails.has(email) || registered.websites.has(website)) continue;
         scanned.push(row);
       }
-      if (selectEligibleContacts(scanned, { allowMultipleContactsPerFirm, limit: target }).length >= target) break;
+      if (selectQualityEligibleContacts(scanned, { allowMultipleContactsPerFirm, limit: target }).length >= target) break;
       if (rows.length < windowSize) break;
       offset += windowSize;
     }
 
-    return selectEligibleContacts(scanned, { allowMultipleContactsPerFirm, limit: target });
+    return selectQualityEligibleContacts(scanned, { allowMultipleContactsPerFirm, limit: target });
   }
 
   async function listPendingContact(limit = 100) {
@@ -680,13 +709,42 @@ export function createProspectingRepository({ supabase, logger = console } = {})
   }
 
   async function insertManualProspect(candidate) {
+    const assessed = assessCandidateQuality(candidate, {
+      pageUrl: candidate.source_url || candidate.website || null,
+    });
+    const email = normalizeEmail(candidate.email);
+    const definitiveExclusion = assessed.status === 'excluded' || assessed.validation_status === 'invalid';
+    const manual = !definitiveExclusion && (
+      assessed.review_required
+      || isManualReviewReason(assessed.rejection_reason)
+      || !email
+    );
+    const reviewReason = assessed.review_reason
+      || manualReviewCode(assessed.rejection_reason)
+      || (email ? 'manual_review' : 'no_email');
+    const evaluatedAt = new Date().toISOString();
+    const evaluationComplete = !manual
+      && !definitiveExclusion
+      && assessed.org_type === 'law_firm'
+      && assessed.email_kind === 'personal'
+      && Boolean(email);
+    const status = manual
+      ? (!email
+        ? 'pending_contact'
+        : (['new', 'validated', 'pending_contact'].includes(assessed.status)
+          ? assessed.status
+          : 'validated'))
+      : (evaluationComplete && !['new', 'validated'].includes(assessed.status)
+        ? 'validated'
+        : assessed.status);
+
     const { data, error } = await db('prospects')
       .insert({
-        dedupe_key: candidate.dedupe_key || `manual:${normalizeEmail(candidate.email)}`,
+        dedupe_key: candidate.dedupe_key || `manual:${email}`,
         email: candidate.email || null,
-        contact_name: candidate.contact_name || null,
+        contact_name: assessed.contact_name || null,
         role: candidate.role || null,
-        firm_name: candidate.firm_name || 'Sin nombre',
+        firm_name: assessed.firm_name || candidate.firm_name || 'Sin nombre',
         website: candidate.website || null,
         linkedin_url: candidate.linkedin_url || null,
         city: candidate.city || null,
@@ -694,17 +752,21 @@ export function createProspectingRepository({ supabase, logger = console } = {})
         description: candidate.description || null,
         source: 'manual',
         source_url: candidate.source_url || null,
-        validation_status: candidate.validation_status || (candidate.email ? 'valid' : 'no_email'),
-        status: candidate.status || (candidate.email ? 'validated' : 'pending_contact'),
+        validation_status: manual ? 'pending' : (evaluationComplete ? 'valid' : assessed.validation_status),
+        status,
         notes: candidate.notes || null,
-        email_kind: candidate.email_kind || null,
-        org_type: candidate.org_type || null,
-        rejection_reason: candidate.rejection_reason || null,
+        email_kind: assessed.email_kind,
+        org_type: assessed.org_type,
+        rejection_reason: manual
+          ? manualReviewReason(reviewReason)
+          : assessed.rejection_reason,
         discovery_query: candidate.discovery_query || null,
         search_rank: Number.isFinite(Number(candidate.search_rank)) ? Number(candidate.search_rank) : null,
-        person_key: candidate.person_key || buildPersonKey(candidate.contact_name),
-        domain_key: candidate.domain_key || buildDomainKey({ email: candidate.email, website: candidate.website }),
+        person_key: assessed.person_key,
+        domain_key: assessed.domain_key,
         mailbox_verified: false,
+        quality_evaluated_at: manual ? null : evaluatedAt,
+        quality_rules_version: manual ? null : QUALITY_RULES_VERSION,
       })
       .select('*')
       .single();
