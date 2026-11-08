@@ -5,6 +5,7 @@ import { CheckCircle, ChevronRight } from 'lucide-react';
 import { useInView } from 'react-intersection-observer';
 import { resolveBlogCtaDestination } from './blogCtaDestinations';
 import { persistArticleSlug } from '@/lib/bookingAttribution';
+import { track } from '@/lib/track';
 
 interface InArticleCTAProps {
   category?: string;
@@ -13,6 +14,7 @@ interface InArticleCTAProps {
   title?: string;
   targetUrl?: string;
   priceNote?: string;
+  badges?: string[];
 }
 
 const InArticleCTA: React.FC<InArticleCTAProps> = ({
@@ -22,10 +24,13 @@ const InArticleCTA: React.FC<InArticleCTAProps> = ({
   title,
   targetUrl,
   priceNote,
+  badges,
 }) => {
   const DEFAULT_TITLE = "¿Necesitas resolver tu situación?";
   const DEFAULT_MESSAGE = "Un abogado puede analizar tu caso y orientarte sobre las alternativas disponibles.";
   const DEFAULT_BUTTON = "Consultar con un abogado";
+  const DEFAULT_BADGES = ["Respuesta hoy", "Consulta online", "60 minutos", "Precio fijo"];
+  const activeBadges = badges ?? DEFAULT_BADGES;
   const resolvedTarget = (() => {
     if (typeof window === 'undefined') {
       return resolveBlogCtaDestination({ category, targetUrl });
@@ -62,17 +67,15 @@ const InArticleCTA: React.FC<InArticleCTAProps> = ({
     const pagePath = window.location.pathname;
     const articleSlug = pagePath.split('/').pop() || '';
     persistArticleSlug(articleSlug, resolvedTarget, pagePath);
-    if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', 'blog_inline_cta_clicked', {
-        specialty: category,
-        category,
-        article_slug: articleSlug,
-        page_path: pagePath,
-        cta_position: 'in_article',
-        cta_type: 'in_article',
-        destination: resolvedTarget,
-      });
-    }
+    track.commercialCTAClicked({
+      specialty: category,
+      legal_category: category,
+      article_slug: articleSlug,
+      page_path: pagePath + window.location.search,
+      cta_location: 'in_article',
+      cta_type: 'in_article',
+      destination: resolvedTarget,
+    });
   };
 
   const getButtonText = () => {
@@ -88,10 +91,11 @@ const InArticleCTA: React.FC<InArticleCTAProps> = ({
       </p>
 
       <div className="flex flex-wrap gap-x-6 gap-y-2 mb-5 justify-center">
-        <span className="flex items-center gap-1.5 text-sm text-green-900"><span className="text-green-600 font-bold">✓</span> Respuesta hoy</span>
-        <span className="flex items-center gap-1.5 text-sm text-green-900"><span className="text-green-600 font-bold">✓</span> Consulta online</span>
-        <span className="flex items-center gap-1.5 text-sm text-green-900"><span className="text-green-600 font-bold">✓</span> 60 minutos</span>
-        <span className="flex items-center gap-1.5 text-sm text-green-900"><span className="text-green-600 font-bold">✓</span> Precio fijo</span>
+        {activeBadges.map((badge) => (
+          <span key={badge} className="flex items-center gap-1.5 text-sm text-green-900">
+            <span className="text-green-600 font-bold">✓</span> {badge}
+          </span>
+        ))}
       </div>
 
       {priceNote && (

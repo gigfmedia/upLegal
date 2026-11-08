@@ -351,7 +351,7 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
-<InArticleCTA category="Derecho de Familia"  title="¿Tu situación económica cambió y necesitas rebajar la pensión?" message="Un abogado de familia puede evaluar si corresponde la rebaja, reunir los antecedentes y presentar la demanda judicial." />
+<InArticleCTA category="Derecho de Familia"  title="¿Tu situación económica cambió y necesitas rebajar la pensión?" message="Un abogado de familia puede evaluar si corresponde la rebaja, reunir los antecedentes y presentar la demanda judicial." buttonText="Ver abogados y disponibilidad" badges={["Abogados verificados", "Consulta online", "60 minutos", "Agenda según disponibilidad"]} priceNote="Consulta desde $30.000 CLP. Precio final y disponibilidad se muestran al reservar." />
 
 
           {/* No bajar por su cuenta */}

@@ -22,6 +22,16 @@ function renderCta() {
   );
 }
 
+function renderFamilyCta(topic?: 'familia' | 'pension' | 'divorcio') {
+  const path = '/blog/derecho-de-familia-chile-2026';
+  window.history.pushState({}, '', path);
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      <CategoryCTA category="familia" topic={topic} />
+    </MemoryRouter>
+  );
+}
+
 describe('CategoryCTA — commercial_cta_clicked', () => {
   beforeEach(() => ctaClickedMock.mockClear());
 
@@ -55,5 +65,24 @@ describe('CategoryCTA — commercial_cta_clicked', () => {
     expect(ctaClickedMock).toHaveBeenCalledTimes(3);
     const payloads = ctaClickedMock.mock.calls.map(([p]) => p as Record<string, unknown>);
     expect(new Set(payloads.map((p) => JSON.stringify(p))).size).toBe(1);
+  });
+
+  it('familia usa la landing de familia, no /search', () => {
+    renderFamilyCta();
+    const link = screen.getByRole('link', { name: /Revisar mi caso con un abogado/ });
+    expect(link.getAttribute('href')).toBe('/abogado-familia');
+    fireEvent.click(link);
+    expect(ctaClickedMock.mock.calls[0][0]).toMatchObject({
+      destination: '/abogado-familia',
+      cta_type: 'category',
+      legal_category: 'familia',
+    });
+  });
+
+  it('familia mantiene overrides específicos de pensión y divorcio', () => {
+    renderFamilyCta('pension');
+    expect(screen.getByRole('link', { name: /Revisar mi caso con un abogado/ }).getAttribute('href')).toBe(
+      '/abogado-pension-alimentos'
+    );
   });
 });

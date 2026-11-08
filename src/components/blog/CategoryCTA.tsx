@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import type { BlogTopic } from './blogConversionConfig';
+import { resolveBlogCtaDestination } from './blogCtaDestinations';
 import { track } from '@/lib/track';
 
 interface CategoryCTAProps {
@@ -10,6 +11,7 @@ interface CategoryCTAProps {
 }
 
 const CategoryCTA: React.FC<CategoryCTAProps> = ({ category, topic }) => {
+  const familyLanding = resolveBlogCtaDestination({ category: 'Derecho de Familia' });
   const content = {
     laboral: {
       title: '¿Necesitas ayuda con un tema laboral?',
@@ -26,7 +28,7 @@ const CategoryCTA: React.FC<CategoryCTAProps> = ({ category, topic }) => {
     familia: {
       title: '¿Necesitas ayuda con tu caso familiar?',
       description: 'Compara abogados especializados en derecho de familia y agenda una consulta online.',
-      link: '/search?specialty=Derecho%20de%20Familia',
+      link: familyLanding,
       linkText: 'Revisar mi caso con un abogado',
     },
     penal: {
@@ -82,7 +84,7 @@ const CategoryCTA: React.FC<CategoryCTAProps> = ({ category, topic }) => {
     },
     familia: {
       description: 'Compara abogados especializados en cuidado personal, visitas, mediación y conflictos familiares.',
-      link: '/search?specialty=Derecho%20de%20Familia',
+      link: familyLanding,
       linkText: 'Revisar mi caso con un abogado',
     },
   };

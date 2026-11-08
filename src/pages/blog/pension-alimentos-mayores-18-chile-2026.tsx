@@ -198,7 +198,7 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                        <InArticleCTA category="Derecho de Familia"  title="¿Tu hijo cumplió 18 años y debes seguir pagando pensión?" message="Un abogado de familia puede evaluar si corresponde la extensión, revisar la situación del hijo y determinar tus obligaciones." />
+                        <InArticleCTA category="Derecho de Familia"  title="¿Tu hijo cumplió 18 años y debes seguir pagando pensión?" message="Un abogado de familia puede evaluar si corresponde la extensión, revisar la situación del hijo y determinar tus obligaciones." buttonText="Ver abogados y disponibilidad" badges={["Abogados verificados", "Consulta online", "60 minutos", "Agenda según disponibilidad"]} priceNote="Consulta desde $30.000 CLP. Precio final y disponibilidad se muestran al reservar." />
 
                     {/* HIJO ESTUDIA UNIVERSIDAD */}
                     <div className="mb-12">
@@ -398,8 +398,10 @@ const BlogArticle = () => {
                                         <InArticleCTA
                         title="¿Necesitas resolver tu situación familiar?"
                         message="Un abogado de familia puede orientarte sobre los pasos a seguir en tu caso y ayudarte a tomar decisiones informadas."
-                        buttonText="Habla con un abogado ahora"
+                        buttonText="Ver abogados y disponibilidad"
                         category="Derecho de Familia"
+                        badges={["Abogados verificados", "Consulta online", "60 minutos", "Agenda según disponibilidad"]}
+                        priceNote="Consulta desde $30.000 CLP. Precio final y disponibilidad se muestran al reservar."
                     />
 
 {/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">

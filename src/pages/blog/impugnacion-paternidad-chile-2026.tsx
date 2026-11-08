@@ -214,7 +214,7 @@ const BlogArticle = () => {
                             </div>
                         </div>
                     </div>
-<InArticleCTA category="Derecho de Familia" title="¿Dudas de la paternidad de un hijo?" message="Un abogado de familia puede evaluar los plazos, preparar la demanda de impugnación y proteger tus derechos patrimoniales." />
+<InArticleCTA category="Derecho de Familia" title="¿Dudas de la paternidad de un hijo?" message="Un abogado de familia puede evaluar los plazos, preparar la demanda de impugnación y proteger tus derechos patrimoniales." buttonText="Ver abogados y disponibilidad" badges={["Abogados verificados", "Consulta online", "60 minutos", "Agenda según disponibilidad"]} priceNote="Consulta desde $30.000 CLP. Precio final y disponibilidad se muestran al reservar." />
 
 
                     {/* QUIEN PUEDE SOLICITAR LA IMPUGNACION */}
@@ -451,8 +451,10 @@ const BlogArticle = () => {
                                         <InArticleCTA
                         title="¿Necesitas resolver tu situación familiar?"
                         message="Un abogado de familia puede orientarte sobre los pasos a seguir en tu caso y ayudarte a tomar decisiones informadas."
-                        buttonText="Habla con un abogado ahora"
+                        buttonText="Ver abogados y disponibilidad"
                         category="Derecho de Familia"
+                        badges={["Abogados verificados", "Consulta online", "60 minutos", "Agenda según disponibilidad"]}
+                        priceNote="Consulta desde $30.000 CLP. Precio final y disponibilidad se muestran al reservar."
                     />
 
 {/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">

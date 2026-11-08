@@ -256,7 +256,7 @@ const BlogArticle = () => {
                         </div>
                         <p className="text-gray-600 mt-4">El tribunal no se limita a verificar que el ACS contenga todas las materias: evalúa si cada una de ellas está resuelta de manera que proteja adecuadamente los derechos de los hijos y del cónyuge más vulnerable. Esto implica que un acuerdo que formalmente cubre alimentos, visitas y cuidado personal puede ser considerado insuficiente si, por ejemplo, el monto de pensión es irrisorio o el régimen de visitas es tan ambiguo que genera conflictos futuros.</p>
                     </div>
-<InArticleCTA category="Derecho de Familia" title="¿Necesitas redactar o revisar un Acuerdo Completo y Suficiente?" message="Un abogado de familia puede diseñar el ACS, proteger tus intereses y asegurar que cumpla todos los requisitos legales para tu divorcio." />
+<InArticleCTA category="Derecho de Familia" title="¿Necesitas redactar o revisar un Acuerdo Completo y Suficiente?" message="Un abogado de familia puede diseñar el ACS, proteger tus intereses y asegurar que cumpla todos los requisitos legales para tu divorcio." buttonText="Ver abogados y disponibilidad" badges={["Abogados verificados", "Consulta online", "60 minutos", "Agenda según disponibilidad"]} priceNote="Consulta desde $30.000 CLP. Precio final y disponibilidad se muestran al reservar." />
 
 
                     {/* QUE DEBE INCLUIR */}
@@ -461,8 +461,10 @@ const BlogArticle = () => {
                                         <InArticleCTA
                         title="¿Necesitas resolver tu situación familiar?"
                         message="Un abogado de familia puede orientarte sobre los pasos a seguir en tu caso y ayudarte a tomar decisiones informadas."
-                        buttonText="Habla con un abogado ahora"
+                        buttonText="Ver abogados y disponibilidad"
                         category="Derecho de Familia"
+                        badges={["Abogados verificados", "Consulta online", "60 minutos", "Agenda según disponibilidad"]}
+                        priceNote="Consulta desde $30.000 CLP. Precio final y disponibilidad se muestran al reservar."
                     />
 
 {/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">

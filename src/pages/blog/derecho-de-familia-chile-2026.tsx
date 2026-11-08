@@ -487,7 +487,7 @@ const BlogArticle = () => {
               </Link>
             </div>
           </div>
-<InArticleCTA category="Derecho de Familia"  title="¿Tienes un problema de derecho de familia?" message="Un abogado de familia puede analizar tu caso, identificar la vía correcta y proteger tus derechos y los de tu familia." />
+<InArticleCTA category="Derecho de Familia"  title="¿Tienes un problema de derecho de familia?" message="Un abogado de familia puede analizar tu caso, identificar la vía correcta y proteger tus derechos y los de tu familia." buttonText="Ver abogados y disponibilidad" badges={["Abogados verificados", "Consulta online", "60 minutos", "Agenda según disponibilidad"]} priceNote="Consulta desde $30.000 CLP. Precio final y disponibilidad se muestran al reservar." />
 
 
           <div className="mb-12 bg-gray-50 p-8 rounded-2xl border border-gray-100">
@@ -520,8 +520,10 @@ const BlogArticle = () => {
           <InArticleCTA
                         title="¿Necesitas resolver tu situación familiar?"
                         message="Un abogado de familia puede orientarte sobre los pasos a seguir en tu caso y ayudarte a tomar decisiones informadas."
-                        buttonText="Habla con un abogado ahora"
+                        buttonText="Ver abogados y disponibilidad"
                         category="Derecho de Familia"
+                        badges={["Abogados verificados", "Consulta online", "60 minutos", "Agenda según disponibilidad"]}
+                        priceNote="Consulta desde $30.000 CLP. Precio final y disponibilidad se muestran al reservar."
                     />
 
 {/* Conclusion */}          <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
