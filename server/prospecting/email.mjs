@@ -87,16 +87,16 @@ export function renderProspectEmail({ prospect, settings, unsubscribeUrl, legalU
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${escapeHtml(subject)}</title></head>
 <body style="margin:0;padding:0;background:#fafaf6;">
   <div style="max-width:600px;margin:0 auto;padding:32px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#1f2937;line-height:1.6;font-size:16px;">
-    <div style="padding-bottom:20px;font-size:20px;font-weight:700;color:#111827;text-align:center;">
+    <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:32px;">
+    <div style="padding-bottom:40px;font-size:20px;font-weight:700;color:#111827;text-align:center;">
       <img src="https://legalup.cl/apple-touch-icon.png" alt="LegalUp" style="height:40px;width:40px;vertical-align:middle;border:0;" />
       <span style="color:#1a202c;font-size:22px;font-weight:800;vertical-align:middle;">LegalUp</span>
       <span style="font-size:10px;background:#85efab;color:#101820;padding:4px 6px;border-radius:4px;margin-left:4px;vertical-align:middle;">PRO</span>
     </div>
-    <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:32px;">
       <p style="margin:0 0 16px;">${escapeHtml(greeting)}</p>
       <p style="margin:0 0 16px;">${escapeHtml(context)}</p>
-      <p style="margin:0 0 16px;">Si hoy llevas clientes, causas, agenda, tareas y documentos en distintos lugares, LegalUp Pro los reúne en un solo espacio de trabajo.</p>
-      <p style="margin:0 0 16px;">Incluye gestión de solicitudes, clientes, casos, agenda e ingresos, con IA integrada en tus casos para análisis de documentos, chat del caso, investigación jurídica y redacción asistida.</p>
+      <p style="margin:0 0 16px;">Si hoy llevas clientes, causas, agenda, tareas y documentos en distintas herramientas, LegalUp Pro te permite centralizar la gestión de tu práctica legal en un solo espacio de trabajo.</p>
+      <p style="margin:0 0 16px;">Incluye gestión de solicitudes, clientes, casos, agenda e ingresos, con IA integrada en tus casos para analizar documentos, consultar sobre los antecedentes de cada expediente, investigar jurisprudencia y preparar borradores con asistencia de IA.</p>
       <p style="margin:0 0 24px;">${escapeHtml(CTA)}</p>
       <p style="margin:0 0 28px;">
         <a href="${escapeHtml(link)}" style="display:inline-block;background:#85efab;color:#1a202c;text-decoration:none;padding:14px 22px;border-radius:8px;font-weight:600;">Ver LegalUp Pro</a>
@@ -120,9 +120,9 @@ export function renderProspectEmail({ prospect, settings, unsubscribeUrl, legalU
     '',
     context,
     '',
-    'Si hoy llevas clientes, causas, agenda, tareas y documentos en distintos lugares, LegalUp Pro los reúne en un solo espacio de trabajo.',
+    'Si hoy llevas clientes, causas, agenda, tareas y documentos en distintas herramientas, LegalUp Pro te permite centralizar la gestión de tu práctica legal en un solo espacio de trabajo.',
     '',
-    'Incluye gestión de solicitudes, clientes, casos, agenda e ingresos, con IA integrada en tus casos para análisis de documentos, chat del caso, investigación jurídica y redacción asistida.',
+    'Incluye gestión de solicitudes, clientes, casos, agenda e ingresos, con IA integrada en tus casos para analizar documentos, consultar sobre los antecedentes de cada expediente, investigar jurisprudencia y preparar borradores con asistencia de IA.',
     '',
     CTA,
     '',
@@ -135,7 +135,7 @@ export function renderProspectEmail({ prospect, settings, unsubscribeUrl, legalU
     'juan@legalup.cl',
     '',
     reason,
-    'LegalUp, Santiago, Chile.',
+    'LegalUp - Chile.',
     `Darte de baja: ${unsubscribeUrl}`,
   ].join('\n');
 

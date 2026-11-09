@@ -117,10 +117,14 @@ export function buildInquiryNotification({ record, id, createdAt = new Date() })
   ].join('\n');
 
   const html = `
-    <div style="margin:0;padding:24px;background:#f4f6f5;font-family:Inter,Arial,sans-serif;color:#101820;">
-      <div style="max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;">
-        <div style="background:#14532d;color:#ffffff;padding:20px 24px;">
-          <div style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;opacity:.8;">LegalUp Services</div>
+    <div style="margin:0;padding:24px;background:#fafaf6;font-family:Inter,Arial,sans-serif;color:#101820;">
+      <div style="max-width:600px;margin:0 auto;padding:32px 20px;background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;">
+           <div style="padding-bottom:20px;font-size:20px;font-weight:700;color:#111827;text-align:center;">
+      <img src="https://legalup.cl/apple-touch-icon.png" alt="LegalUp" style="height:40px;width:40px;vertical-align:middle;border:0;" />
+      <span style="color:#1a202c;font-size:22px;font-weight:800;vertical-align:middle;">LegalUp</span>
+      <span style="font-size:10px;background:#85efab;color:#101820;padding:4px 6px;border-radius:4px;margin-left:4px;vertical-align:middle;">SERVICES</span>
+    </div>
+        <div style="color:#101820;padding:10px 24px;">
           <h1 style="margin:8px 0 0;font-size:22px;line-height:1.3;">Nueva solicitud de servicio</h1>
           <div style="margin-top:6px;font-size:13px;opacity:.8;">Referencia ${escapeHtml(reference)}</div>
         </div>
@@ -140,7 +144,12 @@ export function buildInquiryNotification({ record, id, createdAt = new Date() })
           <p style="margin:20px 0 0;font-size:12px;color:#6b7280;">Privacidad aceptada en el formulario. Responde a este correo para contactar a la empresa.</p>
         </div>
       </div>
+      <div style="padding:20px 4px 0;font-size:12px;color:#6b7280;line-height:1.5;">
+      <p style="text-align:center;">LegalUp Services Chile.
+          Todos los derechos reservados.
+        </p>
     </div>
+</div>
   `;
 
   return { subject, text, html };
