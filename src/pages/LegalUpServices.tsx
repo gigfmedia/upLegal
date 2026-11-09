@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
@@ -368,7 +368,21 @@ export default function LegalUpServices() {
   const reduceMotion = useReducedMotion();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [preset, setPreset] = useState<{ category: ServiceCategorySlug; nonce: number } | null>(null);
+  const [footerVisible, setFooterVisible] = useState(false);
   const presetNonce = useRef(0);
+  const footerRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const footer = footerRef.current;
+    if (!footer || typeof IntersectionObserver === 'undefined') return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setFooterVisible(entry.isIntersecting),
+      { threshold: 0.01 },
+    );
+    observer.observe(footer);
+    return () => observer.disconnect();
+  }, []);
 
   const scrollToId = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -880,7 +894,7 @@ export default function LegalUpServices() {
         </section>
       </main>
 
-      <footer className="border-t border-gray-200 bg-gray-50">
+      <footer ref={footerRef} className="border-t border-gray-200 bg-gray-50">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-8 sm:flex-row sm:px-6">
           <div className="flex items-center gap-2">
             <Scale className="h-7 w-7 text-green-900" />
@@ -913,15 +927,21 @@ export default function LegalUpServices() {
         
       </footer>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white/95 p-3 backdrop-blur md:hidden">
-        <Button
-          onClick={() => scrollToId('solicitud')}
-          className="h-11 w-full rounded-full bg-gray-900 font-semibold hover:bg-green-900"
+      {!footerVisible && (
+        <div
+          data-testid="mobile-services-cta"
+          className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white/95 p-3 backdrop-blur md:hidden"
+          style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
         >
-          Solicitar un servicio
-          <ArrowRight className="h-4 w-4" />
-        </Button>
-      </div>
+          <Button
+            onClick={() => scrollToId('solicitud')}
+            className="h-11 w-full rounded-full bg-gray-900 font-semibold hover:bg-green-900"
+          >
+            Solicitar un servicio
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
