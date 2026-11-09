@@ -29,6 +29,6 @@ jobs:
           fi
           curl --fail-with-body --silent --show-error \
             --request POST \
-            "https://legalup.cl/api/cron/prospecting" \
+            "https://uplegal-service.onrender.com/api/cron/prospecting" \
             --header "x-cron-secret: ${PROSPECTING_CRON_SECRET}" \
             --header "Content-Type: application/json"
