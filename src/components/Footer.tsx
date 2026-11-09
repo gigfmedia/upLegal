@@ -38,6 +38,7 @@ const FooterColumn = ({ title, links }: { title: string; links: FooterNavLink[] 
 const PRODUCT_LINKS: FooterNavLink[] = [
   { label: 'LegalUp', to: '/' },
   { label: 'LegalUp Pro', to: '/pro' },
+  { label: 'LegalUp Services', to: '/services' },
   { label: 'LegalUp AI', to: '/ai' },
 ];
 

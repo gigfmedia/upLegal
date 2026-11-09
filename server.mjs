@@ -22,6 +22,7 @@ import { sendWebhookResponse } from './server/subscriptions/webhookResponse.mjs'
 import { dispatchSubscriptionWebhook } from './server/subscriptions/subscriptionWebhook.mjs';
 import { fetchProviderResource, providerFetchFailureResult } from './server/subscriptions/providerFetch.mjs';
 import { processProAuthorizedPaymentEvent } from './server/subscriptions/proPaymentEvent.mjs';
+import { createInquiryRateLimiter, createServicesInquiryHandler } from './server/services/inquiries.mjs';
 import {
   canClaimEarlyPlusProvider,
   claimPendingPlusProvider,
@@ -533,6 +534,17 @@ app.post('/api/cron/prospecting', prospecting.cronHandler);
 app.get('/health', (req, res) => {
   res.json({ ok: true, timestamp: Date.now() });
 });
+
+// LegalUp Services: formulario público. Persistencia privada, sin documentos.
+app.post(
+  '/api/services/inquiries',
+  createInquiryRateLimiter(),
+  createServicesInquiryHandler({
+    supabase,
+    resend,
+    notifyEmail: process.env.SERVICES_NOTIFY_EMAIL || 'contacto@legalup.cl',
+  }),
+);
 
 // Helper to normalize strings safely
 const safeTrim = (value) => {
