@@ -15,13 +15,13 @@ type FooterNavLink = {
 
 const FooterColumn = ({ title, links }: { title: string; links: FooterNavLink[] }) => (
   <nav aria-label={title}>
-    <h3 className="text-xs font-semibold uppercase tracking-widest text-white/50">{title}</h3>
+    <h3 className="text-xs font-semibold uppercase tracking-widest text-green-900/60">{title}</h3>
     <ul className="mt-4 space-y-2.5">
       {links.map((link) => (
         <li key={`${link.to}-${link.label}`}>
           <Link
             to={link.to}
-            className="rounded text-sm text-white/70 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+            className="rounded text-sm text-green-900/75 transition-colors hover:text-green-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-900/40"
           >
             {link.label}
           </Link>
@@ -61,7 +61,7 @@ const FooterCookieSettings = () => (
   <button
     type="button"
     onClick={openCookiePreferences}
-    className="rounded text-sm text-white/70 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+    className="rounded text-sm text-green-900/75 transition-colors hover:text-green-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-900/40"
   >
     Configurar cookies
   </button>
@@ -206,20 +206,18 @@ const Footer = () => {
         </a>
       </div>
     
-      <footer ref={footerRef} className="bg-[#101820] text-white relative z-10">
+      <footer ref={footerRef} className="bg-cream-900 text-green-900 relative z-10">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid gap-10 py-12 sm:grid-cols-2 sm:py-14 lg:grid-cols-[2fr_1fr_1fr_1fr]">
 
             {/* Marca */}
             <div>
               <p className="flex items-center gap-2 text-xl font-bold tracking-tight">
-                <Scale className="h-8 w-8 text-white" aria-hidden="true" />
+                <Scale className="h-8 w-8 text-green-900" aria-hidden="true" />
                 LegalUp
               </p>
-              <p className="mt-4 text-base leading-relaxed text-white/70">
-                Asesoría legal online con abogados verificados.
-                <br />
-                Gestiona consultas, casos y servicios legales desde<br /> un solo lugar.
+              <p className="mt-4 text-base leading-relaxed text-green-900/70">
+                Conecta con abogados verificados y gestiona consultas, casos y servicios legales desde un solo lugar.
               </p>
               <div className="mt-6 flex items-center gap-2">
                 <a
@@ -227,7 +225,7 @@ const Footer = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Instagram LegalUp"
-                  className="rounded-full p-2 text-white/60 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                  className="rounded-full p-2 text-green-900/60 transition-colors hover:bg-green-900/10 hover:text-green-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-900/40"
                 >
                   <svg fill="currentColor" width="20px" height="20px" viewBox="0 0 24 24"><title>Instagram icon</title>
                     <path d="M17.34,5.46h0a1.2,1.2,0,1,0,1.2,1.2A1.2,1.2,0,0,0,17.34,5.46Zm4.6,2.42a7.59,7.59,0,0,0-.46-2.43,4.94,4.94,0,0,0-1.16-1.77,4.7,4.7,0,0,0-1.77-1.15,7.3,7.3,0,0,0-2.43-.47C15.06,2,14.72,2,12,2s-3.06,0-4.12.06a7.3,7.3,0,0,0-2.43.47A4.78,4.78,0,0,0,3.68,3.68,4.7,4.7,0,0,0,2.53,5.45a7.3,7.3,0,0,0-.47,2.43C2,8.94,2,9.28,2,12s0,3.06.06,4.12a7.3,7.3,0,0,0,.47,2.43,4.7,4.7,0,0,0,1.15,1.77,4.78,4.78,0,0,0,1.77,1.15,7.3,7.3,0,0,0,2.43.47C8.94,22,9.28,22,12,22s3.06,0,4.12-.06a7.3,7.3,0,0,0,2.43-.47,4.7,4.7,0,0,0,1.77-1.15,4.85,4.85,0,0,0,1.16-1.77,7.59,7.59,0,0,0,.46-2.43c0-1.06.06-1.4.06-4.12S22,8.94,21.94,7.88ZM20.14,16a5.61,5.61,0,0,1-.34,1.86,3.06,3.06,0,0,1-.75,1.15,3.19,3.19,0,0,1-1.15.75,5.61,5.61,0,0,1-1.86.34c-1,.05-1.37.06-4,.06s-3,0-4-.06A5.73,5.73,0,0,1,6.1,19.8,3.27,3.27,0,0,1,5,19.05a3,3,0,0,1-.74-1.15A5.54,5.54,0,0,1,3.86,16c0-1-.06-1.37-.06-4s0-3,.06-4A5.54,5.54,0,0,1,4.21,6.1,3,3,0,0,1,5,5,3.14,3.14,0,0,1,6.1,4.2,5.73,5.73,0,0,1,8,3.86c1,0,1.37-.06,4-.06s3,0,4,.06a5.61,5.61,0,0,1,1.86.34A3.06,3.06,0,0,1,19.05,5,3.06,3.06,0,0,1,19.8,6.1,5.61,5.61,0,0,1,20.14,8c.05,1,.06,1.37.06,4S20.19,15,20.14,16ZM12,6.87A5.13,5.13,0,1,0,17.14,12,5.12,5.12,0,0,0,12,6.87Zm0,8.46A3.33,3.33,0,1,1,15.33,12,3.33,3.33,0,0,1,12,15.33Z"/></svg>
@@ -238,7 +236,7 @@ const Footer = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Tiktok LegalUp"
-                  className="rounded-full p-2 text-white/60 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                  className="rounded-full p-2 text-green-900/60 transition-colors hover:bg-green-900/10 hover:text-green-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-900/40"
                 >
                   <svg
                     width="16px"
@@ -249,6 +247,19 @@ const Footer = () => {
                     <path d="M12.53.02C13.84 0 15.14.01 16.44 0c.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
                 </a>
               </div>
+
+              <div className="mt-8">
+                <img
+                  src="/assets/nvidia-inception-program-badge-rgb-for-screen.svg"
+                  alt="NVIDIA Inception Program Member"
+                  width={500}
+                  height={216}
+                  loading="lazy"
+                  decoding="async"
+                  draggable={false}
+                  className="h-16 w-auto max-w-full"
+                />
+              </div>
             </div>
 
             <FooterColumn title="Productos" links={PRODUCT_LINKS} />
@@ -258,9 +269,9 @@ const Footer = () => {
 
           {FOOTER_COUNTRIES_ENABLED && <CountriesSection />}
 
-          <div className="flex flex-col gap-4 border-t border-white/10 py-6 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-4 border-t border-green-900/10 py-6 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-sm text-white/70">{LEGAL_ENTITY_COPYRIGHT}</p>
+              <p className="text-sm text-green-900/70">{LEGAL_ENTITY_COPYRIGHT}</p>
               {/* <p className="mt-1 text-xs text-white/50">{LEGAL_ENTITY_OPERATOR_LINE}</p> */}
             </div>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2">

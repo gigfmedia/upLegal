@@ -370,7 +370,7 @@ export default function LegalUpServices() {
   const [preset, setPreset] = useState<{ category: ServiceCategorySlug; nonce: number } | null>(null);
   const [footerVisible, setFooterVisible] = useState(false);
   const presetNonce = useRef(0);
-  const footerRef = useRef<HTMLElement | null>(null);
+  const footerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const footer = footerRef.current;
@@ -894,38 +894,8 @@ export default function LegalUpServices() {
         </section>
       </main>
 
-      <footer ref={footerRef} className="border-t border-gray-200 bg-gray-50">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-8 sm:flex-row sm:px-6">
-          <div className="flex items-center gap-2">
-            <Scale className="h-7 w-7 text-green-900" />
-            <span className="text-lg font-bold text-green-900">LegalUp</span>
-            <span className="ml-1 rounded bg-[#85efab] px-[6px] py-[4px] align-middle text-[10px] font-bold text-[#101820]">
-              SERVICES
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-gray-500">
-            <button onClick={() => scrollToId('servicios')} className="hover:text-gray-900">
-              Servicios
-            </button>
-            <button onClick={() => scrollToId('como-funciona')} className="hover:text-gray-900">
-              Cómo funciona
-            </button>
-            <button onClick={() => scrollToId('preguntas')} className="hover:text-gray-900">
-              Preguntas
-            </button>
-            <a href="mailto:contacto@legalup.cl" className="hover:text-gray-900">
-              Contacto
-            </a>
-            <button onClick={() => navigate('/privacidad')} className="hover:text-gray-900">
-              Privacidad
-            </button>
-            <button onClick={() => navigate('/terminos')} className="hover:text-gray-900">
-              Términos
-            </button>
-          </div>
-        </div>
-        
-      </footer>
+      {/* Sentinel: marca el inicio del footer global para ocultar el CTA móvil. */}
+      <div ref={footerRef} aria-hidden="true" className="h-px w-full" />
 
       {!footerVisible && (
         <div

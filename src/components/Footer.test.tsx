@@ -31,6 +31,9 @@ describe('Footer rediseño', () => {
     // Línea operadora actualmente comentada en el footer visible
     expect(screen.queryByText('LegalUp es operado por LegalUp SpA.')).toBeNull();
     expect(screen.getByRole('button', { name: 'Configurar cookies' })).toBeTruthy();
+    // Badge oficial de NVIDIA Inception (no NVIDIA PARTNER)
+    expect(screen.getByRole('img', { name: 'NVIDIA Inception Program Member' })).toBeTruthy();
+    expect(screen.queryByRole('img', { name: /NVIDIA PARTNER/i })).toBeNull();
     // Países ocultos con flag false
     expect(screen.queryByRole('heading', { name: 'Países' })).toBeNull();
   });

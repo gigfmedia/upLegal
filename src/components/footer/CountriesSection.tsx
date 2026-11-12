@@ -6,14 +6,14 @@ import { FOOTER_COUNTRIES } from './footerConfig';
  */
 export default function CountriesSection() {
   return (
-    <section aria-label="Países" className="border-t border-white/10 py-10">
+    <section aria-label="Países" className="border-t border-green-900/10 py-10">
       <div className="grid gap-8 lg:grid-cols-[1fr_2fr] lg:items-start">
-        <h2 className="text-2xl font-bold tracking-tight text-white">Países</h2>
+        <h2 className="text-2xl font-bold tracking-tight text-green-900">Países</h2>
         <ul className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 lg:grid-cols-4">
           {FOOTER_COUNTRIES.map((country) => (
             <li
               key={country.code}
-              className="flex items-center gap-2 text-sm text-white/70"
+              className="flex items-center gap-2 text-sm text-green-900/70"
             >
               <span aria-hidden="true">{country.flag}</span>
               <span>{country.name}</span>

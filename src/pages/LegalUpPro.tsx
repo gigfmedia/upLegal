@@ -1219,7 +1219,7 @@ export default function LegalUpPro() {
       </section>
 
       {/* CTA FINAL — mismo verde con degrade del hero */}
-      <section className="bg-white">
+      <section className="bg-cream-900 py-6">
         <div className="px-3 pb-3 sm:px-6 sm:pb-6">
           <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-b from-green-300 via-green-200 to-[#edf7f0] sm:rounded-[40px]">
         <div className="pointer-events-none absolute -bottom-48 left-1/2 h-96 w-[52rem] max-w-none -translate-x-1/2 rounded-full bg-green-600/10 blur-3xl" aria-hidden="true" />
@@ -1266,24 +1266,6 @@ export default function LegalUpPro() {
           </div>
         </div>
       </section>
-
-      {/* Minimal footer */}
-      <footer className="border-t border-gray-200 bg-gray-50">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-8 sm:flex-row sm:px-6">
-          <div className="flex items-center gap-2">
-            <Scale className="h-7 w-7 text-green-900" />
-            <span className="text-lg font-bold text-green-900">LegalUp</span>
-            <span className="text-[10px] bg-[#85efab] text-[#101820] px-[6px] py-[4px] rounded ml-1 font-bold align-middle">PRO</span>
-          </div>
-          <div className="flex items-center gap-4 text-sm text-gray-500">
-            <button onClick={() => scrollToId("producto")} className="hover:text-gray-900">Producto</button>
-            <button onClick={() => scrollToId("pricing")} className="hover:text-gray-900">Precio</button>
-            <button onClick={() => navigate("/contacto")} className="hover:text-gray-900">Contacto</button>
-            <button onClick={() => navigate("/privacidad")} className="hover:text-gray-900">Privacidad</button>
-            <button onClick={() => navigate("/terminos")} className="hover:text-gray-900">Términos</button>
-          </div>
-        </div>
-      </footer>
 
       <AuthModal
         isOpen={authOpen}
