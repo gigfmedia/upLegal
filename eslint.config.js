@@ -29,5 +29,20 @@ export default tseslint.config(
       ],
       "@typescript-eslint/no-unused-vars": "off",
     },
+  },
+  {
+    extends: [js.configs.recommended],
+    files: ["server/services/security/**/*.mjs"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      globals: globals.node,
+      sourceType: "module",
+    },
+    rules: {
+      "no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
+    },
   }
 );
