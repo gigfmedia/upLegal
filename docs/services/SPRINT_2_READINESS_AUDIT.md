@@ -1,8 +1,8 @@
 # Auditoría Técnica y Documental de Preparación — LegalUp Services Sprint 2
 
-**Fecha de emisión:** 11 de noviembre de 2026  
-**Documento de referencia técnica:** `docs/services/SPRINT_2_TECHNICAL_DESIGN.md`  
-**Repositorio:** `upLegal/upLegal` (`feat/ua4-letter-pages-phase2`)  
+**Fecha de emisión:** 11 de noviembre de 2026\
+**Documento de referencia técnica:** `docs/services/SPRINT_2_TECHNICAL_DESIGN.md`\
+**Repositorio:** `upLegal/upLegal` (`feat/ua4-letter-pages-phase2`)\
 **Carácter del informe:** Exclusivamente auditoría técnica y contractual. No introduce modificaciones de código ni cambios en base de datos.
 
 ---
@@ -309,4 +309,3 @@ Se debe establecer un **gate formal de despliegue a producción (`CommercialRead
 - **Verificaciones técnicas (Categoría A):** Scanner antimalware real operativo (mock rechazado en boot), parámetros de retención aprobados y válidos, y worker de purga desplegado y verificado de forma no destructiva.
 - **Aprobaciones documentales y externas (Categoría B):** DPA bilateral del proveedor de IA formalmente registrado y vigente, y validación legal y de privacidad completada con evidencia administrativa registrada.
 - **Seguridad en runtime:** Imposibilidad de habilitar el servicio comercial modificando de forma aislada variables de entorno sin las verificaciones técnicas y documentales correspondientes.
-
