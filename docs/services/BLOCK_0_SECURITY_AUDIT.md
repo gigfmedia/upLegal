@@ -568,3 +568,35 @@ Se agregaron **7 pruebas** en total: proveedor canónico exacto, aliases contrad
 ### 13.6 Veredicto 0.2
 
 **NO APROBADO.** H-05, H-06, H-01 residual y la carrera de M-02 están corregidos en código y cubiertos por pruebas. El Bloque 0 no puede cerrarse mientras H-07 no esté implementado y verificado, y mientras M-05/M-06 no cuenten con evidencia suficiente. Mantener `SERVICES_REAL_DOCUMENTS_ENABLED=false` y no iniciar el Bloque 1.
+
+---
+
+## 14. Cierre administrativo de H-07 — BLOCKED
+
+**Fecha:** 2026-11-12
+**Estado de H-07:** **BLOCKED — no RESOLVED.**
+**Alcance de esta sección:** documental únicamente.
+
+H-07 no puede completarse porque el flujo de documentos de LegalUp Services todavía no existe como frontera real. La única ruta de Services es `/api/services/inquiries`, un formulario sin archivos ni procesamiento documental (`server.mjs:539-547`). No existen rutas `upload-url`, `finalize`, registro, análisis, listado o cuarentena de documentos de Services, ni el modelo/tablas/buckets asociados. Por ello no hay un punto de entrada real donde integrar y verificar el gate.
+
+### 14.1 Dependencia explícita
+
+**H-07 depende de la implementación de las rutas y del modelo de documentos de Services en Block 1.** Como mínimo deben existir la orden de servicio, el registro de documentos, la carga/finalización y el análisis, con autenticación y persistencia reales. Después de esa implementación, H-07 requerirá:
+
+1. ejecutar la aserción de arranque en la inicialización del servidor;
+2. revalidar el gate en cada operación que acepte o procese documentos de Services;
+3. responder `503` con `SERVICES_NOT_READY_FOR_REAL_DOCUMENTS` cuando el gate esté cerrado;
+4. añadir pruebas de integración contra las rutas reales, no solo funciones aisladas.
+
+### 14.2 Restricciones respetadas
+
+- No se modificó código, `server.mjs`, rutas, migraciones, Storage ni infraestructura.
+- No se crearon guards sin consumidores, rutas simuladas ni pruebas sintéticas presentadas como integración.
+- No se procesaron documentos reales.
+- `SERVICES_REAL_DOCUMENTS_ENABLED` no fue modificado y debe permanecer `false`.
+
+### 14.3 Consecuencia
+
+Este cierre administrativo **no significa que H-07 esté implementado**, ni que el Bloque 0 o D17 estén aprobados. El procesamiento comercial real sigue deshabilitado y Block 1 no queda autorizado por esta sección.
+
+**Verificación:** las 60 pruebas de seguridad existentes pasan; no se añadieron ni modificaron pruebas; el único cambio de esta sección es documental.
