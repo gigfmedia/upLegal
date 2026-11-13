@@ -40,7 +40,7 @@ export function createProspectingEngine({
 
     if (!['dry_run', 'send', 'test'].includes(mode)) throw httpError(400, 'invalid_mode');
     if (mode === 'send' && !confirm && trigger === 'manual') throw httpError(400, 'send_requires_confirmation');
-    if (mode === 'send' && trigger === 'manual' && settings.dry_run) throw httpError(409, 'dry_run_enabled');
+    if (mode !== 'dry_run' && trigger === 'manual' && settings.dry_run) throw httpError(409, 'dry_run_enabled');
     if (mode === 'test' && !normalizeEmail(testRecipient)) throw httpError(400, 'test_recipient_required');
     if ((trigger === 'scheduled' || trigger === 'cron') && !settings.enabled) {
       return { run: null, skipped: true, reason: 'automation_disabled' };
@@ -93,6 +93,10 @@ export function createProspectingEngine({
     };
 
     try {
+      if (settings?.dry_run && trigger === 'manual' && mode !== 'dry_run') {
+        throw httpError(409, 'dry_run_enabled');
+      }
+
       if (mode === 'test') {
         const result = await sendTestEmail({ run, settings, testRecipient, summary });
         const status = result.ok ? 'succeeded' : 'failed';
@@ -364,6 +368,7 @@ export function createProspectingEngine({
   }
 
   async function sendTestEmail({ run, settings, testRecipient, summary }) {
+    if (settings?.dry_run) throw httpError(409, 'dry_run_enabled');
     const token = createUnsubscribeToken(run.id, env.PROSPECTING_UNSUBSCRIBE_SECRET || 'test');
     const unsubscribeUrl = buildUnsubscribeUrl({ appUrl: settings.app_url, token: token || 'test' });
     const prospect = {
