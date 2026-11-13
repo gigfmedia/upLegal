@@ -300,8 +300,46 @@ describe('prospecting engine', () => {
     expect(result).toMatchObject({ skipped: true, reason: 'automation_disabled' });
   });
 
-  it('modo test envía solo al destinatario solicitado', async () => {
+  it('modo test se bloquea mientras dry_run esté activo', async () => {
+    const { engine, state } = createHarness({
+      settings: { ...BASE_SETTINGS, dry_run: true, enabled: false },
+    });
+    await expect(engine.startRun({ trigger: 'manual', mode: 'test', testRecipient: 'test@legalup.cl' }))
+      .rejects.toThrow('dry_run_enabled');
+    expect(state.mailerCalls).toHaveLength(0);
+  });
+
+  it('sendTestEmail directo se bloquea con dry_run activo', async () => {
     const { engine, state } = createHarness();
+    await expect(engine.sendTestEmail({
+      run: state.run,
+      settings: state.settings,
+      testRecipient: 'test@legalup.cl',
+      summary: {},
+    })).rejects.toThrow('dry_run_enabled');
+    expect(state.mailerCalls).toHaveLength(0);
+  });
+
+  it('executeRun directo no envía con dry_run activo', async () => {
+    const { engine, state } = createHarness();
+    const final = await engine.executeRun({
+      run: state.run,
+      lockToken: 'lock-1',
+      settings: state.settings,
+      trigger: 'manual',
+      mode: 'send',
+      actorId: 'admin-1',
+      confirm: true,
+      testRecipient: null,
+    });
+    expect(final).toMatchObject({ status: 'failed', error: 'dry_run_enabled' });
+    expect(state.mailerCalls).toHaveLength(0);
+    expect(state.sends).toHaveLength(0);
+    expect(state.released).toEqual(['lock-1']);
+  });
+
+  it('modo test envía solo al destinatario solicitado cuando está permitido', async () => {
+    const { engine, state } = createHarness({ settings: { ...BASE_SETTINGS, dry_run: false } });
     const started = await engine.startRun({ trigger: 'manual', mode: 'test', testRecipient: 'test@legalup.cl' });
     const final = await started.execution;
     expect(final.status).toBe('succeeded');
