@@ -337,7 +337,7 @@ Los documentos históricos del bucket público `documents` no se migran en Sprin
 El comprobante de pago no es un documento contractual y no se almacena en `service-documents`. Se usa un bucket privado separado, `service-payment-proofs`:
 
 - `public = false`; sin policies de cliente; acceso solo por URL firmada de 300 segundos emitida por servidor.
-- Límite: 20 MB.
+- Límite máximo normativo de v1: **10 MB (10,485,760 bytes)**. `upload-url` y `finalize` rechazan comprobantes que excedan el límite. Los 20 MB quedan fuera del alcance de v1; una ampliación futura requiere una nueva decisión documentada y evidencia técnica.
 - MIME permitido: `application/pdf`, `image/png`, `image/jpeg`; se valida por magic bytes, no solo por `Content-Type`.
 - Rutas server-side: `quarantine/{company_id}/{order_id}/payments/{payment_id}/{uuid}.{ext}` y luego `clean/{company_id}/{order_id}/payments/{payment_id}/{uuid}.{ext}`.
 - Solo owner/admin de la empresa puede subir y ver el comprobante de su orden; solo admin puede confirmar o rechazar el pago. Profesional, member y viewer no acceden.
@@ -394,6 +394,7 @@ El ciclo completo de ingestión y análisis se rige por barreras server-side aut
 1. **Solicitud de `upload-url` (`POST /api/services/orders/:id/documents/upload-url`):**
    - Valida que el `CommercialReadinessGate` esté abierto.
    - Emite una URL firmada de corta duración (estrictamente definida en **300 segundos / 5 minutos**) exclusivamente hacia la ruta de cuarentena: `quarantine/{company_id}/{order_id}/documents/{document_id}/{uuid}.pdf`.
+   - Crea la fila `service_order_documents` en `pending` con `storage_path` generado server-side y `size_bytes`/`sha256` nulos; `finalize` completa esos metadatos y solo entonces puede marcar `validated`.
    - **Principio de no autorización previa:** La emisión de una URL firmada de subida **NO** autoriza por sí sola el procesamiento del archivo ni prejuzga el resultado del escaneo.
 2. **Carga en Storage:**
    - El cliente transfiere los bytes directamente a la ruta de cuarentena en `service-documents`. El archivo permanece completamente aislado en cuarentena lógica, sin permisos de lectura ni descarga para el cliente ni para el profesional asignado.
@@ -452,7 +453,6 @@ stateDiagram-v2
     quote_sent --> expired
     quote_sent --> cancelled
     accepted --> awaiting_payment
-    accepted --> cancelled
     awaiting_payment --> awaiting_documents
     awaiting_payment --> cancelled
     awaiting_documents --> in_analysis
@@ -871,7 +871,7 @@ Reglas:
 
 - Es la única fuente de verdad de la aceptación. No hay `accepted_at`, `accepted_by` ni versiones de aceptación duplicadas en `service_orders` o `service_order_quotes`.
 - Solo owner/admin de la empresa puede aceptar. El servidor valida `security_company_role(company_id) in ('owner','admin')`; no basta con `security_company_access`.
-- La transacción bloquea la cotización, verifica `status = 'sent'` y `now() < expires_at`, compara versión, monto y versiones de términos/privacidad/IA, inserta la aceptación, marca la cotización `accepted`, mueve la orden a `accepted`, crea el intento de pago `pending` y la deja en `awaiting_payment`; todo ocurre en una sola transacción y se registra el evento.
+- La transacción bloquea la cotización, verifica `status = 'sent'` y `now() < expires_at`, compara versión, monto y versiones de términos/privacidad/IA, inserta la aceptación, marca la cotización `accepted`, mueve la orden a `accepted`, crea el intento de pago `pending` y la deja en `awaiting_payment`; todo ocurre en una sola transacción y se registra el evento. `accepted` puede persistirse transitoriamente dentro de esa transacción, pero no es terminal ni se expone como estado final.
 - `unique(order_id)` y `unique(quote_id)` impiden doble aceptación, incluso con requests concurrentes. Un error de unicidad se traduce en conflicto idempotente, no en una segunda aceptación.
 - La fila es inmutable: un trigger bloquea UPDATE y DELETE. No se corrige una aceptación; si el cliente debe aceptar una nueva cotización, se crea una nueva versión de cotización antes de aceptar.
 - La aceptación no habilita documentos ni pago confirmado. El siguiente hito es el comprobante y la revisión administrativa del pago.
@@ -895,8 +895,9 @@ create table service_order_payments (
   proof_mime_type text
     check (proof_mime_type is null
         or proof_mime_type in ('application/pdf','image/png','image/jpeg')),
+  -- D-05 aprobada: límite normativo de v1 = 10 MB (10,485,760 bytes); 20 MB fuera de alcance.
   proof_size_bytes bigint
-    check (proof_size_bytes is null or (proof_size_bytes > 0 and proof_size_bytes <= 20971520)),
+    check (proof_size_bytes is null or (proof_size_bytes > 0 and proof_size_bytes <= 10485760)),
   proof_sha256 text
     check (proof_sha256 is null or proof_sha256 ~ '^[a-f0-9]{64}$'),
   proof_validation_status text
@@ -956,7 +957,7 @@ Reglas:
 
 - `service_order_payments` es la única fuente de verdad del estado de pago. `service_orders` no tiene `payment_status`.
 - Al aceptar, el servidor crea un intento `pending` por el monto exacto de la cotización aceptada, sin método ni comprobante. Si el último intento fue rechazado, un owner/admin o un admin puede crear uno nuevo; el servidor vuelve a fijar `quote_id`, monto y moneda desde la aceptación. El endpoint y un trigger verifican esa coincidencia; no se acepta un monto enviado por el cliente. El método se fija al subir el comprobante y es obligatorio desde `proof_submitted`.
-- Un pago confirmado es inmutable en monto, cotización, comprobante y decisión. Un pago rechazado también es inmutable; para reintentar se crea un nuevo intento con un nuevo comprobante. Solo `proof_deleted_at` (al rechazar un comprobante no validado) y `proof_deleted_at`/`proof_purged_at` (purga auditada) pueden cambiar. Los índices parciales impiden dos intentos abiertos o dos pagos confirmados para la misma orden.
+- Un pago confirmado es inmutable en monto, cotización, comprobante y decisión. Un pago rechazado también es inmutable; para reintentar se crea un nuevo intento con un nuevo comprobante. Solo `proof_deleted_at` (al rechazar un comprobante no validado) y, en la purga auditada, `proof_deleted_at`/`proof_purged_at` y `proof_path = null` pueden cambiar. Los índices parciales impiden dos intentos abiertos o dos pagos confirmados para la misma orden.
 - El comprobante se sube solo a un intento `pending`; una vez `proof_submitted` no se reemplaza y debe revisarlo un admin. Se valida por MIME y magic bytes, se escanea y se marca `validated` solo si `scan_status = 'clean'`. No se ejecuta parser contractual ni IA sobre él.
 - `proof_path`/`proof_bucket` se persisten al finalizar; si `upload-url` deja una ruta de cuarentena, el trigger permite una única transición cuarentena→clean y luego los congela. `method`, `proof_sha256` y `proof_uploaded_by` también se fijan en `finalize`.
 - `proof_path`, `proof_bucket`, hashes y resultados de escaneo son server-side; el endpoint devuelve solo estado, monto, método, referencia y motivo sanitizado. `proof_scan_result` guarda solo un resumen sanitizado. `proof_path` único evita reutilizar el objeto de otro pago.
@@ -981,8 +982,8 @@ create table service_order_documents (
   original_filename text not null check (char_length(btrim(original_filename)) between 1 and 255),
   mime_type text not null default 'application/pdf'
     check (mime_type = 'application/pdf'),
-  size_bytes bigint not null check (size_bytes > 0 and size_bytes <= 20971520),
-  sha256 text not null check (sha256 ~ '^[a-f0-9]{64}$'),
+  size_bytes bigint check (size_bytes is null or (size_bytes > 0 and size_bytes <= 20971520)),
+  sha256 text check (sha256 is null or sha256 ~ '^[a-f0-9]{64}$'),
   page_count integer check (page_count is null or page_count > 0),
   validation_status text not null default 'pending'
     check (validation_status in ('pending','quarantined','validated','rejected')),
@@ -997,7 +998,9 @@ create table service_order_documents (
   purged_at timestamptz,
   created_at timestamptz not null default now(),
   check (validation_status <> 'validated' or scan_status = 'clean'),
-  check (validation_status <> 'validated' or (page_count is not null and page_count <= 200)),
+  check (validation_status <> 'validated'
+      or (size_bytes is not null and sha256 is not null
+          and page_count is not null and page_count <= 200)),
   check (document_kind = 'deliverable' or published_at is null),
   check (published_at is null or (validation_status = 'validated' and scan_status = 'clean')),
   check (purged_at is null or deleted_at is not null)
@@ -1015,7 +1018,7 @@ create unique index service_order_documents_unique_sha
 Reglas:
 
 - Solo almacena documentos contractuales: `input`, `annex`, `deliverable`. El cliente solo puede crear `input`/`annex`; `deliverable` lo crea el servidor en `deliverables`. El comprobante de pago vive en `service_order_payments` y en `service-payment-proofs`.
-- `storage_path` se genera server-side; nunca se acepta una ruta del cliente.
+- `storage_path` se genera server-side; nunca se acepta una ruta del cliente. `upload-url` puede crear la fila con `size_bytes`/`sha256` nulos; `validated` exige ambos, `scan_status='clean'` y `page_count` válido.
 - Todo archivo se sube a un prefijo de cuarentena. No se emite URL firmada de lectura para insumos en cuarentena.
 - `scan_status = 'clean'` es obligatorio para pasar a `validation_status = 'validated'` y para habilitar análisis IA.
 - `scan_result` y `validation_error` guardan un resumen/código sanitizado, nunca el contenido del archivo, rutas internas, tokens ni firmas completas.
@@ -1023,7 +1026,7 @@ Reglas:
 - Un archivo `infected` no se sirve, no se analiza y se elimina según el procedimiento de incidentes.
 - Un documento `quarantined`/`unavailable`/`failed` puede reintentar `finalize` sobre la misma fila cuando el escáner vuelva; no se crea otro documento. Un documento `rejected` no se reutiliza: se sube uno nuevo.
 - `published_at` solo aplica a `deliverable` y se fija únicamente en la transición a `delivered`, con el mismo timestamp que `delivered_at`. Un informe generado y validado pero aún no entregado queda invisible al cliente. El cliente solo ve el informe final aprobado cuando `published_at <= delivered_at`; un informe publicado antes de una reentrega queda oculto hasta que esa entrega ocurra.
-- `deleted_at` es borrado lógico; `purged_at` se marca cuando el objeto se elimina de Storage y la fila queda sin ruta utilizable, según la política. No se guardan URLs públicas ni firmadas en la base.
+- `deleted_at` es borrado lógico; `purged_at` se marca cuando el objeto se elimina de Storage y `storage_path` se reemplaza por `purged/{document_id}`. Esa ruta pseudónima mantiene `NOT NULL UNIQUE`, no representa un objeto disponible y no se usa para lectura. No se guardan URLs públicas ni firmadas en la base.
 
 ### 7.8 `service_order_analyses`
 
@@ -1227,12 +1230,13 @@ La política de purga asegura que el vencimiento de la retención o el ejercicio
    - Supresión irreversible de los objetos almacenados en `service-payment-proofs` (imágenes o PDFs de comprobantes de pago bancarios), sujeta a su propia ventana de retención independiente.
 2. **Sanitización y purga de contenido derivado en Base de Datos:**
    - La eliminación del archivo en Storage es insuficiente si el texto extraído o los hallazgos permanecen en PostgreSQL. El procedimiento de purga debe sanitizar y vaciar de forma irreversible los campos sensibles de `service_order_analyses`:
-     - Se vacían a `null` o estructura neutral (`{ "purged": true }`) las columnas: `summary`, `claims`, `evidence_sources`, `obligations`, `risks`, `key_points`, `parties` y `reviewed_payload`.
-     - Se purgan todas las versiones superseded o previas del análisis asociadas al documento.
-   - En `service_order_documents`: se marca `purged_at = now()`, se actualiza `validation_status = 'rejected'`, y se sobrescribe `storage_path` con un valor nulo o seudónimo que impida reconstruir la ruta previa.
+     - Se reemplazan `result_json`, `evidence_json` y `reviewed_payload` por `{ "purged": true }` en todas las versiones del análisis asociadas al documento.
+     - Se preservan `provider`, `model`, `prompt_version`, `schema_version`, tokens, costo y timestamps para trazabilidad, sujeto a la política de retención.
+     - No se referencian columnas que no existan en el modelo contractual.
+   - En `service_order_documents`: se marca `published_at = null`, `deleted_at = coalesce(deleted_at, now())`, `purged_at = now()`, `validation_status = 'rejected'` y se reemplaza `storage_path` por `purged/{document_id}`. La ruta pseudónima conserva `NOT NULL UNIQUE`, no representa un objeto disponible y no se usa para lectura.
 3. **Conservación de registros administrativos y financieros:**
    - Los registros de pago en `service_order_payments` (monto, moneda, fecha, referencia de transacción, actor de confirmación e ID de pago) se conservan de forma inmutable para respaldo contable y cumplimiento tributario ante autoridades fiscalizadoras (ej. SII).
-   - El archivo gráfico del comprobante (`proof_path`) se purga físicamente marcando `proof_purged_at = now()` y nulificando la ruta de almacenamiento, disociando el soporte visual del registro contable.
+   - El archivo gráfico del comprobante (`proof_path`) se purga físicamente marcando `proof_deleted_at = coalesce(proof_deleted_at, now())`, `proof_purged_at = now()` y `proof_path = null`, disociando el soporte visual del registro contable. Se registra la acción `purged` en `service_order_retention_actions`.
 4. **Conservación de eventos de auditoría (`service_order_events`):**
    - La tabla de eventos es append-only y no se purga en v1 para preservar la trazabilidad jurídica frente a eventuales reclamos de responsabilidad profesional.
    - **Regla de sanitización preventiva:** Ningún evento de auditoría puede registrar en su campo `metadata` texto contractual, citas textuales de cláusulas, datos bancarios completos ni secretos empresariales. Solo registra identificadores, estados, actores y marcas temporales.
@@ -1262,10 +1266,13 @@ El worker de purga opera en lotes pequeños (ej. 10 a 25 órdenes por ciclo) baj
 |      abortar transacción y reintentar en el siguiente ciclo.                                       |
 |                                                                                                    |
 | 4. Sanitización de Base de Datos:                                                                  |
-|    - UPDATE service_order_analyses: vaciar claims, evidence_sources, obligations, risks,          |
-|      summary y reviewed_payload -> { "purged": true } para todos los análisis de la orden.        |
-|    - UPDATE service_order_documents SET storage_path = null, purged_at = now()                     |
-|    - UPDATE service_order_payments SET proof_path = null, proof_purged_at = now()                  |
+|    - UPDATE service_order_analyses: result_json, evidence_json y reviewed_payload ->              |
+|      { "purged": true } para todas las versiones de la orden; preservar metadatos de modelo.       |
+|    - UPDATE service_order_documents SET published_at = null,                                      |
+|      deleted_at = coalesce(deleted_at, now()), purged_at = now(),                                 |
+|      validation_status = 'rejected', storage_path = 'purged/' || id                              |
+|    - UPDATE service_order_payments SET proof_deleted_at = coalesce(proof_deleted_at, now()),       |
+|      proof_purged_at = now(), proof_path = null                                                   |
 |                                                                                                    |
 | 5. Certificación y Cierre:                                                                         |
 |    - INSERT INTO service_order_retention_actions (action = 'purged')                              |
@@ -1471,7 +1478,7 @@ Bucket `service-documents` (solo contractuales):
 Bucket `service-payment-proofs` (solo comprobantes):
 
 - `public = false`.
-- MIME: `application/pdf`, `image/png`, `image/jpeg`; 20 MB.
+- MIME: `application/pdf`, `image/png`, `image/jpeg`; 10 MB (10,485,760 bytes), límite normativo de v1; 20 MB fuera de alcance.
 - Sin policies de Storage SELECT/INSERT/UPDATE/DELETE para `anon`/`authenticated`; solo `service_role`.
 - URL firmada de 300 segundos, emitida por endpoint; solo owner/admin de la empresa dueña o admin, y solo si el comprobante está `clean`/`validated` y no fue purgado (`proof_deleted_at`/`proof_purged_at` nulos).
 - Prefijo `quarantine/{company_id}/{order_id}/payments/{payment_id}/` y `clean/{company_id}/{order_id}/payments/{payment_id}/`.
@@ -1507,7 +1514,7 @@ Nunca:
 
 1. Verificar sesión, empresa, orden en `awaiting_payment`, rol owner/admin y que el `payment_id` pertenezca a la orden con un intento `pending`. Si ya existe `proof_path`, debe ser la ruta de cuarentena de ese intento; no se permite una ruta `clean` previa ni reemplazar un comprobante `proof_submitted`, salvo replay idempotente.
 2. Descargar el objeto desde el bucket de comprobantes con service role.
-3. Verificar `size_bytes <= 20 MB`.
+3. Verificar `size_bytes <= 10,485,760` (10 MB) como límite máximo normativo de v1; rechazar cualquier comprobante que lo exceda. 20 MB queda fuera del alcance de v1.
 4. Verificar MIME real por magic bytes: `%PDF-`, firma PNG o `FF D8 FF` de JPEG. Rechazar cualquier otro formato.
 5. Escanear malware; sin `clean`, no marcar validado y no habilitar confirmación.
 6. No ejecutar `extractPdfText`, parser contractual ni IA sobre el comprobante.
@@ -1556,7 +1563,7 @@ La base de datos no confía solo en el endpoint:
 
 - `service_order_events` y `service_order_retention_actions` tienen triggers que bloquean UPDATE/DELETE. `service_order_acceptances` recibe el mismo trigger de inmutabilidad.
 - Un trigger `before update of status` en `service_orders` valida: aceptación existente para `accepted`; pago `confirmed` para `awaiting_documents`; asignación activa `lead`/`reviewer` para `in_review`; al menos un análisis current aprobado y que todo documento contractual `input`/`annex` clean/validated y no borrado tenga su análisis current con `review_status = 'approved'` para `ready_for_delivery`; `deliverable` `clean`/`validated` con `published_at = delivered_at`, ventana y `delivered_at` para `delivered`; en reentrega, `delivered_at` debe ser distinto y posterior al anterior y la ventana original se conserva salvo decisión auditada; ausencia de pagos abiertos y de revisiones activas para `cancelled`; ventana y ronda para `revision_requested`.
-- Un trigger en `service_order_payments` valida que `quote_id` pertenezca a la orden y que monto/moneda coincidan con `service_order_acceptances`. `order_id`, `quote_id`, `amount_clp` y `currency` son inmutables desde el INSERT; `proof_path` se fija en `finalize` (o en la única transición cuarentena→clean) y luego es inmutable; `method` se fija al finalizar el comprobante. Un pago `confirmed` o `rejected` no cambia comprobante ni decisión; solo se permite `proof_deleted_at` al rechazar un comprobante no validado y los timestamps de purga desde la función auditada. Un trigger en `service_order_quotes` bloquea la edición de una cotización `accepted` o `superseded`. Un trigger en `service_order_analyses` bloquea cambios de `result_json`, `reviewed_payload` y `review_status` cuando `review_status = 'approved'` y bloquea aprobar una fila con `is_current = false`; corregir exige una nueva versión de análisis.
+- Un trigger en `service_order_payments` valida que `quote_id` pertenezca a la orden y que monto/moneda coincidan con `service_order_acceptances`. `order_id`, `quote_id`, `amount_clp` y `currency` son inmutables desde el INSERT; `proof_path` se fija en `finalize` (o en la única transición cuarentena→clean) y luego es inmutable; `method` se fija al finalizar el comprobante. Un pago `confirmed` o `rejected` no cambia comprobante ni decisión; `proof_deleted_at` solo se fija al rechazar un comprobante no validado o en la función auditada de purga, que también fija `proof_purged_at` y `proof_path = null`. Un trigger en `service_order_quotes` bloquea la edición de una cotización `accepted` o `superseded`. Un trigger en `service_order_analyses` bloquea cambios de `result_json`, `reviewed_payload` y `review_status` cuando `review_status = 'approved'` y bloquea aprobar una fila con `is_current = false`; corregir exige una nueva versión de análisis.
 - Los índices únicos de aceptación, pago confirmado, cotización activa, revisión activa, análisis actual y análisis en ejecución son la barrera de concurrencia.
 - Los triggers también cubren INSERT: una orden nace en `created`/`awaiting_quote`; una cotización nace `draft`; un pago nace `pending`; un documento nace `pending`/`quarantined`; un análisis nace `queued`. No se puede insertar directamente `accepted`, `sent`, `confirmed`, `validated`/publicado ni `approved` sin recorrer el flujo.
 - `service_role` puede saltar RLS, pero no los triggers. Las funciones de purga son la única excepción controlada y deben auditar en `service_order_retention_actions`.
@@ -1853,7 +1860,7 @@ El plazo legal y las excepciones deben validarse con asesoría jurídica; no se 
 
 - La política de retención debe ser aprobada por Legal antes de procesar documentos reales en producción. No se inventan plazos en este documento.
 - `service_orders.retention_until` se fija desde esa aprobación; no se hardcodea aquí. `legal_hold` bloquea la purga y exige motivo, actor y timestamps.
-- Cada cambio de retención/hold/purga se registra en `service_order_retention_actions` (append-only). La purga física elimina los archivos de Storage y vacía de forma irreversible los datos derivados sensibles en base de datos (`service_order_analyses`: resumen, cláusulas, riesgos, obligaciones y evidencias), preservando únicamente registros financieros y auditoría sanitizada según el procedimiento detallado en la sección 7.12.
+- Cada cambio de retención/hold/purga se registra en `service_order_retention_actions` (append-only). La purga física elimina los archivos de Storage y reemplaza de forma irreversible los datos derivados sensibles en base de datos (`service_order_analyses.result_json`, `evidence_json` y `reviewed_payload` por `{"purged": true}`), preservando únicamente registros financieros, metadatos de trazabilidad y auditoría sanitizada según el procedimiento detallado en la sección 7.12.
 - La purga solo se ejecuta si no hay legal hold, `retention_until <= now()`, no hay revisión activa ni pago abierto, la ventana de revisión ya cerró y la orden está en estado terminal. Es idempotente y reintentable.
 - Los comprobantes de pago se rigen por la política aprobada; pueden tener una ventana de retención distinta de la del contrato. El archivo físico se purga sin borrar el registro contable.
 - Los eventos no se purgan en v1 por ser append-only; cualquier excepción requiere un procedimiento legal separado.
@@ -2051,7 +2058,7 @@ No se fijan metas hasta tener línea base.
 3. `anon` no puede listar ni descargar objetos de `service-documents` ni de `service-payment-proofs`.
 4. Ningún flujo de Services llama `getPublicUrl`.
 5. Un archivo con extensión `.pdf` pero contenido no PDF es rechazado.
-6. Un PDF contractual de 21 MB es rechazado; uno de 20 MB válido es aceptado.
+6. Un PDF contractual de 21 MB es rechazado; uno de 20 MB válido es aceptado. Un comprobante de pago de 10 MB (10,485,760 bytes) es aceptado; uno que exceda 10 MB es rechazado. 20 MB queda fuera del alcance de v1.
 7. Un PDF con contraseña es rechazado con mensaje claro.
 8. Un PDF sin texto se rechaza con instrucción y no genera análisis inventado ni ejecuta IA.
 9. Un documento en cuarentena, `infected`, `unavailable` o `rejected` no se analiza ni se sirve.
@@ -2094,7 +2101,7 @@ No se fijan metas hasta tener línea base.
 46. El endpoint `analysis` rechaza de forma estricta cualquier documento que no tenga `scan_status = 'clean'` y `validation_status = 'validated'`; los documentos en cuarentena tienen el acceso a análisis terminantemente bloqueado.
 47. Es técnicamente imposible eludir los controles de seguridad utilizando URLs firmadas emitidas con anterioridad a una caída o interrupción del scanner, dado que `finalize` y `analysis` ejecutan barreras server-side independientes.
 48. Es técnicamente imposible habilitar el procesamiento comercial de documentos reales únicamente modificando una variable de entorno: si `SERVICES_REAL_DOCUMENTS_ENABLED=true` está configurada pero falta el registro formal de las aprobaciones documentales (DPA, retención, validación legal) o fallan las verificaciones técnicas de arranque/runtime, el gate comercial permanece cerrado en 503.
-49. La purga de una orden elimina físicamente los objetos de `service-documents` y `service-payment-proofs`, y sanitiza/vacía los datos sensibles de `service_order_analyses` (resumen, cláusulas, riesgos, obligaciones y evidencias), preservando los registros financieros inmutables y la auditoría sanitizada sin contenido confidencial.
+49. La purga de una orden elimina físicamente los objetos de `service-documents` y `service-payment-proofs`, reemplaza `result_json`, `evidence_json` y `reviewed_payload` de `service_order_analyses` por `{"purged": true}`, y preserva los registros financieros inmutables, los metadatos de trazabilidad y la auditoría sanitizada sin contenido confidencial.
 50. Todo archivo con malware detectado (`infected`) se elimina inmediatamente de Storage y se marca `rejected` con `deleted_at = now()`, registrando un evento de seguridad sanitizado sin exponer la firma del exploit.
 
 ---

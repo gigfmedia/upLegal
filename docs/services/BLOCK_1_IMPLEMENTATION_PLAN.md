@@ -68,7 +68,7 @@ Reglas:
 
 - Implementar cualquier cambio de código o infraestructura.
 - Crear migraciones, tablas, buckets, rutas, UI, jobs o variables de entorno.
-- Modificar `server.mjs`, `eslint.config.js`, `SPRINT_2_TECHNICAL_DESIGN.md` o `SPRINT_2_READINESS_AUDIT.md`.
+- Modificar `server.mjs`, `eslint.config.js`, `SPRINT_2_TECHNICAL_DESIGN.md` o `SPRINT_2_READINESS_AUDIT.md` durante la implementación, salvo correcciones documentales aprobadas.
 - Implementar el worker de purga o fijar plazos de retención.
 - Procesar documentos reales o activar `SERVICES_REAL_DOCUMENTS_ENABLED`.
 - Cerrar H-07 o declarar D17 aprobado.
@@ -173,7 +173,7 @@ En la implementación futura:
 | `service_order_quotes` | Cotizaciones versionadas. | `order_id`, `version`, `amount_clp`, `scope`, `terms_version`, `status`, `sent_at`, `expires_at`. Una cotización `sent` activa y una `accepted` por orden. |
 | `service_order_acceptances` | Evidencia inmutable de aceptación. | `order_id` y `quote_id` únicos; snapshot de versión, monto, moneda, usuario, términos, privacidad, IA y hash. Sin UPDATE/DELETE. |
 | `service_order_payments` | Intento y estado del pago, incluido el comprobante. | `order_id`, `quote_id`, monto/moneda, estado, método, `proof_*`, `confirmed_by`, rechazo. Un intento abierto y un pago confirmado por orden. |
-| `service_order_documents` | Documentos contractuales. | `document_kind` (`input`/`annex`/`deliverable`), bucket siempre `service-documents`, ruta server-side, PDF, tamaño, SHA-256, validación, escaneo, publicación y purga. |
+| `service_order_documents` | Documentos contractuales. | `document_kind` (`input`/`annex`/`deliverable`), bucket siempre `service-documents`, ruta server-side, PDF, tamaño y SHA-256 completados en `finalize`, validación, escaneo, publicación y purga. |
 | `service_order_analyses` | Análisis IA versionado. | `document_id`, `analysis_version`, `is_current`, estado, proveedor/modelo/prompt/schema, resultado, evidencia, payload revisado y revisión. Un current y una ejecución activa por documento. |
 | `service_order_revisions` | Ronda de revisión incluida. | `round_number`, estado, solicitante, ventana snapshot, motivo y decisión. Una revisión activa por orden. |
 | `service_order_events` | Auditoría append-only. | Tipo, estados, audiencia, actor, metadata sanitizada, hashes de IP/user-agent. Sin UPDATE/DELETE. |
@@ -188,6 +188,7 @@ No se crea `service_order_messages` en v1.
 - `service_order_acceptances` referencia la cotización aceptada y conserva el snapshot comercial.
 - `service_order_payments.quote_id`, monto y moneda deben coincidir con la aceptación; el trigger y el endpoint lo validan.
 - `service_order_documents.document_kind='deliverable'` solo lo crea el servidor al generar el informe.
+- `documents/upload-url` crea la fila `pending` con `storage_path` server-side y `size_bytes`/`sha256` nulos; `finalize` completa ambos y solo entonces puede marcarse `validated`.
 - Un documento contractual solo puede analizarse si está `clean` y `validated`.
 - Un `deliverable` solo se publica al entregar; un informe validado pero no entregado no es visible al cliente.
 - Los eventos y las acciones de retención son append-only incluso para `service_role`, salvo la función auditada de purga fuera de Block 1.
@@ -198,7 +199,7 @@ No se crea `service_order_messages` en v1.
 | Bucket | Contenido | Formatos | Límite | Política |
 |---|---|---|---|---|
 | `service-documents` | Documentos contractuales `input`/`annex`/`deliverable`. | Solo PDF. | 20 MB. | Privado; sin policies para `anon`/`authenticated`; solo `service_role`; URLs firmadas de 300 s. |
-| `service-payment-proofs` | Comprobantes de pago. | PDF, PNG, JPEG. | 20 MB. | Privado; solo `service_role`; URLs firmadas de 300 s; nunca se analiza con IA. |
+| `service-payment-proofs` | Comprobantes de pago. | PDF, PNG, JPEG. | 10 MB (10,485,760 bytes), límite normativo de v1; 20 MB fuera de alcance. | Privado; solo `service_role`; URLs firmadas de 300 s; nunca se analiza con IA. |
 
 Prefijos:
 
@@ -217,6 +218,7 @@ Reglas:
 - Un archivo en cuarentena no se sirve ni se analiza.
 - Al promoverse, el objeto se mueve/copia a `clean/` y se actualiza la fila en la misma operación lógica.
 - El bucket legacy `documents` no se toca.
+- D-05 resuelta: 10 MB (10,485,760 bytes) es el límite máximo normativo de v1 para comprobantes; 20 MB queda fuera del alcance de v1. Una ampliación futura requiere una nueva decisión documentada y evidencia técnica suficiente.
 
 ### 4.4 Migración y pruebas de esquema
 
@@ -234,7 +236,7 @@ Reglas:
 | Transición | Actor | Condición mínima |
 |---|---|---|
 | `created`/`awaiting_quote` -> `quote_sent` | Admin | Cotización enviada, vigente y única `sent`. |
-| `quote_sent` -> `awaiting_payment` | Owner/admin empresa | Aceptación inmutable insertada; cotización `accepted`; intento de pago `pending`. `accepted` es un hito canónico, no un estado final persistido. |
+| `quote_sent` -> `awaiting_payment` | Owner/admin empresa | Aceptación inmutable insertada; cotización `accepted`; intento de pago `pending`. `accepted` puede persistirse transitoriamente dentro de la transacción y se avanza a `awaiting_payment`; no es terminal. |
 | `awaiting_payment` -> `awaiting_documents` | Admin | Pago confirmado, comprobante `clean`/`validated` y monto igual a la aceptación. |
 | `awaiting_documents` -> `in_analysis` | Profesional/admin | Primer análisis permitido sobre documento `input`/`annex` clean/validated. |
 | `in_analysis` -> `in_review` | Profesional/admin | Análisis completado y revisión iniciada. |
@@ -613,8 +615,8 @@ El gate real rechaza entornos no-production. Por eso:
 | OP-03 | Registro/confirmación del documento | Sin endpoint separado; fila en upload-url, confirmación en finalize. | Sí, en ambos hitos. | Trigger impide insertar `validated`/publicado directamente. | No se puede saltar de `pending` a `validated` por SQL/API. No hay ruta alternativa. |
 | OP-04 | `analysis` | Profesional asignado/admin; doc `input`/`annex` clean/validated; orden `awaiting_documents`/`in_analysis`/`in_review`. | Sí, antes de enviar contenido al proveedor. | Solo clean/validated; no deliverable; no cuarentena. | Gate cerrado: 503 y provider no invocado. Cuarentena/deliverable: 409/422. Cross-tenant/no asignado: 403/404. Dos análisis concurrentes: uno falla. |
 | OP-05 | `deliverables` | Profesional/admin; análisis current aprobados. | Sí, antes de generar y escanear. | PDF server-side, escaneo, validación, `published_at=delivered_at`. | Gate cerrado: no genera. Scanner unavailable: `ready_for_delivery`, no publica. Clean: entrega/publica. Reintento idempotente. |
-| OP-06 | `proof/upload-url` | Owner/admin empresa; pago `pending`; monto igual a aceptación. | Sí, antes de crear/firmar. | Bucket `service-payment-proofs`, PDF/PNG/JPEG, 20 MB, ruta server-side. | Gate cerrado: 503 sin URL. Member/viewer/profesional denegados. Pago ajeno/orden ajena: 404. Intento no abierto: 409. |
-| OP-07 | `proof/finalize` | Owner/admin empresa; pago `pending`; ruta de cuarentena del intento. | Sí, antes de descargar/escanear. | Magic PDF/PNG/JPEG, 20 MB, malware; sin parser/IA. | Gate cerrado: no promueve. EICAR/MIME spoof/tamaño: rechazo. Scanner unavailable: intento rechazado, objeto eliminado. Replay idempotente. |
+| OP-06 | `proof/upload-url` | Owner/admin empresa; pago `pending`; monto igual a aceptación. | Sí, antes de crear/firmar. | Bucket `service-payment-proofs`, PDF/PNG/JPEG, 10 MB (10,485,760 bytes), límite definitivo v1, ruta server-side. | Gate cerrado: 503 sin URL. Member/viewer/profesional denegados. Pago ajeno/orden ajena: 404. Intento no abierto: 409. >10 MB: rechazo. |
+| OP-07 | `proof/finalize` | Owner/admin empresa; pago `pending`; ruta de cuarentena del intento. | Sí, antes de descargar/escanear. | Magic PDF/PNG/JPEG, 10 MB (10,485,760 bytes), límite definitivo v1, malware; sin parser/IA. | Gate cerrado: no promueve. EICAR/MIME spoof: rechazo. 10 MB aceptado; >10 MB rechazado. Scanner unavailable: intento rechazado, objeto eliminado. Replay idempotente. |
 | OP-08 | `quarantine/retry` | Admin; doc en cuarentena/fallo. | Sí, antes de reescanear. | Reintento del mismo documento; no promueve sin clean. | Gate cerrado: 503. Clean: validated. Infeccioso: rechazo/eliminación. Evento auditado. |
 | OP-09 | Cualquier nueva ruta documental | Debe declararse en esta matriz antes de merge. | Sí, por defecto. | La misma que corresponda. | Test de "ruta nueva sin gate" debe fallar en revisión. |
 
@@ -685,6 +687,7 @@ No se debe cambiar `NODE_ENV` de la app ni agregar una rama de código que permi
 - Scanner `unavailable` en documento contractual: cuarentena, sin análisis; en comprobante: intento rechazado.
 - Malware EICAR: rechazo, eliminación, evento sanitizado.
 - PDF falso, cifrado, sin texto, corrupto, >200 páginas, >20 MB: rechazo.
+- Comprobante >10 MB (10,485,760 bytes): rechazo; 20 MB queda fuera del alcance de v1 y no se prueba como límite.
 - Cross-tenant en cada endpoint.
 - Profesional no asignado; profesional no ve pagos.
 - Member no acepta, no paga, no ve comprobantes.

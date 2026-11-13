@@ -309,3 +309,29 @@ Se debe establecer un **gate formal de despliegue a producción (`CommercialRead
 - **Verificaciones técnicas (Categoría A):** Scanner antimalware real operativo (mock rechazado en boot), parámetros de retención aprobados y válidos, y worker de purga desplegado y verificado de forma no destructiva.
 - **Aprobaciones documentales y externas (Categoría B):** DPA bilateral del proveedor de IA formalmente registrado y vigente, y validación legal y de privacidad completada con evidencia administrativa registrada.
 - **Seguridad en runtime:** Imposibilidad de habilitar el servicio comercial modificando de forma aislada variables de entorno sin las verificaciones técnicas y documentales correspondientes.
+
+---
+
+## 10. Addendum D-05 — Discrepancia del límite de comprobantes de pago (12 de noviembre de 2026)
+
+Este addendum no modifica ni reescribe el cuerpo histórico del informe emitido el 11 de noviembre de 2026. Se agrega únicamente para dejar constancia de la discrepancia D-05 y de su tratamiento documental.
+
+- **Observación histórica conservada:** la sección de validaciones de tipo MIME, extensión, tamaño y contenido de este informe registra 10 MB para `service-payment-proofs`.
+- **Proyección de diseño:** el diseño y el plan proyectaban 20 MB para el mismo bucket al momento de la revisión.
+- **Evidencia disponible:** el límite de 20 MB de `ai-documents` corresponde a otro bucket y no acredita la capacidad de `service-payment-proofs`. No consta que el bucket de comprobantes exista, que el scanner esté seleccionado o verificado, ni que existan pruebas de carga, escaneo o tiempo de procesamiento para archivos de 20 MB con el timeout previsto.
+- **Tratamiento aplicado:** 10 MB queda como límite conservador provisional para comprobantes. Los 20 MB quedan como objetivo propuesto pendiente de validación técnica y no se consideran normativos.
+- **Estado:** D-05 continúa pendiente; A12 permanece abierto y B1.0 no se declara cerrado. Cualquier cambio futuro del límite deberá registrar la evidencia técnica que lo sustente.
+- **Alcance:** este addendum es documental; no crea buckets, no modifica Storage, no implementa validaciones y no declara capacidad verificada.
+
+---
+
+## 11. Resolución documental D-05 — Límite definitivo de comprobantes (13 de noviembre de 2026)
+
+Esta resolución se agrega con posterioridad y no reescribe el cuerpo histórico del informe ni el addendum D-05 del 12 de noviembre de 2026, que se conservan íntegramente.
+
+- **Decisión del usuario:** se aprueba **10 MB (10,485,760 bytes)** como límite máximo normativo de v1 para `service-payment-proofs`, con formatos PDF, PNG y JPEG.
+- **Rechazo por exceso:** `upload-url` y `finalize` deben rechazar comprobantes que excedan ese límite.
+- **20 MB:** queda fuera del alcance de v1. No es un objetivo pendiente ni un límite normativo. Una ampliación futura requiere una nueva decisión documentada y evidencia técnica suficiente.
+- **Estado documental:** D-05 queda resuelta y A12 pasa a aprobado; B1.0 queda `READY FOR FORMAL APPROVAL — NOT CLOSED`.
+- **Alcance:** esta decisión de diseño no acredita que Storage, scanner o infraestructura estén implementados o verificados. No crea buckets, no modifica configuración y no autoriza procesamiento de documentos reales.
+- **Invariantes:** H-07 y D17 permanecen `BLOCKED`; `SERVICES_REAL_DOCUMENTS_ENABLED=false`; no se procesaron documentos reales.
