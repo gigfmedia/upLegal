@@ -21,18 +21,15 @@ function createRes() {
   };
 }
 
-function createRepo({ send = null, duplicate = false, failApply = false } = {}) {
-  const calls = { applied: [], suppressed: [], deleted: [] };
+function createRepo({ result = { processed: true, status: 'bounced', applied: true }, failIngest = false } = {}) {
+  const calls = { ingested: [] };
   return {
     calls,
-    async recordProviderEvent() { return { event: duplicate ? null : { id: 'event-1' }, duplicate }; },
-    async deleteProviderEvent(id) { calls.deleted.push(id); },
-    async findSendByProviderMessageId() { return send; },
-    async applyProviderEvent(args) {
-      if (failApply) throw new Error('apply_failed');
-      calls.applied.push(args);
+    async ingestProviderEvent(args) {
+      calls.ingested.push(args);
+      if (failIngest) throw new Error('ingest_failed');
+      return result;
     },
-    async addSuppression(args) { calls.suppressed.push(args); },
   };
 }
 
@@ -40,41 +37,51 @@ async function deliver({ type, data, repo, id }) {
   const body = JSON.stringify({ type, data, created_at: NOW.toISOString() });
   const req = { body: Buffer.from(body), headers: sign(body, { id }) };
   const res = createRes();
-  await handleWebhook(req, res, { repository: repo, env: { RESEND_WEBHOOK_SECRET: SECRET }, logger: { info() {}, error() {} }, clock: () => NOW });
+  await handleWebhook(req, res, { repository: repo, env: { RESEND_WEBHOOK_SECRET: SECRET }, logger: { info() {}, warn() {}, error() {} }, clock: () => NOW });
   return res;
 }
 
 describe('resend webhook handler', () => {
-  it('un rebote con envío asociado actualiza estado y crea supresión', async () => {
-    const repo = createRepo({ send: { id: 'send-1', prospect_id: 'p-1', to_email: 'juan@estudio.cl' } });
+  it('ingiere el evento y deja que el ledger aplique la supresión', async () => {
+    const repo = createRepo();
     const res = await deliver({ type: 'email.bounced', data: { email_id: 're_1', to: ['juan@estudio.cl'] }, repo });
     expect(res.statusCode).toBe(200);
-    expect(repo.calls.applied).toHaveLength(1);
-    expect(repo.calls.applied[0]).toMatchObject({ status: 'bounced', email: 'juan@estudio.cl' });
-    expect(repo.calls.suppressed).toHaveLength(1);
-    expect(repo.calls.suppressed[0]).toMatchObject({ email: 'juan@estudio.cl', reason: 'bounce' });
+    expect(res.body).toMatchObject({ ok: true, status: 'bounced', applied: true });
+    expect(repo.calls.ingested).toHaveLength(1);
+    expect(repo.calls.ingested[0]).toMatchObject({
+      providerEventId: 'msg_1',
+      eventType: 'email.bounced',
+      providerMessageId: 're_1',
+      email: 'juan@estudio.cl',
+    });
   });
 
   it('un evento duplicado no vuelve a aplicar cambios', async () => {
-    const repo = createRepo({ duplicate: true });
+    const repo = createRepo({ result: { duplicate: true, processed: true } });
     const res = await deliver({ type: 'email.bounced', data: { email_id: 're_1', to: ['juan@estudio.cl'] }, repo });
-    expect(res.body).toMatchObject({ ok: true, duplicate: true });
-    expect(repo.calls.applied).toHaveLength(0);
-    expect(repo.calls.suppressed).toHaveLength(0);
+    expect(res.body).toMatchObject({ ok: true, duplicate: true, processed: true });
+    expect(repo.calls.ingested).toHaveLength(1);
   });
 
-  it('libera el evento si falla el procesamiento para permitir el reintento', async () => {
-    const repo = createRepo({ send: { id: 'send-1', prospect_id: 'p-1', to_email: 'juan@estudio.cl' }, failApply: true });
-    await expect(deliver({ type: 'email.bounced', data: { email_id: 're_1', to: ['juan@estudio.cl'] }, repo }))
-      .rejects.toThrow('apply_failed');
-    expect(repo.calls.deleted).toEqual(['msg_1']);
+  it('un evento sin asociación única responde 200 para que el worker lo revise', async () => {
+    const repo = createRepo({ result: { needs_review: true, reason: 'ambiguous_provider_message_id' } });
+    const res = await deliver({ type: 'email.bounced', data: { email_id: 're_1', to: ['juan@estudio.cl'] }, repo });
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toMatchObject({ ok: true, needs_review: true, reason: 'ambiguous_provider_message_id' });
+  });
+
+  it('responde 500 sin borrar el evento si falla la ingesta', async () => {
+    const repo = createRepo({ failIngest: true });
+    const res = await deliver({ type: 'email.bounced', data: { email_id: 're_1', to: ['juan@estudio.cl'] }, repo });
+    expect(res.statusCode).toBe(500);
+    expect(res.body).toMatchObject({ ok: false, error: 'webhook_processing_failed' });
   });
 
   it('rechaza firmas inválidas', async () => {
     const repo = createRepo();
     const req = { body: Buffer.from('{}'), headers: { 'svix-id': 'x', 'svix-timestamp': String(Math.floor(NOW.getTime() / 1000)), 'svix-signature': 'v1,AAAA' } };
     const res = createRes();
-    await handleWebhook(req, res, { repository: repo, env: { RESEND_WEBHOOK_SECRET: SECRET }, logger: { info() {}, error() {} }, clock: () => NOW });
+    await handleWebhook(req, res, { repository: repo, env: { RESEND_WEBHOOK_SECRET: SECRET }, logger: { info() {}, warn() {}, error() {} }, clock: () => NOW });
     expect(res.statusCode).toBe(401);
     expect(res.body.error).toBe('invalid_signature');
   });
@@ -83,5 +90,6 @@ describe('resend webhook handler', () => {
     const repo = createRepo();
     const res = await deliver({ type: 'email.opened', data: { email_id: 're_1', to: ['juan@estudio.cl'] }, repo });
     expect(res.body).toMatchObject({ ok: true, ignored: true });
+    expect(repo.calls.ingested).toHaveLength(0);
   });
 });

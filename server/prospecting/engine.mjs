@@ -14,7 +14,6 @@ import {
   startOfDayUtc,
 } from './time.mjs';
 import { normalizeEmail } from './validation.mjs';
-import { MAX_SEND_ATTEMPTS } from './constants.mjs';
 
 const SEND_DELAY_MS = 1200;
 const DEFAULT_SENDER_NAME = 'Juan de Legalup';
@@ -89,6 +88,7 @@ export function createProspectingEngine({
       started_at: startedAt.toISOString(),
       rejected: { total: 0, by_reason: {} },
       failed_details: [],
+      ambiguous_details: [],
       notes: [],
     };
 
@@ -115,7 +115,7 @@ export function createProspectingEngine({
         summary.notes.push('forced_dry_run_by_settings');
       }
 
-      await repository.recoverStaleRuns(settings.timezone);
+      await repository.recoverStaleRuns();
       const discoveryResult = await discovery.discoverProspects({
         settings,
         target: settings.daily_target,
@@ -183,16 +183,32 @@ export function createProspectingEngine({
         throw new Error('unsubscribe_secret_not_configured');
       }
 
-      const dayStart = startOfDayUtc(clock(), settings.timezone).toISOString();
-      const sentToday = await repository.getTodaySendCount(dayStart);
-      const dailyRemaining = Math.max(0, Number(settings.max_sends_per_day) - sentToday);
-      const targetRemaining = Math.max(0, Number(settings.daily_target) - sentToday);
-      const planned = Math.min(Number(settings.max_sends_per_run), dailyRemaining, targetRemaining);
+      const capacity = await repository.getCapacity(clock().toISOString());
+      if (!capacity?.ledger_ready || capacity?.recovery_required) {
+        const reason = capacity?.ledger_ready ? 'ledger_recovery_required' : 'ledger_not_ready';
+        await finishRun(run.id, 'skipped', {
+          discovered: candidates.length,
+          inserted: filtered.inserted.length,
+          eligible: eligible.length,
+          skipped: filtered.rejected.length,
+          error: null,
+          summary: { ...summary, skip_reason: reason, capacity },
+        });
+        return { run_id: run.id, status: 'skipped', reason };
+      }
+
+      const planned = Math.min(
+        Number(settings.max_sends_per_run),
+        Number(capacity.remaining || 0),
+      );
       summary.limits = {
-        daily_target: settings.daily_target,
-        target_remaining: targetRemaining,
-        max_per_run: settings.max_sends_per_run,
-        daily_remaining: dailyRemaining,
+        day_key: capacity.day_key,
+        daily_target: capacity.daily_target,
+        target_remaining: capacity.remaining,
+        max_per_run: capacity.max_sends_per_run,
+        daily_remaining: capacity.remaining,
+        used: capacity.used,
+        limit: capacity.limit,
         planned,
       };
 
@@ -203,12 +219,12 @@ export function createProspectingEngine({
           eligible: eligible.length,
           skipped: filtered.rejected.length,
           error: null,
-          summary: { ...summary, skip_reason: 'daily_send_limit_reached' },
+          summary: { ...summary, skip_reason: 'daily_send_limit_reached', capacity },
         });
         return { run_id: run.id, status: 'skipped', reason: 'daily_send_limit_reached' };
       }
 
-      const counts = { sent: 0, failed: 0, skipped: filtered.rejected.length, retried: 0 };
+      const counts = { sent: 0, failed: 0, unknown: 0, skipped: filtered.rejected.length, retried: 0 };
       const queue = await buildSendQueue({
         run,
         settings,
@@ -223,6 +239,7 @@ export function createProspectingEngine({
         const outcome = await processSend({ item, run, settings, unsubscribeSecret, summary });
         if (outcome === 'sent') counts.sent += 1;
         else if (outcome === 'failed') counts.failed += 1;
+        else if (outcome === 'unknown') counts.unknown += 1;
         else counts.skipped += 1;
 
         if (outcome === 'sent' && index < queue.length - 1) {
@@ -234,7 +251,10 @@ export function createProspectingEngine({
         ? 'partial'
         : counts.failed > 0 && counts.sent === 0
           ? 'failed'
-          : 'succeeded';
+          : counts.unknown > 0
+            ? 'partial'
+            : 'succeeded';
+      summary.unknown = counts.unknown;
 
       await finishRun(run.id, status, {
         discovered: candidates.length,
@@ -301,23 +321,70 @@ export function createProspectingEngine({
       prospect = await repository.findProspect(send.prospect_id);
     }
     if (!prospect) {
-      await repository.markSendResult(send.id, {
-        status: 'skipped',
-        error: 'prospect_missing',
-        transient: false,
-      });
+      await repository.markSendSkipped(send.id, 'prospect_missing');
       return 'skipped';
     }
 
-    const claimed = await repository.claimSend(send.id);
-    if (!claimed) {
-      summary.notes.push('send_claim_conflict');
+    const claimed = await repository.claimSendAttempt({ sendId: send.id, runId: run.id });
+    if (!claimed?.claimed) {
+      summary.notes.push(claimed?.reason ? `send_claim_${claimed.reason}` : 'send_claim_conflict');
       return 'skipped';
+    }
+
+    let revalidated;
+    try {
+      revalidated = await repository.revalidateAttemptDay({ attemptId: claimed.attempt_id });
+      if (!revalidated || typeof revalidated.valid !== 'boolean') {
+        throw new Error('revalidation_invalid_response');
+      }
+    } catch (error) {
+      summary.notes.push('send_revalidation_failed');
+      try {
+        await finalizeAttempt({
+          attemptId: claimed.attempt_id,
+          outcome: 'released',
+          error: String(error?.message || error || 'revalidation_failed').slice(0, 1000),
+          transient: true,
+          definitiveRejection: false,
+          providerContacted: false,
+          releaseReason: 'revalidation_failed',
+        });
+      } catch (releaseError) {
+        summary.notes.push('send_revalidation_release_failed');
+        throw releaseError;
+      }
+      summary.failed_details.push({
+        prospect_id: prospect.id,
+        email: send.to_email,
+        error: 'revalidation_failed',
+        transient: true,
+        attempts: 0,
+      });
+      return 'failed';
+    }
+
+    if (!revalidated.valid) {
+      const reason = revalidated.reason || 'revalidation_rejected';
+      summary.notes.push(`send_revalidation_${reason}`);
+      if (reason === 'day_full' || reason === 'run_limit_reached') {
+        summary.failed_details.push({
+          prospect_id: prospect.id,
+          email: send.to_email,
+          error: reason,
+          transient: true,
+          attempts: 0,
+        });
+        return 'failed';
+      }
+      return 'skipped';
+    }
+    if (revalidated.rolled_over) {
+      summary.notes.push('send_revalidation_day_rollover');
     }
 
     const rendered = item.rendered || {
-      subject: claimed.subject,
-      html: claimed.html,
+      subject: send.subject,
+      html: send.html,
       text: null,
     };
     const unsubscribeToken = createUnsubscribeToken(prospect.id, unsubscribeSecret);
@@ -326,7 +393,7 @@ export function createProspectingEngine({
 
     const result = await mailer.sendProspectEmail({
       from,
-      to: claimed.to_email,
+      to: send.to_email,
       replyTo: settings.reply_to || settings.sender_email || DEFAULT_SENDER_EMAIL,
       subject: rendered.subject,
       html: rendered.html,
@@ -335,36 +402,62 @@ export function createProspectingEngine({
         'List-Unsubscribe': `<${unsubscribeUrl}>`,
         'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
       },
-      idempotencyKey: claimed.idempotency_key,
+      idempotencyKey: send.idempotency_key,
     });
 
     if (result.ok) {
-      await repository.markSendResult(claimed.id, {
-        status: 'sent',
+      await finalizeAttempt({
+        attemptId: claimed.attempt_id,
+        outcome: 'sent',
         providerMessageId: result.id,
-        sentAt: clock().toISOString(),
+        providerContacted: true,
       });
-      await repository.markProspectContacted(prospect);
       if (item.kind === 'retry') summary.retried = (summary.retried || 0) + 1;
       return 'sent';
     }
 
-    const terminal = !result.transient || claimed.attempt >= MAX_SEND_ATTEMPTS;
-    await repository.markSendResult(claimed.id, {
-      status: 'failed',
+    const ambiguous = result.ambiguous === true;
+    const definitiveRejection = result.definitiveRejection === true;
+    await finalizeAttempt(ambiguous ? {
+      attemptId: claimed.attempt_id,
+      outcome: 'unknown',
+      error: result.error || 'ambiguous_provider_result',
+      providerContacted: true,
+    } : {
+      attemptId: claimed.attempt_id,
+      outcome: 'released',
       error: result.error,
-      transient: result.transient,
-      terminal,
+      transient: Boolean(result.transient),
+      definitiveRejection,
+      providerContacted: definitiveRejection,
+      releaseReason: definitiveRejection ? 'provider_rejected' : 'provider_error',
     });
-    if (terminal) await repository.markProspectFailed(prospect.id);
+
+    if (ambiguous) {
+      summary.ambiguous_details.push({
+        prospect_id: prospect.id,
+        email: send.to_email,
+        error: result.error,
+        attempts: result.attempts,
+      });
+      return 'unknown';
+    }
     summary.failed_details.push({
       prospect_id: prospect.id,
-      email: claimed.to_email,
+      email: send.to_email,
       error: result.error,
       transient: Boolean(result.transient),
       attempts: result.attempts,
     });
     return 'failed';
+  }
+
+  async function finalizeAttempt(args) {
+    const result = await repository.finalizeSendAttempt(args);
+    if (!result?.finalized) {
+      throw new Error(`ledger_finalize_failed:${result?.reason || 'unknown'}`);
+    }
+    return result;
   }
 
   async function sendTestEmail({ run, settings, testRecipient, summary }) {

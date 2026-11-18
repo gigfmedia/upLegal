@@ -11,6 +11,11 @@ No se envía ningún correo real hasta que un administrador active la automatiza
 - `supabase/migrations/20261105004400_prospecting_automation.sql`: tablas, RLS deny, claim atómico, recuperación de runs y supresiones.
 - `supabase/migrations/20261105225853_prospecting_quality_limits.sql`: columnas aditivas de calidad, dedupe por persona/dominio y setting de múltiples contactos.
 - `supabase/migrations/20261106120000_prospecting_quality_version.sql`: versión explícita de reglas de calidad; `null` significa pendiente de reevaluación.
+- `supabase/migrations/20261116000000_prospecting_block3_ledger_guard.sql`: ledger de intentos, inbox de eventos, recovery, scrub, grants base y vista operacional; deja `ledger_ready = false`.
+- `supabase/migrations/20261116000100_prospecting_block3_ledger_backfill.sql`: baseline histórico, reconciliación y cierre transaccional a `ledger_ready = true`.
+- `supabase/migrations/20261116000200_prospecting_block3_permissions.sql`: fase append-only; revoca `DELETE`/`TRUNCATE` después de desplegar el runtime nuevo.
+- `server/prospecting/ledger.mjs`: cliente fino de RPC; no escribe tablas del ledger directamente.
+- `server/prospecting/workers.mjs`: recovery, reproceso de eventos y scrub PII; corre en el tick interno y en el cron.
 - `.github/workflows/prospecting-cron.yml`: cron externo de respaldo.
 
 ## Rutas
@@ -21,6 +26,7 @@ No se envía ningún correo real hasta que un administrador active la automatiza
 | `POST /api/webhooks/resend` | firma Svix | rebotes, quejas, entregas |
 | `POST /api/cron/prospecting` | `x-cron-secret` | respaldo del scheduler diario |
 | `/api/admin/prospecting/*` | `requireAdmin` | panel, settings, runs, prospectos, envíos, supresiones y prueba |
+| `GET /api/admin/prospecting/operations/health` | `requireAdmin` | estado del ledger, eventos pendientes y reservas atascadas |
 
 ## Variables de entorno (Render)
 
@@ -44,6 +50,8 @@ Opcional:
 
 Sin proveedor de búsqueda, el discovery devuelve `discovery_provider_not_configured` y el run queda `skipped`; no inventa prospectos.
 
+Las solicitudes a sitios de prospectos usan un cliente con protección SSRF: valida esquema, host, IP literal, todas las respuestas DNS y cada redirección; bloquea rangos privados, loopback, link-local, multicast, metadatos cloud, IPv4/IPv6 alternativas y hosts locales. La conexión usa la dirección ya validada para evitar DNS rebinding, con timeout y límite de respuesta. Si un destino no se puede validar, el sitio se descarta sin solicitar la página.
+
 ## Webhook de Resend
 
 1. En Resend, crear un endpoint para `https://legalup.cl/api/webhooks/resend`.
@@ -51,7 +59,7 @@ Sin proveedor de búsqueda, el discovery devuelve `discovery_provider_not_config
 3. Copiar el signing secret a `RESEND_WEBHOOK_SECRET` en Render.
 4. Verificar que el dominio `legalup.cl` esté verificado en Resend. Si no lo está, cambiar temporalmente `sender_email` a un dominio verificado (por ejemplo `mg.legalup.cl`).
 
-El endpoint valida la firma Svix, tolera 5 minutos de desfase, deduplica por `svix-id` y registra rebotes/quejas en la lista de supresión.
+El endpoint valida la firma Svix, tolera 5 minutos de desfase y llama a `prospecting_ingest_provider_event` en una sola transacción. El inbox deduplica por `provider_event_id`, asocia el evento al envío y aplica el estado/supresión. Un duplicado responde 2xx; un evento ambiguo queda `needs_review` y responde 2xx; si falla la ingesta responde 500 para que Resend reintente. El runtime ya no borra eventos fallidos.
 
 ## Cron diario 10:00 America/Santiago
 
@@ -61,6 +69,18 @@ Hay dos mecanismos idempotentes:
 - GitHub Actions a las 13:00 y 14:00 UTC (cubre horario de verano/invierno). La API ignora la llamada si aún no es la hora configurada.
 
 Ambos usan `run_key = scheduled:YYYY-MM-DD` en la zona horaria configurada, por lo que solo se ejecuta un run diario.
+
+## Ledger, readiness y rollout
+
+- `prospecting_send_attempts` es la fuente de cupos: cada claim reserva un intento y el finalize lo consume o lo libera. `prospecting_get_capacity` calcula el cupo desde el ledger, no desde contadores del runtime.
+- `prospecting_settings.ledger_ready` es un flag persistente. El guard lo deja en `false`; el backfill valida y lo cambia a `true` en su transacción. Los claims rechazan con `ledger_not_ready` o `recovery_required` mientras esté bloqueado.
+- `ledger_cutoff_at` es la próxima medianoche local al aplicar el guard. Hasta ese instante los claims siguen bloqueados con `recovery_required`, para no mezclar baseline histórico con ledger exacto del mismo día.
+- Orden de despliegue: guard → verificar `ledger_ready = false` desde otra conexión → backfill → desplegar runtime nuevo → aplicar migración de permisos append-only. No desplegar el runtime anterior después del guard/backfill.
+- La recuperación de envíos `sending` con más de 2 horas y de reservas abandonadas la ejecuta `prospecting_recover_stale`; llamarla sin `mark_ready = true`. El cierre del backfill es la única ruta que habilita el ledger.
+- El worker corre antes del chequeo de `enabled`: recupera reservas, reprocesa eventos pendientes y hace scrub PII como máximo una vez cada 24 horas. Un fallo de worker se loguea y no bloquea el envío.
+- La baja desde el enlace usa `prospecting_apply_unsubscribe`: actualiza el prospecto y crea/actualiza la supresión en una transacción.
+- Si el guard/backfill ya está aplicado, el rollback debe ser forward-fix o deshabilitar envíos; no se debe restaurar el runtime anterior que hacía claims directos.
+- La migración de permisos es la fase append-only: recién ahí se revocan `DELETE`/`TRUNCATE` sobre `prospecting_events` y `prospecting_send_attempts`.
 
 ## Checklist por plataforma
 
@@ -126,7 +146,7 @@ limit 50;
 - La migración exige que `quality_rules_version` no nulo tenga `quality_evaluated_at` no nulo; una inserción que solo declare la versión falla.
 - `daily_target` es el tope estricto de prospectos elegibles y de envíos planificados por día. `max_sends_per_run` y `max_sends_per_day` siguen actuando como topes adicionales.
 - El discovery puede explorar más páginas que el objetivo diario, pero la elegibilidad y el envío nunca superan `daily_target`.
-- Por defecto, la elegibilidad permite una persona y un dominio/estudio por campaña. `allow_multiple_contacts_per_firm = true` permite más de un contacto del mismo estudio, sin duplicar personas.
+- Por defecto, la elegibilidad permite una persona y un dominio/estudio por campaña, y excluye dominios con envíos previos en estado `sent`, `delivered`, `bounced`, `complained` o `unknown`, incluso entre ejecuciones. Los envíos `queued` y `sending` bloquean temporalmente el dominio mientras están en curso; `failed` no lo bloquea. `allow_multiple_contacts_per_firm = true` permite más de un contacto del mismo estudio, sin duplicar personas.
 
 ## Reevaluación de prospectos existentes
 
@@ -146,12 +166,21 @@ La migración es aditiva y no borra ni reescribe registros. Para reevaluar los p
 - Con `dry_run = true`, cualquier envío manual se rechaza (`dry_run_enabled`); solo el correo de prueba explícito sale.
 - Un prospecto recibe como máximo una campaña inicial (`prospecting_sends.prospect_id` único).
 - Los rebotes y quejas agregan supresión y excluyen futuros envíos.
-- Los envíos se registran con `idempotency_key`; los reintentos no crean filas nuevas.
-- Los errores transitorios de Resend se reintentan hasta 3 veces; los definitivos marcan el prospecto como `failed`.
+- Los envíos se registran con `idempotency_key`; los claims posteriores no crean filas nuevas.
+- Cada claim del ledger permite como máximo una llamada al proveedor. El mailer no reintenta internamente ninguna respuesta ni error; el ledger es la única autoridad que habilita un nuevo envío.
+- Un rechazo explícito del proveedor, incluidos 429 y 425, se finaliza con `provider_contacted=true` e incrementa `attempt` exactamente una vez. El tercer rechazo agota el envío y el ledger bloquea cualquier claim adicional. Los 429/425 conservan el estado transitorio para revisión, pero no se reintentan dentro del mismo claim.
+- Timeout, 408, 5xx, respuesta sin id y errores de red ambiguos se finalizan como `unknown` con `provider_contacted=true`; incrementan el intento de esa llamada y no se reintentan automáticamente en la misma ejecución ni en corridas posteriores.
+- Un error previo a contactar al proveedor, como una conexión rechazada, libera la reserva con `provider_contacted=false`, no incrementa `attempt` y deja el envío disponible para un claim posterior bajo el control del ledger.
+- Inmediatamente después del claim y antes de llamar a Resend se revalida el día, el prospecto y la supresión. Si la revalidación falla o no responde, se libera la reserva, no se contacta al proveedor y el envío queda para revisión/reintento seguro.
+- La recuperación de envíos `sending` con más de 2 horas y de reservas abandonadas es idempotente y la ejecuta el ledger; también recupera runs atascados y locks vencidos. Estos envíos no se reintentan y el dominio sigue bloqueado.
+- El inbox `prospecting_events` es append-only en fase 2: el runtime inserta y actualiza, pero no borra eventos; los fallidos se reprocesan.
 - No se almacenan secretos en la base de datos ni en el repositorio.
 
 ## Pendiente antes de activar envíos reales
 
+- Aplicar guard, confirmar `ledger_ready = false`, aplicar backfill y verificar `ledger_ready = true`; esperar `ledger_cutoff_at` antes de enviar.
+- Desplegar el runtime nuevo y luego aplicar la migración de permisos append-only en staging.
+- Ejecutar tests unitarios y de integración PostgreSQL con dos conexiones.
 - Configurar las variables de entorno y el webhook en Resend.
 - Verificar el dominio remitente.
 - Ejecutar un dry-run real con proveedor de búsqueda configurado.

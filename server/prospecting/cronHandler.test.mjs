@@ -97,6 +97,15 @@ describe('prospecting cron handler', () => {
     expect(module.engine.startRun).not.toHaveBeenCalled();
   });
 
+  it('ejecuta workers aunque la automatización esté desactivada', async () => {
+    const module = createModule({ now: new Date('2026-01-15T13:00:00Z'), settings: { ...settings, enabled: false } });
+    module.workers.run = vi.fn(async () => ({ recovered: null, reprocessed: null, scrubbed: null }));
+    const res = await invoke(module, createReq({ secret: SECRET }));
+    expect(res.body).toMatchObject({ skipped: true, reason: 'automation_disabled' });
+    expect(module.workers.run).toHaveBeenCalledTimes(1);
+    expect(module.engine.startRun).not.toHaveBeenCalled();
+  });
+
   it('respeta 10:00 America/Santiago en horario de verano (UTC-3)', async () => {
     const before = createModule({ now: new Date('2026-01-15T12:59:00Z'), settings });
     expect((await invoke(before, createReq({ secret: SECRET }))).body).toMatchObject({ skipped: true, reason: 'not_due' });

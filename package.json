@@ -16,6 +16,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
+    "test:integration:prospecting": "vitest run server/prospecting/postgres.integration.test.mjs",
     "server": "nodemon server.mjs",
     "start": "concurrently \"npm run server\" \"vite\"",
     "test:unit": "vitest run --mode test"
@@ -136,6 +137,7 @@
     "jsdom": "^29.0.2",
     "micro": "^10.0.1",
     "nodemon": "^3.1.14",
+    "pg": "^8.16.3",
     "postcss": "^8.5.26",
     "tailwindcss": "^3.4.11",
     "terser": "^5.44.0",

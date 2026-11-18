@@ -58,6 +58,8 @@ describe('prospecting discovery', () => {
     expect(await provider.search('abogados santiago', 5)).toEqual([{ title: 'A', url: 'https://a.cl', snippet: 's' }]);
     expect(captured.url).toBe('https://google.serper.dev/search');
     expect(captured.options.headers['X-API-KEY']).toBe('serper-key');
+    expect(captured.options.redirect).toBe('error');
+    expect(captured.options.signal).toBeInstanceOf(AbortSignal);
     expect(JSON.parse(captured.options.body)).toMatchObject({ q: 'abogados santiago', gl: 'cl', hl: 'es' });
   });
 
@@ -229,6 +231,7 @@ describe('prospecting discovery', () => {
       settings: {},
       target: 5,
       fetchImpl,
+      lookup: async () => [{ address: '93.184.216.34', family: 4 }],
       resolveMx: async () => [{ exchange: 'mx.estudio.cl', priority: 10 }],
       maxPages: 2,
       logger: { warn() {}, error() {} },
@@ -241,6 +244,63 @@ describe('prospecting discovery', () => {
       mailbox_verified: false,
     });
     expect(result.stats.excluded).toBe(2);
+  });
+
+  it('descarta páginas que superan el límite de respuesta', async () => {
+    const fetchImpl = async (url) => {
+      const target = String(url);
+      if (target === 'https://google.serper.dev/search') {
+        return response({ contentType: 'application/json', json: { organic: [{ title: 'Grande', link: 'https://grande.cl', snippet: '' }] } });
+      }
+      if (target === 'https://grande.cl/robots.txt') return response({ contentType: 'text/plain', body: '' });
+      if (target === 'https://grande.cl') return response({ body: 'a'.repeat(1_200_001) });
+      throw new Error(`unexpected fetch ${target}`);
+    };
+    const result = await discoverProspects({
+      env: { SERPER_API_KEY: 'test' },
+      settings: {},
+      target: 5,
+      fetchImpl,
+      lookup: async () => [{ address: '93.184.216.34', family: 4 }],
+      resolveMx: async () => [{ exchange: 'mx', priority: 10 }],
+      maxPages: 1,
+      logger: { warn() {}, error() {} },
+    });
+
+    expect(result.candidates).toEqual([]);
+  });
+
+  it('no solicita destinos privados cuando una página redirige fuera de la red pública', async () => {
+    const calls = [];
+    const fetchImpl = async (url) => {
+      const target = String(url);
+      calls.push(target);
+      if (target === 'https://google.serper.dev/search') {
+        return response({ contentType: 'application/json', json: { organic: [{ title: 'Pérez', link: 'https://www.estudio.cl/equipo', snippet: '' }] } });
+      }
+      if (target === 'https://www.estudio.cl/robots.txt') return response({ contentType: 'text/plain', body: '' });
+      if (target === 'https://www.estudio.cl/equipo') {
+        return response({ status: 302, headers: { location: 'http://169.254.169.254/latest/meta-data' } });
+      }
+      throw new Error(`unexpected fetch ${target}`);
+    };
+    const result = await discoverProspects({
+      env: { SERPER_API_KEY: 'test' },
+      settings: {},
+      target: 5,
+      fetchImpl,
+      lookup: async () => [{ address: '93.184.216.34', family: 4 }],
+      resolveMx: async () => [{ exchange: 'mx', priority: 10 }],
+      maxPages: 2,
+      logger: { warn() {}, error() {} },
+    });
+
+    expect(result.candidates).toEqual([]);
+    expect(calls.filter((url) => !url.includes('google.serper.dev'))).toEqual([
+      'https://www.estudio.cl/robots.txt',
+      'https://www.estudio.cl/equipo',
+    ]);
+    expect(calls.some((url) => url.includes('169.254.169.254'))).toBe(false);
   });
 
   it('sitio sin email queda pendiente de contacto, no se inventa dirección', async () => {
@@ -259,6 +319,7 @@ describe('prospecting discovery', () => {
       settings: {},
       target: 5,
       fetchImpl,
+      lookup: async () => [{ address: '93.184.216.34', family: 4 }],
       resolveMx: async () => [{ exchange: 'mx', priority: 10 }],
       maxPages: 2,
       logger: { warn() {}, error() {} },

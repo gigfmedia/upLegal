@@ -1,11 +1,12 @@
 import crypto from 'crypto';
 import dns from 'dns/promises';
 import express from 'express';
+import { createProspectingLedger } from './ledger.mjs';
 import { createProspectingRepository } from './repository.mjs';
+import { createProspectingWorkers } from './workers.mjs';
 import { createProspectingEngine, httpError } from './engine.mjs';
 import { discoverProspects } from './discovery.mjs';
-import { isTransientSendError } from './mailer.mjs';
-import { MAX_SEND_ATTEMPTS } from './constants.mjs';
+import { createProspectingMailer } from './mailerRuntime.mjs';
 import { mapResendEvent, verifyResendSignature } from './webhook.mjs';
 import { isValidTimezone, normalizeScheduleTime } from './time.mjs';
 import { isValidEmailSyntax, normalizeEmail } from './validation.mjs';
@@ -15,66 +16,6 @@ function actorId(req) {
   return req.adminUser?.id || req.auth?.user?.id || req.authUser?.id || null;
 }
 
-function createProspectingMailer({
-  resend,
-  sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
-  logger = console,
-  maxAttempts = MAX_SEND_ATTEMPTS,
-} = {}) {
-  async function sendEmail(payload, idempotencyKey) {
-    if (!resend) {
-      return { ok: false, id: null, attempts: 0, error: 'resend_not_configured', transient: false };
-    }
-    let lastError = null;
-    let attemptsUsed = 0;
-    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-      attemptsUsed = attempt;
-      try {
-        const response = await resend.emails.send(payload, { idempotencyKey });
-        if (response?.error) throw response.error;
-        const id = response?.data?.id || response?.id || null;
-        if (!id) {
-          return { ok: false, id: null, attempts: attempt, error: 'provider_returned_no_id', transient: false };
-        }
-        return { ok: true, id, attempts: attempt, error: null };
-      } catch (error) {
-        lastError = error;
-        const transient = isTransientSendError(error);
-        if (!transient || attempt >= maxAttempts) break;
-        const delay = [500, 1500, 4000][attempt - 1] || 4000;
-        logger.warn?.('[Prospecting] transient Resend failure, retrying', {
-          attempt,
-          delay_ms: delay,
-          error: String(error?.message || error),
-        });
-        await sleep(delay);
-      }
-    }
-    return {
-      ok: false,
-      id: null,
-      attempts: attemptsUsed,
-      error: String(lastError?.message || lastError || 'send_failed').slice(0, 1000),
-      transient: isTransientSendError(lastError),
-    };
-  }
-
-  async function sendProspectEmail({ from, to, replyTo, subject, html, text, headers, idempotencyKey }) {
-    const payload = {
-      from,
-      to: [to],
-      reply_to: replyTo,
-      subject,
-      html,
-      text,
-      headers: headers || undefined,
-    };
-    return sendEmail(payload, idempotencyKey);
-  }
-
-  return { sendEmail, sendProspectEmail };
-}
-
 export function createProspectingModule({
   supabase,
   resend,
@@ -82,17 +23,20 @@ export function createProspectingModule({
   env = process.env,
   logger = console,
   clock = () => new Date(),
-  fetchImpl = globalThis.fetch,
+  fetchImpl,
+  lookup = (host, options) => dns.lookup(host, options),
   resolveMx = (domain) => dns.resolveMx(domain),
   sleep,
   requireAdminMiddleware = null,
 } = {}) {
-  const repository = createProspectingRepository({ supabase, logger });
-  const mailer = createProspectingMailer({ resend, logger, ...(sleep ? { sleep } : {}) });
+  const ledger = createProspectingLedger({ supabase, logger });
+  const repository = createProspectingRepository({ supabase, logger, ledger });
+  const workers = createProspectingWorkers({ ledger, repository, logger, clock });
+  const mailer = createProspectingMailer({ resend });
   const engine = createProspectingEngine({
     repository,
     discovery: {
-      discoverProspects: (options) => discoverProspects({ ...options, fetchImpl, resolveMx, logger, clock }),
+      discoverProspects: (options) => discoverProspects({ ...options, fetchImpl, lookup, resolveMx, logger, clock }),
     },
     mailer,
     env,
@@ -133,6 +77,15 @@ export function createProspectingModule({
         resend: Boolean(resend),
       };
       res.json({ ok: true, data });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  adminRouter.get('/operations/health', async (req, res, next) => {
+    try {
+      const health = await workers.health();
+      res.json({ ok: true, data: health });
     } catch (error) {
       next(error);
     }
@@ -314,6 +267,7 @@ export function createProspectingModule({
     tickRunning = true;
     try {
       const settings = await repository.getSettings();
+      await workers.run({ scrub: true });
       if (!settings?.enabled) return;
       const now = clock();
       const dateKey = new Intl.DateTimeFormat('en-CA', {
@@ -332,7 +286,6 @@ export function createProspectingModule({
       const scheduled = normalizeScheduleTime(settings.schedule_time)?.slice(0, 5) || '10:00';
       if (localTime < scheduled) return;
 
-      await repository.recoverStaleRuns(settings.timezone);
       const result = await engine.startRun({ trigger: 'scheduled', mode: 'send', actorId: null });
       lastScheduleAttemptKey = dateKey;
       if (result.skipped) {
@@ -355,6 +308,7 @@ export function createProspectingModule({
         || String(req.get('authorization') || '').replace(/^Bearer\s+/i, '');
       if (!safeEqual(provided, secret)) throw httpError(401, 'invalid_cron_secret');
       const settings = await repository.getSettings();
+      await workers.run({ scrub: true });
       if (settings?.enabled === false) {
         res.status(200).json({ ok: true, skipped: true, reason: 'automation_disabled', run: null });
         return;
@@ -395,6 +349,8 @@ export function createProspectingModule({
 
   return {
     repository,
+    ledger,
+    workers,
     engine,
     publicRouter,
     adminRouter,
@@ -435,42 +391,38 @@ export async function handleWebhook(req, res, { repository, env, logger, clock =
   }
 
   const providerEventId = verification.svixId || `${event.type}:${event.providerMessageId || 'unknown'}:${payload?.created_at || ''}`;
-  const recorded = await repository.recordProviderEvent({
-    providerEventId,
-    eventType: event.type,
-    providerMessageId: event.providerMessageId,
-    email: event.email,
-    payload,
-  });
-  if (recorded.duplicate) {
-    res.json({ ok: true, duplicate: true });
-    return;
-  }
 
   try {
-    const send = await repository.findSendByProviderMessageId(event.providerMessageId);
-    if (send) {
-      await repository.applyProviderEvent({ send, status: event.status, email: event.email });
-    }
-    if (event.status === 'bounced' || event.status === 'complained') {
-      await repository.addSuppression({
-        email: event.email || send?.to_email || null,
-        reason: event.status === 'bounced' ? 'bounce' : 'complaint',
-        source: 'resend_webhook',
-        note: send ? 'Evento asociado a un envío de prospección' : 'Evento sin envío de prospección asociado',
-      });
-    }
-  } catch (error) {
-    // Si falla el procesamiento, liberar el id del evento para que el reintento
-    // de Resend no quede bloqueado como duplicado sin haberse aplicado.
-    await repository.deleteProviderEvent(providerEventId).catch((cleanupError) => {
-      logger.error?.('[Prospecting] webhook event cleanup failed', { error: cleanupError?.message || cleanupError });
+    const result = await repository.ingestProviderEvent({
+      providerEventId,
+      eventType: event.type,
+      providerMessageId: event.providerMessageId,
+      email: event.email,
+      payload,
+      now: clock().toISOString(),
     });
-    throw error;
-  }
 
-  logger.info?.('[Prospecting] webhook processed', { type: event.type, status: event.status });
-  res.json({ ok: true, status: event.status });
+    if (result?.duplicate) {
+      logger.info?.('[Prospecting] webhook duplicate acknowledged', { type: event.type, status: event.status });
+      res.json({ ok: true, duplicate: true, processed: result.processed === true });
+      return;
+    }
+
+    if (result?.needs_review) {
+      logger.warn?.('[Prospecting] webhook event needs review', {
+        type: event.type,
+        reason: result.reason || null,
+      });
+      res.json({ ok: true, needs_review: true, reason: result.reason || null });
+      return;
+    }
+
+    logger.info?.('[Prospecting] webhook processed', { type: event.type, status: result?.status || event.status });
+    res.json({ ok: true, status: result?.status || event.status, applied: result?.applied !== false });
+  } catch (error) {
+    logger.error?.('[Prospecting] webhook ingest failed', { type: event.type, error: error?.message || error });
+    res.status(500).json({ ok: false, error: 'webhook_processing_failed' });
+  }
 }
 
 async function handleUnsubscribe(req, res, { repository, env, logger, viaPost }) {
@@ -487,16 +439,12 @@ async function handleUnsubscribe(req, res, { repository, env, logger, viaPost })
   }
 
   try {
-    const prospect = await repository.findProspect(prospectId);
-    if (prospect) {
-      await repository.markProspectUnsubscribed(prospect.id);
-      await repository.addSuppression({
-        email: prospect.email || prospect.email_normalized,
-        reason: 'unsubscribe',
-        source: 'email_link',
-        note: 'Baja solicitada desde el enlace del correo',
-      });
-    }
+    await repository.applyUnsubscribe({
+      prospectId,
+      source: 'email_link',
+      note: 'Baja solicitada desde el enlace del correo',
+      now: new Date().toISOString(),
+    });
     if (viaPost) {
       res.status(200).json({ ok: true });
       return;

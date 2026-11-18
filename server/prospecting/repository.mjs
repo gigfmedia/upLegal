@@ -1,4 +1,5 @@
 import { normalizeDomain, normalizeEmail } from './validation.mjs';
+import { createProspectingLedger } from './ledger.mjs';
 import {
   QUALITY_RULES_VERSION,
   assessCandidateQuality,
@@ -10,7 +11,9 @@ import {
   selectQualityEligibleContacts,
 } from './quality.mjs';
 
-const SEND_STATUS_RANK = { queued: 0, sending: 1, sent: 2, delivered: 3, unknown: 3, failed: 4, bounced: 5, complained: 6 };
+const HISTORICAL_CONTACT_STATUSES = new Set(['sent', 'delivered', 'bounced', 'complained', 'unknown']);
+const IN_FLIGHT_SEND_STATUSES = new Set(['queued', 'sending']);
+const DOMAIN_BLOCKING_SEND_STATUSES = new Set([...HISTORICAL_CONTACT_STATUSES, ...IN_FLIGHT_SEND_STATUSES]);
 
 const SETTINGS_FIELDS = [
   'enabled',
@@ -27,8 +30,9 @@ const SETTINGS_FIELDS = [
   'allow_multiple_contacts_per_firm',
 ];
 
-export function createProspectingRepository({ supabase, logger = console } = {}) {
+export function createProspectingRepository({ supabase, logger = console, ledger = null } = {}) {
   if (!supabase) throw new Error('supabase client required');
+  const ledgerClient = ledger || createProspectingLedger({ supabase, logger });
 
   function db(table) {
     return supabase.from(table);
@@ -82,13 +86,94 @@ export function createProspectingRepository({ supabase, logger = console } = {})
     if (error) logger.warn?.('[Prospecting] releaseLock failed', { error: error.message });
   }
 
-  async function recoverStaleRuns(timezone) {
-    const { data, error } = await supabase.rpc('prospecting_recover_stale_runs', { p_timezone: timezone });
-    if (error) {
-      logger.warn?.('[Prospecting] recoverStaleRuns failed', { error: error.message });
-      return { recovered: 0 };
+  async function recoverStaleRuns() {
+    try {
+      const result = await ledgerClient.recoverStale({
+        now: new Date().toISOString(),
+        markReady: false,
+      });
+      return { ...result, recovered: Number(result?.runs || 0) };
+    } catch (error) {
+      fail('recoverStaleRuns', error);
     }
-    return data || { recovered: 0 };
+  }
+
+  async function getCapacity(now = null) {
+    try {
+      return await ledgerClient.getCapacity({ now });
+    } catch (error) {
+      fail('getCapacity', error);
+    }
+  }
+
+  async function claimSendAttempt({ sendId, runId = null, now = null }) {
+    try {
+      return await ledgerClient.claimSendAttempt({ sendId, runId, now });
+    } catch (error) {
+      fail('claimSendAttempt', error);
+    }
+  }
+
+  async function revalidateAttemptDay({ attemptId, now = null }) {
+    try {
+      return await ledgerClient.revalidateAttemptDay({ attemptId, now });
+    } catch (error) {
+      fail('revalidateAttemptDay', error);
+    }
+  }
+
+  async function finalizeSendAttempt(args) {
+    try {
+      return await ledgerClient.finalizeSendAttempt(args);
+    } catch (error) {
+      fail('finalizeSendAttempt', error);
+    }
+  }
+
+  async function markSendSkipped(sendId, reason, now = null) {
+    try {
+      return await ledgerClient.markSendSkipped({ sendId, reason, now });
+    } catch (error) {
+      fail('markSendSkipped', error);
+    }
+  }
+
+  async function ingestProviderEvent(args) {
+    try {
+      return await ledgerClient.ingestProviderEvent(args);
+    } catch (error) {
+      fail('ingestProviderEvent', error);
+    }
+  }
+
+  async function applyProviderEvent(args) {
+    try {
+      return await ledgerClient.applyProviderEvent(args);
+    } catch (error) {
+      fail('applyProviderEvent', error);
+    }
+  }
+
+  async function reprocessProviderEvents(limit = 50, now = null) {
+    try {
+      return await ledgerClient.reprocessProviderEvents({ limit, now });
+    } catch (error) {
+      fail('reprocessProviderEvents', error);
+    }
+  }
+
+  async function applyUnsubscribe(args) {
+    try {
+      return await ledgerClient.applyUnsubscribe(args);
+    } catch (error) {
+      fail('applyUnsubscribe', error);
+    }
+  }
+
+  async function getOperationalHealth() {
+    const { data, error } = await db('prospecting_operational_health').select('*').maybeSingle();
+    if (error) fail('getOperationalHealth', error);
+    return data || null;
   }
 
   async function updateRun(runId, patch) {
@@ -282,6 +367,40 @@ export function createProspectingRepository({ supabase, logger = console } = {})
     return { emails, websites };
   }
 
+  async function listContactedDomains(rows) {
+    const domains = [...new Set(rows
+      .map((row) => row.domain_key || buildDomainKey({ email: row.email, website: row.website }))
+      .filter(Boolean))];
+    if (domains.length === 0) return new Set();
+
+    const domainProspects = await selectIn(
+      'prospects',
+      'domain_key',
+      domains,
+      'id, domain_key, email, website',
+    );
+    const prospectsById = new Map([...domainProspects, ...rows].map((row) => [row.id, row]));
+    const contacted = await selectIn(
+      'prospecting_sends',
+      'prospect_id',
+      [...prospectsById.keys()],
+      'prospect_id, status',
+    );
+    const contactedIds = contacted
+      .filter((row) => DOMAIN_BLOCKING_SEND_STATUSES.has(row.status))
+      .map((row) => row.prospect_id);
+    const contactedDomains = new Set();
+    for (const prospectId of contactedIds) {
+      const prospect = prospectsById.get(prospectId);
+      const domainKey = prospect?.domain_key || buildDomainKey({
+        email: prospect?.email,
+        website: prospect?.website,
+      });
+      if (domainKey) contactedDomains.add(domainKey);
+    }
+    return contactedDomains;
+  }
+
   async function listEligibleForRun(runId, options = {}) {
     // No se limita al run actual: un dry-run inserta prospectos válidos y no
     // debe consumirlos. La cola real toma el backlog pendiente más antiguo,
@@ -322,13 +441,18 @@ export function createProspectingRepository({ supabase, logger = console } = {})
       const emails = rows.map((row) => normalizeEmail(row.email)).filter(Boolean);
       const suppressed = await selectIn('prospecting_suppressions', 'email_normalized', emails, 'email_normalized');
       const suppressedSet = new Set(suppressed.map((row) => row.email_normalized));
+      const contactedDomains = allowMultipleContactsPerFirm
+        ? new Set()
+        : await listContactedDomains(rows);
 
       for (const row of rows) {
         if (withSends.has(row.id)) continue;
         if (suppressedSet.has(normalizeEmail(row.email))) continue;
         const email = normalizeEmail(row.email);
         const website = normalizeDomain(row.website);
+        const domainKey = row.domain_key || buildDomainKey({ email: row.email, website: row.website });
         if (registered.emails.has(email) || registered.websites.has(website)) continue;
+        if (!allowMultipleContactsPerFirm && domainKey && contactedDomains.has(domainKey)) continue;
         scanned.push(row);
       }
       if (selectQualityEligibleContacts(scanned, { allowMultipleContactsPerFirm, limit: target }).length >= target) break;
@@ -374,47 +498,6 @@ export function createProspectingRepository({ supabase, logger = console } = {})
     return { send: data, created: true };
   }
 
-  async function claimSend(sendId) {
-    const now = new Date().toISOString();
-    const { data, error } = await db('prospecting_sends')
-      .update({ status: 'sending', updated_at: now })
-      .eq('id', sendId)
-      .in('status', ['queued', 'failed'])
-      .select('*')
-      .maybeSingle();
-    if (error) fail('claimSend', error);
-    if (!data) return null;
-    const nextAttempt = Number(data.attempt || 0) + 1;
-    const { data: updated, error: updateError } = await db('prospecting_sends')
-      .update({ attempt: nextAttempt, updated_at: now })
-      .eq('id', sendId)
-      .select('*')
-      .single();
-    if (updateError) fail('claimSend.attempt', updateError);
-    return updated;
-  }
-
-  async function markSendResult(sendId, { status, providerMessageId = null, error = null, transient = false, sentAt = null }) {
-    const patch = {
-      status,
-      provider_message_id: providerMessageId || null,
-      last_error: error ? String(error).slice(0, 2000) : null,
-      last_error_transient: Boolean(transient),
-      updated_at: new Date().toISOString(),
-    };
-    if (sentAt) patch.sent_at = sentAt;
-    if (status === 'delivered') patch.delivered_at = patch.updated_at;
-    if (status === 'bounced') patch.bounced_at = patch.updated_at;
-    if (status === 'complained') patch.complained_at = patch.updated_at;
-    const { data, error: updateError } = await db('prospecting_sends')
-      .update(patch)
-      .eq('id', sendId)
-      .select('*')
-      .single();
-    if (updateError) fail('markSendResult', updateError);
-    return data;
-  }
-
   async function listRetryableSends(limit = 20) {
     const { data, error } = await db('prospecting_sends')
       .select('*')
@@ -427,57 +510,21 @@ export function createProspectingRepository({ supabase, logger = console } = {})
     return data || [];
   }
 
-  async function markProspectFailed(prospectId) {
-    const now = new Date().toISOString();
-    const { data, error } = await db('prospects')
-      .update({ send_status: 'failed', status: 'failed', updated_at: now })
-      .eq('id', prospectId)
-      .select('*')
-      .maybeSingle();
-    if (error) fail('markProspectFailed', error);
-    return data;
-  }
-
-  async function markProspectContacted(prospect) {
-    const now = new Date().toISOString();
-    const { data, error } = await db('prospects')
-      .update({
-        status: 'contacted',
-        send_status: 'sent',
-        last_contacted_at: now,
-        campaign_count: Number(prospect.campaign_count || 0) + 1,
-        updated_at: now,
-      })
-      .eq('id', prospect.id)
-      .select('*')
-      .maybeSingle();
-    if (error) fail('markProspectContacted', error);
-    return data;
-  }
-
-  async function updateProspectStatus(prospectId, { status, sendStatus, notes } = {}) {
-    const patch = { updated_at: new Date().toISOString() };
-    if (status) patch.status = status;
-    if (sendStatus) patch.send_status = sendStatus;
-    if (notes !== undefined) patch.notes = notes;
-    const { data, error } = await db('prospects').update(patch).eq('id', prospectId).select('*').maybeSingle();
-    if (error) fail('updateProspectStatus', error);
-    return data;
-  }
-
   async function addSuppression({ email, reason, source = 'system', note = null, createdBy = null }) {
     const normalized = normalizeEmail(email);
     if (!normalized) return null;
+    const id = await ledgerClient.upsertSuppression({
+      email: normalized,
+      reason,
+      source,
+      note,
+      createdBy,
+    });
+    if (!id) return null;
     const { data, error } = await db('prospecting_suppressions')
-      .upsert({
-        email_normalized: normalized,
-        reason,
-        source,
-        note,
-        created_by: createdBy,
-      }, { onConflict: 'email_normalized', ignoreDuplicates: false })
       .select('*')
-      .single();
+      .eq('id', id)
+      .maybeSingle();
     if (error) fail('addSuppression', error);
     return data;
   }
@@ -505,89 +552,6 @@ export function createProspectingRepository({ supabase, logger = console } = {})
       .maybeSingle();
     if (error) fail('findSendByProviderMessageId', error);
     return data || null;
-  }
-
-  async function recordProviderEvent({ providerEventId, eventType, providerMessageId, email, payload }) {
-    const { data, error } = await db('prospecting_events')
-      .insert({
-        provider_event_id: providerEventId,
-        event_type: eventType,
-        provider_message_id: providerMessageId || null,
-        email_normalized: normalizeEmail(email) || null,
-        payload: payload || {},
-      })
-      .select('*')
-      .single();
-    if (error) {
-      if (error.code === '23505') return { event: null, duplicate: true };
-      fail('recordProviderEvent', error);
-    }
-    return { event: data, duplicate: false };
-  }
-
-  async function deleteProviderEvent(providerEventId) {
-    const { error } = await db('prospecting_events')
-      .delete()
-      .eq('provider_event_id', providerEventId);
-    if (error) fail('deleteProviderEvent', error);
-  }
-
-  async function applyProviderEvent({ send, status, email }) {
-    if (!send) return null;
-    const now = new Date().toISOString();
-    const currentRank = SEND_STATUS_RANK[send.status] ?? 0;
-    const nextRank = SEND_STATUS_RANK[status] ?? 0;
-    const applyStatus = nextRank >= currentRank;
-    const patch = { updated_at: now };
-    if (applyStatus) patch.status = status;
-    if (status === 'sent' && !send.sent_at) patch.sent_at = now;
-    if (applyStatus) {
-      if (status === 'delivered' && !send.delivered_at) patch.delivered_at = now;
-      if (status === 'bounced' && !send.bounced_at) patch.bounced_at = now;
-      if (status === 'complained' && !send.complained_at) patch.complained_at = now;
-    }
-    const { data, error } = await db('prospecting_sends')
-      .update(patch)
-      .eq('id', send.id)
-      .select('*')
-      .maybeSingle();
-    if (error) fail('applyProviderEvent.send', error);
-
-    if (applyStatus) {
-      const prospectPatch = { updated_at: now };
-      if (status === 'bounced') {
-        prospectPatch.status = 'bounced';
-        prospectPatch.send_status = 'bounced';
-      } else if (status === 'complained') {
-        prospectPatch.status = 'complained';
-        prospectPatch.send_status = 'complained';
-      } else if (status === 'delivered') {
-        prospectPatch.send_status = 'delivered';
-      }
-      const { error: prospectError } = await db('prospects')
-        .update(prospectPatch)
-        .eq('id', send.prospect_id);
-      if (prospectError) fail('applyProviderEvent.prospect', prospectError);
-    }
-
-    if (status === 'bounced' || status === 'complained') {
-      await addSuppression({
-        email: email || send.to_email,
-        reason: status === 'bounced' ? 'bounce' : 'complaint',
-        source: 'resend_webhook',
-        note: status === 'bounced' ? 'Rebote reportado por Resend' : 'Queja de spam reportada por Resend',
-      });
-    }
-    return data;
-  }
-
-  async function getTodaySendCount(dayStartIso) {
-    const { count, error } = await db('prospecting_sends')
-      .select('*', { count: 'exact', head: true })
-      .in('status', ['sent', 'delivered', 'bounced', 'complained', 'sending', 'unknown'])
-      .gte('created_at', dayStartIso);
-    if (error) fail('getTodaySendCount', error);
-    return count || 0;
   }
 
   async function count(table, apply) {
@@ -693,10 +657,6 @@ export function createProspectingRepository({ supabase, logger = console } = {})
     return data || null;
   }
 
-  async function markProspectUnsubscribed(prospectId) {
-    return updateProspectStatus(prospectId, { status: 'unsubscribed', sendStatus: 'skipped' });
-  }
-
   async function selectIn(table, column, values, columns = '*') {
     const list = [...new Set((values || []).filter(Boolean))];
     const output = [];
@@ -780,6 +740,11 @@ export function createProspectingRepository({ supabase, logger = console } = {})
     claimRun,
     releaseLock,
     recoverStaleRuns,
+    getCapacity,
+    claimSendAttempt,
+    revalidateAttemptDay,
+    finalizeSendAttempt,
+    markSendSkipped,
     updateRun,
     getRun,
     listRuns,
@@ -789,27 +754,23 @@ export function createProspectingRepository({ supabase, logger = console } = {})
     listEligibleForRun,
     listPendingContact,
     createSend,
-    claimSend,
-    markSendResult,
     listRetryableSends,
-    markProspectContacted,
-    markProspectFailed,
-    updateProspectStatus,
     addSuppression,
     removeSuppression,
     listSuppressions,
     findSendByProviderMessageId,
-    recordProviderEvent,
-    deleteProviderEvent,
+    ingestProviderEvent,
     applyProviderEvent,
-    getTodaySendCount,
+    reprocessProviderEvents,
+    applyUnsubscribe,
+    getOperationalHealth,
     getOverviewCounts,
     listProspects,
     listSends,
     findProspect,
     findProspectByEmail,
-    markProspectUnsubscribed,
     insertManualProspect,
+    ledger: ledgerClient,
   };
 }
 
