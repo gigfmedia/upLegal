@@ -2,6 +2,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
 import * as mailerModule from './mailer.mjs';
+import * as mailerRuntime from './mailerRuntime.mjs';
 import * as indexModule from './index.mjs';
 import { createProspectingModule } from './index.mjs';
 
@@ -19,7 +20,8 @@ describe('prospecting mailer boundary', () => {
     expect(indexModule.sendProspectEmail).toBeUndefined();
     expect(mailerModule.createProspectingMailer).toBeUndefined();
     expect(mailerModule.sendProspectEmail).toBeUndefined();
-    expect(Object.keys(mailerModule)).toEqual(['isTransientSendError']);
+    expect(mailerRuntime.createProspectingMailer).toBeTypeOf('function');
+    expect(Object.keys(mailerModule).sort()).toEqual(['isAmbiguousSendError', 'isExplicitProviderRejection', 'isTransientSendError']);
   });
 
   it('no expone el mailer en la API pública del módulo', () => {
@@ -45,8 +47,13 @@ describe('prospecting mailer boundary', () => {
     expect(callers).toEqual(['engine.mjs']);
   });
 
-  it('la fábrica del mailer solo se usa dentro de index', () => {
+  it('la fábrica del mailer solo se define en su módulo y solo index la usa', () => {
     const users = productionFiles.filter((name) => source(name).includes('createProspectingMailer'));
-    expect(users).toEqual(['index.mjs']);
+    expect(users.sort()).toEqual(['index.mjs', 'mailerRuntime.mjs']);
+
+    const importers = productionFiles.filter((name) => (
+      name !== 'mailerRuntime.mjs' && source(name).includes("from './mailerRuntime.mjs'")
+    ));
+    expect(importers).toEqual(['index.mjs']);
   });
 });

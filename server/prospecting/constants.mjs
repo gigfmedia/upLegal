@@ -78,3 +78,4 @@ export const PAGE_FETCH_CONCURRENCY = 4;
 export const PAGE_FETCH_DELAY_MS = 250;
 export const MAX_SEND_ATTEMPTS = 3;
 export const TRANSIENT_HTTP_STATUSES = Object.freeze(new Set([408, 425, 429, 500, 502, 503, 504]));
+export const AMBIGUOUS_HTTP_STATUSES = Object.freeze(new Set([408, 500, 502, 503, 504]));

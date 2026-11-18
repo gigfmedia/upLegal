@@ -8,13 +8,14 @@ function matchesFilters(row, filters) {
     if (op === 'eq') return row[key] === value;
     if (op === 'in') return value.includes(row[key]);
     if (op === 'is') return (row[key] ?? null) === value;
+    if (op === 'lt') return row[key] < value;
     if (op === 'not' && value === null) return row[key] !== null && row[key] !== undefined;
     return true;
   });
 }
 
-function createFakeSupabase({ prospects = [], sends = [], suppressions = [], profiles = [], ignoreFilters = false } = {}) {
-  const state = { prospectFilters: [], upserts: [], inserts: [] };
+function createFakeSupabase({ prospects = [], sends = [], suppressions = [], profiles = [], runs = [], settings = [], ignoreFilters = false } = {}) {
+  const state = { prospectFilters: [], upserts: [], inserts: [], updates: [] };
 
   function from(table) {
     let filters = [];
@@ -23,6 +24,8 @@ function createFakeSupabase({ prospects = [], sends = [], suppressions = [], pro
     let upsertPayload = null;
     let upsertOptions = null;
     let insertPayload = null;
+    let updatePayload = null;
+    let singleMode = false;
 
     function resolveQuery() {
       if (upsertPayload) {
@@ -42,18 +45,26 @@ function createFakeSupabase({ prospects = [], sends = [], suppressions = [], pro
       if (table === 'prospecting_sends') rows = sends;
       if (table === 'prospecting_suppressions') rows = suppressions;
       if (table === 'profiles') rows = profiles;
+      if (table === 'prospecting_runs') rows = runs;
+      if (table === 'prospecting_settings') rows = settings;
 
-      if (table === 'prospects') state.prospectFilters = filters;
+      if (table === 'prospects' && state.prospectFilters.length === 0) state.prospectFilters = filters;
       if (!ignoreFilters) rows = rows.filter((row) => matchesFilters(row, filters));
       if (range) rows = rows.slice(range.from, range.to + 1);
       if (limit) rows = rows.slice(0, limit);
-      return { data: rows.map((row) => ({ ...row })), error: null };
+      if (updatePayload) {
+        for (const row of rows) Object.assign(row, updatePayload);
+        state.updates.push({ table, ids: rows.map((row) => row.id), payload: updatePayload });
+      }
+      const data = rows.map((row) => ({ ...row }));
+      return { data: singleMode ? data[0] || null : data, error: null };
     }
 
     const query = {
       select() { return query; },
       eq(key, value) { filters = [...filters, [key, 'eq', value]]; return query; },
       in(key, values) { filters = [...filters, [key, 'in', values]]; return query; },
+      lt(key, value) { filters = [...filters, [key, 'lt', value]]; return query; },
       not(key, op, value) { filters = [...filters, [key, 'not', value]]; return query; },
       is(key, value) { filters = [...filters, [key, 'is', value]]; return query; },
       order() { return query; },
@@ -68,8 +79,12 @@ function createFakeSupabase({ prospects = [], sends = [], suppressions = [], pro
         insertPayload = payload;
         return query;
       },
-      single() { return query; },
-      maybeSingle() { return query; },
+      update(payload) {
+        updatePayload = payload;
+        return query;
+      },
+      single() { singleMode = true; return query; },
+      maybeSingle() { singleMode = true; return query; },
       then(onFulfilled, onRejected) {
         return Promise.resolve(resolveQuery()).then(onFulfilled, onRejected);
       },
@@ -98,10 +113,11 @@ function baseProspect(overrides = {}) {
   };
 }
 
-function repositoryFor(fake) {
+function repositoryFor(fake, ledger = null) {
   return createProspectingRepository({
     supabase: fake,
     logger: { error() {}, warn() {} },
+    ...(ledger ? { ledger } : {}),
   });
 }
 
@@ -163,6 +179,78 @@ describe('prospecting repository eligibility', () => {
     const eligible = await repository.listEligibleForRun('run-1', { limit: 1 });
 
     expect(eligible.map((row) => row.id)).toEqual(['elegible-1']);
+  });
+
+  it('excluye dominios ya contactados en ejecuciones anteriores', async () => {
+    const sends = [];
+    const fake = createFakeSupabase({
+      prospects: [
+        baseProspect({ id: 'alfa-1', email: 'uno@estudio-alfa.example', website: 'https://estudio-alfa.example', domain_key: 'estudio-alfa.example', person_key: 'uno' }),
+        baseProspect({ id: 'alfa-2', email: 'dos@estudio-alfa.example', website: 'https://estudio-alfa.example', domain_key: 'estudio-alfa.example', person_key: 'dos' }),
+        baseProspect({ id: 'beta-1', email: 'tres@estudio-beta.example', website: 'https://estudio-beta.example', domain_key: 'estudio-beta.example', person_key: 'tres' }),
+      ],
+      sends,
+    });
+    const repository = repositoryFor(fake);
+
+    const first = await repository.listEligibleForRun('run-1', { limit: 1 });
+    expect(first.map((row) => row.id)).toEqual(['alfa-1']);
+
+    sends.push({ prospect_id: 'alfa-1', status: 'sent' });
+    const second = await repository.listEligibleForRun('run-2', { limit: 10 });
+
+    expect(second.map((row) => row.id)).toEqual(['beta-1']);
+  });
+
+  it.each(['queued', 'sending'])('bloquea temporalmente el dominio con envío %s', async (status) => {
+    const fake = createFakeSupabase({
+      prospects: [
+        baseProspect({ id: 'alfa-1', email: 'uno@estudio-alfa.example', website: 'https://estudio-alfa.example', domain_key: 'estudio-alfa.example', person_key: 'uno' }),
+        baseProspect({ id: 'alfa-2', email: 'dos@estudio-alfa.example', website: 'https://estudio-alfa.example', domain_key: 'estudio-alfa.example', person_key: 'dos' }),
+        baseProspect({ id: 'beta-1', email: 'tres@estudio-beta.example', website: 'https://estudio-beta.example', domain_key: 'estudio-beta.example', person_key: 'tres' }),
+      ],
+      sends: [{ prospect_id: 'alfa-1', status }],
+    });
+    const repository = repositoryFor(fake);
+
+    const eligible = await repository.listEligibleForRun('run-2', { limit: 10 });
+
+    expect(eligible.map((row) => row.id)).toEqual(['beta-1']);
+  });
+
+  it('no bloquea el dominio por un envío failed', async () => {
+    const fake = createFakeSupabase({
+      prospects: [
+        baseProspect({ id: 'alfa-1', email: 'uno@estudio-alfa.example', website: 'https://estudio-alfa.example', domain_key: 'estudio-alfa.example', person_key: 'uno' }),
+        baseProspect({ id: 'alfa-2', email: 'dos@estudio-alfa.example', website: 'https://estudio-alfa.example', domain_key: 'estudio-alfa.example', person_key: 'dos' }),
+        baseProspect({ id: 'beta-1', email: 'tres@estudio-beta.example', website: 'https://estudio-beta.example', domain_key: 'estudio-beta.example', person_key: 'tres' }),
+      ],
+      sends: [{ prospect_id: 'alfa-1', status: 'failed' }],
+    });
+    const repository = repositoryFor(fake);
+
+    const eligible = await repository.listEligibleForRun('run-2', { limit: 10 });
+
+    expect(eligible.map((row) => row.id)).toEqual(['alfa-2', 'beta-1']);
+  });
+
+  it.each(['sent', 'sending'])('permite contactos del mismo dominio si el setting lo autoriza (%s)', async (status) => {
+    const fake = createFakeSupabase({
+      prospects: [
+        baseProspect({ id: 'alfa-1', email: 'uno@estudio-alfa.example', website: 'https://estudio-alfa.example', domain_key: 'estudio-alfa.example', person_key: 'uno' }),
+        baseProspect({ id: 'alfa-2', email: 'dos@estudio-alfa.example', website: 'https://estudio-alfa.example', domain_key: 'estudio-alfa.example', person_key: 'dos' }),
+        baseProspect({ id: 'beta-1', email: 'tres@estudio-beta.example', website: 'https://estudio-beta.example', domain_key: 'estudio-beta.example', person_key: 'tres' }),
+      ],
+      sends: [{ prospect_id: 'alfa-1', status }],
+    });
+    const repository = repositoryFor(fake);
+
+    const eligible = await repository.listEligibleForRun('run-2', {
+      limit: 10,
+      allowMultipleContactsPerFirm: true,
+    });
+
+    expect(eligible.map((row) => row.id)).toEqual(['alfa-2', 'beta-1']);
   });
 
   it('reevalúa y estampa la versión al insertar candidatos nuevos', async () => {
@@ -249,6 +337,25 @@ describe('prospecting repository eligibility', () => {
       rejection_reason: null,
     });
     expect(isQualityEligible({ ...inserted, send_status: 'not_sent' })).toBe(true);
+  });
+
+
+  it('delega la recuperación al ledger atómico sin escribir sends directamente', async () => {
+    const fake = createFakeSupabase();
+    const calls = [];
+    const ledger = {
+      async recoverStale(args) {
+        calls.push(args);
+        return { recovered: 2, runs: 1 };
+      },
+    };
+    const repository = repositoryFor(fake, ledger);
+
+    const result = await repository.recoverStaleRuns();
+
+    expect(result).toEqual({ recovered: 1, runs: 1 });
+    expect(calls[0]).toMatchObject({ markReady: false });
+    expect(calls[0].now).toEqual(expect.any(String));
   });
 
   it('deja en revisión manual no terminal un prospecto manual con correo corrupto', async () => {

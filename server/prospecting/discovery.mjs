@@ -1,6 +1,5 @@
 import { load } from 'cheerio';
 import {
-  BLOCKED_PAGE_HOSTS,
   CHILE_CITIES,
   SPECIALTY_KEYWORDS,
   MAX_PAGES_PER_RUN,
@@ -20,6 +19,7 @@ import {
   validateEmail,
 } from './validation.mjs';
 import { assessCandidateQuality } from './quality.mjs';
+import { createSafeFetcher, isBlockedUrl } from './ssrf.mjs';
 
 const USER_AGENT = 'LegalUpProspectingBot/1.0 (+https://legalup.cl; contacto: juan@legalup.cl)';
 const MAX_HTML_BYTES = 1_200_000;
@@ -37,6 +37,8 @@ export function createSearchProvider({ env = process.env, fetchImpl = globalThis
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ q: query, gl: 'cl', hl: 'es', num: Math.min(10, limit) }),
+          redirect: 'error',
+          signal: AbortSignal.timeout(PAGE_FETCH_TIMEOUT_MS),
         });
         if (!response.ok) throw new Error(`serper_http_${response.status}`);
         const data = await response.json();
@@ -63,6 +65,8 @@ export function createSearchProvider({ env = process.env, fetchImpl = globalThis
             Accept: 'application/json',
             'X-Subscription-Token': env.BRAVE_SEARCH_API_KEY,
           },
+          redirect: 'error',
+          signal: AbortSignal.timeout(PAGE_FETCH_TIMEOUT_MS),
         });
         if (!response.ok) throw new Error(`brave_http_${response.status}`);
         const data = await response.json();
@@ -86,7 +90,10 @@ export function createSearchProvider({ env = process.env, fetchImpl = globalThis
         url.searchParams.set('gl', 'cl');
         url.searchParams.set('hl', 'es');
         url.searchParams.set('num', String(Math.min(10, limit)));
-        const response = await doFetch(url.toString());
+        const response = await doFetch(url.toString(), {
+          redirect: 'error',
+          signal: AbortSignal.timeout(PAGE_FETCH_TIMEOUT_MS),
+        });
         if (!response.ok) throw new Error(`google_cse_http_${response.status}`);
         const data = await response.json();
         return (data.items || []).map((item) => ({
@@ -130,18 +137,7 @@ export function buildSearchQueries({ target = 100, cities = CHILE_CITIES, specia
   return queries.slice(0, desired);
 }
 
-export function isBlockedUrl(url) {
-  let parsed;
-  try {
-    parsed = new URL(url);
-  } catch {
-    return true;
-  }
-  if (!/^https?:$/.test(parsed.protocol)) return true;
-  const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
-  if (BLOCKED_PAGE_HOSTS.has(host)) return true;
-  return [...BLOCKED_PAGE_HOSTS].some((blocked) => host.endsWith(`.${blocked}`));
-}
+export { isBlockedUrl };
 
 export function parseRobots(robotsTxt) {
   const groups = [];
@@ -202,13 +198,15 @@ export async function discoverProspects({
   settings,
   target = 100,
   env = process.env,
-  fetchImpl = globalThis.fetch,
+  fetchImpl,
+  lookup,
   resolveMx,
   logger = console,
   maxPages = MAX_PAGES_PER_RUN,
   clock = () => new Date(),
 } = {}) {
   const doFetch = fetchImpl || globalThis.fetch;
+  const safeFetcher = createSafeFetcher({ fetchImpl, lookup, timeoutMs: PAGE_FETCH_TIMEOUT_MS });
   const provider = createSearchProvider({ env, fetchImpl: doFetch });
   if (!provider) {
     return {
@@ -250,7 +248,7 @@ export async function discoverProspects({
     try {
       const origin = new URL(item.url).origin;
       if (!robotsCache.has(origin)) {
-        robotsCache.set(origin, await fetchRobots(origin, doFetch));
+        robotsCache.set(origin, await fetchRobots(origin, safeFetcher));
       }
       const robots = robotsCache.get(origin);
       if (robots === false) {
@@ -261,7 +259,7 @@ export async function discoverProspects({
         stats.skipped += 1;
         return [];
       }
-      const html = await fetchHtml(item.url, doFetch);
+      const html = await fetchHtml(item.url, safeFetcher);
       if (!html) {
         stats.skipped += 1;
         return [];
@@ -606,11 +604,12 @@ function candidateScore(candidate) {
   return score;
 }
 
-async function fetchRobots(origin, fetchImpl) {
+async function fetchRobots(origin, safeFetcher) {
   try {
-    const response = await withTimeout(fetchImpl(`${origin}/robots.txt`, {
+    const { response } = await safeFetcher.fetchUrl(`${origin}/robots.txt`, {
       headers: { 'User-Agent': USER_AGENT, Accept: 'text/plain' },
-    }), PAGE_FETCH_TIMEOUT_MS);
+      maxBytes: 200_000,
+    });
     if (!response.ok) return null;
     const text = await response.text();
     return String(text || '').slice(0, 200_000);
@@ -620,17 +619,17 @@ async function fetchRobots(origin, fetchImpl) {
   }
 }
 
-async function fetchHtml(url, fetchImpl) {
-  const response = await withTimeout(fetchImpl(url, {
+async function fetchHtml(url, safeFetcher) {
+  const { response, url: finalUrl } = await safeFetcher.fetchUrl(url, {
     headers: {
       'User-Agent': USER_AGENT,
       Accept: 'text/html,application/xhtml+xml',
       'Accept-Language': 'es-CL,es;q=0.9',
     },
-    redirect: 'follow',
-  }), PAGE_FETCH_TIMEOUT_MS);
+    maxBytes: MAX_HTML_BYTES,
+  });
   if (!response.ok) return null;
-  if (isBlockedUrl(response.url || url)) return null;
+  if (isBlockedUrl(finalUrl)) return null;
   const contentType = String(response.headers?.get?.('content-type') || '');
   if (contentType && !/text\/html|application\/xhtml/i.test(contentType)) return null;
   const buffer = Buffer.from(await response.arrayBuffer());
@@ -730,14 +729,4 @@ async function mapWithConcurrency(items, concurrency, fn) {
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function withTimeout(promise, ms) {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('timeout')), ms);
-    promise.then(
-      (value) => { clearTimeout(timer); resolve(value); },
-      (error) => { clearTimeout(timer); reject(error); },
-    );
-  });
 }

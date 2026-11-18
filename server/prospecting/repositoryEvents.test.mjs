@@ -2,99 +2,98 @@
 import { describe, it, expect } from 'vitest';
 import { createProspectingRepository } from './repository.mjs';
 
-function createFakeSupabase({ send, prospect }) {
-  const writes = [];
-  function query(table, patch = null) {
-    let filters = {};
-    const q = {
-      eq(key, value) { filters = { ...filters, [key]: value }; return q; },
-      select() { return q; },
-      async maybeSingle() {
-        if (patch) {
-          writes.push({ table, patch, filters });
-          if (table === 'prospecting_sends') Object.assign(send, patch);
-          if (table === 'prospects') Object.assign(prospect, patch);
-        }
-        return { data: table === 'prospecting_sends' ? structuredClone(send) : null, error: null };
-      },
-      async single() { return this.maybeSingle(); },
-      then(resolve, reject) {
-        return this.maybeSingle().then(resolve, reject);
-      },
-    };
-    return q;
-  }
+function createFakeSupabase(result = {}) {
+  const calls = [];
   return {
-    writes,
-    from(table) {
-      return {
-        update(patch) { return query(table, patch); },
-        upsert(row) {
-          return {
-            select() {
-              return {
-                single: async () => {
-                  writes.push({ table, patch: row, filters: {} });
-                  return { data: row, error: null };
-                },
-              };
-            },
-          };
-        },
-      };
+    calls,
+    async rpc(name, args) {
+      calls.push({ name, args });
+      return { data: { ...result }, error: null };
+    },
+    from() {
+      throw new Error('unexpected table access');
     },
   };
 }
 
-function setup(status) {
-  const send = {
-    id: 'send-1',
-    prospect_id: 'prospect-1',
-    to_email: 'juan@estudio.cl',
-    status,
-    sent_at: null,
-    delivered_at: null,
-    bounced_at: null,
-    complained_at: null,
-  };
-  const prospect = { id: 'prospect-1', status: 'contacted', send_status: 'sent' };
-  const supabase = createFakeSupabase({ send, prospect });
-  const repository = createProspectingRepository({ supabase, logger: { error() {}, warn() {} } });
-  return { repository, supabase, send, prospect };
+function repositoryFor(supabase) {
+  return createProspectingRepository({
+    supabase,
+    logger: { error() {}, warn() {} },
+  });
 }
 
 describe('prospecting provider events', () => {
-  it('no degrada bounced a delivered si el evento llega fuera de orden', async () => {
-    const { repository, supabase, send, prospect } = setup('bounced');
-    await repository.applyProviderEvent({
-      send,
-      status: 'delivered',
+  it('ingiere eventos a través del RPC atómico del ledger', async () => {
+    const supabase = createFakeSupabase({ processed: true, applied: true, status: 'bounced' });
+    const repository = repositoryFor(supabase);
+
+    const result = await repository.ingestProviderEvent({
+      providerEventId: 'msg_1',
+      eventType: 'email.bounced',
+      providerMessageId: 're_1',
       email: 'juan@estudio.cl',
+      payload: { type: 'email.bounced' },
+      now: '2026-11-04T12:00:00.000Z',
     });
-    expect(send.status).toBe('bounced');
-    expect(send.delivered_at).toBe(null);
-    expect(prospect.send_status).toBe('sent');
-    expect(supabase.writes.some((write) => write.table === 'prospects')).toBe(false);
+
+    expect(result).toMatchObject({ processed: true, applied: true, status: 'bounced' });
+    expect(supabase.calls[0]).toMatchObject({
+      name: 'prospecting_ingest_provider_event',
+      args: {
+        p_provider_event_id: 'msg_1',
+        p_event_type: 'email.bounced',
+        p_provider_message_id: 're_1',
+        p_email: 'juan@estudio.cl',
+        p_now: '2026-11-04T12:00:00.000Z',
+      },
+    });
   });
 
-  it('no degrada complained a sent si el evento llega fuera de orden', async () => {
-    const { repository, send } = setup('complained');
-    await repository.applyProviderEvent({ send, status: 'sent', email: 'juan@estudio.cl' });
-    expect(send.status).toBe('complained');
+  it('expone la aplicación idempotente por id de evento', async () => {
+    const supabase = createFakeSupabase({ processed: true, duplicate: true });
+    const repository = repositoryFor(supabase);
+
+    const result = await repository.applyProviderEvent({
+      eventId: 'event-1',
+      historical: true,
+      now: '2026-11-04T12:00:00.000Z',
+    });
+
+    expect(result).toMatchObject({ processed: true, duplicate: true });
+    expect(supabase.calls[0]).toMatchObject({
+      name: 'prospecting_apply_provider_event',
+      args: {
+        p_event_id: 'event-1',
+        p_historical: true,
+        p_now: '2026-11-04T12:00:00.000Z',
+      },
+    });
   });
 
-  it('permite avanzar de sent a delivered y actualiza el prospecto', async () => {
-    const { repository, send, prospect } = setup('sent');
-    await repository.applyProviderEvent({ send, status: 'delivered', email: 'juan@estudio.cl' });
-    expect(send.status).toBe('delivered');
-    expect(send.delivered_at).toBeTruthy();
-    expect(prospect.send_status).toBe('delivered');
+  it('expone la revalidación del intento a través del ledger', async () => {
+    const supabase = createFakeSupabase({ valid: true, rolled_over: true, day_key: '2026-11-05' });
+    const repository = repositoryFor(supabase);
+
+    const result = await repository.revalidateAttemptDay({ attemptId: 'attempt-1' });
+
+    expect(result).toMatchObject({ valid: true, rolled_over: true });
+    expect(supabase.calls[0]).toMatchObject({
+      name: 'prospecting_revalidate_attempt_day',
+      args: { p_attempt_id: 'attempt-1' },
+    });
   });
 
-  it('permite que un rebote reemplace un fallo genérico', async () => {
-    const { repository, send } = setup('failed');
-    await repository.applyProviderEvent({ send, status: 'bounced', email: 'juan@estudio.cl' });
-    expect(send.status).toBe('bounced');
-    expect(send.bounced_at).toBeTruthy();
+  it('reprocesa eventos pendientes sin tocar tablas directamente', async () => {
+    const supabase = createFakeSupabase({ processed: 3, deferred: 1 });
+    const repository = repositoryFor(supabase);
+
+    const result = await repository.reprocessProviderEvents(50, '2026-11-04T12:00:00.000Z');
+
+    expect(result).toMatchObject({ processed: 3, deferred: 1 });
+    expect(supabase.calls[0]).toMatchObject({
+      name: 'prospecting_reprocess_provider_events',
+      args: { p_limit: 50, p_now: '2026-11-04T12:00:00.000Z' },
+    });
   });
 });
