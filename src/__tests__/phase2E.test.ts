@@ -21,30 +21,30 @@ describe('FASE 2E — DashboardAppointments bookings', () => {
 
 describe('FASE 2E — create-payment bookingId', () => {
   it('Test 4: create-payment acepta bookingId', () => {
-    const c = readFileSync(resolve('netlify/functions/create-payment.js'), 'utf-8');
+    const c = readFileSync(resolve('netlify/functions/create-payment.cjs'), 'utf-8');
     expect(c).toContain('bookingId');
   });
   it('Test 5: bookingId produce payments.booking_id', () => {
-    const c = readFileSync(resolve('netlify/functions/create-payment.js'), 'utf-8');
+    const c = readFileSync(resolve('netlify/functions/create-payment.cjs'), 'utf-8');
     expect(c).toContain('booking_id');
     expect(c).toContain('isBooking');
   });
   it('Test 6: precio viene del booking', () => {
-    const c = readFileSync(resolve('netlify/functions/create-payment.js'), 'utf-8');
+    const c = readFileSync(resolve('netlify/functions/create-payment.cjs'), 'utf-8');
     expect(c).toContain('bookingId');
     expect(c).toContain('lawyer_id');
   });
   it('Test 7: external_reference = booking.id', () => {
-    const c = readFileSync(resolve('netlify/functions/create-payment.js'), 'utf-8');
+    const c = readFileSync(resolve('netlify/functions/create-payment.cjs'), 'utf-8');
     expect(c).toContain('external_reference');
     expect(c).toContain('isBooking ? bookingId : paymentId');
   });
   it('Test 8: legacy appointmentId continúa', () => {
-    const c = readFileSync(resolve('netlify/functions/create-payment.js'), 'utf-8');
+    const c = readFileSync(resolve('netlify/functions/create-payment.cjs'), 'utf-8');
     expect(c).toContain('appointmentId');
   });
   it('Test 9: legacy payments.appointment_id', () => {
-    const c = readFileSync(resolve('netlify/functions/create-payment.js'), 'utf-8');
+    const c = readFileSync(resolve('netlify/functions/create-payment.cjs'), 'utf-8');
     expect(c).toContain('appointment_id');
   });
 });

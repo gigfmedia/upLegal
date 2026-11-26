@@ -39,7 +39,7 @@ describe('FASE 2G — Modern booking', () => {
   it('Test 7 — Legacy appointmentId still works', () => {
     const server = readFileSync(resolve('server.mjs'), 'utf-8');
     expect(server).toContain('appointmentId');
-    const netlify = readFileSync(resolve('netlify/functions/create-payment.js'), 'utf-8');
+    const netlify = readFileSync(resolve('netlify/functions/create-payment.cjs'), 'utf-8');
     expect(netlify).toContain('appointmentId');
   });
   it('Test 8 — Payments booking_id', () => {
