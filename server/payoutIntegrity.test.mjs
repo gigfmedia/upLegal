@@ -11,26 +11,58 @@ const P1 = '00000000-0000-4000-a000-000000000011';
 const P2 = '00000000-0000-4000-a000-000000000012';
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const source = read('supabase/functions/process-weekly-payouts/index.ts');
+const eligibilityMigration = read('supabase/migrations/20261125120000_phase2f_payout_eligibility.sql');
 const ast = ts.createSourceFile('edge.ts', source, ts.ScriptTarget.Latest, true);
 // Evaluate the actual Edge module, replacing only remote imports/runtime dependencies.
 const executable = ts.transpileModule(ast.statements.filter(s => !ts.isImportDeclaration(s)).map(s => s.getText(ast)).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText;
 let pg;
 beforeAll(async () => {
   pg = new PGlite();
+  await pg.exec('CREATE ROLE anon NOLOGIN; CREATE ROLE authenticated NOLOGIN; CREATE ROLE service_role NOLOGIN;');
   await pg.exec('CREATE SCHEMA auth; CREATE TABLE auth.users(id uuid primary key); CREATE TABLE public.services(id uuid primary key);');
+  await pg.exec(`
+    CREATE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS $$
+      SELECT COALESCE(NULLIF(current_setting('test.role', true), ''), 'service_role')
+    $$;
+    CREATE FUNCTION public.security_platform_admin() RETURNS boolean LANGUAGE sql STABLE AS $$
+      SELECT false
+    $$;
+  `);
   const payments = read('supabase/migrations/20240927020000_create_payments_tables.sql').match(/CREATE TABLE[\s\S]*?\n\);/)[0];
   const extensions = read('supabase/migrations/20241125150000_platform_settings_and_payouts.sql');
   await pg.exec(payments.replaceAll('uuid_generate_v4()', 'gen_random_uuid()'));
   await pg.exec(extensions.match(/ALTER TABLE public.payments[\s\S]*?;/)[0]);
   await pg.exec(extensions.match(/CREATE TABLE IF NOT EXISTS public.payout_logs[\s\S]*?\n\);/)[0].replaceAll('uuid_generate_v4()', 'gen_random_uuid()'));
+  await pg.exec(`
+    ALTER TABLE public.payments
+      ADD COLUMN IF NOT EXISTS payment_gateway_id text,
+      ADD COLUMN IF NOT EXISTS total_amount integer,
+      ADD COLUMN IF NOT EXISTS appointment_id uuid,
+      ADD COLUMN IF NOT EXISTS consultation_id uuid,
+      ADD COLUMN IF NOT EXISTS booking_id uuid;
+    CREATE TABLE public.payment_events (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      event_type text NOT NULL,
+      user_id uuid,
+      payment_id text,
+      status text,
+      amount numeric,
+      metadata jsonb DEFAULT '{}',
+      created_at timestamptz DEFAULT now()
+    );
+    CREATE UNIQUE INDEX payment_events_success_payment_once
+      ON public.payment_events (payment_id)
+      WHERE event_type = 'success' AND payment_id IS NOT NULL;
+  `);
+  await pg.exec(eligibilityMigration);
   // Account fixture follows the existing save-account contract; not a production schema assertion.
   await pg.exec('CREATE TABLE mercadopago_accounts(user_id uuid primary key, mercadopago_user_id text, access_token text);');
   await pg.query('INSERT INTO auth.users VALUES ($1), ($2)', [A, B]);
 }, 20000);
 afterAll(async () => { await pg?.close(); });
 beforeEach(async () => {
-  await pg.exec('TRUNCATE payments, payout_logs, mercadopago_accounts;');
-  await pg.query("INSERT INTO payments (id,user_id,lawyer_id,amount,platform_fee,lawyer_amount,status,created_at) VALUES ($1,$3,$3,50000,10000,40000,'succeeded','2020-01-01'), ($2,$3,$3,50000,10000,40000,'succeeded','2020-01-01')", [P1,P2,A]);
+  await pg.exec('TRUNCATE payments, payout_logs, mercadopago_accounts, payment_events;');
+  await pg.query("INSERT INTO payments (id,user_id,lawyer_id,amount,platform_fee,lawyer_amount,status,currency,created_at,confirmed_at,confirmation_source,payout_eligible,payment_gateway_id) VALUES ($1,$3,$3,50000,10000,40000,'succeeded','CLP','2020-01-01','2020-01-01','mercadopago_webhook',true,'mp_payment_1'), ($2,$3,$3,50000,10000,40000,'succeeded','CLP','2020-01-01','2020-01-01','mercadopago_webhook',true,'mp_payment_2')", [P1,P2,A]);
   await pg.query("INSERT INTO mercadopago_accounts VALUES ($1,'provider-987','fake-lawyer-token')", [A]);
 });
 
@@ -42,6 +74,8 @@ function setup(options = {}) {
     const q = {
       select(columns = '*') { projection = columns; returning = true; return q; },
       eq(key, value) { predicates.push([key, '=', value]); return q; },
+      neq(key, value) { predicates.push([key, '<>', value]); return q; },
+      not(key, op, value) { predicates.push([key, 'NOT', { op, value }]); return q; },
       lt(key, value) { predicates.push([key, '<', value]); return q; },
       in(key, values) { predicates.push([key, 'IN', values]); return q; },
       update(payload) { action = 'update'; value = payload; return q; },
@@ -57,7 +91,15 @@ function setup(options = {}) {
           const param = v => { params.push(v); return `$${params.length}`; };
           const fields = Object.keys(value || {});
           let sql = action === 'select' ? `SELECT ${projection} FROM ${table}` : action === 'update' ? `UPDATE ${table} SET ${fields.map(k => `${k}=${param(value[k])}`).join(',')}` : `INSERT INTO ${table} (${fields.join(',')}) VALUES (${fields.map(k => param(value[k])).join(',')})`;
-          if (predicates.length) sql += ' WHERE ' + predicates.map(([k,op,v]) => op === 'IN' ? `${k} IN (${v.map(param).join(',')})` : `${k} ${op} ${param(v)}`).join(' AND ');
+          if (predicates.length) sql += ' WHERE ' + predicates.map(([k,op,v]) => {
+            if (op === 'IN') return `${k} IN (${v.map(param).join(',')})`;
+            if (op === 'NOT') {
+              if (v.op === 'is' && v.value === null) return `${k} IS NOT NULL`;
+              if (v.op === 'is') return `${k} IS NOT ${param(v.value)}`;
+              return `NOT (${k} ${v.op} ${param(v.value)})`;
+            }
+            return `${k} ${op} ${param(v)}`;
+          }).join(' AND ');
           if (action !== 'select' && returning) sql += ` RETURNING ${projection}`;
           statements.push(sql);
           try {
@@ -91,6 +133,13 @@ describe('Actual Edge payouts + versioned PostgreSQL payment/log schema', () => 
     expect(s.amounts()[0]).toMatchObject({ amount: 80000, user_id: 'provider-987', currency_id: 'CLP' });
     expect(s.amounts()[0].metadata.payment_ids.sort()).toEqual([P1,P2]);
     expect(s.statements[0]).toContain('SELECT id, lawyer_id, lawyer_amount, currency, created_at FROM payments');
+  });
+  it('never transfers succeeded/pending CLP rows without full confirmation evidence', async () => {
+    await pg.exec("UPDATE payments SET payout_eligible=false, confirmed_at=null, confirmation_source=null");
+    const s = setup();
+    expect((await s.run()).status).toBe('skipped');
+    expect(s.provider).not.toHaveBeenCalled();
+    expect(await states()).toEqual([{ id: P1, payout_status: 'pending' }, { id: P2, payout_status: 'pending' }]);
   });
   it('INV-2 full claim transfers 80k and logs 80k', async () => {
     const s = setup(); expect((await s.run()).status).toBe('completed');
@@ -126,8 +175,9 @@ describe('Actual Edge payouts + versioned PostgreSQL payment/log schema', () => 
     expect((await states()).every(r => r.payout_status === 'error')).toBe(true);
   });
   it('invalid currency fails safely', async () => {
-    await pg.exec("UPDATE payments SET currency='USD'");
-    const s = setup(); expect((await s.run()).status).toBe('failed'); expect(s.provider).not.toHaveBeenCalled();
+    await pg.exec("UPDATE payments SET currency='USD', payout_eligible=false");
+    const s = setup(); expect((await s.run()).status).toBe('skipped'); expect(s.provider).not.toHaveBeenCalled();
+    expect((await states()).every(r => r.payout_status !== 'completed')).toBe(true);
   });
   it('total exceeding payout_logs INTEGER range never reaches provider', async () => {
     const s = setup({ corruptClaim: rows => rows.map(r => ({...r, lawyer_amount: 2147483647})) });

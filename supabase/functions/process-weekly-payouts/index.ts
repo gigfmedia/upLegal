@@ -64,6 +64,12 @@ serve(async (req) => {
       .select('id, lawyer_id, lawyer_amount, currency, created_at')
       .eq('status', 'succeeded')
       .eq('payout_status', 'pending')
+      .eq('payout_eligible', true)
+      .eq('confirmation_source', 'mercadopago_webhook')
+      .not('confirmed_at', 'is', null)
+      .not('payment_gateway_id', 'is', null)
+      .neq('payment_gateway_id', '')
+      .eq('currency', DEFAULT_CURRENCY)
       .lt('created_at', cutoffDate.toISOString())
 
     if (error) {
@@ -152,6 +158,12 @@ async function processPayout(supabase: SupabaseClient, payout: PayoutGroup) {
     .in('id', payout.paymentIds)
     .eq('payout_status', 'pending')
     .eq('status', 'succeeded')
+    .eq('payout_eligible', true)
+    .eq('confirmation_source', 'mercadopago_webhook')
+    .not('confirmed_at', 'is', null)
+    .not('payment_gateway_id', 'is', null)
+    .neq('payment_gateway_id', '')
+    .eq('currency', DEFAULT_CURRENCY)
     .eq('lawyer_id', payout.lawyerId)
     .select('id, lawyer_id, lawyer_amount, currency');
   if (claimError) {
