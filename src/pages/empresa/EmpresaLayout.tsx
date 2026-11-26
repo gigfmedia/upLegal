@@ -79,7 +79,7 @@ export default function EmpresaLayout() {
             <Link to="/empresa" className="flex items-center gap-2.5">
               <Scale className="h-7 w-7 text-green-900 cursor-pointer" />
               <span className="text-xl font-bold text-green-900 cursor-pointer">LegalUp</span>
-              <span className="text-[10px] bg-green-900 text-white px-1 py-0.5 rounded ml-1 align-middle">Business</span>
+              <span className="text-[10px] bg-[#85efab] text-[#101820] px-[6px] py-[4px] rounded ml-1 font-bold align-middle">BUSINESS</span>
             </Link>
           </div>
 

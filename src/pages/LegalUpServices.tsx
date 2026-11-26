@@ -522,7 +522,7 @@ export default function LegalUpServices() {
                 transition={reduceMotion ? undefined : { duration: 14, repeat: Infinity, ease: 'easeInOut' }}
               /> */}
 
-              <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.02fr_0.98fr]">
+              <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.02fr_0.98fr] px-4 sm:px-6">
                 <div>
                   <Enter>
                     <span className="inline-flex items-center gap-2 rounded-full border border-green-900/15 bg-white/60 px-3.5 py-1.5 text-xs font-semibold text-green-900 backdrop-blur">

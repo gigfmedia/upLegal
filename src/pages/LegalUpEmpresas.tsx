@@ -23,7 +23,6 @@ import {
   ChevronRight,
   Check,
   ArrowRight,
-  Building2,
   Briefcase,
   Star,
   ChevronDown,
@@ -345,7 +344,7 @@ export default function LegalUpEmpresas() {
             <div className="hidden md:flex items-center space-x-2 cursor-pointer" onClick={() => navigate('/legalup-empresas')}>
               <Scale className="h-8 w-8 text-green-900" />
               <span className="text-xl font-bold text-green-900">LegalUp</span>
-              <span className="text-[10px] bg-green-900 text-white px-1 py-0.5 rounded ml-1 align-middle">Business</span>
+              <span className="text-[10px] bg-[#85efab] text-[#101820] px-[6px] py-[4px] rounded ml-1 font-bold align-middle">BUSINESS</span>
             </div>
           </div>
           {/* Center: Logo (mobile) + Nav (desktop) */}
@@ -353,7 +352,7 @@ export default function LegalUpEmpresas() {
             <div className="md:hidden flex items-center space-x-2 cursor-pointer" onClick={() => navigate('/legalup-empresas')}>
               <Scale className="h-7 w-7 text-green-900" />
               <span className="text-lg font-bold text-green-900">LegalUp</span>
-              <span className="text-[10px] bg-green-900 text-white px-1 py-0.5 rounded ml-1 align-middle">Business</span>
+              <span className="text-[10px] bg-[#85efab] text-[#101820] px-[6px] py-[4px] rounded ml-1 font-bold align-middle">BUSINESS</span>
             </div>
             <nav className="hidden md:flex items-center justify-center space-x-6">
               <button onClick={() => document.getElementById('empresa-benefits')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm text-muted-foreground hover:text-green-900 transition-colors">Beneficios</button>
@@ -464,10 +463,9 @@ export default function LegalUpEmpresas() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-20">
           <div className="text-center max-w-3xl mx-auto">
             <Badge variant="outline" className="inline-flex items-center gap-2 bg-gray-900 text-white rounded-full px-3 py-2.5 text-xs mb-6 h-[30px]">
-             <Building2 className="w-4 h-4 mr-2 text-white" />
               LegalUp Business
             </Badge>
-            <h1 className="text-3xl sm:text-[3.5rem] leading-[1.4] sm:leading-[1.2] font-bold tracking-tight text-gray-900 font-serif mb-6">
+            <h1 className="text-3xl sm:text-[3.5rem] leading-[1.4] sm:leading-[1.2] font-bold tracking-tight text-gray-900 mb-6">
               Tu departamento {' '}
               <span className="text-green-900 italic underline underline-offset-8 block sm:inline"> legal externo.</span>
             </h1>
@@ -475,13 +473,13 @@ export default function LegalUpEmpresas() {
               Con una sola suscripción, tu empresa cuenta con un equipo de abogados especialistas para resolver sus necesidades legales.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="text-base h-12 px-8 hover:bg-green-900 hover:text-white" onClick={() => handleStart()}>
+              <Button size="lg" className="text-base rounded-3xl h-12 px-8 hover:bg-green-900 hover:text-white" onClick={() => handleStart()}>
                 Comenzar ahora
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <Button
                 size="lg"
-                className="text-base bg-white text-gray-900 border hover:bg-white-50 h-12 px-8"
+                className="text-base rounded-3xl bg-white text-gray-900 border hover:bg-white-50 h-12 px-8"
                 onClick={() => document.getElementById('empresa-plans')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 Ver planes
@@ -498,7 +496,7 @@ export default function LegalUpEmpresas() {
       <section id="empresa-benefits" className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-4xl font-bold text-green-900 font-serif mb-4">
+            <h2 className="text-4xl font-bold text-green-900 mb-4">
               ¿Por qué LegalUp Empresas?
             </h2>
             <p className="text-lg text-gray-600">
@@ -523,7 +521,7 @@ export default function LegalUpEmpresas() {
       <section id="empresa-how" className="py-24 bg-cream-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-4xl font-bold text-green-900 font-serif mb-4">
+            <h2 className="text-4xl font-bold text-green-900 mb-4">
               ¿Cómo funciona?
             </h2>
             <p className="text-lg text-gray-600">
@@ -548,7 +546,7 @@ export default function LegalUpEmpresas() {
       <section id="empresa-plans" className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-4xl font-bold text-green-900 font-serif mb-4">
+            <h2 className="text-4xl font-bold text-green-900 mb-4">
               Planes para cada empresa
             </h2>
             <p className="text-lg text-gray-600">
@@ -591,7 +589,7 @@ export default function LegalUpEmpresas() {
                   </ul>
                 </div>
                 <Button
-                  className="w-full mt-auto"
+                  className="w-full mt-auto rounded-3xl"
                   variant={plan.highlighted ? 'default' : 'outline'}
                   size="lg"
                   onClick={() => handleStart(plan.id)}
@@ -611,7 +609,7 @@ export default function LegalUpEmpresas() {
       <section id="empresa-faq" className="py-24 bg-cream-900">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-4xl font-bold text-green-900 font-serif mb-4">
+            <h2 className="text-4xl font-bold text-green-900 mb-4">
               Preguntas frecuentes
             </h2>
             <p className="text-lg text-gray-600">
@@ -628,17 +626,17 @@ export default function LegalUpEmpresas() {
 
       {/* CTA */}
       <section className="py-24 bg-green-900">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl font-bold text-green-600 font-serif mb-4">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="mx-auto mt-5 max-w-5xl text-4xl font-bold leading-[1.05] tracking-tight text-green-500 sm:text-6xl">
             Prepara tu empresa para lo que viene
           </h2>
-          <p className="text-lg text-gray-300 mb-8 max-w-2xl mx-auto">
+          <p className="mt-8 text-lg text-gray-300 mb-8 max-w-3xl mx-auto">
             Únete a las empresas que ya tienen su departamento legal externo con LegalUp.
           </p>
           <Button
             size="lg"
             variant="secondary"
-            className="text-base h-12 px-8"
+            className="text-base h-12 px-8 rounded-3xl"
             onClick={() => handleStart()}
           >
             Comenzar ahora
