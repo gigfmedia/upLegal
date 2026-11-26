@@ -283,7 +283,7 @@ function createDb({ seedBookings = null, runningPaymentEvents = [] } = {}) {
   return { state, supabase };
 }
 
-function buildHarness({ db }) {
+function buildHarness({ db, webhookSecret = SECRET }) {
   const { state, supabase } = db;
   const logs = [];
   const sandboxConsole = {
@@ -295,7 +295,11 @@ function buildHarness({ db }) {
     const u = String(url);
     if (u.startsWith('https://api.mercadopago.com/v1/payments/')) {
       state.calls.mp.push(u);
-      return { ok: true, status: 200, json: async () => mpPayment() };
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ ...mpPayment(), ...(state.config.mpPayment || {}) }),
+      };
     }
     if (u.includes('posthog.com/capture')) {
       state.calls.posthog.push(JSON.parse(opts.body));
@@ -310,7 +314,7 @@ function buildHarness({ db }) {
       app: { post: (_p, h) => { handler = h; } },
       supabase,
       console: sandboxConsole,
-      process: { env: { MERCADOPAGO_WEBHOOK_SECRET: SECRET, POSTHOG_PROJECT_API_KEY: 'phk_test' } },
+      process: { env: { MERCADOPAGO_WEBHOOK_SECRET: webhookSecret, POSTHOG_PROJECT_API_KEY: 'phk_test' } },
       crypto,
       Buffer,
       fetch: fetchMock,
@@ -334,10 +338,15 @@ function buildHarness({ db }) {
   );
   if (!handler) throw new Error('el handler real del webhook no se capturó');
 
-  const deliver = async () => {
-    const ts = Math.floor(Date.now() / 1000).toString();
-    const requestId = 'req_test_r1';
-    const manifest = `id:${PID};request-id:${requestId};ts:${ts};`;
+  const deliver = async (options = {}) => {
+    const ts = options.ts ?? Math.floor(Date.now() / 1000).toString();
+    const requestId = options.requestId ?? 'req_test_r1';
+    const dataId = options.dataId ?? PID;
+    const manifestParts = [];
+    if (dataId) manifestParts.push(`id:${String(dataId).toLowerCase()}`);
+    if (requestId) manifestParts.push(`request-id:${requestId}`);
+    manifestParts.push(`ts:${ts}`);
+    const manifest = manifestParts.join(';') + ';';
     const v1 = crypto.createHmac('sha256', SECRET).update(manifest).digest('hex');
     const res = {
       statusCode: null,
@@ -348,9 +357,12 @@ function buildHarness({ db }) {
     };
     await handler(
       {
-        body: { type: 'payment', data: { id: PID } },
-        query: { 'data.id': PID },
-        headers: { 'x-signature': `ts=${ts},v1=${v1}`, 'x-request-id': requestId },
+        body: options.body ?? { type: 'payment', data: { id: PID } },
+        query: options.query ?? { 'data.id': PID },
+        headers: options.headers ?? {
+          'x-signature': options.signature ?? `ts=${ts},v1=${v1}`,
+          'x-request-id': requestId,
+        },
       },
       res
     );
@@ -487,5 +499,92 @@ describe('R1 — payment_events.success: el handler REAL del webhook', () => {
     expect(h.state.calls.emails).toHaveLength(3);
     // deduplicación de notificaciones vía índice único (fidel al esquema real)
     expect(h.state.notifications).toHaveLength(1);
+  });
+});
+
+describe('FASE 2B — webhook fail-closed y validación server-side', () => {
+  it('rechaza sin x-signature (401) sin consultar Mercado Pago', async () => {
+    const h = buildHarness({ db: createDb({ seedBookings: baseBooking() }) });
+    const res = await h.deliver({ headers: {} });
+    expect(res.statusCode).toBe(401);
+    expect(h.state.calls.mp).toHaveLength(0);
+    expect(h.state.bookings.get(BID)).toMatchObject({ payment_id: null, status: 'pending' });
+  });
+
+  it('rechaza firma inválida (401) sin consultar Mercado Pago', async () => {
+    const h = buildHarness({ db: createDb({ seedBookings: baseBooking() }) });
+    const res = await h.deliver({ signature: 'ts=1700000000,v1=deadbeef' });
+    expect(res.statusCode).toBe(401);
+    expect(h.state.calls.mp).toHaveLength(0);
+  });
+
+  it('rechaza header malformado (401)', async () => {
+    const h = buildHarness({ db: createDb({ seedBookings: baseBooking() }) });
+    const res = await h.deliver({ signature: 'not-a-signature-header' });
+    expect(res.statusCode).toBe(401);
+    expect(h.state.calls.mp).toHaveLength(0);
+  });
+
+  it('sin MERCADOPAGO_WEBHOOK_SECRET falla cerrado (500)', async () => {
+    const h = buildHarness({
+      db: createDb({ seedBookings: baseBooking() }),
+      webhookSecret: null,
+    });
+    const res = await h.deliver();
+    expect(res.statusCode).toBe(500);
+    expect(h.state.calls.mp).toHaveLength(0);
+    expect(h.state.bookings.get(BID)).toMatchObject({ payment_id: null });
+  });
+
+  it('monto distinto al precio del booking no confirma: manual review', async () => {
+    const db = createDb({ seedBookings: baseBooking() });
+    db.state.config.mpPayment = { transaction_amount: 1 };
+    const h = buildHarness({ db });
+    const res = await h.deliver();
+    expect(res.statusCode).toBe(200);
+    expect(h.state.payments).toHaveLength(0);
+    expect(h.state.bookings.get(BID)).toMatchObject({
+      status: 'pending',
+      payment_id: null,
+      needs_manual_review: true,
+    });
+  });
+
+  it('moneda distinta de CLP no confirma: manual review', async () => {
+    const db = createDb({ seedBookings: baseBooking() });
+    db.state.config.mpPayment = { currency_id: 'USD' };
+    const h = buildHarness({ db });
+    const res = await h.deliver();
+    expect(res.statusCode).toBe(200);
+    expect(h.state.payments).toHaveLength(0);
+    expect(h.state.bookings.get(BID)).toMatchObject({
+      status: 'pending',
+      payment_id: null,
+      needs_manual_review: true,
+    });
+  });
+
+  it('booking en estado terminal no se resucita: manual review', async () => {
+    const db = createDb({ seedBookings: { ...baseBooking(), status: 'cancelled' } });
+    const h = buildHarness({ db });
+    const res = await h.deliver();
+    expect(res.statusCode).toBe(200);
+    expect(h.state.payments).toHaveLength(0);
+    expect(h.state.bookings.get(BID)).toMatchObject({
+      status: 'cancelled',
+      needs_manual_review: true,
+    });
+  });
+
+  it('pago distinto sobre booking ya reclamado no sobrescribe: manual review', async () => {
+    const db = createDb({ seedBookings: { ...baseBooking(), payment_id: '999999' } });
+    const h = buildHarness({ db });
+    const res = await h.deliver();
+    expect(res.statusCode).toBe(200);
+    expect(h.state.payments).toHaveLength(0);
+    expect(h.state.bookings.get(BID)).toMatchObject({
+      payment_id: '999999',
+      needs_manual_review: true,
+    });
   });
 });
